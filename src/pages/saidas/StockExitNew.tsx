@@ -22,7 +22,8 @@ const StockExitNew = () => {
     productId: '',
     clientId: '',
     quantity: 1,
-    salePrice: 0
+    salePrice: 0,
+    date: new Date() // Added the date field
   });
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);

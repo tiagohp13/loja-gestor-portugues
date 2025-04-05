@@ -23,7 +23,8 @@ const StockEntryNew = () => {
     supplierId: '',
     quantity: 1,
     purchasePrice: 0,
-    invoiceNumber: ''
+    invoiceNumber: '',
+    date: new Date() // Added the date field
   });
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);

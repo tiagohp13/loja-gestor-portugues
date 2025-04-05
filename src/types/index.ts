@@ -10,11 +10,12 @@ export interface Product {
   id: string;
   name: string;
   category: string;
-  internalCode: string;
+  code: string; // Changed from internalCode
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
-  photo?: string;
+  image?: string; // Changed from photo
+  description?: string; // Added description
   createdAt: Date;
   updatedAt: Date;
 }
@@ -22,8 +23,10 @@ export interface Product {
 export interface Client {
   id: string;
   name: string;
-  contact: string;
+  phone?: string; // Changed from contact
   email: string;
+  address?: string; // Added address
+  notes?: string; // Added notes
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,8 +34,10 @@ export interface Client {
 export interface Supplier {
   id: string;
   name: string;
-  contact: string;
+  phone?: string; // Changed from contact
   email: string;
+  address?: string; // Added address
+  notes?: string; // Added notes
   createdAt: Date;
   updatedAt: Date;
 }

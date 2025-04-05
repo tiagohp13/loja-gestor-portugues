@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { Product, Client, Supplier, StockEntry, StockExit } from '../types';
 import { products as initialProducts, clients as initialClients, suppliers as initialSuppliers, stockEntries as initialEntries, stockExits as initialExits } from '../data/mockData';
@@ -76,7 +75,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [stockExits, setStockExits] = useState<StockExit[]>(() => 
     loadFromLocalStorage('stockExits', initialExits));
   
-  // Save to localStorage when data changes
   useEffect(() => {
     saveToLocalStorage('products', products);
   }, [products]);
@@ -97,7 +95,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     saveToLocalStorage('stockExits', stockExits);
   }, [stockExits]);
   
-  // Product CRUD
   const getProduct = (id: string) => products.find(p => p.id === id);
   
   const addProduct = (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -121,7 +118,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const deleteProduct = (id: string) => {
-    // Check if product has related entries or exits
     const hasEntries = stockEntries.some(entry => entry.productId === id);
     const hasExits = stockExits.some(exit => exit.productId === id);
     
@@ -134,7 +130,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Produto eliminado com sucesso');
   };
   
-  // Client CRUD
   const getClient = (id: string) => clients.find(c => c.id === id);
   
   const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -158,7 +153,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const deleteClient = (id: string) => {
-    // Check if client has related exits
     const hasExits = stockExits.some(exit => exit.clientId === id);
     
     if (hasExits) {
@@ -170,7 +164,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Cliente eliminado com sucesso');
   };
   
-  // Supplier CRUD
   const getSupplier = (id: string) => suppliers.find(s => s.id === id);
   
   const addSupplier = (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -194,7 +187,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const deleteSupplier = (id: string) => {
-    // Check if supplier has related entries
     const hasEntries = stockEntries.some(entry => entry.supplierId === id);
     
     if (hasEntries) {
@@ -206,7 +198,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Fornecedor eliminado com sucesso');
   };
   
-  // Stock operations
   const addStockEntry = (entry: Omit<StockEntry, 'id' | 'createdAt'>) => {
     const newEntry: StockEntry = {
       ...entry,
@@ -216,7 +207,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     setStockEntries(prev => [...prev, newEntry]);
     
-    // Update product stock
     const product = products.find(p => p.id === entry.productId);
     if (product) {
       updateProduct(product.id, {
@@ -230,7 +220,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt'>) => {
     const product = products.find(p => p.id === exit.productId);
     
-    // Check if there's enough stock
     if (!product || product.currentStock < exit.quantity) {
       toast.error('Stock insuficiente para realizar esta operação');
       return;
@@ -244,7 +233,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     setStockExits(prev => [...prev, newExit]);
     
-    // Update product stock
     updateProduct(product.id, {
       currentStock: product.currentStock - exit.quantity
     });
@@ -252,7 +240,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Saída de stock registada com sucesso');
   };
   
-  // Get histories
   const getProductHistory = (productId: string) => {
     const entries = stockEntries.filter(entry => entry.productId === productId);
     const exits = stockExits.filter(exit => exit.productId === productId);
