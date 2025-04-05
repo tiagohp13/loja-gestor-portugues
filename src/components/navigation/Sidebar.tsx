@@ -9,7 +9,7 @@ import {
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
-  SidebarMenuItem, SidebarRail, useSidebar
+  SidebarMenuItem
 } from '@/components/ui/sidebar';
 
 const AppSidebar: React.FC = () => {
@@ -75,7 +75,6 @@ const AppSidebar: React.FC = () => {
     },
   ];
 
-  // Fixed submenu items rendering to use direct Link components
   const renderSubmenuItems = (items) => {
     return (
       <div className="pl-6 mt-1 space-y-1">

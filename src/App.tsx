@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import { DataProvider } from "./contexts/DataContext";
 import Dashboard from "./pages/Dashboard";
@@ -48,22 +48,27 @@ const App = () => (
               <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
               
               {/* Product routes */}
+              <Route path="/produtos" element={<Navigate to="/produtos/consultar" replace />} />
               <Route path="/produtos/novo" element={<AppLayout><ProductNew /></AppLayout>} />
               <Route path="/produtos/consultar" element={<AppLayout><ProductList /></AppLayout>} />
               
               {/* Client routes */}
+              <Route path="/clientes" element={<Navigate to="/clientes/consultar" replace />} />
               <Route path="/clientes/novo" element={<AppLayout><ClientNew /></AppLayout>} />
               <Route path="/clientes/consultar" element={<AppLayout><ClientList /></AppLayout>} />
               
               {/* Supplier routes */}
+              <Route path="/fornecedores" element={<Navigate to="/fornecedores/consultar" replace />} />
               <Route path="/fornecedores/novo" element={<AppLayout><SupplierNew /></AppLayout>} />
               <Route path="/fornecedores/consultar" element={<AppLayout><SupplierList /></AppLayout>} />
               
               {/* Stock Entry routes */}
+              <Route path="/entradas" element={<Navigate to="/entradas/historico" replace />} />
               <Route path="/entradas/nova" element={<AppLayout><StockEntryNew /></AppLayout>} />
               <Route path="/entradas/historico" element={<AppLayout><StockEntryList /></AppLayout>} />
               
               {/* Stock Exit routes */}
+              <Route path="/saidas" element={<Navigate to="/saidas/historico" replace />} />
               <Route path="/saidas/nova" element={<AppLayout><StockExitNew /></AppLayout>} />
               <Route path="/saidas/historico" element={<AppLayout><StockExitList /></AppLayout>} />
               
