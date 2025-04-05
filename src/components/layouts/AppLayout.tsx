@@ -18,7 +18,7 @@ const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
   }
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={true} open={true}>
       <div className="min-h-screen flex w-full font-inter">
         <Sidebar />
         <div className="flex-1 flex flex-col overflow-hidden">

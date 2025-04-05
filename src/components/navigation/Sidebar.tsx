@@ -1,30 +1,20 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, User as UserIcon,
-  PlusCircle, List, ChevronDown
+  PlusCircle, List
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
-  SidebarMenuItem, SidebarTrigger, SidebarRail, useSidebar
+  SidebarMenuItem, SidebarRail, useSidebar
 } from '@/components/ui/sidebar';
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import { cn } from "@/lib/utils";
 
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
-  const { state } = useSidebar();
   
   const navigationItems = [
     { 
@@ -85,72 +75,28 @@ const AppSidebar: React.FC = () => {
     },
   ];
 
-  const NavigationMenuComponent = ({ item }) => {
-    const isActive = location.pathname === item.path || 
-                    (item.hasSubmenu && item.submenu.some(subItem => location.pathname === subItem.path));
-    
-    if (!item.hasSubmenu) {
-      return (
-        <Link 
-          to={item.path} 
-          className={`flex items-center space-x-2 ${
-            isActive 
-              ? 'font-bold text-gestorApp-blue' 
-              : 'text-gestorApp-gray'
-          }`}
-        >
-          {item.icon}
-          <span>{item.label}</span>
-        </Link>
-      );
-    }
-
+  // Fixed submenu items rendering to use direct Link components
+  const renderSubmenuItems = (items) => {
     return (
-      <NavigationMenu>
-        <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger 
-              className={`p-0 h-auto bg-transparent hover:bg-transparent ${
-                isActive 
-                  ? 'font-bold text-gestorApp-blue' 
-                  : 'text-gestorApp-gray'
-              }`}
-            >
-              <div className="flex items-center space-x-2">
-                {item.icon}
-                <span>{item.label}</span>
-              </div>
-            </NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid w-[220px] gap-2 p-2">
-                {item.submenu.map((subItem, index) => (
-                  <li key={index}>
-                    <NavigationMenuLink asChild>
-                      <Link
-                        to={subItem.path}
-                        className="block select-none space-y-1 rounded-md p-2 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
-                      >
-                        <div className="flex items-center space-x-2">
-                          {subItem.icon}
-                          <span>{subItem.label}</span>
-                        </div>
-                      </Link>
-                    </NavigationMenuLink>
-                  </li>
-                ))}
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
-        </NavigationMenuList>
-      </NavigationMenu>
+      <div className="pl-6 mt-1 space-y-1">
+        {items.map((subItem, idx) => (
+          <Link 
+            key={idx} 
+            to={subItem.path}
+            className="flex items-center space-x-2 py-1 px-2 text-sm rounded-md text-gestorApp-gray hover:text-gestorApp-blue hover:bg-gestorApp-gray-lighter"
+          >
+            {subItem.icon}
+            <span>{subItem.label}</span>
+          </Link>
+        ))}
+      </div>
     );
   };
 
   return (
-    <Sidebar>
+    <Sidebar variant="sidebar" collapsible="none">
       <SidebarHeader className="p-4 flex items-center justify-center border-b">
         <h2 className="text-lg font-bold text-gestorApp-blue">Gestor de Stock</h2>
-        <SidebarTrigger />
       </SidebarHeader>
       
       <SidebarContent>
@@ -158,13 +104,42 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item, index) => (
-                <SidebarMenuItem key={index}>
-                  <SidebarMenuButton>
-                    <NavigationMenuComponent item={item} />
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {navigationItems.map((item, index) => {
+                const isActive = location.pathname === item.path || 
+                              (item.hasSubmenu && item.submenu.some(subItem => location.pathname === subItem.path));
+                
+                return (
+                  <SidebarMenuItem key={index}>
+                    <SidebarMenuButton>
+                      {item.hasSubmenu ? (
+                        <div className="w-full">
+                          <div className={`flex items-center space-x-2 ${
+                            isActive 
+                              ? 'font-bold text-gestorApp-blue' 
+                              : 'text-gestorApp-gray'
+                          }`}>
+                            {item.icon}
+                            <span>{item.label}</span>
+                          </div>
+                          {renderSubmenuItems(item.submenu)}
+                        </div>
+                      ) : (
+                        <Link 
+                          to={item.path} 
+                          className={`flex items-center space-x-2 ${
+                            isActive 
+                              ? 'font-bold text-gestorApp-blue' 
+                              : 'text-gestorApp-gray'
+                          }`}
+                        >
+                          {item.icon}
+                          <span>{item.label}</span>
+                        </Link>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -187,9 +162,6 @@ const AppSidebar: React.FC = () => {
           </button>
         </div>
       </SidebarFooter>
-      
-      {/* Add a visible rail to expand the sidebar when collapsed */}
-      <SidebarRail />
     </Sidebar>
   );
 };
