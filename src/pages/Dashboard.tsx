@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
@@ -14,10 +13,8 @@ const DashboardPage: React.FC = () => {
   const { products, suppliers, clients, stockEntries, stockExits } = useData();
   const dashboardData = getDashboardData();
   
-  // Create data for sales chart
   const monthlyData = new Map();
   
-  // Populate with all months
   const today = new Date();
   for (let i = 5; i >= 0; i--) {
     const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
@@ -29,7 +26,6 @@ const DashboardPage: React.FC = () => {
     });
   }
   
-  // Populate sales data
   stockExits.forEach(exit => {
     const date = new Date(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -43,7 +39,6 @@ const DashboardPage: React.FC = () => {
     }
   });
   
-  // Populate purchase data
   stockEntries.forEach(entry => {
     const date = new Date(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -59,7 +54,6 @@ const DashboardPage: React.FC = () => {
   
   const chartData = Array.from(monthlyData.values());
   
-  // Create data for products by category
   const categoryCounts = products.reduce((acc, product) => {
     const { category } = product;
     if (!acc[category]) {
@@ -184,7 +178,7 @@ const DashboardPage: React.FC = () => {
                       <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
                       <div>
                         <div className="font-medium">{product.name}</div>
-                        <div className="text-sm text-gestorApp-gray">Código: {product.internalCode}</div>
+                        <div className="text-sm text-gestorApp-gray">Código: {product.code}</div>
                       </div>
                     </div>
                     <div className="text-red-600 font-medium">{product.currentStock} unidades</div>
