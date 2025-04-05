@@ -3,8 +3,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
-  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, User as UserIcon,
-  PlusCircle, List
+  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, User as UserIcon
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
@@ -18,79 +17,42 @@ const AppSidebar: React.FC = () => {
   
   const navigationItems = [
     { 
-      path: '/', 
+      path: '/dashboard', 
       label: 'Dashboard', 
       icon: <LayoutDashboard className="w-5 h-5" />,
-      hasSubmenu: false 
+      isActive: location.pathname === '/' || location.pathname === '/dashboard'
     },
     { 
-      path: '/produtos', 
+      path: '/produtos/consultar', 
       label: 'Produtos', 
       icon: <Package className="w-5 h-5" />,
-      hasSubmenu: true,
-      submenu: [
-        { path: '/produtos/novo', label: 'Criar novo produto', icon: <PlusCircle className="w-4 h-4" /> },
-        { path: '/produtos/consultar', label: 'Consultar produtos', icon: <List className="w-4 h-4" /> }
-      ]
+      isActive: location.pathname.includes('/produtos')
     },
     { 
-      path: '/clientes', 
+      path: '/clientes/consultar', 
       label: 'Clientes', 
       icon: <Users className="w-5 h-5" />,
-      hasSubmenu: true,
-      submenu: [
-        { path: '/clientes/novo', label: 'Criar novo cliente', icon: <PlusCircle className="w-4 h-4" /> },
-        { path: '/clientes/consultar', label: 'Consultar clientes', icon: <List className="w-4 h-4" /> }
-      ]
+      isActive: location.pathname.includes('/clientes')
     },
     { 
-      path: '/fornecedores', 
+      path: '/fornecedores/consultar', 
       label: 'Fornecedores', 
       icon: <Truck className="w-5 h-5" />,
-      hasSubmenu: true,
-      submenu: [
-        { path: '/fornecedores/novo', label: 'Criar novo fornecedor', icon: <PlusCircle className="w-4 h-4" /> },
-        { path: '/fornecedores/consultar', label: 'Consultar fornecedores', icon: <List className="w-4 h-4" /> }
-      ]
+      isActive: location.pathname.includes('/fornecedores')
     },
     { 
-      path: '/entradas', 
+      path: '/entradas/historico', 
       label: 'Entradas', 
       icon: <LogIn className="w-5 h-5" />,
-      hasSubmenu: true,
-      submenu: [
-        { path: '/entradas/nova', label: 'Registar nova entrada', icon: <PlusCircle className="w-4 h-4" /> },
-        { path: '/entradas/historico', label: 'Histórico de entradas', icon: <List className="w-4 h-4" /> }
-      ]
+      isActive: location.pathname.includes('/entradas')
     },
     { 
-      path: '/saidas', 
+      path: '/saidas/historico', 
       label: 'Saídas', 
       icon: <LogOut className="w-5 h-5" />,
-      hasSubmenu: true,
-      submenu: [
-        { path: '/saidas/nova', label: 'Registar nova saída', icon: <PlusCircle className="w-4 h-4" /> },
-        { path: '/saidas/historico', label: 'Histórico de saídas', icon: <List className="w-4 h-4" /> }
-      ]
+      isActive: location.pathname.includes('/saidas')
     },
   ];
-
-  const renderSubmenuItems = (items) => {
-    return (
-      <div className="pl-6 mt-1 space-y-1">
-        {items.map((subItem, idx) => (
-          <Link 
-            key={idx} 
-            to={subItem.path}
-            className="flex items-center space-x-2 py-1 px-2 text-sm rounded-md text-gestorApp-gray hover:text-gestorApp-blue hover:bg-gestorApp-gray-lighter"
-          >
-            {subItem.icon}
-            <span>{subItem.label}</span>
-          </Link>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <Sidebar variant="sidebar" collapsible="none">
@@ -103,42 +65,23 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item, index) => {
-                const isActive = location.pathname === item.path || 
-                              (item.hasSubmenu && item.submenu.some(subItem => location.pathname === subItem.path));
-                
-                return (
-                  <SidebarMenuItem key={index}>
-                    <SidebarMenuButton>
-                      {item.hasSubmenu ? (
-                        <div className="w-full">
-                          <div className={`flex items-center space-x-2 ${
-                            isActive 
-                              ? 'font-bold text-gestorApp-blue' 
-                              : 'text-gestorApp-gray'
-                          }`}>
-                            {item.icon}
-                            <span>{item.label}</span>
-                          </div>
-                          {renderSubmenuItems(item.submenu)}
-                        </div>
-                      ) : (
-                        <Link 
-                          to={item.path} 
-                          className={`flex items-center space-x-2 ${
-                            isActive 
-                              ? 'font-bold text-gestorApp-blue' 
-                              : 'text-gestorApp-gray'
-                          }`}
-                        >
-                          {item.icon}
-                          <span>{item.label}</span>
-                        </Link>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {navigationItems.map((item, index) => (
+                <SidebarMenuItem key={index}>
+                  <SidebarMenuButton>
+                    <Link 
+                      to={item.path} 
+                      className={`flex items-center space-x-2 ${
+                        item.isActive 
+                          ? 'font-bold text-gestorApp-blue' 
+                          : 'text-gestorApp-gray'
+                      }`}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
