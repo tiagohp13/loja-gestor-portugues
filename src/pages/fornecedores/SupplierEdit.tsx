@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 
@@ -17,7 +18,8 @@ const SupplierEdit = () => {
     email: '',
     phone: '',
     address: '',
-    taxId: ''
+    taxId: '',
+    notes: ''
   });
 
   useEffect(() => {
@@ -29,7 +31,8 @@ const SupplierEdit = () => {
           email: foundSupplier.email || '',
           phone: foundSupplier.phone || '',
           address: foundSupplier.address || '',
-          taxId: foundSupplier.taxId || ''
+          taxId: foundSupplier.taxId || '',
+          notes: foundSupplier.notes || ''
         });
       } else {
         toast.error('Fornecedor não encontrado');
@@ -136,6 +139,20 @@ const SupplierEdit = () => {
               value={supplier.address}
               onChange={handleChange}
               placeholder="Endereço completo"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+              Observações
+            </label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={supplier.notes}
+              onChange={handleChange}
+              placeholder="Notas ou observações sobre o fornecedor"
+              rows={4}
             />
           </div>
           

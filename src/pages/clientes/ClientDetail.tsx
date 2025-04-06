@@ -12,7 +12,7 @@ import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getClient, deleteClient, getClientHistory } = useData();
+  const { getClient, deleteClient, getClientHistory, products } = useData();
   const client = getClient(id as string);
   
   if (!client) {
@@ -102,6 +102,12 @@ const ClientDetail = () => {
                 <p className="text-sm text-gestorApp-gray">Morada</p>
                 <p className="font-medium">{client.address || "Não definida"}</p>
               </div>
+              {client.notes && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gestorApp-gray">Observações</p>
+                  <p className="font-medium">{client.notes}</p>
+                </div>
+              )}
               <div>
                 <p className="text-sm text-gestorApp-gray">Data de Criação</p>
                 <p className="font-medium">{formatDate(new Date(client.createdAt))}</p>
@@ -133,17 +139,23 @@ const ClientDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {clientHistory.map(exit => (
-                    <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
-                      <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
-                      <td className="px-4 py-2">
-                        {exit.productName || "Desconhecido"}
-                      </td>
-                      <td className="px-4 py-2">{exit.quantity} unidades</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(exit.quantity * exit.salePrice)}</td>
-                    </tr>
-                  ))}
+                  {clientHistory.map(exit => {
+                    const product = products.find(p => p.id === exit.productId);
+                    
+                    return (
+                      <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
+                        <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
+                        <td className="px-4 py-2">
+                          {product 
+                            ? `${product.code} - ${product.name}` 
+                            : exit.productName || "Desconhecido"}
+                        </td>
+                        <td className="px-4 py-2">{exit.quantity} unidades</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(exit.quantity * exit.salePrice)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

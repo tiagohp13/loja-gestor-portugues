@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Plus, Eye, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDateTime } from '@/utils/formatting';
@@ -49,6 +49,10 @@ const StockExitList = () => {
 
   const handleDeleteExit = (id: string) => {
     deleteStockExit(id);
+  };
+
+  const handleEditExit = (id: string) => {
+    navigate(`/saidas/editar/${id}`);
   };
 
   const handleViewDetails = (id: string) => {
@@ -142,6 +146,17 @@ const StockExitList = () => {
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            title="Editar"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditExit(exit.id);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
                           <DeleteConfirmDialog
                             title="Eliminar Saída"
                             description="Tem a certeza que deseja eliminar esta saída de stock? Esta ação é irreversível."
@@ -206,6 +221,17 @@ const StockExitList = () => {
               </div>
               
               <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setDetailsOpen(false);
+                    handleEditExit(selectedExitData.id);
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
                 <DeleteConfirmDialog
                   title="Eliminar Saída"
                   description="Tem a certeza que deseja eliminar esta saída de stock? Esta ação é irreversível."

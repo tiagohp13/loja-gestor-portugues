@@ -10,18 +10,19 @@ import PageHeader from '@/components/ui/PageHeader';
 const SupplierNew = () => {
   const navigate = useNavigate();
   const { addSupplier } = useData();
-  const [supplier, setSupplier] = useState({
+  
+  const [formData, setFormData] = useState({
     name: '',
-    address: '',
-    phone: '',
     email: '',
+    phone: '',
+    address: '',
     taxId: '',
     notes: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setSupplier(prev => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -29,18 +30,18 @@ const SupplierNew = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addSupplier(supplier);
+    addSupplier(formData);
     navigate('/fornecedores/consultar');
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Criar Novo Fornecedor" 
-        description="Adicione um novo fornecedor à base de dados" 
+        title="Novo Fornecedor" 
+        description="Adicionar um novo fornecedor ao sistema" 
         actions={
           <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
-            Voltar à Lista
+            Cancelar
           </Button>
         }
       />
@@ -55,9 +56,9 @@ const SupplierNew = () => {
               <Input
                 id="name"
                 name="name"
-                value={supplier.name}
+                value={formData.name}
                 onChange={handleChange}
-                placeholder="Nome da empresa"
+                placeholder="Nome do fornecedor"
                 required
               />
             </div>
@@ -70,7 +71,7 @@ const SupplierNew = () => {
                 id="email"
                 name="email"
                 type="email"
-                value={supplier.email}
+                value={formData.email}
                 onChange={handleChange}
                 placeholder="email@exemplo.com"
               />
@@ -85,9 +86,9 @@ const SupplierNew = () => {
               <Input
                 id="phone"
                 name="phone"
-                value={supplier.phone}
+                value={formData.phone}
                 onChange={handleChange}
-                placeholder="912345678"
+                placeholder="Número de telefone"
               />
             </div>
             
@@ -98,9 +99,9 @@ const SupplierNew = () => {
               <Input
                 id="taxId"
                 name="taxId"
-                value={supplier.taxId}
+                value={formData.taxId}
                 onChange={handleChange}
-                placeholder="Número de Identificação Fiscal"
+                placeholder="Número de identificação fiscal"
               />
             </div>
           </div>
@@ -112,22 +113,22 @@ const SupplierNew = () => {
             <Input
               id="address"
               name="address"
-              value={supplier.address}
+              value={formData.address}
               onChange={handleChange}
-              placeholder="Morada completa"
+              placeholder="Endereço completo"
             />
           </div>
           
           <div className="space-y-2">
             <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-              Notas
+              Observações
             </label>
             <Textarea
               id="notes"
               name="notes"
-              value={supplier.notes}
+              value={formData.notes}
               onChange={handleChange}
-              placeholder="Notas adicionais sobre o fornecedor"
+              placeholder="Notas ou observações sobre o fornecedor"
               rows={4}
             />
           </div>
@@ -136,7 +137,7 @@ const SupplierNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/fornecedores/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit">Guardar Fornecedor</Button>
+            <Button type="submit">Adicionar Fornecedor</Button>
           </div>
         </form>
       </div>

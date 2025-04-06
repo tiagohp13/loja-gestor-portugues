@@ -10,18 +10,19 @@ import PageHeader from '@/components/ui/PageHeader';
 const ClientNew = () => {
   const navigate = useNavigate();
   const { addClient } = useData();
-  const [client, setClient] = useState({
+  
+  const [formData, setFormData] = useState({
     name: '',
-    address: '',
-    phone: '',
     email: '',
+    phone: '',
+    address: '',
     taxId: '',
     notes: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setClient(prev => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
@@ -29,18 +30,18 @@ const ClientNew = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addClient(client);
+    addClient(formData);
     navigate('/clientes/consultar');
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Criar Novo Cliente" 
-        description="Adicione um novo cliente à base de dados" 
+        title="Novo Cliente" 
+        description="Adicionar um novo cliente ao sistema" 
         actions={
           <Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
-            Voltar à Lista
+            Cancelar
           </Button>
         }
       />
@@ -55,9 +56,9 @@ const ClientNew = () => {
               <Input
                 id="name"
                 name="name"
-                value={client.name}
+                value={formData.name}
                 onChange={handleChange}
-                placeholder="Nome completo"
+                placeholder="Nome do cliente"
                 required
               />
             </div>
@@ -70,7 +71,7 @@ const ClientNew = () => {
                 id="email"
                 name="email"
                 type="email"
-                value={client.email}
+                value={formData.email}
                 onChange={handleChange}
                 placeholder="email@exemplo.com"
               />
@@ -85,9 +86,9 @@ const ClientNew = () => {
               <Input
                 id="phone"
                 name="phone"
-                value={client.phone}
+                value={formData.phone}
                 onChange={handleChange}
-                placeholder="912345678"
+                placeholder="Número de telefone"
               />
             </div>
             
@@ -98,9 +99,9 @@ const ClientNew = () => {
               <Input
                 id="taxId"
                 name="taxId"
-                value={client.taxId}
+                value={formData.taxId}
                 onChange={handleChange}
-                placeholder="Número de Identificação Fiscal"
+                placeholder="Número de identificação fiscal"
               />
             </div>
           </div>
@@ -112,22 +113,22 @@ const ClientNew = () => {
             <Input
               id="address"
               name="address"
-              value={client.address}
+              value={formData.address}
               onChange={handleChange}
-              placeholder="Morada completa"
+              placeholder="Endereço completo"
             />
           </div>
           
           <div className="space-y-2">
             <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-              Notas
+              Observações
             </label>
             <Textarea
               id="notes"
               name="notes"
-              value={client.notes}
+              value={formData.notes}
               onChange={handleChange}
-              placeholder="Notas adicionais sobre o cliente"
+              placeholder="Notas ou observações sobre o cliente"
               rows={4}
             />
           </div>
@@ -136,7 +137,7 @@ const ClientNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/clientes/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit">Guardar Cliente</Button>
+            <Button type="submit">Adicionar Cliente</Button>
           </div>
         </form>
       </div>

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDateTime } from '@/utils/formatting';
@@ -52,6 +52,10 @@ const StockEntryList = () => {
     deleteStockEntry(id);
   };
 
+  const handleEditEntry = (id: string) => {
+    navigate(`/entradas/editar/${id}`);
+  };
+
   const handleViewDetails = (id: string) => {
     setSelectedEntry(id);
     setDetailsOpen(true);
@@ -69,7 +73,7 @@ const StockEntryList = () => {
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Histórico de Entradas" 
-        description="Consultar todas as entradas de stock" 
+        description="Consultar todas as entradas em stock" 
         actions={
           <Button onClick={() => navigate('/entradas/nova')}>
             <Plus className="w-4 h-4 mr-2" />
@@ -96,10 +100,10 @@ const StockEntryList = () => {
                 <TableHead>Data</TableHead>
                 <TableHead>Produto</TableHead>
                 <TableHead>Fornecedor</TableHead>
+                <TableHead>Nº Fatura</TableHead>
                 <TableHead>Quantidade</TableHead>
                 <TableHead>Preço Unit.</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead>Nº Fatura</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -126,12 +130,12 @@ const StockEntryList = () => {
                         {product ? `${product.code} - ${product.name}` : 'Produto removido'}
                       </TableCell>
                       <TableCell>{supplier ? supplier.name : 'Fornecedor removido'}</TableCell>
+                      <TableCell>{entry.invoiceNumber || 'N/A'}</TableCell>
                       <TableCell>{entry.quantity} unid.</TableCell>
                       <TableCell>{formatCurrency(entry.purchasePrice)}</TableCell>
                       <TableCell className="font-medium">
                         {formatCurrency(entry.quantity * entry.purchasePrice)}
                       </TableCell>
-                      <TableCell>{entry.invoiceNumber || '-'}</TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end space-x-2">
                           <Button 
@@ -144,6 +148,17 @@ const StockEntryList = () => {
                             }}
                           >
                             <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            title="Editar"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditEntry(entry.id);
+                            }}
+                          >
+                            <Edit className="w-4 h-4" />
                           </Button>
                           <DeleteConfirmDialog
                             title="Eliminar Entrada"
@@ -178,15 +193,9 @@ const StockEntryList = () => {
           
           {selectedEntryData && (
             <div className="space-y-4 mt-4">
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Data</p>
-                  <p>{formatDateTime(selectedEntryData.createdAt)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Nº Fatura</p>
-                  <p>{selectedEntryData.invoiceNumber || '-'}</p>
-                </div>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Data</p>
+                <p>{formatDateTime(selectedEntryData.createdAt)}</p>
               </div>
               
               <div>
@@ -197,6 +206,11 @@ const StockEntryList = () => {
               <div>
                 <p className="text-sm font-medium text-gray-500">Fornecedor</p>
                 <p>{selectedSupplier ? selectedSupplier.name : 'Fornecedor removido'}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-500">Nº Fatura</p>
+                <p>{selectedEntryData.invoiceNumber || 'N/A'}</p>
               </div>
               
               <div className="grid grid-cols-3 gap-2">
@@ -215,6 +229,17 @@ const StockEntryList = () => {
               </div>
               
               <div className="flex justify-end space-x-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => {
+                    setDetailsOpen(false);
+                    handleEditEntry(selectedEntryData.id);
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
                 <DeleteConfirmDialog
                   title="Eliminar Entrada"
                   description="Tem a certeza que deseja eliminar esta entrada de stock? Esta ação é irreversível."

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProduct, deleteProduct, getProductHistory } = useData();
+  const { getProduct, deleteProduct, getProductHistory, clients, suppliers } = useData();
   const product = getProduct(id as string);
   
   if (!product) {
@@ -164,17 +164,21 @@ const ProductDetail = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {entries.map(entry => (
-                        <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
-                          <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
-                          <td className="px-4 py-2">
-                            {entry.supplierName || "Desconhecido"}
-                          </td>
-                          <td className="px-4 py-2">{entry.quantity} unidades</td>
-                          <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
-                          <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice * entry.quantity)}</td>
-                        </tr>
-                      ))}
+                      {entries.map(entry => {
+                        const supplier = suppliers.find(s => s.id === entry.supplierId);
+                        
+                        return (
+                          <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
+                            <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
+                            <td className="px-4 py-2">
+                              {supplier ? supplier.name : (entry.supplierName || "Desconhecido")}
+                            </td>
+                            <td className="px-4 py-2">{entry.quantity} unidades</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice * entry.quantity)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -197,17 +201,21 @@ const ProductDetail = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {exits.map(exit => (
-                        <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
-                          <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
-                          <td className="px-4 py-2">
-                            {exit.clientName || "Desconhecido"}
-                          </td>
-                          <td className="px-4 py-2">{exit.quantity} unidades</td>
-                          <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>
-                          <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice * exit.quantity)}</td>
-                        </tr>
-                      ))}
+                      {exits.map(exit => {
+                        const client = clients.find(c => c.id === exit.clientId);
+                        
+                        return (
+                          <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
+                            <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
+                            <td className="px-4 py-2">
+                              {client ? client.name : (exit.clientName || "Desconhecido")}
+                            </td>
+                            <td className="px-4 py-2">{exit.quantity} unidades</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice * exit.quantity)}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

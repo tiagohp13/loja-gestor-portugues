@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 
@@ -17,7 +18,8 @@ const ClientEdit = () => {
     email: '',
     phone: '',
     address: '',
-    taxId: ''
+    taxId: '',
+    notes: ''
   });
 
   useEffect(() => {
@@ -29,7 +31,8 @@ const ClientEdit = () => {
           email: foundClient.email || '',
           phone: foundClient.phone || '',
           address: foundClient.address || '',
-          taxId: foundClient.taxId || ''
+          taxId: foundClient.taxId || '',
+          notes: foundClient.notes || ''
         });
       } else {
         toast.error('Cliente não encontrado');
@@ -136,6 +139,20 @@ const ClientEdit = () => {
               value={client.address}
               onChange={handleChange}
               placeholder="Endereço completo"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+              Observações
+            </label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={client.notes}
+              onChange={handleChange}
+              placeholder="Notas ou observações sobre o cliente"
+              rows={4}
             />
           </div>
           

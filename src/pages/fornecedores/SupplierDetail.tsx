@@ -12,7 +12,7 @@ import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getSupplier, deleteSupplier, getSupplierHistory } = useData();
+  const { getSupplier, deleteSupplier, getSupplierHistory, products } = useData();
   const supplier = getSupplier(id as string);
   
   if (!supplier) {
@@ -102,6 +102,12 @@ const SupplierDetail = () => {
                 <p className="text-sm text-gestorApp-gray">Morada</p>
                 <p className="font-medium">{supplier.address || "Não definida"}</p>
               </div>
+              {supplier.notes && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gestorApp-gray">Observações</p>
+                  <p className="font-medium">{supplier.notes}</p>
+                </div>
+              )}
               <div>
                 <p className="text-sm text-gestorApp-gray">Data de Criação</p>
                 <p className="font-medium">{formatDate(new Date(supplier.createdAt))}</p>
@@ -133,17 +139,23 @@ const SupplierDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {supplierHistory.map(entry => (
-                    <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
-                      <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
-                      <td className="px-4 py-2">
-                        {entry.productName || "Desconhecido"}
-                      </td>
-                      <td className="px-4 py-2">{entry.quantity} unidades</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
-                      <td className="px-4 py-2 text-right">{formatCurrency(entry.quantity * entry.purchasePrice)}</td>
-                    </tr>
-                  ))}
+                  {supplierHistory.map(entry => {
+                    const product = products.find(p => p.id === entry.productId);
+                    
+                    return (
+                      <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
+                        <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
+                        <td className="px-4 py-2">
+                          {product 
+                            ? `${product.code} - ${product.name}` 
+                            : entry.productName || "Desconhecido"}
+                        </td>
+                        <td className="px-4 py-2">{entry.quantity} unidades</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(entry.quantity * entry.purchasePrice)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
