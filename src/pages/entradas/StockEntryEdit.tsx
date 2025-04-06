@@ -1,24 +1,44 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 
-const StockEntryNew = () => {
+const StockEntryEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addStockEntry, products, suppliers } = useData();
+  const { stockEntries, updateStockEntry, products, suppliers } = useData();
+  
   const [entry, setEntry] = useState({
     productId: '',
     supplierId: '',
-    quantity: 1,
+    quantity: 0,
     purchasePrice: 0,
-    date: new Date().toISOString().split('T')[0],
+    date: '',
     invoiceNumber: ''
   });
-  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    if (id) {
+      const foundEntry = stockEntries.find(entry => entry.id === id);
+      if (foundEntry) {
+        setEntry({
+          productId: foundEntry.productId || '',
+          supplierId: foundEntry.supplierId || '',
+          quantity: foundEntry.quantity || 0,
+          purchasePrice: foundEntry.purchasePrice || 0,
+          date: foundEntry.date ? new Date(foundEntry.date).toISOString().split('T')[0] : '',
+          invoiceNumber: foundEntry.invoiceNumber || ''
+        });
+      } else {
+        toast.error('Entrada não encontrada');
+        navigate('/entradas/historico');
+      }
+    }
+  }, [id, stockEntries, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -28,62 +48,36 @@ const StockEntryNew = () => {
               ? parseFloat(value) || 0 
               : value
     }));
-
-    // If selecting a product, set the default purchase price
-    if (name === 'productId' && value) {
-      const selectedProduct = products.find(p => p.id === value);
-      if (selectedProduct) {
-        setEntry(prev => ({
-          ...prev,
-          purchasePrice: selectedProduct.purchasePrice
-        }));
-      }
-    }
   };
-
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-
-  const filteredProducts = searchTerm
-    ? products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : products;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validate form
-    if (!entry.productId || !entry.supplierId || entry.quantity <= 0) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
+    if (id) {
+      // Get the product associated with this entry
+      const product = products.find(p => p.id === entry.productId);
+      const supplier = suppliers.find(s => s.id === entry.supplierId);
+      
+      if (!product || !supplier) {
+        toast.error('Produto ou fornecedor não encontrado');
+        return;
+      }
+      
+      // Update the stock entry
+      updateStockEntry(id, {
+        ...entry,
+        productName: product.name,
+        supplierName: supplier.name
+      });
+      
+      navigate('/entradas/historico');
     }
-    
-    // Get the product and supplier names
-    const product = products.find(p => p.id === entry.productId);
-    const supplier = suppliers.find(s => s.id === entry.supplierId);
-    
-    if (!product || !supplier) {
-      toast.error('Produto ou fornecedor não encontrado');
-      return;
-    }
-    
-    // Add the stock entry
-    addStockEntry({
-      ...entry,
-      productName: product.name,
-      supplierName: supplier.name,
-    });
-    navigate('/entradas/historico');
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Nova Entrada de Stock" 
-        description="Registar uma nova entrada no inventário" 
+        title="Editar Entrada de Stock" 
+        description="Atualize os detalhes da entrada de stock" 
         actions={
           <Button variant="outline" onClick={() => navigate('/entradas/historico')}>
             Voltar ao Histórico
@@ -93,19 +87,7 @@ const StockEntryNew = () => {
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                Pesquisar Produto
-              </label>
-              <Input
-                id="productSearch"
-                value={searchTerm}
-                onChange={handleSearch}
-                placeholder="Pesquisar por nome ou código"
-              />
-            </div>
-            
+          <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="productId" className="text-sm font-medium text-gestorApp-gray-dark">
                 Produto
@@ -116,37 +98,38 @@ const StockEntryNew = () => {
                 value={entry.productId}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                required
+                disabled
               >
                 <option value="">Selecione um produto</option>
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <option key={product.id} value={product.id}>
-                    {product.code} - {product.name} (Stock: {product.currentStock})
+                    {product.code} - {product.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gestorApp-gray">O produto não pode ser alterado após a criação</p>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="supplierId" className="text-sm font-medium text-gestorApp-gray-dark">
+                Fornecedor
+              </label>
+              <select
+                id="supplierId"
+                name="supplierId"
+                value={entry.supplierId}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+                required
+              >
+                <option value="">Selecione um fornecedor</option>
+                {suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
                   </option>
                 ))}
               </select>
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="supplierId" className="text-sm font-medium text-gestorApp-gray-dark">
-              Fornecedor
-            </label>
-            <select
-              id="supplierId"
-              name="supplierId"
-              value={entry.supplierId}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-              required
-            >
-              <option value="">Selecione um fornecedor</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </option>
-              ))}
-            </select>
           </div>
           
           <div className="grid md:grid-cols-3 gap-4">
@@ -215,7 +198,7 @@ const StockEntryNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/entradas/historico')}>
               Cancelar
             </Button>
-            <Button type="submit">Registar Entrada</Button>
+            <Button type="submit">Guardar Alterações</Button>
           </div>
         </form>
       </div>
@@ -223,4 +206,4 @@ const StockEntryNew = () => {
   );
 };
 
-export default StockEntryNew;
+export default StockEntryEdit;

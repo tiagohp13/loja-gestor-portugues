@@ -1,6 +1,6 @@
 
-import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,10 +10,12 @@ import { Upload, X, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const ProductNew = () => {
+const ProductEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addProduct, categories } = useData();
+  const { getProduct, updateProduct, categories } = useData();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
   const [product, setProduct] = useState({
     name: '',
     code: '',
@@ -24,9 +26,35 @@ const ProductNew = () => {
     description: '',
     image: ''
   });
+  
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState('');
   const [activeTab, setActiveTab] = useState('upload');
+
+  useEffect(() => {
+    if (id) {
+      const foundProduct = getProduct(id);
+      if (foundProduct) {
+        setProduct({
+          name: foundProduct.name || '',
+          code: foundProduct.code || '',
+          purchasePrice: foundProduct.purchasePrice || 0,
+          salePrice: foundProduct.salePrice || 0,
+          currentStock: foundProduct.currentStock || 0,
+          category: foundProduct.category || '',
+          description: foundProduct.description || '',
+          image: foundProduct.image || ''
+        });
+        
+        if (foundProduct.image) {
+          setPreviewImage(foundProduct.image);
+        }
+      } else {
+        toast.error('Produto não encontrado');
+        navigate('/produtos/consultar');
+      }
+    }
+  }, [id, getProduct, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -96,18 +124,20 @@ const ProductNew = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addProduct(product);
-    navigate('/produtos/consultar');
+    if (id) {
+      updateProduct(id, product);
+      navigate(`/produtos/${id}`);
+    }
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Criar Novo Produto" 
-        description="Adicione um novo produto ao inventário" 
+        title="Editar Produto" 
+        description="Atualize os detalhes do produto" 
         actions={
-          <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
-            Voltar à Lista
+          <Button variant="outline" onClick={() => navigate(`/produtos/${id}`)}>
+            Voltar aos Detalhes
           </Button>
         }
       />
@@ -200,7 +230,7 @@ const ProductNew = () => {
           
           <div className="space-y-2">
             <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
-              Stock Inicial
+              Stock Atual
             </label>
             <Input
               id="currentStock"
@@ -210,7 +240,9 @@ const ProductNew = () => {
               value={product.currentStock}
               onChange={handleChange}
               placeholder="0"
+              disabled
             />
+            <p className="text-xs text-gestorApp-gray">O stock é atualizado automaticamente através de entradas e saídas</p>
           </div>
           
           <div className="space-y-2">
@@ -324,10 +356,10 @@ const ProductNew = () => {
           </div>
           
           <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/produtos/consultar')}>
+            <Button variant="outline" type="button" onClick={() => navigate(`/produtos/${id}`)}>
               Cancelar
             </Button>
-            <Button type="submit">Guardar Produto</Button>
+            <Button type="submit">Guardar Alterações</Button>
           </div>
         </form>
       </div>
@@ -335,4 +367,4 @@ const ProductNew = () => {
   );
 };
 
-export default ProductNew;
+export default ProductEdit;

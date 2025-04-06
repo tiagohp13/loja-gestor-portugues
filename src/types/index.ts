@@ -1,81 +1,89 @@
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: 'admin' | 'user';
-}
-
+// Product type
 export interface Product {
   id: string;
   name: string;
-  category: string;
-  code: string; // Changed from internalCode
+  code: string;
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
-  image?: string; // Changed from photo
-  description?: string; // Added description
+  category: string;
+  description: string;
+  image?: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Category type
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  productCount: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Client type
 export interface Client {
   id: string;
   name: string;
-  phone?: string; // Changed from contact
   email: string;
-  address?: string; // Added address
-  notes?: string; // Added notes
-  taxId?: string; // Added taxId
+  phone: string;
+  address: string;
+  taxId: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Supplier type
 export interface Supplier {
   id: string;
   name: string;
-  phone?: string; // Changed from contact
   email: string;
-  address?: string; // Added address
-  notes?: string; // Added notes
-  taxId?: string; // Added taxId
+  phone: string;
+  address: string;
+  taxId: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Stock Entry type
 export interface StockEntry {
   id: string;
   productId: string;
-  product?: Product;
+  productName?: string;
   supplierId: string;
-  supplier?: Supplier;
+  supplierName?: string;
   quantity: number;
   purchasePrice: number;
+  date: string;
   invoiceNumber: string;
-  date: Date;
   createdAt: Date;
-  // Additional properties for display
-  productName?: string;
-  supplierName?: string;
 }
 
+// Stock Exit type
 export interface StockExit {
   id: string;
   productId: string;
-  product?: Product;
+  productName?: string;
   clientId: string;
-  client?: Client;
+  clientName?: string;
   quantity: number;
   salePrice: number;
-  date: Date;
+  date: string;
   createdAt: Date;
-  // Additional properties for display
-  productName?: string;
-  clientName?: string;
 }
 
-export interface AuthState {
-  user: User | null;
-  isAuthenticated: boolean;
+// Dashboard stats
+export interface DashboardStats {
+  totalProducts: number;
+  totalClients: number;
+  totalSuppliers: number;
+  stockValue: number;
+  lowStockProducts: Product[];
+  recentTransactions: (StockEntry | StockExit)[];
+  monthlySales: { month: string; value: number }[];
+  monthlyPurchases: { month: string; value: number }[];
+  productsByCategory: { category: string; count: number }[];
 }
