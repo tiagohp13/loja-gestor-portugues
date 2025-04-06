@@ -27,6 +27,7 @@ export interface Client {
   email: string;
   address?: string; // Added address
   notes?: string; // Added notes
+  taxId?: string; // Added taxId
   createdAt: Date;
   updatedAt: Date;
 }
@@ -38,6 +39,7 @@ export interface Supplier {
   email: string;
   address?: string; // Added address
   notes?: string; // Added notes
+  taxId?: string; // Added taxId
   createdAt: Date;
   updatedAt: Date;
 }
@@ -53,6 +55,9 @@ export interface StockEntry {
   invoiceNumber: string;
   date: Date;
   createdAt: Date;
+  // Additional properties for display
+  productName?: string;
+  supplierName?: string;
 }
 
 export interface StockExit {
@@ -65,6 +70,9 @@ export interface StockExit {
   salePrice: number;
   date: Date;
   createdAt: Date;
+  // Additional properties for display
+  productName?: string;
+  clientName?: string;
 }
 
 export interface AuthState {

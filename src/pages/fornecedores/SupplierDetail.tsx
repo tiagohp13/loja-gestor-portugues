@@ -136,7 +136,9 @@ const SupplierDetail = () => {
                   {supplierHistory.map(entry => (
                     <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
                       <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
-                      <td className="px-4 py-2">{entry.productName}</td>
+                      <td className="px-4 py-2">
+                        {entry.product ? entry.product.name : entry.productName || "Desconhecido"}
+                      </td>
                       <td className="px-4 py-2">{entry.quantity} unidades</td>
                       <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
                       <td className="px-4 py-2 text-right">{formatCurrency(entry.quantity * entry.purchasePrice)}</td>

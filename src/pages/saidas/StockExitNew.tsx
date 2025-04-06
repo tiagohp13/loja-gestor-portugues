@@ -31,7 +31,8 @@ const StockExitNew = () => {
     quantity: 1,
     salePrice: 0,
     productName: '',
-    clientName: ''
+    clientName: '',
+    date: new Date()
   });
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -232,6 +233,27 @@ const StockExitNew = () => {
                     min="0"
                     value={exit.salePrice}
                     onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
+                    Data
+                  </label>
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={exit.date instanceof Date ? exit.date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      setExit(prev => ({
+                        ...prev,
+                        date: new Date(e.target.value)
+                      }));
+                    }}
                     required
                   />
                 </div>

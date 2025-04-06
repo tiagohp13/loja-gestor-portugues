@@ -31,7 +31,9 @@ const StockEntryNew = () => {
     quantity: 1,
     purchasePrice: 0,
     productName: '',
-    supplierName: ''
+    supplierName: '',
+    invoiceNumber: '',
+    date: new Date(),
   });
 
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -225,6 +227,41 @@ const StockEntryNew = () => {
                 </div>
               </div>
               
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label htmlFor="invoiceNumber" className="text-sm font-medium text-gestorApp-gray-dark">
+                    Número da Fatura
+                  </label>
+                  <Input
+                    id="invoiceNumber"
+                    name="invoiceNumber"
+                    type="text"
+                    value={entry.invoiceNumber}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
+                    Data
+                  </label>
+                  <Input
+                    id="date"
+                    name="date"
+                    type="date"
+                    value={entry.date instanceof Date ? entry.date.toISOString().split('T')[0] : ''}
+                    onChange={(e) => {
+                      setEntry(prev => ({
+                        ...prev,
+                        date: new Date(e.target.value)
+                      }));
+                    }}
+                    required
+                  />
+                </div>
+              </div>
+              
               <div className="bg-gestorApp-gray-light p-4 rounded-md">
                 <h3 className="font-medium mb-2">Resumo da Entrada</h3>
                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -248,7 +285,7 @@ const StockEntryNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/entradas/historico')}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={!selectedProduct || !entry.supplierId}>
+            <Button type="submit" disabled={!selectedProduct || !entry.supplierId || !entry.invoiceNumber}>
               Registar Entrada
             </Button>
           </div>
