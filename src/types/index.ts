@@ -87,3 +87,17 @@ export interface DashboardStats {
   monthlyPurchases: { month: string; value: number }[];
   productsByCategory: { category: string; count: number }[];
 }
+
+// User type
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+// Auth state
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+}

@@ -150,7 +150,9 @@ export const getDashboardData = () => {
 
   // Recent transactions
   const recentTransactions = [...stockEntries, ...stockExits]
-    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .sort((a, b) => {
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    })
     .slice(0, 5)
     .map(transaction => {
       const isEntry = 'invoiceNumber' in transaction;

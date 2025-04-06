@@ -15,6 +15,7 @@ const ClientNew = () => {
     address: '',
     phone: '',
     email: '',
+    taxId: '',
     notes: ''
   });
 
@@ -91,17 +92,30 @@ const ClientNew = () => {
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="address" className="text-sm font-medium text-gestorApp-gray-dark">
-                Morada
+              <label htmlFor="taxId" className="text-sm font-medium text-gestorApp-gray-dark">
+                NIF
               </label>
               <Input
-                id="address"
-                name="address"
-                value={client.address}
+                id="taxId"
+                name="taxId"
+                value={client.taxId}
                 onChange={handleChange}
-                placeholder="Morada completa"
+                placeholder="Número de Identificação Fiscal"
               />
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="address" className="text-sm font-medium text-gestorApp-gray-dark">
+              Morada
+            </label>
+            <Input
+              id="address"
+              name="address"
+              value={client.address}
+              onChange={handleChange}
+              placeholder="Morada completa"
+            />
           </div>
           
           <div className="space-y-2">

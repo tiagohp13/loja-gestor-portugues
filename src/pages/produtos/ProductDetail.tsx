@@ -61,7 +61,7 @@ const ProductDetail = () => {
             <DeleteConfirmDialog
               title="Eliminar Produto"
               description="Tem certeza que deseja eliminar este produto? Esta ação não pode ser desfeita."
-              onDelete={handleDelete}
+              onConfirm={handleDelete}
               trigger={
                 <Button 
                   variant="destructive" 
@@ -168,7 +168,7 @@ const ProductDetail = () => {
                         <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
                           <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
                           <td className="px-4 py-2">
-                            {entry.supplier ? entry.supplier.name : entry.supplierName || "Desconhecido"}
+                            {entry.supplierName || "Desconhecido"}
                           </td>
                           <td className="px-4 py-2">{entry.quantity} unidades</td>
                           <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
@@ -201,7 +201,7 @@ const ProductDetail = () => {
                         <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
                           <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
                           <td className="px-4 py-2">
-                            {exit.client ? exit.client.name : exit.clientName || "Desconhecido"}
+                            {exit.clientName || "Desconhecido"}
                           </td>
                           <td className="px-4 py-2">{exit.quantity} unidades</td>
                           <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>

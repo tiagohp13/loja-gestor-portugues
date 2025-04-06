@@ -60,7 +60,7 @@ const SupplierDetail = () => {
             <DeleteConfirmDialog
               title="Eliminar Fornecedor"
               description="Tem certeza que deseja eliminar este fornecedor? Esta ação não pode ser desfeita."
-              onDelete={handleDelete}
+              onConfirm={handleDelete}
               trigger={
                 <Button 
                   variant="destructive" 
@@ -137,7 +137,7 @@ const SupplierDetail = () => {
                     <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
                       <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
                       <td className="px-4 py-2">
-                        {entry.product ? entry.product.name : entry.productName || "Desconhecido"}
+                        {entry.productName || "Desconhecido"}
                       </td>
                       <td className="px-4 py-2">{entry.quantity} unidades</td>
                       <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>

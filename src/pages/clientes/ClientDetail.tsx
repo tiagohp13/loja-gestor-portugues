@@ -60,7 +60,7 @@ const ClientDetail = () => {
             <DeleteConfirmDialog
               title="Eliminar Cliente"
               description="Tem certeza que deseja eliminar este cliente? Esta ação não pode ser desfeita."
-              onDelete={handleDelete}
+              onConfirm={handleDelete}
               trigger={
                 <Button 
                   variant="destructive" 
@@ -137,7 +137,7 @@ const ClientDetail = () => {
                     <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
                       <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
                       <td className="px-4 py-2">
-                        {exit.product ? exit.product.name : exit.productName || "Desconhecido"}
+                        {exit.productName || "Desconhecido"}
                       </td>
                       <td className="px-4 py-2">{exit.quantity} unidades</td>
                       <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>

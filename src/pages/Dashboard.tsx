@@ -70,7 +70,7 @@ const DashboardPage: React.FC = () => {
   }));
 
   return (
-    <AppLayout>
+    <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Dashboard" 
         description="Vista geral do seu negócio"
@@ -351,7 +351,7 @@ const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
-    </AppLayout>
+    </div>
   );
 };
 
