@@ -2,11 +2,19 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Plus } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDateTime } from '@/utils/formatting';
 import PageHeader from '@/components/ui/PageHeader';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -18,8 +26,10 @@ import {
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries, products, suppliers } = useData();
+  const { stockEntries, products, suppliers, deleteStockEntry } = useData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   // Sort entries by date (most recent first)
   const sortedEntries = [...stockEntries].sort((a, b) => 
@@ -37,6 +47,23 @@ const StockEntryList = () => {
       (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
     );
   });
+
+  const handleDeleteEntry = (id: string) => {
+    deleteStockEntry(id);
+  };
+
+  const handleViewDetails = (id: string) => {
+    setSelectedEntry(id);
+    setDetailsOpen(true);
+  };
+
+  const handleRowClick = (id: string) => {
+    handleViewDetails(id);
+  };
+
+  const selectedEntryData = selectedEntry ? stockEntries.find(entry => entry.id === selectedEntry) : null;
+  const selectedProduct = selectedEntryData ? products.find(p => p.id === selectedEntryData.productId) : null;
+  const selectedSupplier = selectedEntryData ? suppliers.find(s => s.id === selectedEntryData.supplierId) : null;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -73,12 +100,13 @@ const StockEntryList = () => {
                 <TableHead>Preço Unit.</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead>Nº Fatura</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredEntries.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={8} className="text-center py-6 text-gestorApp-gray">
                     Nenhuma entrada encontrada
                   </TableCell>
                 </TableRow>
@@ -88,7 +116,11 @@ const StockEntryList = () => {
                   const supplier = suppliers.find(s => s.id === entry.supplierId);
                   
                   return (
-                    <TableRow key={entry.id}>
+                    <TableRow 
+                      key={entry.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleRowClick(entry.id)}
+                    >
                       <TableCell>{formatDateTime(entry.createdAt)}</TableCell>
                       <TableCell className="font-medium">
                         {product ? `${product.code} - ${product.name}` : 'Produto removido'}
@@ -100,6 +132,31 @@ const StockEntryList = () => {
                         {formatCurrency(entry.quantity * entry.purchasePrice)}
                       </TableCell>
                       <TableCell>{entry.invoiceNumber || '-'}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end space-x-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            title="Ver Detalhes"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewDetails(entry.id);
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <DeleteConfirmDialog
+                            title="Eliminar Entrada"
+                            description="Tem a certeza que deseja eliminar esta entrada de stock? Esta ação é irreversível."
+                            onDelete={() => handleDeleteEntry(entry.id)}
+                            trigger={
+                              <Button variant="outline" size="sm" title="Eliminar">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        </div>
+                      </TableCell>
                     </TableRow>
                   );
                 })
@@ -108,6 +165,75 @@ const StockEntryList = () => {
           </Table>
         </div>
       </div>
+
+      {/* Entry Details Dialog */}
+      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Detalhes da Entrada</DialogTitle>
+            <DialogDescription>
+              Informações detalhadas sobre esta entrada de stock
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedEntryData && (
+            <div className="space-y-4 mt-4">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Data</p>
+                  <p>{formatDateTime(selectedEntryData.createdAt)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Nº Fatura</p>
+                  <p>{selectedEntryData.invoiceNumber || '-'}</p>
+                </div>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-500">Produto</p>
+                <p className="font-medium">{selectedProduct ? `${selectedProduct.code} - ${selectedProduct.name}` : 'Produto removido'}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-500">Fornecedor</p>
+                <p>{selectedSupplier ? selectedSupplier.name : 'Fornecedor removido'}</p>
+              </div>
+              
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Quantidade</p>
+                  <p>{selectedEntryData.quantity} unid.</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Preço Unit.</p>
+                  <p>{formatCurrency(selectedEntryData.purchasePrice)}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Total</p>
+                  <p className="font-medium">{formatCurrency(selectedEntryData.quantity * selectedEntryData.purchasePrice)}</p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2 pt-4">
+                <DeleteConfirmDialog
+                  title="Eliminar Entrada"
+                  description="Tem a certeza que deseja eliminar esta entrada de stock? Esta ação é irreversível."
+                  onDelete={() => {
+                    handleDeleteEntry(selectedEntryData.id);
+                    setDetailsOpen(false);
+                  }}
+                  trigger={
+                    <Button variant="destructive" size="sm">
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Eliminar
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

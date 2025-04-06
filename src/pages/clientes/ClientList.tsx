@@ -6,6 +6,7 @@ import { Search, Edit, Trash2, History, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import {
   Table,
   TableBody,
@@ -26,10 +27,22 @@ const ClientList = () => {
     (client.phone && client.phone.includes(searchTerm))
   );
 
+  const handleViewClient = (id: string) => {
+    navigate(`/clientes/${id}`);
+  };
+
+  const handleViewHistory = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/clientes/${id}?tab=history`);
+  };
+
+  const handleEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/clientes/${id}?tab=edit`);
+  };
+
   const handleDelete = (id: string) => {
-    if (window.confirm('Tem a certeza que deseja eliminar este cliente?')) {
-      deleteClient(id);
-    }
+    deleteClient(id);
   };
 
   return (
@@ -76,27 +89,43 @@ const ClientList = () => {
                 </TableRow>
               ) : (
                 filteredClients.map((client) => (
-                  <TableRow key={client.id}>
+                  <TableRow 
+                    key={client.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleViewClient(client.id)}
+                  >
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>{client.email || '-'}</TableCell>
                     <TableCell>{client.phone || '-'}</TableCell>
                     <TableCell>{client.address || '-'}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="sm" title="Histórico">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          title="Histórico"
+                          onClick={(e) => handleViewHistory(client.id, e)}
+                        >
                           <History className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" title="Editar">
-                          <Edit className="w-4 h-4" />
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          title="Eliminar"
-                          onClick={() => handleDelete(client.id)}
+                          title="Editar"
+                          onClick={(e) => handleEdit(client.id, e)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </Button>
+                        <DeleteConfirmDialog
+                          title="Eliminar Cliente"
+                          description={`Tem a certeza que deseja eliminar o cliente "${client.name}"?`}
+                          onDelete={() => handleDelete(client.id)}
+                          trigger={
+                            <Button variant="outline" size="sm" title="Eliminar">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

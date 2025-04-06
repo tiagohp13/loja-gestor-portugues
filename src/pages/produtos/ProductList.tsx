@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency } from '@/utils/formatting';
 import PageHeader from '@/components/ui/PageHeader';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { toast } from 'sonner';
 import {
   Table,
   TableBody,
@@ -26,10 +28,22 @@ const ProductList = () => {
     product.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const handleViewProduct = (id: string) => {
+    navigate(`/produtos/${id}`);
+  };
+
+  const handleViewHistory = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/produtos/${id}?tab=history`);
+  };
+
+  const handleEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/produtos/${id}?tab=edit`);
+  };
+
   const handleDelete = (id: string) => {
-    if (window.confirm('Tem a certeza que deseja eliminar este produto?')) {
-      deleteProduct(id);
-    }
+    deleteProduct(id);
   };
 
   return (
@@ -77,7 +91,11 @@ const ProductList = () => {
                 </TableRow>
               ) : (
                 filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
+                  <TableRow 
+                    key={product.id} 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleViewProduct(product.id)}
+                  >
                     <TableCell className="font-medium">{product.code}</TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-3">
@@ -96,22 +114,34 @@ const ProductList = () => {
                       </span>
                     </TableCell>
                     <TableCell>{formatCurrency(product.salePrice)}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="sm" title="Histórico">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          title="Histórico"
+                          onClick={(e) => handleViewHistory(product.id, e)}
+                        >
                           <History className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" title="Editar">
-                          <Edit className="w-4 h-4" />
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          title="Eliminar"
-                          onClick={() => handleDelete(product.id)}
+                          title="Editar"
+                          onClick={(e) => handleEdit(product.id, e)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </Button>
+                        <DeleteConfirmDialog
+                          title="Eliminar Produto"
+                          description={`Tem a certeza que deseja eliminar o produto "${product.name}"?`}
+                          onDelete={() => handleDelete(product.id)}
+                          trigger={
+                            <Button variant="outline" size="sm" title="Eliminar">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

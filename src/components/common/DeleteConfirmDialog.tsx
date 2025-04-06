@@ -15,8 +15,8 @@ import {
 interface DeleteConfirmDialogProps {
   title: string;
   description: string;
-  onDelete: () => void;
   trigger: React.ReactNode;
+  onDelete: () => void;
   open?: boolean;
   onClose?: () => void;
 }

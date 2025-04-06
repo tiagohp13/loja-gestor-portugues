@@ -31,7 +31,9 @@ interface DataContextType {
   
   // Stock operations
   addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt'>) => void;
+  deleteStockEntry: (id: string) => void;
   addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt'>) => void;
+  deleteStockExit: (id: string) => void;
   
   // Get histories
   getProductHistory: (productId: string) => { entries: StockEntry[], exits: StockExit[] };
@@ -217,6 +219,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     toast.success('Entrada de stock registada com sucesso');
   };
   
+  const deleteStockEntry = (id: string) => {
+    const entry = stockEntries.find(e => e.id === id);
+    
+    if (!entry) {
+      toast.error('Entrada não encontrada');
+      return;
+    }
+    
+    const product = products.find(p => p.id === entry.productId);
+    
+    if (product && product.currentStock >= entry.quantity) {
+      updateProduct(product.id, {
+        currentStock: product.currentStock - entry.quantity
+      });
+      
+      setStockEntries(prev => prev.filter(e => e.id !== id));
+      toast.success('Entrada de stock eliminada com sucesso');
+    } else {
+      toast.error('Não é possível eliminar esta entrada pois causaria stock negativo');
+    }
+  };
+  
   const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt'>) => {
     const product = products.find(p => p.id === exit.productId);
     
@@ -238,6 +262,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
     
     toast.success('Saída de stock registada com sucesso');
+  };
+  
+  const deleteStockExit = (id: string) => {
+    const exit = stockExits.find(e => e.id === id);
+    
+    if (!exit) {
+      toast.error('Saída não encontrada');
+      return;
+    }
+    
+    const product = products.find(p => p.id === exit.productId);
+    
+    if (product) {
+      updateProduct(product.id, {
+        currentStock: product.currentStock + exit.quantity
+      });
+      
+      setStockExits(prev => prev.filter(e => e.id !== id));
+      toast.success('Saída de stock eliminada com sucesso');
+    } else {
+      toast.error('Não é possível eliminar esta saída pois o produto não existe');
+    }
   };
   
   const getProductHistory = (productId: string) => {
@@ -277,7 +323,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     deleteSupplier,
     
     addStockEntry,
+    deleteStockEntry,
     addStockExit,
+    deleteStockExit,
     
     getProductHistory,
     getClientHistory,
