@@ -1,8 +1,6 @@
-
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
-import AppLayout from '../components/layouts/AppLayout';
 import PageHeader from '../components/ui/PageHeader';
 import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatting';
@@ -221,7 +219,9 @@ const DashboardPage: React.FC = () => {
                           {transaction.type === 'entry' ? '+ ' : '- '}
                           {transaction.quantity} unidades
                         </div>
-                        <div className="text-sm text-gestorApp-gray">{formatDate(transaction.date)}</div>
+                        <div className="text-sm text-gestorApp-gray">
+                          {formatDate(new Date(transaction.date))}
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -244,7 +244,9 @@ const DashboardPage: React.FC = () => {
                           <div className="text-purple-600">
                             + {transaction.quantity} unidades
                           </div>
-                          <div className="text-sm text-gestorApp-gray">{formatDate(transaction.date)}</div>
+                          <div className="text-sm text-gestorApp-gray">
+                            {formatDate(new Date(transaction.date))}
+                          </div>
                         </div>
                       </li>
                     ))}
@@ -267,7 +269,9 @@ const DashboardPage: React.FC = () => {
                           <div className="text-gestorApp-blue">
                             - {transaction.quantity} unidades
                           </div>
-                          <div className="text-sm text-gestorApp-gray">{formatDate(transaction.date)}</div>
+                          <div className="text-sm text-gestorApp-gray">
+                            {formatDate(new Date(transaction.date))}
+                          </div>
                         </div>
                       </li>
                     ))}

@@ -60,7 +60,7 @@ const SupplierDetail = () => {
             <DeleteConfirmDialog
               title="Eliminar Fornecedor"
               description="Tem certeza que deseja eliminar este fornecedor? Esta ação não pode ser desfeita."
-              onConfirm={handleDelete}
+              onDelete={handleDelete}
               trigger={
                 <Button 
                   variant="destructive" 

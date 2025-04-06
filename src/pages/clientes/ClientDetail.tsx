@@ -60,7 +60,7 @@ const ClientDetail = () => {
             <DeleteConfirmDialog
               title="Eliminar Cliente"
               description="Tem certeza que deseja eliminar este cliente? Esta ação não pode ser desfeita."
-              onConfirm={handleDelete}
+              onDelete={handleDelete}
               trigger={
                 <Button 
                   variant="destructive" 

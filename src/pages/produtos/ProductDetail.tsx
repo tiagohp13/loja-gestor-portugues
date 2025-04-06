@@ -61,7 +61,7 @@ const ProductDetail = () => {
             <DeleteConfirmDialog
               title="Eliminar Produto"
               description="Tem certeza que deseja eliminar este produto? Esta ação não pode ser desfeita."
-              onConfirm={handleDelete}
+              onDelete={handleDelete}
               trigger={
                 <Button 
                   variant="destructive" 
