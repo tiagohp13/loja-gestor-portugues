@@ -1,15 +1,18 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
+import { Upload, X } from 'lucide-react';
+import { toast } from 'sonner';
 
 const ProductNew = () => {
   const navigate = useNavigate();
   const { addProduct } = useData();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [product, setProduct] = useState({
     name: '',
     code: '',
@@ -20,13 +23,51 @@ const ProductNew = () => {
     description: '',
     image: ''
   });
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setProduct(prev => ({
       ...prev,
-      [name]: name === 'purchasePrice' || name === 'salePrice' ? parseFloat(value) || 0 : value
+      [name]: name === 'purchasePrice' || name === 'salePrice' || name === 'currentStock' 
+              ? parseFloat(value) || 0 
+              : value
     }));
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Check file type
+    if (!file.type.includes('image/jpeg') && !file.type.includes('image/png')) {
+      toast.error('Apenas imagens JPG ou PNG são permitidas');
+      return;
+    }
+    
+    // Create object URL for preview
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewImage(objectUrl);
+    
+    // In a real app, you would upload the file to a server
+    // For now, we'll just use the object URL
+    setProduct(prev => ({
+      ...prev,
+      image: objectUrl
+    }));
+  };
+
+  const handleRemoveImage = () => {
+    setPreviewImage(null);
+    setProduct(prev => ({
+      ...prev,
+      image: ''
+    }));
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -79,7 +120,7 @@ const ProductNew = () => {
             </div>
           </div>
           
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label htmlFor="category" className="text-sm font-medium text-gestorApp-gray-dark">
                 Categoria
@@ -94,8 +135,24 @@ const ProductNew = () => {
             </div>
             
             <div className="space-y-2">
+              <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
+                Preço de Compra (€)
+              </label>
+              <Input
+                id="purchasePrice"
+                name="purchasePrice"
+                type="number"
+                step="0.01"
+                min="0"
+                value={product.purchasePrice}
+                onChange={handleChange}
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div className="space-y-2">
               <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço Sugerido (€)
+                Preço de Venda (€)
               </label>
               <Input
                 id="salePrice"
@@ -108,6 +165,21 @@ const ProductNew = () => {
                 placeholder="0.00"
               />
             </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
+              Stock Inicial
+            </label>
+            <Input
+              id="currentStock"
+              name="currentStock"
+              type="number"
+              min="0"
+              value={product.currentStock}
+              onChange={handleChange}
+              placeholder="0"
+            />
           </div>
           
           <div className="space-y-2">
@@ -125,22 +197,42 @@ const ProductNew = () => {
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="image" className="text-sm font-medium text-gestorApp-gray-dark">
-              URL da Imagem
+            <label className="text-sm font-medium text-gestorApp-gray-dark">
+              Imagem do Produto
             </label>
-            <Input
-              id="image"
-              name="image"
-              value={product.image}
-              onChange={handleChange}
-              placeholder="URL da imagem do produto"
-            />
-            {product.image && (
-              <div className="mt-2 w-32 h-32 border rounded-md overflow-hidden">
+            
+            {previewImage ? (
+              <div className="relative w-48 h-48 border rounded-md overflow-hidden">
                 <img 
-                  src={product.image} 
-                  alt={product.name} 
+                  src={previewImage} 
+                  alt="Preview" 
                   className="w-full h-full object-cover"
+                />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  className="absolute top-2 right-2 h-6 w-6"
+                  onClick={handleRemoveImage}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div 
+                className="border-2 border-dashed border-gestorApp-gray-light rounded-md p-6 flex flex-col items-center justify-center h-48 w-48 cursor-pointer"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="h-12 w-12 text-gestorApp-gray" />
+                <p className="mt-2 text-sm text-gestorApp-gray text-center">
+                  Clique para carregar uma imagem<br />(JPG ou PNG)
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png"
+                  className="hidden"
+                  onChange={handleImageChange}
                 />
               </div>
             )}

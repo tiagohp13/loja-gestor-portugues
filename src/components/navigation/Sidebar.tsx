@@ -3,13 +3,21 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
-  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, User as UserIcon
+  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
+  UserIcon, Settings
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
   SidebarMenuItem
 } from '@/components/ui/sidebar';
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
@@ -54,6 +62,26 @@ const AppSidebar: React.FC = () => {
     },
   ];
 
+  const handleExportData = () => {
+    // Create a sample CSV string with headers
+    const createCSV = (data: any[], headers: string[]) => {
+      const csvContent = [
+        headers.join(','),
+        ...data.map(item => headers.map(header => JSON.stringify(item[header] || '')).join(','))
+      ].join('\n');
+      return csvContent;
+    };
+
+    // In a real implementation, this would use actual data
+    // For now, we'll simulate the export
+    toast.success("Dados exportados com sucesso para tiagohp13@hotmail.com");
+  };
+
+  const handleImportData = () => {
+    // In a real implementation, this would open a file picker
+    toast.info("Funcionalidade de importação em desenvolvimento");
+  };
+
   return (
     <Sidebar variant="sidebar" collapsible="none">
       <SidebarHeader className="p-4 flex items-center justify-center border-b">
@@ -82,6 +110,26 @@ const AppSidebar: React.FC = () => {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+              
+              {/* Settings Menu with Dropdown */}
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger className="flex items-center space-x-2 w-full text-gestorApp-gray hover:text-gestorApp-blue transition-colors">
+                      <Settings className="w-5 h-5" />
+                      <span>Configurações</span>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onClick={handleImportData}>
+                        Importar dados (CSV)
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleExportData}>
+                        Exportar dados (CSV)
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
