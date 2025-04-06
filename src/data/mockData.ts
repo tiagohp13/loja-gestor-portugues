@@ -71,6 +71,22 @@ export const getSupplierWithHistory = (supplierId: string) => {
 
 // Helper to get dashboard data
 export const getDashboardData = () => {
+  // Ensure we have data to process
+  if (products.length === 0) {
+    return {
+      totalProducts: 0,
+      totalClients: 0,
+      totalSuppliers: 0,
+      totalStockValue: 0,
+      totalSalesValue: 0,
+      mostSoldProduct: null,
+      mostFrequentClient: null,
+      mostUsedSupplier: null,
+      lowStockProducts: [],
+      recentTransactions: []
+    };
+  }
+
   // Total stock value
   const totalStockValue = products.reduce((sum, product) => {
     return sum + (product.currentStock * product.purchasePrice);
@@ -144,32 +160,55 @@ export const getDashboardData = () => {
   
   const mostUsedSupplier = suppliers.find(s => s.id === mostUsedSupplierId);
 
-  // Low stock products
-  const lowStockThreshold = 5;
-  const lowStockProducts = products.filter(p => p.currentStock <= lowStockThreshold);
+  // Low stock products - now checking against minStock instead of fixed value
+  const lowStockProducts = products.filter(p => p.currentStock <= (p.minStock || 5));
 
-  // Recent transactions
-  const recentTransactions = [...stockEntries, ...stockExits]
-    .sort((a, b) => {
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    })
-    .slice(0, 5)
-    .map(transaction => {
-      const isEntry = 'invoiceNumber' in transaction;
-      return {
-        id: transaction.id,
-        date: transaction.date,
-        type: isEntry ? 'entry' : 'exit',
-        product: products.find(p => p.id === transaction.productId),
-        quantity: transaction.quantity,
-        value: isEntry 
-          ? transaction.quantity * transaction.purchasePrice 
-          : transaction.quantity * (transaction as StockExit).salePrice,
-        entity: isEntry 
-          ? suppliers.find(s => s.id === (transaction as StockEntry).supplierId)?.name 
-          : clients.find(c => c.id === (transaction as StockExit).clientId)?.name
-      };
-    });
+  // Recent transactions - ensure we can combine and sort
+  const allTransactions = [
+    ...stockEntries.map(entry => ({
+      id: entry.id,
+      date: entry.date,
+      type: 'entry' as const, // Type assertion here
+      productId: entry.productId,
+      quantity: entry.quantity,
+      price: entry.purchasePrice,
+      entityId: entry.supplierId,
+      createdAt: entry.createdAt
+    })),
+    ...stockExits.map(exit => ({
+      id: exit.id,
+      date: exit.date,
+      type: 'exit' as const, // Type assertion here
+      productId: exit.productId,
+      quantity: exit.quantity,
+      price: exit.salePrice,
+      entityId: exit.clientId,
+      createdAt: exit.createdAt
+    }))
+  ];
+
+  const sortedTransactions = allTransactions.sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Most recent first
+  });
+
+  const recentTransactions = sortedTransactions.slice(0, 5).map(transaction => {
+    const product = products.find(p => p.id === transaction.productId);
+    const entity = transaction.type === 'entry'
+      ? suppliers.find(s => s.id === transaction.entityId)
+      : clients.find(c => c.id === transaction.entityId);
+
+    return {
+      id: transaction.id,
+      date: transaction.date,
+      type: transaction.type,
+      product,
+      quantity: transaction.quantity,
+      value: transaction.quantity * transaction.price,
+      entity: entity?.name || 'Desconhecido'
+    };
+  });
 
   return {
     totalProducts: products.length,

@@ -20,6 +20,7 @@ export interface Product {
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
+  minStock: number;
   image: string;
   createdAt: Date | string;
   updatedAt: Date | string;

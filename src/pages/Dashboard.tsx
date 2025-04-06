@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
@@ -11,6 +12,11 @@ import { BarChart, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar,
 const DashboardPage: React.FC = () => {
   const { products, suppliers, clients, stockEntries, stockExits } = useData();
   const dashboardData = getDashboardData();
+  
+  // Ensure dates are properly converted for charting
+  const ensureDate = (dateInput: string | Date): Date => {
+    return dateInput instanceof Date ? dateInput : new Date(dateInput);
+  };
   
   const monthlyData = new Map();
   
@@ -26,7 +32,7 @@ const DashboardPage: React.FC = () => {
   }
   
   stockExits.forEach(exit => {
-    const date = new Date(exit.date);
+    const date = ensureDate(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
     if (monthlyData.has(monthKey)) {
@@ -39,7 +45,7 @@ const DashboardPage: React.FC = () => {
   });
   
   stockEntries.forEach(entry => {
-    const date = new Date(entry.date);
+    const date = ensureDate(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
     if (monthlyData.has(monthKey)) {
@@ -180,7 +186,10 @@ const DashboardPage: React.FC = () => {
                         <div className="text-sm text-gestorApp-gray">Código: {product.code}</div>
                       </div>
                     </div>
-                    <div className="text-red-600 font-medium">{product.currentStock} unidades</div>
+                    <div className="text-right">
+                      <div className="text-red-600 font-medium">{product.currentStock} unidades</div>
+                      <div className="text-sm text-gestorApp-gray">Mínimo: {product.minStock || 5} unidades</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -206,25 +215,31 @@ const DashboardPage: React.FC = () => {
               
               <TabsContent value="all">
                 <ul className="space-y-3">
-                  {dashboardData.recentTransactions.map((transaction) => (
-                    <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <div>
-                        <div className="font-medium">{transaction.product?.name}</div>
-                        <div className="text-sm text-gestorApp-gray">
-                          {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: {transaction.entity}
+                  {dashboardData.recentTransactions.length > 0 ? (
+                    dashboardData.recentTransactions.map((transaction) => (
+                      <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
+                        <div>
+                          <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
+                          <div className="text-sm text-gestorApp-gray">
+                            {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: {transaction.entity}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className={transaction.type === 'entry' ? 'text-purple-600' : 'text-gestorApp-blue'}>
-                          {transaction.type === 'entry' ? '+ ' : '- '}
-                          {transaction.quantity} unidades
+                        <div className="text-right">
+                          <div className={transaction.type === 'entry' ? 'text-purple-600' : 'text-gestorApp-blue'}>
+                            {transaction.type === 'entry' ? '+ ' : '- '}
+                            {transaction.quantity} unidades
+                          </div>
+                          <div className="text-sm text-gestorApp-gray">
+                            {formatDate(ensureDate(transaction.date))}
+                          </div>
                         </div>
-                        <div className="text-sm text-gestorApp-gray">
-                          {formatDate(new Date(transaction.date))}
-                        </div>
-                      </div>
+                      </li>
+                    ))
+                  ) : (
+                    <li className="text-center py-6 text-gestorApp-gray">
+                      Nenhuma transação encontrada
                     </li>
-                  ))}
+                  )}
                 </ul>
               </TabsContent>
               
@@ -235,7 +250,7 @@ const DashboardPage: React.FC = () => {
                     .map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
                         <div>
-                          <div className="font-medium">{transaction.product?.name}</div>
+                          <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
                           <div className="text-sm text-gestorApp-gray">
                             Fornecedor: {transaction.entity}
                           </div>
@@ -245,7 +260,7 @@ const DashboardPage: React.FC = () => {
                             + {transaction.quantity} unidades
                           </div>
                           <div className="text-sm text-gestorApp-gray">
-                            {formatDate(new Date(transaction.date))}
+                            {formatDate(ensureDate(transaction.date))}
                           </div>
                         </div>
                       </li>
@@ -260,7 +275,7 @@ const DashboardPage: React.FC = () => {
                     .map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
                         <div>
-                          <div className="font-medium">{transaction.product?.name}</div>
+                          <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
                           <div className="text-sm text-gestorApp-gray">
                             Cliente: {transaction.entity}
                           </div>
@@ -270,7 +285,7 @@ const DashboardPage: React.FC = () => {
                             - {transaction.quantity} unidades
                           </div>
                           <div className="text-sm text-gestorApp-gray">
-                            {formatDate(new Date(transaction.date))}
+                            {formatDate(ensureDate(transaction.date))}
                           </div>
                         </div>
                       </li>

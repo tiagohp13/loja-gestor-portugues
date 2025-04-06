@@ -52,7 +52,7 @@ const StockExitList = () => {
   };
 
   const handleEditExit = (id: string) => {
-    navigate(`/saidas/editar/${id}`);
+    navigate(`/saidas/${id}/editar`);
   };
 
   const handleViewDetails = (id: string) => {

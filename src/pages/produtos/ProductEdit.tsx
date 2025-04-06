@@ -22,6 +22,7 @@ const ProductEdit = () => {
     purchasePrice: 0,
     salePrice: 0,
     currentStock: 0,
+    minStock: 0,
     category: '',
     description: '',
     image: ''
@@ -41,6 +42,7 @@ const ProductEdit = () => {
           purchasePrice: foundProduct.purchasePrice || 0,
           salePrice: foundProduct.salePrice || 0,
           currentStock: foundProduct.currentStock || 0,
+          minStock: foundProduct.minStock || 0,
           category: foundProduct.category || '',
           description: foundProduct.description || '',
           image: foundProduct.image || ''
@@ -60,7 +62,7 @@ const ProductEdit = () => {
     const { name, value } = e.target;
     setProduct(prev => ({
       ...prev,
-      [name]: name === 'purchasePrice' || name === 'salePrice' || name === 'currentStock' 
+      [name]: name === 'purchasePrice' || name === 'salePrice' || name === 'currentStock' || name === 'minStock'
               ? parseFloat(value) || 0 
               : value
     }));
@@ -228,21 +230,39 @@ const ProductEdit = () => {
             </div>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
-              Stock Atual
-            </label>
-            <Input
-              id="currentStock"
-              name="currentStock"
-              type="number"
-              min="0"
-              value={product.currentStock}
-              onChange={handleChange}
-              placeholder="0"
-              disabled
-            />
-            <p className="text-xs text-gestorApp-gray">O stock é atualizado automaticamente através de entradas e saídas</p>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Atual
+              </label>
+              <Input
+                id="currentStock"
+                name="currentStock"
+                type="number"
+                min="0"
+                value={product.currentStock}
+                onChange={handleChange}
+                placeholder="0"
+                disabled
+              />
+              <p className="text-xs text-gestorApp-gray">O stock é atualizado automaticamente através de entradas e saídas</p>
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Mínimo
+              </label>
+              <Input
+                id="minStock"
+                name="minStock"
+                type="number"
+                min="0"
+                value={product.minStock}
+                onChange={handleChange}
+                placeholder="0"
+              />
+              <p className="text-xs text-gestorApp-gray">Definir para alertas de stock baixo</p>
+            </div>
           </div>
           
           <div className="space-y-2">
