@@ -69,6 +69,11 @@ const StockEntryList = () => {
   const selectedProduct = selectedEntryData ? products.find(p => p.id === selectedEntryData.productId) : null;
   const selectedSupplier = selectedEntryData ? suppliers.find(s => s.id === selectedEntryData.supplierId) : null;
 
+  // Helper function to ensure we're working with Date objects
+  const ensureDate = (dateInput: string | Date): Date => {
+    return dateInput instanceof Date ? dateInput : new Date(dateInput);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -125,7 +130,7 @@ const StockEntryList = () => {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(entry.id)}
                     >
-                      <TableCell>{formatDateTime(entry.createdAt)}</TableCell>
+                      <TableCell>{formatDateTime(ensureDate(entry.createdAt))}</TableCell>
                       <TableCell className="font-medium">
                         {product ? `${product.code} - ${product.name}` : 'Produto removido'}
                       </TableCell>
@@ -195,7 +200,7 @@ const StockEntryList = () => {
             <div className="space-y-4 mt-4">
               <div>
                 <p className="text-sm font-medium text-gray-500">Data</p>
-                <p>{formatDateTime(selectedEntryData.createdAt)}</p>
+                <p>{formatDateTime(ensureDate(selectedEntryData.createdAt))}</p>
               </div>
               
               <div>

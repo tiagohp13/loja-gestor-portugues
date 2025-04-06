@@ -1,5 +1,5 @@
 
-import { User, Product, Client, Supplier, StockEntry, StockExit } from '../types';
+import { User, Product, Client, Supplier, StockEntry, StockExit, Category } from '../types';
 
 // Mock Users
 export const users: User[] = [
@@ -164,7 +164,7 @@ export const getDashboardData = () => {
         quantity: transaction.quantity,
         value: isEntry 
           ? transaction.quantity * transaction.purchasePrice 
-          : transaction.quantity * transaction.salePrice,
+          : transaction.quantity * (transaction as StockExit).salePrice,
         entity: isEntry 
           ? suppliers.find(s => s.id === (transaction as StockEntry).supplierId)?.name 
           : clients.find(c => c.id === (transaction as StockExit).clientId)?.name

@@ -68,6 +68,11 @@ const StockExitList = () => {
   const selectedProduct = selectedExitData ? products.find(p => p.id === selectedExitData.productId) : null;
   const selectedClient = selectedExitData ? clients.find(c => c.id === selectedExitData.clientId) : null;
 
+  // Helper function to ensure we're working with Date objects
+  const ensureDate = (dateInput: string | Date): Date => {
+    return dateInput instanceof Date ? dateInput : new Date(dateInput);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -123,7 +128,7 @@ const StockExitList = () => {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(exit.id)}
                     >
-                      <TableCell>{formatDateTime(exit.createdAt)}</TableCell>
+                      <TableCell>{formatDateTime(ensureDate(exit.createdAt))}</TableCell>
                       <TableCell className="font-medium">
                         {product ? `${product.code} - ${product.name}` : 'Produto removido'}
                       </TableCell>
@@ -192,7 +197,7 @@ const StockExitList = () => {
             <div className="space-y-4 mt-4">
               <div>
                 <p className="text-sm font-medium text-gray-500">Data</p>
-                <p>{formatDateTime(selectedExitData.createdAt)}</p>
+                <p>{formatDateTime(ensureDate(selectedExitData.createdAt))}</p>
               </div>
               
               <div>
