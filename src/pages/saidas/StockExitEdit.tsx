@@ -67,6 +67,7 @@ const StockExitEdit = () => {
         clientName: client.name
       });
       
+      toast.success('Saída atualizada com sucesso');
       navigate('/saidas/historico');
     }
   };

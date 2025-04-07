@@ -53,6 +53,7 @@ const SupplierEdit = () => {
     e.preventDefault();
     if (id) {
       updateSupplier(id, supplier);
+      toast.success('Fornecedor atualizado com sucesso');
       navigate(`/fornecedores/${id}`);
     }
   };

@@ -53,6 +53,7 @@ const ClientEdit = () => {
     e.preventDefault();
     if (id) {
       updateClient(id, client);
+      toast.success('Cliente atualizado com sucesso');
       navigate(`/clientes/${id}`);
     }
   };

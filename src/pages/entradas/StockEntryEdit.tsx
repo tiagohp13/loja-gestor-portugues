@@ -69,6 +69,7 @@ const StockEntryEdit = () => {
         supplierName: supplier.name
       });
       
+      toast.success('Entrada atualizada com sucesso');
       navigate('/entradas/historico');
     }
   };

@@ -18,6 +18,7 @@ const DashboardPage: React.FC = () => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
   
+  // Calculate monthly data for chart
   const monthlyData = new Map();
   
   const today = new Date();
@@ -31,6 +32,7 @@ const DashboardPage: React.FC = () => {
     });
   }
   
+  // Calculate sales data
   stockExits.forEach(exit => {
     const date = ensureDate(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -44,6 +46,7 @@ const DashboardPage: React.FC = () => {
     }
   });
   
+  // Calculate purchase data
   stockEntries.forEach(entry => {
     const date = ensureDate(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -59,6 +62,7 @@ const DashboardPage: React.FC = () => {
   
   const chartData = Array.from(monthlyData.values());
   
+  // Count products by category
   const categoryCounts = products.reduce((acc, product) => {
     const { category } = product;
     if (!acc[category]) {
@@ -69,9 +73,119 @@ const DashboardPage: React.FC = () => {
   }, {} as Record<string, number>);
   
   const categoryData = Object.entries(categoryCounts).map(([category, count]) => ({
-    name: category,
+    name: category || 'Sem categoria',
     quantidade: count
   }));
+  
+  // Calculate products with low stock
+  const lowStockProducts = products.filter(product => 
+    product.currentStock <= (product.minStock || 0) && product.minStock > 0
+  );
+  
+  // Calculate recent transactions
+  const allTransactions = [
+    ...stockEntries.map(entry => ({
+      id: entry.id,
+      type: 'entry' as const,
+      productId: entry.productId,
+      product: products.find(p => p.id === entry.productId),
+      entity: entry.supplierName || suppliers.find(s => s.id === entry.supplierId)?.name || 'Desconhecido',
+      quantity: entry.quantity,
+      date: entry.date,
+      value: entry.quantity * entry.purchasePrice
+    })),
+    ...stockExits.map(exit => ({
+      id: exit.id,
+      type: 'exit' as const,
+      productId: exit.productId,
+      product: products.find(p => p.id === exit.productId),
+      entity: exit.clientName || clients.find(c => c.id === exit.clientId)?.name || 'Desconhecido',
+      quantity: exit.quantity,
+      date: exit.date,
+      value: exit.quantity * exit.salePrice
+    }))
+  ];
+  
+  // Sort by date (most recent first)
+  const recentTransactions = allTransactions
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 10);
+  
+  // Calculate most sold product
+  const productSales = stockExits.reduce((acc, exit) => {
+    const { productId, quantity } = exit;
+    if (!acc[productId]) {
+      acc[productId] = 0;
+    }
+    acc[productId] += quantity;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  let mostSoldProductId = '';
+  let mostSoldQuantity = 0;
+  
+  Object.entries(productSales).forEach(([productId, quantity]) => {
+    if (quantity > mostSoldQuantity) {
+      mostSoldProductId = productId;
+      mostSoldQuantity = quantity;
+    }
+  });
+  
+  const mostSoldProduct = products.find(p => p.id === mostSoldProductId);
+  
+  // Calculate most frequent client
+  const clientPurchases = stockExits.reduce((acc, exit) => {
+    const { clientId } = exit;
+    if (!acc[clientId]) {
+      acc[clientId] = 0;
+    }
+    acc[clientId] += 1;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  let mostFrequentClientId = '';
+  let mostFrequentClientCount = 0;
+  
+  Object.entries(clientPurchases).forEach(([clientId, count]) => {
+    if (count > mostFrequentClientCount) {
+      mostFrequentClientId = clientId;
+      mostFrequentClientCount = count;
+    }
+  });
+  
+  const mostFrequentClient = clients.find(c => c.id === mostFrequentClientId);
+  
+  // Calculate most used supplier
+  const supplierPurchases = stockEntries.reduce((acc, entry) => {
+    const { supplierId } = entry;
+    if (!acc[supplierId]) {
+      acc[supplierId] = 0;
+    }
+    acc[supplierId] += 1;
+    return acc;
+  }, {} as Record<string, number>);
+  
+  let mostUsedSupplierId = '';
+  let mostUsedSupplierCount = 0;
+  
+  Object.entries(supplierPurchases).forEach(([supplierId, count]) => {
+    if (count > mostUsedSupplierCount) {
+      mostUsedSupplierId = supplierId;
+      mostUsedSupplierCount = count;
+    }
+  });
+  
+  const mostUsedSupplier = suppliers.find(s => s.id === mostUsedSupplierId);
+  
+  // Calculate total sales value
+  const totalSalesValue = stockExits.reduce((total, exit) => {
+    return total + (exit.quantity * exit.salePrice);
+  }, 0);
+  
+  // Calculate total stock value
+  const totalStockValue = products.reduce((total, product) => {
+    return total + (product.currentStock * product.purchasePrice);
+  }, 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -118,7 +232,7 @@ const DashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent className="px-6 pt-0">
             <div className="text-2xl font-bold text-gestorApp-gray-dark">
-              {formatCurrency(dashboardData.totalStockValue)}
+              {formatCurrency(totalStockValue)}
             </div>
           </CardContent>
         </Card>
@@ -175,9 +289,9 @@ const DashboardPage: React.FC = () => {
             <CardTitle>Produtos com Stock Baixo</CardTitle>
           </CardHeader>
           <CardContent>
-            {dashboardData.lowStockProducts.length > 0 ? (
+            {lowStockProducts.length > 0 ? (
               <div className="space-y-4">
-                {dashboardData.lowStockProducts.map((product) => (
+                {lowStockProducts.map((product) => (
                   <div key={product.id} className="flex justify-between items-center p-3 bg-red-50 rounded-md">
                     <div className="flex items-center">
                       <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
@@ -188,7 +302,7 @@ const DashboardPage: React.FC = () => {
                     </div>
                     <div className="text-right">
                       <div className="text-red-600 font-medium">{product.currentStock} unidades</div>
-                      <div className="text-sm text-gestorApp-gray">Mínimo: {product.minStock || 5} unidades</div>
+                      <div className="text-sm text-gestorApp-gray">Mínimo: {product.minStock} unidades</div>
                     </div>
                   </div>
                 ))}
@@ -215,8 +329,8 @@ const DashboardPage: React.FC = () => {
               
               <TabsContent value="all">
                 <ul className="space-y-3">
-                  {dashboardData.recentTransactions.length > 0 ? (
-                    dashboardData.recentTransactions.map((transaction) => (
+                  {recentTransactions.length > 0 ? (
+                    recentTransactions.map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
                         <div>
                           <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
@@ -245,7 +359,7 @@ const DashboardPage: React.FC = () => {
               
               <TabsContent value="entry">
                 <ul className="space-y-3">
-                  {dashboardData.recentTransactions
+                  {recentTransactions
                     .filter(t => t.type === 'entry')
                     .map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
@@ -270,7 +384,7 @@ const DashboardPage: React.FC = () => {
               
               <TabsContent value="exit">
                 <ul className="space-y-3">
-                  {dashboardData.recentTransactions
+                  {recentTransactions
                     .filter(t => t.type === 'exit')
                     .map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
@@ -307,25 +421,25 @@ const DashboardPage: React.FC = () => {
               <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Produto Mais Vendido</dt>
                 <dd className="font-semibold text-gestorApp-gray-dark">
-                  {dashboardData.mostSoldProduct?.name || 'N/A'}
+                  {mostSoldProduct?.name || 'N/A'}
                 </dd>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Cliente Mais Frequente</dt>
                 <dd className="font-semibold text-gestorApp-gray-dark">
-                  {dashboardData.mostFrequentClient?.name || 'N/A'}
+                  {mostFrequentClient?.name || 'N/A'}
                 </dd>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Fornecedor Mais Usado</dt>
                 <dd className="font-semibold text-gestorApp-gray-dark">
-                  {dashboardData.mostUsedSupplier?.name || 'N/A'}
+                  {mostUsedSupplier?.name || 'N/A'}
                 </dd>
               </div>
               <div className="flex justify-between py-2">
                 <dt className="text-gestorApp-gray font-medium">Total Vendas</dt>
                 <dd className="font-semibold text-gestorApp-blue">
-                  {formatCurrency(dashboardData.totalSalesValue)}
+                  {formatCurrency(totalSalesValue)}
                 </dd>
               </div>
             </dl>
