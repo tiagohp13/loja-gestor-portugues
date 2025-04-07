@@ -20,6 +20,7 @@ const ProductNew = () => {
     purchasePrice: 0,
     salePrice: 0,
     currentStock: 0,
+    minStock: 0, // Added the minStock property with default value of 0
     category: '',
     description: '',
     image: ''
@@ -198,19 +199,36 @@ const ProductNew = () => {
             </div>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
-              Stock Inicial
-            </label>
-            <Input
-              id="currentStock"
-              name="currentStock"
-              type="number"
-              min="0"
-              value={product.currentStock}
-              onChange={handleChange}
-              placeholder="0"
-            />
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Inicial
+              </label>
+              <Input
+                id="currentStock"
+                name="currentStock"
+                type="number"
+                min="0"
+                value={product.currentStock}
+                onChange={handleChange}
+                placeholder="0"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Mínimo
+              </label>
+              <Input
+                id="minStock"
+                name="minStock"
+                type="number"
+                min="0"
+                value={product.minStock}
+                onChange={handleChange}
+                placeholder="0"
+              />
+            </div>
           </div>
           
           <div className="space-y-2">

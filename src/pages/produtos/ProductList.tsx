@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -254,7 +253,7 @@ const ProductList = () => {
                         <DeleteConfirmDialog
                           title="Eliminar Produto"
                           description={`Tem a certeza que deseja eliminar o produto "${product.name}"?`}
-                          onDelete={() => handleDelete(id)}
+                          onDelete={() => handleDelete(product.id)}
                           trigger={
                             <Button variant="outline" size="sm" title="Eliminar">
                               <Trash2 className="w-4 h-4" />
