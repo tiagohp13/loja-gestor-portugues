@@ -6,6 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, Check } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const StockExitNew = () => {
   const navigate = useNavigate();
@@ -18,6 +29,7 @@ const StockExitNew = () => {
     date: new Date().toISOString().split('T')[0]
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -40,8 +52,27 @@ const StockExitNew = () => {
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleProductSelect = (productId: string) => {
+    const selectedProduct = products.find(p => p.id === productId);
+    if (selectedProduct) {
+      setExit(prev => ({
+        ...prev,
+        productId: selectedProduct.id,
+        salePrice: selectedProduct.salePrice
+      }));
+    }
+    setIsProductSearchOpen(false);
+  };
+  
+  const handleClientChange = (value: string) => {
+    setExit(prev => ({
+      ...prev,
+      clientId: value
+    }));
   };
 
   const filteredProducts = searchTerm
@@ -85,6 +116,11 @@ const StockExitNew = () => {
     navigate('/saidas/historico');
   };
 
+  // Get the selected product
+  const selectedProduct = exit.productId 
+    ? products.find(p => p.id === exit.productId)
+    : null;
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -104,33 +140,74 @@ const StockExitNew = () => {
               <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
                 Pesquisar Produto
               </label>
-              <Input
-                id="productSearch"
-                value={searchTerm}
-                onChange={handleSearch}
-                placeholder="Pesquisar por nome ou código"
-              />
+              <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                    <Input
+                      id="productSearch"
+                      className="pl-10"
+                      placeholder="Pesquisar por nome ou código"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onClick={() => setIsProductSearchOpen(true)}
+                    />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Pesquisar produto por nome ou código..." 
+                      value={searchTerm}
+                      onValueChange={handleSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+                      <CommandGroup heading="Produtos">
+                        {filteredProducts.map((product) => (
+                          <CommandItem 
+                            key={product.id} 
+                            value={`${product.code} - ${product.name}`}
+                            onSelect={() => handleProductSelect(product.id)}
+                            disabled={product.currentStock <= 0}
+                            className={product.currentStock <= 0 ? "opacity-50" : ""}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div>
+                                <span className="font-medium">{product.code}</span>
+                                <span className="mx-2">-</span>
+                                <span>{product.name}</span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                Stock: {product.currentStock}
+                              </div>
+                            </div>
+                            {exit.productId === product.id && (
+                              <Check className="ml-2 h-4 w-4" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="productId" className="text-sm font-medium text-gestorApp-gray-dark">
-                Produto
+              <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
+                Produto Selecionado
               </label>
-              <select
-                id="productId"
-                name="productId"
-                value={exit.productId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                required
-              >
-                <option value="">Selecione um produto</option>
-                {filteredProducts.map((product) => (
-                  <option key={product.id} value={product.id} disabled={product.currentStock <= 0}>
-                    {product.code} - {product.name} (Stock: {product.currentStock})
-                  </option>
-                ))}
-              </select>
+              <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
+                {selectedProduct ? (
+                  <div>
+                    <div className="font-medium">{selectedProduct.code} - {selectedProduct.name}</div>
+                    <div className="text-sm text-gestorApp-gray mt-1">Stock disponível: {selectedProduct.currentStock} unidades</div>
+                  </div>
+                ) : (
+                  <div className="text-gestorApp-gray italic">Nenhum produto selecionado</div>
+                )}
+              </div>
             </div>
           </div>
           
@@ -138,21 +215,18 @@ const StockExitNew = () => {
             <label htmlFor="clientId" className="text-sm font-medium text-gestorApp-gray-dark">
               Cliente
             </label>
-            <select
-              id="clientId"
-              name="clientId"
-              value={exit.clientId}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-              required
-            >
-              <option value="">Selecione um cliente</option>
-              {clients.map((client) => (
-                <option key={client.id} value={client.id}>
-                  {client.name}
-                </option>
-              ))}
-            </select>
+            <Select value={exit.clientId} onValueChange={handleClientChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um cliente" />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((client) => (
+                  <SelectItem key={client.id} value={client.id}>
+                    {client.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="grid md:grid-cols-3 gap-4">

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -22,6 +23,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const StockExitList = () => {
   const navigate = useNavigate();
@@ -29,22 +40,30 @@ const StockExitList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedExit, setSelectedExit] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Sort exits by date (most recent first)
   const sortedExits = [...stockExits].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  const filteredExits = sortedExits.filter(exit => {
-    const product = products.find(p => p.id === exit.productId);
-    const client = clients.find(c => c.id === exit.clientId);
-    
-    return (
-      (product && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product && product.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (client && client.name.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  });
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredExits = searchTerm 
+    ? sortedExits.filter(exit => {
+        const product = products.find(p => p.id === exit.productId);
+        const client = clients.find(c => c.id === exit.clientId);
+        
+        return (
+          (product && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (product && product.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (client && client.name.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      })
+    : sortedExits;
 
   const handleDeleteExit = (id: string) => {
     deleteStockExit(id);
@@ -63,14 +82,17 @@ const StockExitList = () => {
     handleViewDetails(id);
   };
 
+  const handleProductSelect = (productCode: string) => {
+    const product = products.find(p => p.code === productCode);
+    if (product) {
+      setSearchTerm(product.code + ' - ' + product.name);
+    }
+    setSearchOpen(false);
+  };
+
   const selectedExitData = selectedExit ? stockExits.find(exit => exit.id === selectedExit) : null;
   const selectedProduct = selectedExitData ? products.find(p => p.id === selectedExitData.productId) : null;
   const selectedClient = selectedExitData ? clients.find(c => c.id === selectedExitData.clientId) : null;
-
-  // Helper function to ensure we're working with Date objects
-  const ensureDate = (dateInput: string | Date): Date => {
-    return dateInput instanceof Date ? dateInput : new Date(dateInput);
-  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -87,13 +109,45 @@ const StockExitList = () => {
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-          <Input
-            className="pl-10"
-            placeholder="Pesquisar por produto ou cliente"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                <Input
+                  className="pl-10"
+                  placeholder="Pesquisar por produto ou cliente"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onClick={() => setSearchOpen(true)}
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Pesquisar produto por nome ou código..." 
+                  value={searchTerm}
+                  onValueChange={setSearchTerm}
+                />
+                <CommandList>
+                  <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+                  <CommandGroup heading="Produtos">
+                    {filteredProducts.map((product) => (
+                      <CommandItem 
+                        key={product.id} 
+                        value={`${product.code} - ${product.name}`}
+                        onSelect={() => handleProductSelect(product.code)}
+                      >
+                        <span className="font-medium">{product.code}</span>
+                        <span className="mx-2">-</span>
+                        <span>{product.name}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         
         <div className="overflow-x-auto">
@@ -127,7 +181,7 @@ const StockExitList = () => {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(exit.id)}
                     >
-                      <TableCell>{formatDateTime(ensureDate(exit.createdAt))}</TableCell>
+                      <TableCell>{formatDateTime(new Date(exit.createdAt))}</TableCell>
                       <TableCell className="font-medium">
                         {product ? `${product.code} - ${product.name}` : 'Produto removido'}
                       </TableCell>
@@ -196,7 +250,7 @@ const StockExitList = () => {
             <div className="space-y-4 mt-4">
               <div>
                 <p className="text-sm font-medium text-gray-500">Data</p>
-                <p>{formatDateTime(ensureDate(selectedExitData.createdAt))}</p>
+                <p>{formatDateTime(new Date(selectedExitData.createdAt))}</p>
               </div>
               
               <div>

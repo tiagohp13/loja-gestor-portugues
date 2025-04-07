@@ -23,6 +23,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Command,
+  CommandDialog,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -30,23 +40,31 @@ const StockEntryList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   // Sort entries by date (most recent first)
   const sortedEntries = [...stockEntries].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
-  const filteredEntries = sortedEntries.filter(entry => {
-    const product = products.find(p => p.id === entry.productId);
-    const supplier = suppliers.find(s => s.id === entry.supplierId);
-    
-    return (
-      (product && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (product && product.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (supplier && supplier.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
-  });
+  const filteredProducts = products.filter(product => 
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const filteredEntries = searchTerm 
+    ? sortedEntries.filter(entry => {
+        const product = products.find(p => p.id === entry.productId);
+        const supplier = suppliers.find(s => s.id === entry.supplierId);
+        
+        return (
+          (product && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (product && product.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (supplier && supplier.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+        );
+      })
+    : sortedEntries;
 
   const handleDeleteEntry = (id: string) => {
     deleteStockEntry(id);
@@ -63,6 +81,14 @@ const StockEntryList = () => {
 
   const handleRowClick = (id: string) => {
     handleViewDetails(id);
+  };
+
+  const handleProductSelect = (productCode: string) => {
+    const product = products.find(p => p.code === productCode);
+    if (product) {
+      setSearchTerm(product.code + ' - ' + product.name);
+    }
+    setSearchOpen(false);
   };
 
   const selectedEntryData = selectedEntry ? stockEntries.find(entry => entry.id === selectedEntry) : null;
@@ -89,13 +115,45 @@ const StockEntryList = () => {
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-          <Input
-            className="pl-10"
-            placeholder="Pesquisar por produto, fornecedor ou nº fatura"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+            <PopoverTrigger asChild>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                <Input
+                  className="pl-10"
+                  placeholder="Pesquisar por produto, fornecedor ou nº fatura"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onClick={() => setSearchOpen(true)}
+                />
+              </div>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Pesquisar produto por nome ou código..." 
+                  value={searchTerm}
+                  onValueChange={setSearchTerm}
+                />
+                <CommandList>
+                  <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+                  <CommandGroup heading="Produtos">
+                    {filteredProducts.map((product) => (
+                      <CommandItem 
+                        key={product.id} 
+                        value={`${product.code} - ${product.name}`}
+                        onSelect={() => handleProductSelect(product.code)}
+                      >
+                        <span className="font-medium">{product.code}</span>
+                        <span className="mx-2">-</span>
+                        <span>{product.name}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
         
         <div className="overflow-x-auto">
