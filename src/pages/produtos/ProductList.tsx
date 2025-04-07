@@ -89,7 +89,7 @@ const ProductList = () => {
 
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/produtos/${id}/editar`);
+    navigate(`/produtos/editar/${id}`);
   };
 
   const handleDelete = (id: string) => {

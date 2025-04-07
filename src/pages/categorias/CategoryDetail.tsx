@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -59,7 +58,7 @@ const CategoryDetail: React.FC = () => {
             </Button>
             <Button 
               variant="outline" 
-              onClick={() => navigate(`/categorias/${id}/editar`)}
+              onClick={() => navigate(`/categorias/editar/${id}`)}
               className="flex items-center gap-2"
             >
               <Edit size={16} />

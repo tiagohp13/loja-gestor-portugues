@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -78,7 +77,7 @@ const CategoryList: React.FC = () => {
                           size="icon" 
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/categorias/${category.id}/editar`);
+                            navigate(`/categorias/editar/${category.id}`);
                           }}
                         >
                           <Edit size={16} />
