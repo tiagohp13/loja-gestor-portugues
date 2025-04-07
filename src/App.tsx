@@ -66,40 +66,40 @@ const App = () => (
               <Route path="/produtos/novo" element={<AppLayout><ProductNew /></AppLayout>} />
               <Route path="/produtos/consultar" element={<AppLayout><ProductList /></AppLayout>} />
               <Route path="/produtos/:id" element={<AppLayout><ProductDetail /></AppLayout>} />
-              <Route path="/produtos/:id/editar" element={<AppLayout><ProductEdit /></AppLayout>} />
+              <Route path="/produtos/editar/:id" element={<AppLayout><ProductEdit /></AppLayout>} />
               
               {/* Category routes */}
               <Route path="/categorias" element={<Navigate to="/categorias/consultar" replace />} />
               <Route path="/categorias/nova" element={<AppLayout><CategoryNew /></AppLayout>} />
               <Route path="/categorias/consultar" element={<AppLayout><CategoryList /></AppLayout>} />
               <Route path="/categorias/:id" element={<AppLayout><CategoryDetail /></AppLayout>} />
-              <Route path="/categorias/:id/editar" element={<AppLayout><CategoryEdit /></AppLayout>} />
+              <Route path="/categorias/editar/:id" element={<AppLayout><CategoryEdit /></AppLayout>} />
               
               {/* Client routes */}
               <Route path="/clientes" element={<Navigate to="/clientes/consultar" replace />} />
               <Route path="/clientes/novo" element={<AppLayout><ClientNew /></AppLayout>} />
               <Route path="/clientes/consultar" element={<AppLayout><ClientList /></AppLayout>} />
               <Route path="/clientes/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
-              <Route path="/clientes/:id/editar" element={<AppLayout><ClientEdit /></AppLayout>} />
+              <Route path="/clientes/editar/:id" element={<AppLayout><ClientEdit /></AppLayout>} />
               
               {/* Supplier routes */}
               <Route path="/fornecedores" element={<Navigate to="/fornecedores/consultar" replace />} />
               <Route path="/fornecedores/novo" element={<AppLayout><SupplierNew /></AppLayout>} />
               <Route path="/fornecedores/consultar" element={<AppLayout><SupplierList /></AppLayout>} />
               <Route path="/fornecedores/:id" element={<AppLayout><SupplierDetail /></AppLayout>} />
-              <Route path="/fornecedores/:id/editar" element={<AppLayout><SupplierEdit /></AppLayout>} />
+              <Route path="/fornecedores/editar/:id" element={<AppLayout><SupplierEdit /></AppLayout>} />
               
               {/* Stock Entry routes */}
               <Route path="/entradas" element={<Navigate to="/entradas/historico" replace />} />
               <Route path="/entradas/nova" element={<AppLayout><StockEntryNew /></AppLayout>} />
               <Route path="/entradas/historico" element={<AppLayout><StockEntryList /></AppLayout>} />
-              <Route path="/entradas/:id/editar" element={<AppLayout><StockEntryEdit /></AppLayout>} />
+              <Route path="/entradas/editar/:id" element={<AppLayout><StockEntryEdit /></AppLayout>} />
               
               {/* Stock Exit routes */}
               <Route path="/saidas" element={<Navigate to="/saidas/historico" replace />} />
               <Route path="/saidas/nova" element={<AppLayout><StockExitNew /></AppLayout>} />
               <Route path="/saidas/historico" element={<AppLayout><StockExitList /></AppLayout>} />
-              <Route path="/saidas/:id/editar" element={<AppLayout><StockExitEdit /></AppLayout>} />
+              <Route path="/saidas/editar/:id" element={<AppLayout><StockExitEdit /></AppLayout>} />
               
               {/* Catch-all route */}
               <Route path="*" element={<NotFound />} />
