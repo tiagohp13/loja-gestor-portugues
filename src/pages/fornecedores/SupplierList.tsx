@@ -6,6 +6,7 @@ import { Search, Edit, Trash2, History, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import {
   Table,
   TableBody,
@@ -26,10 +27,17 @@ const SupplierList = () => {
     (supplier.phone && supplier.phone.includes(searchTerm))
   );
 
+  const handleViewSupplier = (id: string) => {
+    navigate(`/fornecedores/${id}`);
+  };
+
+  const handleEdit = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/fornecedores/editar/${id}`);
+  };
+
   const handleDelete = (id: string) => {
-    if (window.confirm('Tem a certeza que deseja eliminar este fornecedor?')) {
-      deleteSupplier(id);
-    }
+    deleteSupplier(id);
   };
 
   return (
@@ -76,27 +84,46 @@ const SupplierList = () => {
                 </TableRow>
               ) : (
                 filteredSuppliers.map((supplier) => (
-                  <TableRow key={supplier.id}>
+                  <TableRow 
+                    key={supplier.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleViewSupplier(supplier.id)}
+                  >
                     <TableCell className="font-medium">{supplier.name}</TableCell>
                     <TableCell>{supplier.email || '-'}</TableCell>
                     <TableCell>{supplier.phone || '-'}</TableCell>
                     <TableCell>{supplier.address || '-'}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="sm" title="Histórico">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          title="Histórico"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/fornecedores/${supplier.id}`);
+                          }}
+                        >
                           <History className="w-4 h-4" />
-                        </Button>
-                        <Button variant="outline" size="sm" title="Editar">
-                          <Edit className="w-4 h-4" />
                         </Button>
                         <Button 
                           variant="outline" 
                           size="sm" 
-                          title="Eliminar"
-                          onClick={() => handleDelete(supplier.id)}
+                          title="Editar"
+                          onClick={(e) => handleEdit(supplier.id, e)}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Edit className="w-4 h-4" />
                         </Button>
+                        <DeleteConfirmDialog
+                          title="Eliminar Fornecedor"
+                          description="Tem a certeza que deseja eliminar este fornecedor?"
+                          onDelete={() => handleDelete(supplier.id)}
+                          trigger={
+                            <Button variant="outline" size="sm" title="Eliminar">
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          }
+                        />
                       </div>
                     </TableCell>
                   </TableRow>

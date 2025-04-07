@@ -38,7 +38,7 @@ const ClientList = () => {
 
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigate(`/clientes/${id}?tab=edit`);
+    navigate(`/clientes/editar/${id}`);
   };
 
   const handleDelete = (id: string) => {

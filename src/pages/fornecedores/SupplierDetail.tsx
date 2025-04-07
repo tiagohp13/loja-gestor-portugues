@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -6,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
 import { formatCurrency, formatDate } from '@/utils/formatting';
-import { Edit, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 
 const SupplierDetail = () => {
@@ -30,10 +29,6 @@ const SupplierDetail = () => {
   
   const supplierHistory = getSupplierHistory(supplier.id);
   
-  const handleEdit = () => {
-    navigate(`/fornecedores/editar/${supplier.id}`);
-  };
-  
   const handleDelete = () => {
     deleteSupplier(supplier.id);
     navigate('/fornecedores/consultar');
@@ -48,14 +43,6 @@ const SupplierDetail = () => {
           <div className="flex space-x-2">
             <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
               Voltar à Lista
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleEdit}
-              className="flex items-center gap-1"
-            >
-              <Edit className="h-4 w-4" />
-              <span>Editar</span>
             </Button>
             <DeleteConfirmDialog
               title="Eliminar Fornecedor"

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -7,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatCurrency, formatDate } from '@/utils/formatting';
-import { Edit, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 
 const ProductDetail = () => {
@@ -31,10 +30,6 @@ const ProductDetail = () => {
   
   const { entries, exits } = getProductHistory(product.id);
   
-  const handleEdit = () => {
-    navigate(`/produtos/editar/${product.id}`);
-  };
-  
   const handleDelete = () => {
     deleteProduct(product.id);
     navigate('/produtos/consultar');
@@ -49,14 +44,6 @@ const ProductDetail = () => {
           <div className="flex space-x-2">
             <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
               Voltar à Lista
-            </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleEdit}
-              className="flex items-center gap-1"
-            >
-              <Edit className="h-4 w-4" />
-              <span>Editar</span>
             </Button>
             <DeleteConfirmDialog
               title="Eliminar Produto"
