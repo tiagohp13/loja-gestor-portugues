@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
 import AppLayout from "./components/layouts/AppLayout";
+import Suporte from "./pages/Suporte";
 
 // Product routes
 import ProductNew from "./pages/produtos/ProductNew";
@@ -43,8 +44,13 @@ import StockExitNew from "./pages/saidas/StockExitNew";
 import StockExitList from "./pages/saidas/StockExitList";
 import StockExitEdit from "./pages/saidas/StockExitEdit";
 
+// Order routes
+import OrderNew from "./pages/encomendas/OrderNew";
+import OrderList from "./pages/encomendas/OrderList";
+import OrderDetail from "./pages/encomendas/OrderDetail";
+import OrderConverting from "./pages/encomendas/OrderConverting";
+
 // Create a client for React Query
-// The issue was in this part - we need to create the client properly
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -98,6 +104,13 @@ function App() {
                 <Route path="/fornecedores/:id" element={<AppLayout><SupplierDetail /></AppLayout>} />
                 <Route path="/fornecedores/editar/:id" element={<AppLayout><SupplierEdit /></AppLayout>} />
                 
+                {/* Order routes */}
+                <Route path="/encomendas" element={<Navigate to="/encomendas/consultar" replace />} />
+                <Route path="/encomendas/nova" element={<AppLayout><OrderNew /></AppLayout>} />
+                <Route path="/encomendas/consultar" element={<AppLayout><OrderList /></AppLayout>} />
+                <Route path="/encomendas/:id" element={<AppLayout><OrderDetail /></AppLayout>} />
+                <Route path="/encomendas/converter/:id" element={<AppLayout><OrderConverting /></AppLayout>} />
+                
                 {/* Stock Entry routes */}
                 <Route path="/entradas" element={<Navigate to="/entradas/historico" replace />} />
                 <Route path="/entradas/nova" element={<AppLayout><StockEntryNew /></AppLayout>} />
@@ -109,6 +122,9 @@ function App() {
                 <Route path="/saidas/nova" element={<AppLayout><StockExitNew /></AppLayout>} />
                 <Route path="/saidas/historico" element={<AppLayout><StockExitList /></AppLayout>} />
                 <Route path="/saidas/editar/:id" element={<AppLayout><StockExitEdit /></AppLayout>} />
+                
+                {/* Support route */}
+                <Route path="/suporte" element={<AppLayout><Suporte /></AppLayout>} />
                 
                 {/* Catch-all route */}
                 <Route path="*" element={<NotFound />} />

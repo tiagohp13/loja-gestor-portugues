@@ -6,6 +6,17 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const StockEntryNew = () => {
   const navigate = useNavigate();
@@ -19,6 +30,9 @@ const StockEntryNew = () => {
     invoiceNumber: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
+  const [isSupplierSearchOpen, setIsSupplierSearchOpen] = useState(false);
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -41,8 +55,32 @@ const StockEntryNew = () => {
     }
   };
 
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleSupplierSearch = (value: string) => {
+    setSupplierSearchTerm(value);
+  };
+
+  const handleProductSelect = (productId: string) => {
+    const selectedProduct = products.find(p => p.id === productId);
+    if (selectedProduct) {
+      setEntry(prev => ({
+        ...prev,
+        productId: selectedProduct.id,
+        purchasePrice: selectedProduct.purchasePrice
+      }));
+    }
+    setIsProductSearchOpen(false);
+  };
+  
+  const handleSupplierSelect = (supplierId: string) => {
+    setEntry(prev => ({
+      ...prev,
+      supplierId
+    }));
+    setIsSupplierSearchOpen(false);
   };
 
   const filteredProducts = searchTerm
@@ -51,6 +89,12 @@ const StockEntryNew = () => {
         product.code.toLowerCase().includes(searchTerm.toLowerCase())
       )
     : products;
+
+  const filteredSuppliers = supplierSearchTerm
+    ? suppliers.filter(supplier => 
+        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
+      )
+    : suppliers;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +123,16 @@ const StockEntryNew = () => {
     navigate('/entradas/historico');
   };
 
+  // Get the selected product
+  const selectedProduct = entry.productId 
+    ? products.find(p => p.id === entry.productId)
+    : null;
+
+  // Calculate total value
+  const totalValue = selectedProduct 
+    ? entry.quantity * entry.purchasePrice
+    : 0;
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -98,55 +152,129 @@ const StockEntryNew = () => {
               <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
                 Pesquisar Produto
               </label>
-              <Input
-                id="productSearch"
-                value={searchTerm}
-                onChange={handleSearch}
-                placeholder="Pesquisar por nome ou código"
-              />
+              <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                    <Input
+                      id="productSearch"
+                      className="pl-10"
+                      placeholder="Pesquisar por nome ou código"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      onClick={() => setIsProductSearchOpen(true)}
+                    />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Pesquisar produto por nome ou código..." 
+                      value={searchTerm}
+                      onValueChange={handleSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+                      <CommandGroup heading="Produtos">
+                        {filteredProducts.map((product) => (
+                          <CommandItem 
+                            key={product.id} 
+                            value={`${product.code} - ${product.name}`}
+                            onSelect={() => handleProductSelect(product.id)}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div>
+                                <span className="font-medium">{product.code}</span>
+                                <span className="mx-2">-</span>
+                                <span>{product.name}</span>
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                Stock: {product.currentStock}
+                              </div>
+                            </div>
+                            {entry.productId === product.id && (
+                              <Check className="ml-2 h-4 w-4" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="productId" className="text-sm font-medium text-gestorApp-gray-dark">
-                Produto
+              <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
+                Produto Selecionado
               </label>
-              <select
-                id="productId"
-                name="productId"
-                value={entry.productId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                required
-              >
-                <option value="">Selecione um produto</option>
-                {filteredProducts.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.code} - {product.name} (Stock: {product.currentStock})
-                  </option>
-                ))}
-              </select>
+              <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
+                {selectedProduct ? (
+                  <div>
+                    <div className="font-medium">{selectedProduct.code} - {selectedProduct.name}</div>
+                    <div className="text-sm text-gestorApp-gray mt-1">Stock disponível: {selectedProduct.currentStock} unidades</div>
+                  </div>
+                ) : (
+                  <div className="text-gestorApp-gray italic">Nenhum produto selecionado</div>
+                )}
+              </div>
             </div>
           </div>
           
           <div className="space-y-2">
-            <label htmlFor="supplierId" className="text-sm font-medium text-gestorApp-gray-dark">
-              Fornecedor
+            <label htmlFor="supplierSearch" className="text-sm font-medium text-gestorApp-gray-dark">
+              Pesquisar Fornecedor
             </label>
-            <select
-              id="supplierId"
-              name="supplierId"
-              value={entry.supplierId}
-              onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-              required
-            >
-              <option value="">Selecione um fornecedor</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </option>
-              ))}
-            </select>
+            <Popover open={isSupplierSearchOpen} onOpenChange={setIsSupplierSearchOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                  <Input
+                    id="supplierSearch"
+                    className="pl-10"
+                    placeholder="Pesquisar fornecedor por nome"
+                    value={supplierSearchTerm}
+                    onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                    onClick={() => setIsSupplierSearchOpen(true)}
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Pesquisar fornecedor..." 
+                    value={supplierSearchTerm}
+                    onValueChange={handleSupplierSearch}
+                  />
+                  <CommandList>
+                    <CommandEmpty>Nenhum fornecedor encontrado</CommandEmpty>
+                    <CommandGroup heading="Fornecedores">
+                      {filteredSuppliers.map((supplier) => (
+                        <CommandItem 
+                          key={supplier.id} 
+                          value={supplier.name}
+                          onSelect={() => handleSupplierSelect(supplier.id)}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <div>{supplier.name}</div>
+                          </div>
+                          {entry.supplierId === supplier.id && (
+                            <Check className="ml-2 h-4 w-4" />
+                          )}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+            {entry.supplierId && (
+              <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
+                <div className="font-medium">
+                  {suppliers.find(s => s.id === entry.supplierId)?.name || ""}
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="grid md:grid-cols-3 gap-4">
@@ -209,6 +337,12 @@ const StockEntryNew = () => {
               onChange={handleChange}
               placeholder="FAT2023XXXX"
             />
+          </div>
+          
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
+            <p className="text-lg font-semibold text-blue-800">
+              Valor Total: {totalValue.toFixed(2)} €
+            </p>
           </div>
           
           <div className="flex justify-end space-x-4">

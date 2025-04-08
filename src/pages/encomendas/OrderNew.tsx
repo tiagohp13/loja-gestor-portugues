@@ -17,25 +17,25 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Search, Check } from 'lucide-react';
 
-const StockExitNew = () => {
+const OrderNew = () => {
   const navigate = useNavigate();
-  const { addStockExit, products, clients } = useData();
-  const [exit, setExit] = useState({
+  const { addOrder, products, clients } = useData();
+  const [order, setOrder] = useState({
     productId: '',
     clientId: '',
     quantity: 1,
     salePrice: 0,
     date: new Date().toISOString().split('T')[0],
-    invoiceNumber: ''
+    notes: ''
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setExit(prev => ({
+    setOrder(prev => ({
       ...prev,
       [name]: name === 'quantity' || name === 'salePrice' 
               ? parseFloat(value) || 0 
@@ -46,7 +46,7 @@ const StockExitNew = () => {
     if (name === 'productId' && value) {
       const selectedProduct = products.find(p => p.id === value);
       if (selectedProduct) {
-        setExit(prev => ({
+        setOrder(prev => ({
           ...prev,
           salePrice: selectedProduct.salePrice
         }));
@@ -65,7 +65,7 @@ const StockExitNew = () => {
   const handleProductSelect = (productId: string) => {
     const selectedProduct = products.find(p => p.id === productId);
     if (selectedProduct) {
-      setExit(prev => ({
+      setOrder(prev => ({
         ...prev,
         productId: selectedProduct.id,
         salePrice: selectedProduct.salePrice
@@ -75,7 +75,7 @@ const StockExitNew = () => {
   };
   
   const handleClientSelect = (clientId: string) => {
-    setExit(prev => ({
+    setOrder(prev => ({
       ...prev,
       clientId
     }));
@@ -99,54 +99,48 @@ const StockExitNew = () => {
     e.preventDefault();
     
     // Validate form
-    if (!exit.productId || !exit.clientId || exit.quantity <= 0) {
+    if (!order.productId || !order.clientId || order.quantity <= 0) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
     
     // Get the product and client
-    const product = products.find(p => p.id === exit.productId);
-    const client = clients.find(c => c.id === exit.clientId);
+    const product = products.find(p => p.id === order.productId);
+    const client = clients.find(c => c.id === order.clientId);
     
     if (!product || !client) {
       toast.error('Produto ou cliente não encontrado');
       return;
     }
     
-    // Check if we have enough stock
-    if (product.currentStock < exit.quantity) {
-      toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades`);
-      return;
-    }
-    
-    // Add the stock exit
-    addStockExit({
-      ...exit,
+    // Add the order
+    addOrder({
+      ...order,
       productName: product.name,
       clientName: client.name,
     });
     
-    navigate('/saidas/historico');
+    navigate('/encomendas/consultar');
   };
 
   // Get the selected product
-  const selectedProduct = exit.productId 
-    ? products.find(p => p.id === exit.productId)
+  const selectedProduct = order.productId 
+    ? products.find(p => p.id === order.productId)
     : null;
 
   // Calculate total value
   const totalValue = selectedProduct 
-    ? exit.quantity * exit.salePrice
+    ? order.quantity * order.salePrice
     : 0;
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Nova Saída de Stock" 
-        description="Registar uma nova saída do inventário" 
+        title="Nova Encomenda" 
+        description="Registar uma nova encomenda de cliente" 
         actions={
-          <Button variant="outline" onClick={() => navigate('/saidas/historico')}>
-            Voltar ao Histórico
+          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            Voltar à Lista
           </Button>
         }
       />
@@ -187,8 +181,6 @@ const StockExitNew = () => {
                             key={product.id} 
                             value={`${product.code} - ${product.name}`}
                             onSelect={() => handleProductSelect(product.id)}
-                            disabled={product.currentStock <= 0}
-                            className={product.currentStock <= 0 ? "opacity-50" : ""}
                           >
                             <div className="flex items-center justify-between w-full">
                               <div>
@@ -196,11 +188,8 @@ const StockExitNew = () => {
                                 <span className="mx-2">-</span>
                                 <span>{product.name}</span>
                               </div>
-                              <div className="text-sm text-gray-500">
-                                Stock: {product.currentStock}
-                              </div>
                             </div>
-                            {exit.productId === product.id && (
+                            {order.productId === product.id && (
                               <Check className="ml-2 h-4 w-4" />
                             )}
                           </CommandItem>
@@ -220,7 +209,6 @@ const StockExitNew = () => {
                 {selectedProduct ? (
                   <div>
                     <div className="font-medium">{selectedProduct.code} - {selectedProduct.name}</div>
-                    <div className="text-sm text-gestorApp-gray mt-1">Stock disponível: {selectedProduct.currentStock} unidades</div>
                   </div>
                 ) : (
                   <div className="text-gestorApp-gray italic">Nenhum produto selecionado</div>
@@ -266,7 +254,7 @@ const StockExitNew = () => {
                           <div className="flex items-center justify-between w-full">
                             <div>{client.name}</div>
                           </div>
-                          {exit.clientId === client.id && (
+                          {order.clientId === client.id && (
                             <Check className="ml-2 h-4 w-4" />
                           )}
                         </CommandItem>
@@ -276,10 +264,10 @@ const StockExitNew = () => {
                 </Command>
               </PopoverContent>
             </Popover>
-            {exit.clientId && (
+            {order.clientId && (
               <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
                 <div className="font-medium">
-                  {clients.find(c => c.id === exit.clientId)?.name || ""}
+                  {clients.find(c => c.id === order.clientId)?.name || ""}
                 </div>
               </div>
             )}
@@ -295,16 +283,11 @@ const StockExitNew = () => {
                 name="quantity"
                 type="number"
                 min="1"
-                value={exit.quantity}
+                value={order.quantity}
                 onChange={handleChange}
                 placeholder="0"
                 required
               />
-              {exit.productId && (
-                <p className="text-xs text-gestorApp-gray">
-                  Stock disponível: {products.find(p => p.id === exit.productId)?.currentStock || 0} unidades
-                </p>
-              )}
             </div>
             
             <div className="space-y-2">
@@ -317,7 +300,7 @@ const StockExitNew = () => {
                 type="number"
                 step="0.01"
                 min="0"
-                value={exit.salePrice}
+                value={order.salePrice}
                 onChange={handleChange}
                 placeholder="0.00"
                 required
@@ -332,7 +315,7 @@ const StockExitNew = () => {
                 id="date"
                 name="date"
                 type="date"
-                value={exit.date}
+                value={order.date}
                 onChange={handleChange}
                 required
               />
@@ -340,15 +323,17 @@ const StockExitNew = () => {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="invoiceNumber" className="text-sm font-medium text-gestorApp-gray-dark">
-              Número da Fatura
+            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+              Notas
             </label>
-            <Input
-              id="invoiceNumber"
-              name="invoiceNumber"
-              value={exit.invoiceNumber}
+            <textarea
+              id="notes"
+              name="notes"
+              value={order.notes}
               onChange={handleChange}
-              placeholder="FAT2023XXXX"
+              placeholder="Observações adicionais sobre a encomenda..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+              rows={3}
             />
           </div>
           
@@ -359,10 +344,10 @@ const StockExitNew = () => {
           </div>
           
           <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/saidas/historico')}>
+            <Button variant="outline" type="button" onClick={() => navigate('/encomendas/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit">Registar Saída</Button>
+            <Button type="submit">Registar Encomenda</Button>
           </div>
         </form>
       </div>
@@ -370,4 +355,4 @@ const StockExitNew = () => {
   );
 };
 
-export default StockExitNew;
+export default OrderNew;

@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag
+  UserIcon, Settings, Tag, Support, ClipboardList
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
@@ -55,6 +55,12 @@ const AppSidebar: React.FC = () => {
       isActive: location.pathname.includes('/fornecedores')
     },
     { 
+      path: '/encomendas/consultar', 
+      label: 'Encomendas', 
+      icon: <ClipboardList className="w-5 h-5" />,
+      isActive: location.pathname.includes('/encomendas')
+    },
+    { 
       path: '/entradas/historico', 
       label: 'Entradas', 
       icon: <LogIn className="w-5 h-5" />,
@@ -66,6 +72,12 @@ const AppSidebar: React.FC = () => {
       icon: <LogOut className="w-5 h-5" />,
       isActive: location.pathname.includes('/saidas')
     },
+    { 
+      path: '/suporte', 
+      label: 'Suporte', 
+      icon: <Support className="w-5 h-5" />,
+      isActive: location.pathname.includes('/suporte')
+    }
   ];
 
   const handleExportData = () => {
@@ -78,14 +90,78 @@ const AppSidebar: React.FC = () => {
       return csvContent;
     };
 
-    // In a real implementation, this would use actual data
-    // For now, we'll simulate the export
-    toast.success("Dados exportados com sucesso para tiagohp13@hotmail.com");
+    const { products } = window.appData || { products: [] };
+    
+    if (products && products.length > 0) {
+      const headers = ['id', 'code', 'name', 'description', 'category', 'purchasePrice', 'salePrice', 'currentStock'];
+      const csvContent = createCSV(products, headers);
+      
+      // Create a Blob with the CSV data
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      // Create a link and trigger download
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'produtos_exportados.csv');
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.success("Dados exportados com sucesso");
+    } else {
+      toast.error("Nenhum dado para exportar");
+    }
   };
 
   const handleImportData = () => {
-    // In a real implementation, this would open a file picker
-    toast.info("Funcionalidade de importação em desenvolvimento");
+    // Create a sample CSV template for download
+    const sampleHeaders = ['code', 'name', 'description', 'category', 'purchasePrice', 'salePrice', 'currentStock'];
+    const sampleData = [
+      {
+        code: 'PROD001',
+        name: 'Produto Exemplo 1',
+        description: 'Descrição do produto exemplo',
+        category: 'Categoria 1',
+        purchasePrice: '10.50',
+        salePrice: '19.99',
+        currentStock: '50'
+      },
+      {
+        code: 'PROD002',
+        name: 'Produto Exemplo 2',
+        description: 'Outra descrição de exemplo',
+        category: 'Categoria 2',
+        purchasePrice: '5.75',
+        salePrice: '12.99',
+        currentStock: '25'
+      }
+    ];
+    
+    const csvContent = [
+      sampleHeaders.join(','),
+      ...sampleData.map(item => sampleHeaders.map(header => JSON.stringify(item[header] || '')).join(','))
+    ].join('\n');
+    
+    // Create a Blob with the CSV data
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a link and trigger download
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'modelo_importacao.csv');
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    
+    toast.info("Ficheiro modelo para importação descarregado");
   };
 
   return (
