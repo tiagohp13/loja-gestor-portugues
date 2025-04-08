@@ -60,7 +60,7 @@ export async function fetchOrders(): Promise<Order[]> {
           productName: item.productname,
           quantity: item.quantity,
           salePrice: item.saleprice,
-          discount: item.discount || 0
+          discount: item.discount || 0 // Add fallback to 0 if discount is missing
         }));
 
         // Return the order with its mapped items
@@ -132,7 +132,7 @@ export async function createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'u
         productname: item.productName,
         quantity: item.quantity,
         saleprice: item.salePrice,
-        discount: item.discount || 0
+        discount: item.discount || 0 // Ensure discount is provided or set to 0
       }));
       
       const { error: itemsError } = await supabase
@@ -193,7 +193,7 @@ export async function updateOrder(id: string, updates: Partial<Order>): Promise<
         productname: item.productName,
         quantity: item.quantity,
         saleprice: item.salePrice,
-        discount: item.discount || 0
+        discount: item.discount || 0 // Ensure discount is provided or set to 0
       }));
       
       const { error: itemsError } = await supabase
@@ -279,7 +279,7 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
       productName: item.productname,
       quantity: item.quantity,
       salePrice: item.saleprice,
-      discount: item.discount || 0
+      discount: item.discount || 0 // Add fallback to 0 if discount is missing
     }));
     
     const mappedOrder: Order = {

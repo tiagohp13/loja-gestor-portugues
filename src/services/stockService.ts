@@ -68,7 +68,7 @@ export async function fetchStockEntries(): Promise<StockEntry[]> {
           productName: item.productname,
           quantity: item.quantity,
           purchasePrice: item.purchaseprice,
-          discount: item.discount || 0
+          discount: item.discount || 0 // Add fallback to 0 if discount is missing
         }));
 
         // Return the entry with its mapped items
@@ -141,7 +141,7 @@ export async function createStockEntry(entryData: Omit<StockEntry, 'id' | 'creat
         productname: item.productName,
         quantity: item.quantity,
         purchaseprice: item.purchasePrice,
-        discount: item.discount || 0
+        discount: item.discount || 0 // Ensure discount is provided or set to 0
       }));
       
       const { error: itemsError } = await supabase
@@ -211,7 +211,7 @@ export async function fetchStockExits(): Promise<StockExit[]> {
           productName: item.productname,
           quantity: item.quantity,
           salePrice: item.saleprice,
-          discount: item.discount || 0
+          discount: item.discount || 0 // Add fallback to 0 if discount is missing
         }));
 
         // Return the exit with its mapped items
@@ -288,7 +288,7 @@ export async function createStockExit(exitData: Omit<StockExit, 'id' | 'createdA
         productname: item.productName,
         quantity: item.quantity,
         saleprice: item.salePrice,
-        discount: item.discount || 0
+        discount: item.discount || 0 // Ensure discount is provided or set to 0
       }));
       
       const { error: itemsError } = await supabase
@@ -359,7 +359,7 @@ export async function updateStockEntry(id: string, updates: Partial<StockEntry>)
       productName: item.productname,
       quantity: item.quantity,
       purchasePrice: item.purchaseprice,
-      discount: item.discount || 0
+      discount: item.discount || 0 // Add fallback to 0 if discount is missing
     }));
     
     // Return the updated entry with its mapped items
@@ -439,7 +439,7 @@ export async function updateStockExit(id: string, updates: Partial<StockExit>): 
       productName: item.productname,
       quantity: item.quantity,
       salePrice: item.saleprice,
-      discount: item.discount || 0
+      discount: item.discount || 0 // Add fallback to 0 if discount is missing
     }));
     
     // Return the updated exit with its mapped items
