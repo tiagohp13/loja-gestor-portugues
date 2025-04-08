@@ -145,6 +145,34 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     fetchAllData();
   }, []);
   
+  useEffect(() => {
+    // Set up real-time listeners for stock_entries and stock_exits
+    const stockEntriesChannel = supabase
+      .channel('public:stock_entries')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_entries' }, 
+        () => {
+          fetchStockEntries();
+        }
+      )
+      .subscribe();
+    
+    const stockExitsChannel = supabase
+      .channel('public:stock_exits')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_exits' }, 
+        () => {
+          fetchStockExits();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(stockEntriesChannel);
+      supabase.removeChannel(stockExitsChannel);
+    };
+  }, []);
+  
   const getProduct = (id: string): Product | undefined => {
     return products.find(product => product.id === id);
   };
@@ -519,6 +547,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const fetchStockEntries = async () => {
+    console.log("Fetching stock entries...");
     try {
       const { data, error } = await supabase
         .from('stock_entries')
@@ -528,9 +557,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         `)
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching stock entries:', error);
+        throw error;
+      }
       
       if (data) {
+        console.log("Received stock entries data:", data);
         const formattedEntries = data.map(entry => ({
           id: entry.id,
           number: entry.number,
@@ -1109,6 +1142,26 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const entryNumber = entryNumberData || `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
+      // Create a temporary ID for optimistic update
+      const tempId = crypto.randomUUID();
+      
+      // Create optimistic entry for immediate UI update
+      const optimisticEntry: StockEntry = {
+        id: tempId,
+        number: entryNumber,
+        supplierId: entry.supplierId,
+        supplierName: entry.supplierName,
+        date: entry.date,
+        invoiceNumber: entry.invoiceNumber || '',
+        notes: entry.notes || '',
+        createdAt: new Date().toISOString(),
+        items: entry.items
+      };
+      
+      // Update UI immediately (optimistic update)
+      setStockEntries(prev => [optimisticEntry, ...prev]);
+      
+      // Then perform the actual database operation
       const { data, error } = await supabase
         .from('stock_entries')
         .insert({
@@ -1141,6 +1194,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (itemsError) throw itemsError;
       
+      // Update product stock quantities
       for (const item of entry.items) {
         const product = products.find(p => p.id === item.productId);
         if (product) {
@@ -1157,6 +1211,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
       
+      // Remove optimistic entry and add real entry with correct ID
       const newEntry: StockEntry = {
         id: data.id,
         number: data.number,
@@ -1169,13 +1224,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         items: entry.items
       };
       
+      setStockEntries(prev => [
+        ...prev.filter(e => e.id !== tempId),
+        newEntry
+      ]);
+      
+      // Also refresh products to get updated stock values
       await fetchProducts();
-      setStockEntries([newEntry, ...stockEntries]);
+      
       toast.success('Entrada registada com sucesso');
       return newEntry;
     } catch (error) {
       console.error('Error adding stock entry:', error);
       toast.error('Erro ao adicionar entrada de stock');
+      // Remove the optimistic entry if there was an error
+      setStockEntries(prev => prev.filter(e => e.id !== crypto.randomUUID()));
       throw error;
     }
   };

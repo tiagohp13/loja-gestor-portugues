@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -10,10 +11,22 @@ import EmptyState from '@/components/common/EmptyState';
 
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
-  const { categories, deleteCategory } = useData();
+  const { categories, deleteCategory, products } = useData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoriesWithCount, setCategoriesWithCount] = useState(categories);
   
-  const filteredCategories = categories?.filter(category => 
+  useEffect(() => {
+    if (categories && products) {
+      // Calculate product counts for each category
+      const updatedCategories = categories.map(category => {
+        const productCount = products.filter(product => product.category === category.name).length;
+        return { ...category, productCount };
+      });
+      setCategoriesWithCount(updatedCategories);
+    }
+  }, [categories, products]);
+  
+  const filteredCategories = categoriesWithCount?.filter(category => 
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
@@ -69,7 +82,7 @@ const CategoryList: React.FC = () => {
                     onClick={() => handleViewCategory(category.id)}
                   >
                     <td className="px-4 py-3 text-sm">{category.name}</td>
-                    <td className="px-4 py-3 text-sm">{category.productCount || 0}</td>
+                    <td className="px-4 py-3 text-sm">{category.productCount}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
                         <Button 

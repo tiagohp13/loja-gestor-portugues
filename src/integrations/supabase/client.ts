@@ -22,9 +22,21 @@ export const supabase = createClient<Database>(
     },
     db: {
       schema: 'public'
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
     }
   }
 );
+
+// Enable realtime for stock_entries
+supabase.channel('public:stock_entries')
+  .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entries' }, payload => {
+    console.log('Change received!', payload);
+  })
+  .subscribe();
 
 // Utility function to convert Supabase snake_case to camelCase
 export const snakeToCamel = (obj: any) => {
