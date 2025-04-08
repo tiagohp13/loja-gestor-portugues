@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -152,7 +151,7 @@ const ProductDetail = () => {
                   {product.currentStock < product.minStock ? (
                     <Badge variant="destructive">Abaixo do Mínimo</Badge>
                   ) : (
-                    <Badge variant="success">OK</Badge>
+                    <Badge variant="default">OK</Badge>
                   )}
                 </span>
               </div>

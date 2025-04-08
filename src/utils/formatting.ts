@@ -6,7 +6,7 @@ export const formatCurrency = (value: number): string => {
   }).format(value);
 };
 
-export const formatDate = (date: Date): string => {
+export const formatDate = (date: Date | string): string => {
   return new Intl.DateTimeFormat('pt-PT', {
     day: '2-digit',
     month: '2-digit',
@@ -22,6 +22,11 @@ export const formatDateTime = (date: Date | string): string => {
     hour: '2-digit',
     minute: '2-digit',
   }).format(new Date(date));
+};
+
+// Add the missing formatDateString function
+export const formatDateString = (date: Date | string): string => {
+  return formatDate(date);
 };
 
 export const generateFormattedOrderNumber = (counter: number): string => {

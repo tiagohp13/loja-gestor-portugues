@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatDateString } from '@/utils/formatting';
+import { formatDateTime, formatDateString } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
 import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -165,7 +165,7 @@ const ClientDetail = () => {
                         total + (item.quantity * item.salePrice * (1 - (item.discountPercent || 0) / 100)), 0).toFixed(2)} €
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge variant={order.convertedToStockExitId ? "success" : "secondary"}>
+                      <Badge variant={order.convertedToStockExitId ? "default" : "secondary"}>
                         {order.convertedToStockExitId ? "Convertida" : "Pendente"}
                       </Badge>
                     </td>

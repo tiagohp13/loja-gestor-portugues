@@ -1,31 +1,76 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 type StatusVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 interface StatusBadgeProps {
-  variant: StatusVariant;
-  children: React.ReactNode;
+  variant?: StatusVariant;
+  children?: React.ReactNode;
   className?: string;
+  status?: string;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ variant, children, className }) => {
-  const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
+const StatusBadge: React.FC<StatusBadgeProps> = ({ variant, children, className, status }) => {
+  // Handle status prop if provided
+  if (status && !variant && !children) {
+    let statusVariant: StatusVariant = 'neutral';
+    let displayText = 'Desconhecido';
+    
+    switch (status.toLowerCase()) {
+      case 'active':
+        statusVariant = 'success';
+        displayText = 'Ativo';
+        break;
+      case 'inactive':
+        statusVariant = 'danger';
+        displayText = 'Inativo';
+        break;
+      case 'pending':
+        statusVariant = 'warning';
+        displayText = 'Pendente';
+        break;
+      default:
+        statusVariant = 'neutral';
+        displayText = status;
+    }
+    
+    return (
+      <Badge 
+        variant={mapVariantToUiBadge(statusVariant)} 
+        className={className}
+      >
+        {displayText}
+      </Badge>
+    );
+  }
   
-  const variantClasses: Record<StatusVariant, string> = {
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800',
-    neutral: 'bg-gray-100 text-gray-800',
-  };
-  
+  // Handle explicit variant and children
   return (
-    <span className={cn(baseClasses, variantClasses[variant], className)}>
+    <Badge 
+      variant={mapVariantToUiBadge(variant || 'neutral')} 
+      className={className}
+    >
       {children}
-    </span>
+    </Badge>
   );
 };
+
+// Map our status variants to UI badge variants
+function mapVariantToUiBadge(variant: StatusVariant): "default" | "destructive" | "outline" | "secondary" {
+  switch (variant) {
+    case 'success':
+      return 'default'; // Using default (green) for success
+    case 'danger':
+      return 'destructive';
+    case 'warning':
+      return 'outline';
+    case 'info':
+    case 'neutral':
+    default:
+      return 'secondary';
+  }
+}
 
 export default StatusBadge;
