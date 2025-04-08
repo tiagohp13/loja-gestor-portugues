@@ -22,6 +22,7 @@ export interface Product {
   currentStock: number;
   minStock: number;
   image: string;
+  status: 'active' | 'inactive';
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -34,6 +35,7 @@ export interface Client {
   address: string;
   taxId: string;
   notes?: string;
+  status: 'active' | 'inactive';
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -46,6 +48,7 @@ export interface Supplier {
   address: string;
   taxId: string;
   notes?: string;
+  status: 'active' | 'inactive';
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -55,6 +58,7 @@ export interface Category {
   name: string;
   description: string;
   productCount: number;
+  status: 'active' | 'inactive';
   createdAt: Date | string;
   updatedAt: Date | string;
 }
@@ -62,9 +66,9 @@ export interface Category {
 export interface StockEntry {
   id: string;
   productId: string;
-  productName?: string;
+  productName: string;
   supplierId: string;
-  supplierName?: string;
+  supplierName: string;
   quantity: number;
   purchasePrice: number;
   invoiceNumber?: string;
@@ -76,12 +80,25 @@ export interface StockEntry {
 export interface StockExit {
   id: string;
   productId: string;
+  productName: string;
+  clientId: string;
+  clientName: string;
+  quantity: number;
+  salePrice: number;
+  invoiceNumber?: string;
+  notes?: string;
+  date: string;
+  createdAt: Date | string;
+}
+
+export interface Order {
+  id: string;
+  date: string;
+  productId: string;
   productName?: string;
   clientId: string;
   clientName?: string;
   quantity: number;
   salePrice: number;
   notes?: string;
-  date: string;
-  createdAt: Date | string;
 }

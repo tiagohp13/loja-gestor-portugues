@@ -124,6 +124,7 @@ const StockExitNew = () => {
       ...exit,
       productName: product.name,
       clientName: client.name,
+      createdAt: new Date().toISOString() // Add createdAt field
     });
     
     navigate('/saidas/historico');

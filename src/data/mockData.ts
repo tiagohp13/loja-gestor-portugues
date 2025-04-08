@@ -13,6 +13,7 @@ export const clients: Client[] = [];
 export const suppliers: Supplier[] = [];
 export const stockEntries: StockEntry[] = [];
 export const stockExits: StockExit[] = [];
+export const categories: Category[] = [];
 
 // Helper function to get a product with its stock movements
 export const getProductWithHistory = (productId: string) => {

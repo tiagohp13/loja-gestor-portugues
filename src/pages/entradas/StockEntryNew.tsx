@@ -105,7 +105,7 @@ const StockEntryNew = () => {
       return;
     }
     
-    // Get the product and supplier names
+    // Get the product and supplier
     const product = products.find(p => p.id === entry.productId);
     const supplier = suppliers.find(s => s.id === entry.supplierId);
     
@@ -119,7 +119,9 @@ const StockEntryNew = () => {
       ...entry,
       productName: product.name,
       supplierName: supplier.name,
+      createdAt: new Date().toISOString() // Add createdAt field
     });
+    
     navigate('/entradas/historico');
   };
 

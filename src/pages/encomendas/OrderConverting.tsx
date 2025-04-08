@@ -82,6 +82,7 @@ const OrderConverting = () => {
       ...exit,
       productName: order.productName,
       clientName: order.clientName,
+      createdAt: new Date().toISOString() // Add createdAt field
     });
     
     // Navigate back to the stock exits list

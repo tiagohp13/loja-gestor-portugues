@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -93,15 +94,15 @@ const ProductNew = () => {
     
     try {
       addProduct({
-        name,
-        code,
-        purchasePrice,
-        salePrice,
-        currentStock,
-        minStock,
-        category,
-        description,
-        image,
+        name: product.name,
+        code: product.code,
+        purchasePrice: product.purchasePrice,
+        salePrice: product.salePrice,
+        currentStock: product.currentStock,
+        minStock: product.minStock,
+        category: product.category,
+        description: product.description,
+        image: product.image,
         status: 'active'
       });
       
