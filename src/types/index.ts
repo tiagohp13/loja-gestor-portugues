@@ -118,12 +118,14 @@ export interface StockEntry {
   updatedAt: string;
   entryNumber: string;
   discount: number;
+  quantity?: number;
+  purchasePrice?: number;
 }
 
 export interface StockExit {
   id: string;
-  clientId: string;
-  clientName: string;
+  clientId?: string;
+  clientName?: string;
   reason: string;
   items: StockExitItem[];
   date: string;
@@ -135,4 +137,22 @@ export interface StockExit {
   exitNumber: string;
   discount: number;
   fromOrderId?: string;
+  quantity?: number;
+  salePrice?: number;
+}
+
+export interface ClientHistory {
+  id: string;
+  orders: Order[];
+  stockExits: StockExit[];
+}
+
+export interface SupplierHistory {
+  id: string;
+  entries: StockEntry[];
+}
+
+export interface ProductHistory {
+  entries: StockEntry[];
+  exits: StockExit[];
 }

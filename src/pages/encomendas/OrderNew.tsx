@@ -14,15 +14,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Check, Plus, Trash, ShoppingCart } from 'lucide-react';
+import { Check, Search, Plus, Trash, Package } from 'lucide-react';
 import { OrderItem } from '@/types';
 
 const OrderNew = () => {
   const navigate = useNavigate();
   const { addOrder, products, clients } = useData();
+  
   const [orderDetails, setOrderDetails] = useState({
-    clientId: '',
-    clientName: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
     discount: 0
@@ -43,8 +42,9 @@ const OrderNew = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [selectedClient, setSelectedClient] = useState<{ id: string; name: string } | null>(null);
 
   const handleOrderDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -64,7 +64,7 @@ const OrderNew = () => {
     }));
   };
 
-  const handleProductSearch = (value: string) => {
+  const handleSearch = (value: string) => {
     setSearchTerm(value);
   };
 
@@ -81,23 +81,18 @@ const OrderNew = () => {
         quantity: 1,
         salePrice: selectedProduct.salePrice
       });
-      
-      if (items.length === 0) {
-        setTimeout(() => {
-          addItemToOrder();
-        }, 100);
-      }
     }
     setIsProductSearchOpen(false);
   };
   
   const handleClientSelect = (clientId: string) => {
     const selectedClient = clients.find(c => c.id === clientId);
-    setOrderDetails(prev => ({
-      ...prev,
-      clientId,
-      clientName: selectedClient?.name || ''
-    }));
+    if (selectedClient) {
+      setSelectedClient({
+        id: selectedClient.id,
+        name: selectedClient.name
+      });
+    }
     setIsClientSearchOpen(false);
   };
   
@@ -146,34 +141,27 @@ const OrderNew = () => {
         client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
       )
     : clients;
-
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!orderDetails.clientId || items.length === 0) {
+    if (!selectedClient || items.length === 0) {
       toast.error('Selecione um cliente e adicione pelo menos um produto');
       return;
     }
-    
-    const client = clients.find(c => c.id === orderDetails.clientId);
-    
-    if (!client) {
-      toast.error('Cliente não encontrado');
-      return;
-    }
-    
+
     addOrder({
-      clientId: orderDetails.clientId,
-      clientName: client.name,
+      clientId: selectedClient.id,
+      clientName: selectedClient.name,
       items: items,
       date: orderDetails.date,
       notes: orderDetails.notes,
       discount: parseFloat(orderDetails.discount.toString()) || 0
     });
     
-    navigate('/encomendas/consultar');
+    navigate('/encomendas/historico');
   };
-
+  
   const subtotal = items.reduce((total, item) => 
     total + (item.quantity * item.salePrice), 0);
   const discountAmount = subtotal * (orderDetails.discount / 100);
@@ -183,10 +171,10 @@ const OrderNew = () => {
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Nova Encomenda" 
-        description="Registar uma nova encomenda de cliente" 
+        description="Registar uma nova encomenda" 
         actions={
-          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
-            Voltar à Lista
+          <Button variant="outline" onClick={() => navigate('/encomendas/historico')}>
+            Voltar ao Histórico
           </Button>
         }
       />
@@ -231,7 +219,7 @@ const OrderNew = () => {
                             <div className="flex items-center justify-between w-full">
                               <div>{client.name}</div>
                             </div>
-                            {orderDetails.clientId === client.id && (
+                            {selectedClient?.id === client.id && (
                               <Check className="ml-2 h-4 w-4" />
                             )}
                           </CommandItem>
@@ -241,32 +229,34 @@ const OrderNew = () => {
                   </Command>
                 </PopoverContent>
               </Popover>
-              {orderDetails.clientId && (
+              {selectedClient && (
                 <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
                   <div className="font-medium">
-                    {clients.find(c => c.id === orderDetails.clientId)?.name || ""}
+                    {selectedClient.name}
                   </div>
                 </div>
               )}
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
-                Data
-              </label>
-              <Input
-                id="date"
-                name="date"
-                type="date"
-                value={orderDetails.date}
-                onChange={handleOrderDetailsChange}
-                required
-              />
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
+                  Data
+                </label>
+                <Input
+                  id="date"
+                  name="date"
+                  type="date"
+                  value={orderDetails.date}
+                  onChange={handleOrderDetailsChange}
+                  required
+                />
+              </div>
             </div>
             
             <div className="border-t pt-4 mt-4">
               <h3 className="text-md font-medium mb-4 flex items-center">
-                <ShoppingCart className="mr-2 h-5 w-5" />
+                <Package className="mr-2 h-5 w-5" />
                 Adicionar Produtos
               </h3>
               
@@ -294,7 +284,7 @@ const OrderNew = () => {
                         <CommandInput 
                           placeholder="Pesquisar produto por nome ou código..." 
                           value={searchTerm}
-                          onValueChange={handleProductSearch}
+                          onValueChange={handleSearch}
                         />
                         <CommandList>
                           <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
@@ -311,6 +301,8 @@ const OrderNew = () => {
                                     <span className="mx-2">-</span>
                                     <span>{product.name}</span>
                                   </div>
+                                  <div className="text-sm text-gray-500">
+                                  </div>
                                 </div>
                                 {currentItem.productId === product.id && (
                                   <Check className="ml-2 h-4 w-4" />
@@ -326,13 +318,8 @@ const OrderNew = () => {
                 
                 {currentItem.productId && (
                   <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Produto Selecionado
-                      </label>
-                      <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                        <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
-                      </div>
+                    <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
+                      <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
                     </div>
                     
                     <div className="space-y-2">
@@ -376,10 +363,6 @@ const OrderNew = () => {
                       type="button" 
                       onClick={addItemToOrder}
                       className="flex items-center"
-                      disabled={
-                        !currentItem.productId || 
-                        currentItem.quantity <= 0
-                      }
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar Produto
@@ -389,6 +372,7 @@ const OrderNew = () => {
               </div>
             </div>
             
+            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -425,68 +409,66 @@ const OrderNew = () => {
               </div>
             )}
             
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-                  Notas
-                </label>
-                <textarea
-                  id="notes"
-                  name="notes"
-                  value={orderDetails.notes}
-                  onChange={handleOrderDetailsChange}
-                  placeholder="Observações sobre a encomenda..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                  rows={3}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-                  Desconto (%)
-                </label>
-                <Input
-                  id="discount"
-                  name="discount"
-                  type="number"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  value={orderDetails.discount}
-                  onChange={handleOrderDetailsChange}
-                  placeholder="0.00"
-                />
-              </div>
+            <div className="space-y-2">
+              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+                Notas
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={orderDetails.notes}
+                onChange={handleOrderDetailsChange}
+                placeholder="Observações adicionais sobre a encomenda..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+                rows={3}
+              />
             </div>
-          </div>
-          
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <dl className="grid md:grid-cols-3 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
-                <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-blue-800">Desconto ({orderDetails.discount}%):</dt>
-                <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-blue-800">Total:</dt>
-                <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
-              </div>
-            </dl>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/encomendas/consultar')}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={items.length === 0 || !orderDetails.clientId}
-            >
-              Registar Encomenda
-            </Button>
+            
+            <div className="space-y-2">
+              <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
+                Desconto (%)
+              </label>
+              <Input
+                id="discount"
+                name="discount"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={orderDetails.discount}
+                onChange={handleOrderDetailsChange}
+                placeholder="0.00"
+              />
+            </div>
+            
+            <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
+              <dl className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
+                  <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-blue-800">Desconto ({orderDetails.discount}%):</dt>
+                  <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
+                </div>
+                <div>
+                  <dt className="text-sm font-medium text-blue-800">Total:</dt>
+                  <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
+                </div>
+              </dl>
+            </div>
+            
+            <div className="flex justify-end space-x-4">
+              <Button variant="outline" type="button" onClick={() => navigate('/encomendas/historico')}>
+                Cancelar
+              </Button>
+              <Button 
+                type="submit"
+                disabled={items.length === 0 || !selectedClient}
+              >
+                Registar Encomenda
+              </Button>
+            </div>
           </div>
         </form>
       </div>

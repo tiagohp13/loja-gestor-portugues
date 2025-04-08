@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -28,6 +29,7 @@ const SupplierDetail = () => {
   }
   
   const supplierHistory = getSupplierHistory(supplier.id);
+  const entriesArray = supplierHistory.entries || [];
   
   const handleDelete = () => {
     deleteSupplier(supplier.id);
@@ -113,7 +115,7 @@ const SupplierDetail = () => {
           <CardTitle>Histórico de Entregas</CardTitle>
         </CardHeader>
         <CardContent>
-          {supplierHistory.length > 0 ? (
+          {entriesArray.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -126,7 +128,7 @@ const SupplierDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {supplierHistory.map(entry => {
+                  {entriesArray.map(entry => {
                     const product = products.find(p => p.id === entry.productId);
                     
                     return (

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -28,6 +29,11 @@ const ClientDetail = () => {
   }
   
   const clientHistory = getClientHistory(client.id);
+  // Get all client related transactions
+  const allClientTransactions = [
+    ...clientHistory.orders,
+    ...clientHistory.stockExits
+  ];
   
   const handleDelete = () => {
     deleteClient(client.id);
@@ -113,7 +119,7 @@ const ClientDetail = () => {
           <CardTitle>Histórico de Compras</CardTitle>
         </CardHeader>
         <CardContent>
-          {clientHistory.length > 0 ? (
+          {allClientTransactions.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -126,7 +132,7 @@ const ClientDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {clientHistory.map(exit => {
+                  {allClientTransactions.map(exit => {
                     const product = products.find(p => p.id === exit.productId);
                     
                     return (
