@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
@@ -33,14 +33,63 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from '@/integrations/supabase/client';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries, products, suppliers, deleteStockEntry } = useData();
+  const { stockEntries, products, suppliers, deleteStockEntry, setStockEntries } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        setIsLoading(true);
+        const { data, error } = await supabase
+          .from('StockEntries')
+          .select(`
+            *,
+            StockEntriesItems(*)
+          `)
+          .order('createdat', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching stock entries:", error);
+          return;
+        }
+
+        if (data) {
+          // Map the database fields to match our StockEntry type
+          const mappedEntries = data.map(entry => ({
+            id: entry.id,
+            supplierId: entry.supplierid,
+            supplierName: entry.suppliername,
+            entryNumber: entry.entrynumber,
+            invoiceNumber: entry.invoicenumber,
+            notes: entry.notes,
+            status: entry.status,
+            createdAt: entry.createdat,
+            updatedAt: entry.updatedat,
+            date: entry.date,
+            discount: 0, // Set discount to 0 as we're removing this field
+            items: entry.StockEntriesItems
+          }));
+          
+          // Update the state with the mapped entries
+          setStockEntries(mappedEntries);
+        }
+      } catch (error) {
+        console.error("Error in fetchEntries:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEntries();
+  }, [setStockEntries]);
 
   // Sort entries by date (most recent first)
   const sortedEntries = [...stockEntries].sort((a, b) => 
@@ -67,13 +116,17 @@ const StockEntryList = () => {
         return (
           hasMatchingProduct ||
           (supplier && supplier.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+          (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (entry.entryNumber && entry.entryNumber.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       })
     : sortedEntries;
 
   const handleDeleteEntry = (id: string) => {
     deleteStockEntry(id);
+    if (detailsOpen) {
+      setDetailsOpen(false);
+    }
   };
 
   const handleEditEntry = (id: string) => {
@@ -81,12 +134,11 @@ const StockEntryList = () => {
   };
 
   const handleViewDetails = (id: string) => {
-    setSelectedEntry(id);
-    setDetailsOpen(true);
+    navigate(`/entradas/editar/${id}`);
   };
 
   const handleRowClick = (id: string) => {
-    handleViewDetails(id);
+    navigate(`/entradas/editar/${id}`);
   };
 
   const handleProductSelect = (productCode: string) => {
@@ -110,6 +162,20 @@ const StockEntryList = () => {
     return entry.items.reduce((total, item) => total + (item.quantity * item.purchasePrice), 0);
   };
 
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Histórico de Entradas" 
+          description="A carregar dados..." 
+        />
+        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
+          Carregando entradas de stock...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -131,7 +197,7 @@ const StockEntryList = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
                 <Input
                   className="pl-10"
-                  placeholder="Pesquisar por produto, fornecedor ou nº fatura"
+                  placeholder="Pesquisar por produto, fornecedor, nº entrada ou nº fatura"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onClick={() => setSearchOpen(true)}
@@ -171,6 +237,7 @@ const StockEntryList = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
+                <TableHead>Nº Entrada</TableHead>
                 <TableHead>Produtos</TableHead>
                 <TableHead>Fornecedor</TableHead>
                 <TableHead>Nº Fatura</TableHead>
@@ -206,6 +273,9 @@ const StockEntryList = () => {
                       onClick={() => handleRowClick(entry.id)}
                     >
                       <TableCell>{formatDateTime(ensureDate(entry.createdAt))}</TableCell>
+                      <TableCell className="font-medium">
+                        <span className="text-gestorApp-blue">{entry.entryNumber}</span>
+                      </TableCell>
                       <TableCell className="font-medium">{productDisplay}</TableCell>
                       <TableCell>{supplier ? supplier.name : 'Fornecedor removido'}</TableCell>
                       <TableCell>{entry.invoiceNumber || 'N/A'}</TableCell>
@@ -257,100 +327,6 @@ const StockEntryList = () => {
           </Table>
         </div>
       </div>
-
-      {/* Entry Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Entrada</DialogTitle>
-            <DialogDescription>
-              Informações detalhadas sobre esta entrada de stock
-            </DialogDescription>
-          </DialogHeader>
-          
-          {selectedEntryData && (
-            <div className="space-y-4 mt-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Data</p>
-                <p>{formatDateTime(ensureDate(selectedEntryData.createdAt))}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Fornecedor</p>
-                <p>{selectedSupplier ? selectedSupplier.name : 'Fornecedor removido'}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Nº Fatura</p>
-                <p>{selectedEntryData.invoiceNumber || 'N/A'}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Produtos</p>
-                <div className="border rounded-md overflow-hidden mt-2">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                      <tr>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Produto</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Qtd</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Preço</th>
-                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Total</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200">
-                      {selectedEntryData.items.map((item, index) => {
-                        const product = products.find(p => p.id === item.productId);
-                        return (
-                          <tr key={index} className="text-sm">
-                            <td className="px-3 py-2">{product ? `${product.code} - ${product.name}` : 'Produto removido'}</td>
-                            <td className="px-3 py-2">{item.quantity}</td>
-                            <td className="px-3 py-2">{formatCurrency(item.purchasePrice)}</td>
-                            <td className="px-3 py-2">{formatCurrency(item.quantity * item.purchasePrice)}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                    <tfoot className="bg-gray-50">
-                      <tr className="font-medium text-sm">
-                        <td className="px-3 py-2" colSpan={3}>Total</td>
-                        <td className="px-3 py-2">{formatCurrency(calculateEntryTotal(selectedEntryData))}</td>
-                      </tr>
-                    </tfoot>
-                  </table>
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-2 pt-4">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => {
-                    setDetailsOpen(false);
-                    handleEditEntry(selectedEntryData.id);
-                  }}
-                >
-                  <Edit className="w-4 h-4 mr-2" />
-                  Editar
-                </Button>
-                <DeleteConfirmDialog
-                  title="Eliminar Entrada"
-                  description="Tem a certeza que deseja eliminar esta entrada de stock? Esta ação é irreversível."
-                  onDelete={() => {
-                    handleDeleteEntry(selectedEntryData.id);
-                    setDetailsOpen(false);
-                  }}
-                  trigger={
-                    <Button variant="destructive" size="sm">
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Eliminar
-                    </Button>
-                  }
-                />
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

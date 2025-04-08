@@ -1,245 +1,331 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/ui/PageHeader';
+import { Search, Plus, Trash2, ArrowLeft, Save, Calendar } from 'lucide-react';
+import { formatCurrency } from '@/utils/formatting';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { toast } from 'sonner';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Check, Plus, Trash, ShoppingCart } from 'lucide-react';
-import { OrderItem } from '@/types';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 const OrderNew = () => {
   const navigate = useNavigate();
-  const { addOrder, products, clients } = useData();
-  const [orderDetails, setOrderDetails] = useState({
-    clientId: '',
-    clientName: '',
-    date: new Date().toISOString().split('T')[0],
-    notes: ''
-  });
+  const { clients, products, addOrder } = useData();
   
-  const [items, setItems] = useState<OrderItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<{
+  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  const [selectedClient, setSelectedClient] = useState<any>(null);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  
+  const [orderItems, setOrderItems] = useState<Array<{
     productId: string;
     productName: string;
     quantity: number;
     salePrice: number;
-  }>({
-    productId: '',
-    productName: '',
-    quantity: 1,
-    salePrice: 0
-  });
+  }>>([]);
   
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState('');
-  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
-
-  const handleOrderDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setOrderDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState<any>(null);
+  const [currentQuantity, setCurrentQuantity] = useState(1);
+  
+  const [notes, setNotes] = useState('');
+  
+  // Filter clients based on search term
+  const filteredClients = clientSearchTerm 
+    ? clients.filter(client => 
+        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+        (client.taxId && client.taxId.toLowerCase().includes(clientSearchTerm.toLowerCase())))
+    : clients;
+  
+  // Filter products based on search term
+  const filteredProducts = productSearchTerm
+    ? products.filter(product => 
+        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+        product.code.toLowerCase().includes(productSearchTerm.toLowerCase()))
+    : products;
+  
+  // Select client handler
+  const handleSelectClient = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    setSelectedClientId(clientId);
+    setSelectedClient(client);
+    setClientSearchTerm(client ? client.name : '');
+    setClientSearchOpen(false);
   };
   
-  const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentItem(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' 
-              ? parseFloat(value) || 0 
-              : value
-    }));
-  };
-
-  const handleProductSearch = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  const handleClientSearch = (value: string) => {
-    setClientSearchTerm(value);
-  };
-
-  const handleProductSelect = (productId: string) => {
-    const selectedProduct = products.find(p => p.id === productId);
-    if (selectedProduct) {
-      setCurrentItem({
-        productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        quantity: 1,
-        salePrice: selectedProduct.salePrice
-      });
-      
-      // Automatically add product if this is the first selection
-      // Otherwise user will click "Add Product" button
-      if (items.length === 0 && !isProductSearchOpen) {
-        setTimeout(() => {
-          addItemToOrder();
-        }, 100);
-      }
+  // Select product handler
+  const handleSelectProduct = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      setCurrentProduct(product);
+      setProductSearchTerm(`${product.code} - ${product.name}`);
     }
-    setIsProductSearchOpen(false);
+    setProductSearchOpen(false);
   };
   
-  const handleClientSelect = (clientId: string) => {
-    const selectedClient = clients.find(c => c.id === clientId);
-    setOrderDetails(prev => ({
-      ...prev,
-      clientId,
-      clientName: selectedClient?.name || ''
-    }));
-    setIsClientSearchOpen(false);
-  };
-  
-  const addItemToOrder = () => {
-    if (!currentItem.productId || currentItem.quantity <= 0) {
-      toast.error('Selecione um produto e uma quantidade válida');
+  // Add product to order
+  const handleAddProduct = () => {
+    if (!currentProduct) {
+      toast.error("Selecione um produto primeiro");
       return;
     }
     
-    // Check if the product is already in the order
-    const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
+    if (currentQuantity <= 0) {
+      toast.error("A quantidade deve ser maior que zero");
+      return;
+    }
+    
+    // Check if product already exists in order
+    const existingItemIndex = orderItems.findIndex(item => item.productId === currentProduct.id);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
-      const updatedItems = [...items];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice // Update the price in case it changed
-      };
-      setItems(updatedItems);
+      // Update existing item quantity
+      const updatedItems = [...orderItems];
+      updatedItems[existingItemIndex].quantity += currentQuantity;
+      setOrderItems(updatedItems);
     } else {
       // Add new item
-      setItems([...items, { ...currentItem }]);
+      setOrderItems([...orderItems, {
+        productId: currentProduct.id,
+        productName: `${currentProduct.code} - ${currentProduct.name}`,
+        quantity: currentQuantity,
+        salePrice: currentProduct.salePrice
+      }]);
     }
     
-    // Reset current item
-    setCurrentItem({
-      productId: '',
-      productName: '',
-      quantity: 1,
-      salePrice: 0
-    });
-    setSearchTerm('');
+    // Reset product form
+    setCurrentProduct(null);
+    setProductSearchTerm('');
+    setCurrentQuantity(1);
+    
+    toast.success("Produto adicionado à encomenda");
   };
   
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+  // Remove product from order
+  const handleRemoveProduct = (index: number) => {
+    const updatedItems = [...orderItems];
+    updatedItems.splice(index, 1);
+    setOrderItems(updatedItems);
   };
-
-  const filteredProducts = searchTerm
-    ? products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : products;
-
-  const filteredClients = clientSearchTerm
-    ? clients.filter(client => 
-        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
-      )
-    : clients;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (!orderDetails.clientId || items.length === 0) {
-      toast.error('Selecione um cliente e adicione pelo menos um produto');
+  
+  // Calculate order total
+  const calculateTotal = () => {
+    return orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
+  };
+  
+  // Save order
+  const handleSaveOrder = async () => {
+    if (!selectedClientId) {
+      toast.error("Selecione um cliente para a encomenda");
       return;
     }
     
-    // Get the client
-    const client = clients.find(c => c.id === orderDetails.clientId);
-    
-    if (!client) {
-      toast.error('Cliente não encontrado');
+    if (orderItems.length === 0) {
+      toast.error("Adicione pelo menos um produto à encomenda");
       return;
     }
     
-    // Add the order
-    addOrder({
-      clientId: orderDetails.clientId,
-      clientName: client.name,
-      items: items,
-      date: orderDetails.date,
-      notes: orderDetails.notes
-    });
-    
-    navigate('/encomendas/consultar');
+    try {
+      const newOrder = {
+        clientId: selectedClientId,
+        clientName: selectedClient.name,
+        date: orderDate.toISOString(),
+        items: orderItems.map(item => ({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          salePrice: item.salePrice
+        })),
+        notes
+      };
+      
+      await addOrder(newOrder);
+      navigate('/encomendas/consultar');
+    } catch (error) {
+      console.error("Error saving order:", error);
+      toast.error("Erro ao salvar a encomenda");
+    }
   };
-
-  // Calculate total value
-  const totalValue = items.reduce((total, item) => 
-    total + (item.quantity * item.salePrice), 0);
-
+  
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Nova Encomenda" 
-        description="Registar uma nova encomenda de cliente" 
+        description="Criar uma nova encomenda"
         actions={
-          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
-            Voltar à Lista
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+            <Button onClick={handleSaveOrder}>
+              <Save className="mr-2 h-4 w-4" />
+              Guardar Encomenda
+            </Button>
+          </div>
         }
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="grid gap-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="clientSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                Pesquisar Cliente
-              </label>
-              <Popover open={isClientSearchOpen} onOpenChange={setIsClientSearchOpen}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div>
+            <Label htmlFor="cliente">Cliente</Label>
+            <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+              <PopoverTrigger asChild>
+                <div className="relative mt-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    id="cliente"
+                    className="pl-10"
+                    placeholder="Pesquisar cliente por nome ou NIF"
+                    value={clientSearchTerm}
+                    onChange={(e) => setClientSearchTerm(e.target.value)}
+                  />
+                </div>
+              </PopoverTrigger>
+              <PopoverContent className="p-0 w-[calc(100vw-2rem)] md:w-[550px]" align="start">
+                <Command>
+                  <CommandInput 
+                    placeholder="Pesquisar cliente..." 
+                    value={clientSearchTerm}
+                    onValueChange={setClientSearchTerm}
+                  />
+                  <CommandList>
+                    <CommandEmpty>
+                      <div className="p-4 text-center">
+                        <p className="text-sm text-gray-500">Nenhum cliente encontrado</p>
+                        <Button 
+                          variant="link" 
+                          className="mt-2 text-gestorApp-blue"
+                          onClick={() => navigate('/clientes/novo')}
+                        >
+                          + Adicionar novo cliente
+                        </Button>
+                      </div>
+                    </CommandEmpty>
+                    <CommandGroup heading="Clientes">
+                      {filteredClients.map(client => (
+                        <CommandItem
+                          key={client.id}
+                          value={client.name}
+                          onSelect={() => handleSelectClient(client.id)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="font-medium">{client.name}</span>
+                            {client.taxId && (
+                              <span className="text-xs text-gray-500">NIF: {client.taxId}</span>
+                            )}
+                          </div>
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
+          
+          <div>
+            <Label htmlFor="date">Data da Encomenda</Label>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start text-left font-normal mt-1"
+                >
+                  <Calendar className="mr-2 h-4 w-4" />
+                  {format(orderDate, "dd 'de' MMMM 'de' yyyy", { locale: pt })}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <CalendarComponent
+                  mode="single"
+                  selected={orderDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      setOrderDate(date);
+                      setCalendarOpen(false);
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        
+        <div className="mt-6">
+          <h3 className="text-lg font-medium mb-2">Produtos</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+            <div className="md:col-span-2">
+              <Label htmlFor="produto">Produto</Label>
+              <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
                 <PopoverTrigger asChild>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                  <div className="relative mt-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <Input
-                      id="clientSearch"
+                      id="produto"
                       className="pl-10"
-                      placeholder="Pesquisar cliente por nome"
-                      value={clientSearchTerm}
-                      onChange={(e) => setClientSearchTerm(e.target.value)}
-                      onClick={() => setIsClientSearchOpen(true)}
+                      placeholder="Pesquisar produto por nome ou código"
+                      value={productSearchTerm}
+                      onChange={(e) => setProductSearchTerm(e.target.value)}
                     />
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+                <PopoverContent className="p-0 w-[calc(100vw-2rem)] md:w-[550px]" align="start">
                   <Command>
                     <CommandInput 
-                      placeholder="Pesquisar cliente..." 
-                      value={clientSearchTerm}
-                      onValueChange={handleClientSearch}
+                      placeholder="Pesquisar produto..." 
+                      value={productSearchTerm}
+                      onValueChange={setProductSearchTerm}
                     />
                     <CommandList>
-                      <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                      <CommandGroup heading="Clientes">
-                        {filteredClients.map((client) => (
-                          <CommandItem 
-                            key={client.id} 
-                            value={client.name}
-                            onSelect={() => handleClientSelect(client.id)}
+                      <CommandEmpty>
+                        <div className="p-4 text-center">
+                          <p className="text-sm text-gray-500">Nenhum produto encontrado</p>
+                          <Button 
+                            variant="link" 
+                            className="mt-2 text-gestorApp-blue"
+                            onClick={() => navigate('/produtos/novo')}
                           >
-                            <div className="flex items-center justify-between w-full">
-                              <div>{client.name}</div>
+                            + Adicionar novo produto
+                          </Button>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup heading="Produtos">
+                        {filteredProducts.map(product => (
+                          <CommandItem
+                            key={product.id}
+                            value={`${product.code} - ${product.name}`}
+                            onSelect={() => handleSelectProduct(product.id)}
+                          >
+                            <div className="flex flex-col">
+                              <div>
+                                <span className="font-medium mr-2">{product.code}</span>
+                                <span>{product.name}</span>
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                <span className="text-gestorApp-blue font-medium">
+                                  {formatCurrency(product.salePrice)}
+                                </span>
+                                <span className="mx-2">|</span>
+                                <span>Stock: {product.currentStock} unidades</span>
+                              </div>
                             </div>
-                            {orderDetails.clientId === client.id && (
-                              <Check className="ml-2 h-4 w-4" />
-                            )}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -247,228 +333,102 @@ const OrderNew = () => {
                   </Command>
                 </PopoverContent>
               </Popover>
-              {orderDetails.clientId && (
-                <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
-                  <div className="font-medium">
-                    {clients.find(c => c.id === orderDetails.clientId)?.name || ""}
-                  </div>
-                </div>
-              )}
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
-                Data
-              </label>
-              <Input
-                id="date"
-                name="date"
-                type="date"
-                value={orderDetails.date}
-                onChange={handleOrderDetailsChange}
-                required
+            <div>
+              <Label htmlFor="quantidade">Quantidade</Label>
+              <Input 
+                id="quantidade"
+                type="number" 
+                min="1"
+                value={currentQuantity}
+                onChange={(e) => setCurrentQuantity(Number(e.target.value))}
+                className="mt-1"
               />
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-                Notas
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={orderDetails.notes}
-                onChange={handleOrderDetailsChange}
-                placeholder="Observações sobre a encomenda..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                rows={3}
-              />
+            <div className="flex items-end">
+              <Button 
+                onClick={handleAddProduct}
+                disabled={!currentProduct}
+                className="w-full"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar
+              </Button>
             </div>
-            
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-md font-medium mb-4 flex items-center">
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Adicionar Produtos
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                    Pesquisar Produto
-                  </label>
-                  <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-                        <Input
-                          id="productSearch"
-                          className="pl-10"
-                          placeholder="Pesquisar por nome ou código"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onClick={() => setIsProductSearchOpen(true)}
-                        />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Pesquisar produto por nome ou código..." 
-                          value={searchTerm}
-                          onValueChange={handleProductSearch}
-                        />
-                        <CommandList>
-                          <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
-                          <CommandGroup heading="Produtos">
-                            {filteredProducts.map((product) => (
-                              <CommandItem 
-                                key={product.id} 
-                                value={`${product.code} - ${product.name}`}
-                                onSelect={() => handleProductSelect(product.id)}
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <div>
-                                    <span className="font-medium">{product.code}</span>
-                                    <span className="mx-2">-</span>
-                                    <span>{product.name}</span>
-                                  </div>
-                                </div>
-                                {currentItem.productId === product.id && (
-                                  <Check className="ml-2 h-4 w-4" />
-                                )}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                {currentItem.productId && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Produto Selecionado
-                      </label>
-                      <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                        <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="quantity" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Quantidade
-                      </label>
-                      <Input
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        min="1"
-                        value={currentItem.quantity}
-                        onChange={handleItemChange}
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Preço Unitário (€)
-                      </label>
-                      <Input
-                        id="salePrice"
-                        name="salePrice"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={currentItem.salePrice}
-                        onChange={handleItemChange}
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {currentItem.productId && (
-                  <div className="flex justify-end">
-                    <Button 
-                      type="button" 
-                      onClick={addItemToOrder}
-                      className="flex items-center"
-                      disabled={
-                        !currentItem.productId || 
-                        currentItem.quantity <= 0
-                      }
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Adicionar Produto
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            {/* Products list */}
-            {items.length > 0 && (
-              <div className="border rounded-md mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+          </div>
+          
+          <div className="mt-4 border rounded-md overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {orderItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                      Nenhum produto adicionado
+                    </td>
+                  </tr>
+                ) : (
+                  orderItems.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {item.productName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {item.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatCurrency(item.salePrice)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-blue font-medium">
+                        {formatCurrency(item.quantity * item.salePrice)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleRemoveProduct(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeItem(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                  ))
+                )}
+              </tbody>
+              <tfoot className="bg-gray-50">
+                <tr>
+                  <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    Total
+                  </td>
+                  <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
+                    {formatCurrency(calculateTotal())}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
           
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <p className="text-lg font-semibold text-blue-800">
-              Valor Total: {totalValue.toFixed(2)} €
-            </p>
-            <p className="text-sm text-blue-600 mt-1">
-              Total de itens: {items.length}
-            </p>
+          <div className="mt-6">
+            <Label htmlFor="notes">Notas</Label>
+            <Textarea
+              id="notes"
+              placeholder="Observações ou notas adicionais para esta encomenda"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              className="mt-1 h-32"
+            />
           </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/encomendas/consultar')}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={items.length === 0 || !orderDetails.clientId}
-            >
-              Registar Encomenda
-            </Button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
   );
