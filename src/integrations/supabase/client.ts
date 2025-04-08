@@ -31,12 +31,20 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Enable realtime for stock_entries
-supabase.channel('public:stock_entries')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entries' }, payload => {
-    console.log('Change received!', payload);
-  })
-  .subscribe();
+// Enable realtime for all tables that need it
+const channels = {
+  stockEntries: supabase.channel('public:stock_entries')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entries' }, payload => {
+      console.log('Stock entry change received!', payload);
+    })
+    .subscribe(),
+    
+  stockEntryItems: supabase.channel('public:stock_entry_items')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entry_items' }, payload => {
+      console.log('Stock entry item change received!', payload);
+    })
+    .subscribe()
+};
 
 // Utility function to convert Supabase snake_case to camelCase
 export const snakeToCamel = (obj: any) => {

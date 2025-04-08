@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -33,6 +34,7 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -42,58 +44,87 @@ const StockEntryList = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [localEntries, setLocalEntries] = useState([]);
 
+  // Force fetch on component mount and whenever we return to this page
   useEffect(() => {
     const fetchEntries = async () => {
       try {
         setIsLoading(true);
+        console.log("Fetching stock entries directly in StockEntryList component...");
+        
         const { data, error } = await supabase
-          .from('StockEntries')
+          .from('stock_entries')
           .select(`
             *,
-            StockEntriesItems(*)
+            stock_entry_items(*)
           `)
-          .order('createdat', { ascending: false });
+          .order('created_at', { ascending: false });
 
         if (error) {
           console.error("Error fetching stock entries:", error);
+          toast.error("Erro ao carregar entradas de stock");
           return;
         }
 
         if (data) {
+          console.log("Stock entries data received:", data);
+          
           // Map the database fields to match our StockEntry type
           const mappedEntries = data.map(entry => ({
             id: entry.id,
-            supplierId: entry.supplierid,
-            supplierName: entry.suppliername,
-            number: entry.entrynumber,
-            invoiceNumber: entry.invoicenumber,
+            supplierId: entry.supplier_id,
+            supplierName: entry.supplier_name,
+            number: entry.number,
+            invoiceNumber: entry.invoice_number,
             notes: entry.notes,
             date: entry.date,
-            createdAt: entry.createdat,
-            items: entry.StockEntriesItems.map((item: any) => ({
-              productId: item.productid,
-              productName: item.productname,
+            createdAt: entry.created_at,
+            items: entry.stock_entry_items.map((item: any) => ({
+              productId: item.product_id,
+              productName: item.product_name,
               quantity: item.quantity,
-              purchasePrice: item.purchaseprice,
-              discountPercent: item.discount
+              purchasePrice: item.purchase_price,
+              discountPercent: item.discount_percent
             }))
           }));
           
-          // Update the state with the mapped entries
+          // Update both the local state and the context state
+          setLocalEntries(mappedEntries);
           setStockEntries(mappedEntries);
         }
       } catch (error) {
         console.error("Error in fetchEntries:", error);
+        toast.error("Erro ao carregar entradas de stock");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchEntries();
+    
+    // Set up a realtime listener for stock entries
+    const channel = supabase
+      .channel('stock_entries_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_entries' }, 
+        (payload) => {
+          console.log('Stock entry change detected:', payload);
+          fetchEntries(); // Refresh the data when changes occur
+        }
+      )
+      .subscribe();
+      
+    // Cleanup the subscription when the component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [setStockEntries]);
 
-  const sortedEntries = [...stockEntries].sort((a, b) => 
+  // Use the entries from the context or local state
+  const displayEntries = stockEntries.length > 0 ? stockEntries : localEntries;
+  
+  const sortedEntries = [...displayEntries].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -150,14 +181,14 @@ const StockEntryList = () => {
     setSearchOpen(false);
   };
 
-  const selectedEntryData = selectedEntry ? stockEntries.find(entry => entry.id === selectedEntry) : null;
+  const selectedEntryData = selectedEntry ? displayEntries.find(entry => entry.id === selectedEntry) : null;
   const selectedSupplier = selectedEntryData ? suppliers.find(s => s.id === selectedEntryData.supplierId) : null;
 
   const ensureDate = (dateInput: string | Date): Date => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
 
-  const calculateEntryTotal = (entry: typeof stockEntries[0]) => {
+  const calculateEntryTotal = (entry: typeof displayEntries[0]) => {
     return entry.items.reduce((total, item) => total + (item.quantity * item.purchasePrice), 0);
   };
 
@@ -173,6 +204,11 @@ const StockEntryList = () => {
         </div>
       </div>
     );
+  }
+
+  if (filteredEntries.length === 0 && !searchTerm) {
+    console.log("No entries found, but we have in context:", stockEntries.length);
+    console.log("Local entries:", localEntries.length);
   }
 
   return (
