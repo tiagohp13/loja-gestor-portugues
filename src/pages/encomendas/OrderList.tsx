@@ -7,16 +7,17 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import EmptyState from '@/components/common/EmptyState';
-import { ClipboardList, Search, Plus, LogOut, ChevronUp, ChevronDown, Edit } from 'lucide-react';
+import { ClipboardList, Search, Plus, LogOut, ChevronUp, ChevronDown, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 
 type SortField = 'number' | 'date' | 'clientName' | 'totalValue';
 type SortDirection = 'asc' | 'desc';
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const { orders } = useData();
+  const { orders, deleteOrder } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('number');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -58,6 +59,16 @@ const OrderList = () => {
 
   const handleCreateStockExit = (orderId: string) => {
     navigate(`/encomendas/converter/${orderId}`);
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    try {
+      await deleteOrder(id);
+      toast.success("Encomenda eliminada com sucesso");
+    } catch (error) {
+      console.error("Error deleting order:", error);
+      toast.error("Erro ao eliminar encomenda");
+    }
   };
 
   const toggleSort = (field: SortField) => {
@@ -234,9 +245,20 @@ const OrderList = () => {
                             <Button 
                               size="sm" 
                               onClick={() => handleCreateStockExit(order.id)}
+                              className="mr-2"
                             >
                               Converter em Saída
                             </Button>
+                            <DeleteConfirmDialog
+                              title="Eliminar Encomenda"
+                              description="Tem a certeza que deseja eliminar esta encomenda? Esta ação é irreversível."
+                              onDelete={() => handleDeleteOrder(order.id)}
+                              trigger={
+                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              }
+                            />
                           </>
                         )}
                       </td>
