@@ -15,7 +15,7 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     autoRefreshToken: true
   },
   global: {
-    fetch: (...args) => fetch(...args)
+    fetch: fetch
   },
   db: {
     schema: 'public'
@@ -40,14 +40,24 @@ export const snakeToCamel = (obj: any) => {
 };
 
 // Add database functions for increment and decrement
-export const increment = (value: number) => {
-  const { data, error } = supabase.rpc('increment', { inc: value });
-  if (error) console.error("Error incrementing value:", error);
+export const increment = async (table: string, column: string, id: string, value: number) => {
+  const { data, error } = await supabase
+    .from(table)
+    .update({ [column]: supabase.rpc('increment_value', { inc: value, col_name: column }) })
+    .eq('id', id)
+    .select();
+  
+  if (error) console.error(`Error incrementing ${column} in ${table}:`, error);
   return data;
 };
 
-export const decrement = (value: number) => {
-  const { data, error } = supabase.rpc('decrement', { dec: value });
-  if (error) console.error("Error decrementing value:", error);
+export const decrement = async (table: string, column: string, id: string, value: number) => {
+  const { data, error } = await supabase
+    .from(table)
+    .update({ [column]: supabase.rpc('decrement_value', { dec: value, col_name: column }) })
+    .eq('id', id)
+    .select();
+  
+  if (error) console.error(`Error decrementing ${column} in ${table}:`, error);
   return data;
 };

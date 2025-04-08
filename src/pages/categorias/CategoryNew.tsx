@@ -19,8 +19,7 @@ const CategoryNew = () => {
     addCategory({
       name,
       description,
-      status: 'active',
-      productCount: 0
+      status: 'active'
     });
     
     navigate('/categorias/consultar');
