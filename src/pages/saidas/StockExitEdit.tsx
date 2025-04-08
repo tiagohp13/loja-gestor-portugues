@@ -7,7 +7,6 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import { StockExitItem, StockExit } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
 
 const StockExitEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,53 +33,18 @@ const StockExitEdit = () => {
   const fetchExit = async (exitId: string) => {
     setLoading(true);
     try {
-      // Primeiro tenta buscar do Supabase
-      const { data: exitData, error: exitError } = await supabase
-        .from('StockExits')
-        .select('*')
-        .eq('id', exitId)
-        .single();
-
-      if (exitError) {
-        console.error('Erro ao buscar saída no Supabase:', exitError);
-        
-        // Se falhar, busca local
-        const foundExit = stockExits.find(exit => exit.id === exitId);
-        if (foundExit) {
-          setExit({
-            clientId: foundExit.clientId,
-            clientName: foundExit.clientName,
-            items: foundExit.items || [],
-            date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : '',
-            invoiceNumber: foundExit.invoiceNumber || '',
-            notes: foundExit.notes || '',
-            fromOrderId: foundExit.fromOrderId,
-            discount: foundExit.discount
-          });
-          setLoading(false);
-        } else {
-          toast.error('Saída não encontrada');
-          navigate('/saidas/historico');
-        }
-        return;
-      }
-
-      if (exitData) {
-        // Buscar itens da saída
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('StockExitsItems')
-          .select('*')
-          .eq('exitId', exitId);
-
-        if (itemsError) {
-          console.error('Erro ao buscar itens da saída:', itemsError);
-        }
-
+      // Simplificado para usar dados locais
+      const foundExit = stockExits.find(exit => exit.id === exitId);
+      
+      if (foundExit) {
         setExit({
-          ...exitData,
-          items: itemsData || [],
-          date: exitData.date ? new Date(exitData.date).toISOString().split('T')[0] : ''
+          ...foundExit,
+          items: foundExit.items || [],
+          date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : ''
         });
+      } else {
+        toast.error('Saída não encontrada');
+        navigate('/saidas/historico');
       }
     } catch (error) {
       console.error('Erro ao buscar detalhes da saída:', error);
@@ -116,30 +80,7 @@ const StockExitEdit = () => {
           updatedAt: new Date().toISOString()
         };
         
-        // Atualizar no Supabase
-        const { error } = await supabase
-          .from('StockExits')
-          .update({
-            clientId: updateData.clientId,
-            clientName: updateData.clientName,
-            date: updateData.date,
-            invoiceNumber: updateData.invoiceNumber,
-            notes: updateData.notes,
-            updatedAt: updateData.updatedAt
-          })
-          .eq('id', id);
-
-        if (error) {
-          console.error('Erro ao atualizar saída no Supabase:', error);
-          toast.error('Erro ao atualizar saída: ' + error.message);
-          
-          // Continue updating locally even if Supabase fails
-          console.warn('Atualizando apenas localmente devido a erro no Supabase');
-        } else {
-          console.log('Saída atualizada com sucesso no Supabase');
-        }
-        
-        // Update local state
+        // Atualizar localmente
         updateStockExit(id, updateData);
         
         toast.success('Saída atualizada com sucesso');

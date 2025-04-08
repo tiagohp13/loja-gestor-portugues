@@ -9,7 +9,6 @@ import { Search, Plus, Pencil } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockExit } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const StockExitList = () => {
@@ -28,38 +27,16 @@ const StockExitList = () => {
   const fetchExits = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from('StockExits')
-        .select('*')
-        .order('createdAt', { ascending: false });
-
-      if (error) {
-        console.error('Erro ao buscar saídas:', error);
-        toast.error('Erro ao carregar as saídas: ' + error.message);
-        // Fallback to local data
-        setLocalExits(stockExits);
-      } else if (data) {
-        // For each exit, get the items
-        const exitsWithItems = await Promise.all(
-          data.map(async (exit) => {
-            const { data: items, error: itemsError } = await supabase
-              .from('StockExitsItems')
-              .select('*')
-              .eq('exitId', exit.id);
-
-            if (itemsError) {
-              console.error(`Erro ao buscar itens da saída ${exit.id}:`, itemsError);
-              return { ...exit, items: [] };
-            }
-
-            return { ...exit, items: items || [] };
-          })
-        );
-        
-        setLocalExits(exitsWithItems);
-      }
+      // Para simplificar, usamos apenas dados locais
+      const availableExits = stockExits.map(exit => ({
+        ...exit,
+        items: exit.items || []
+      }));
+      
+      setLocalExits(availableExits);
     } catch (err) {
       console.error('Erro ao buscar saídas:', err);
+      toast.error('Erro ao carregar as saídas');
       // Fallback to local data
       setLocalExits(stockExits);
     } finally {

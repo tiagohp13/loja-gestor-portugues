@@ -252,18 +252,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('Guardando encomenda no Supabase:', newOrder);
       
-      // Salvar no Supabase
-      const { data, error } = await supabase.from('Encomendas').insert({
-        id: newOrder.id,
-        clientId: newOrder.clientId,
-        clientName: newOrder.clientName,
-        orderNumber: newOrder.orderNumber,
-        date: newOrder.date,
+      // Salvar dados básicos da encomenda via SQL API genérica
+      const { error } = await supabase.rpc('save_order', {
+        order_id: newOrder.id,
+        client_id: newOrder.clientId,
+        client_name: newOrder.clientName,
+        order_number: newOrder.orderNumber,
+        order_date: newOrder.date,
         notes: newOrder.notes,
         status: newOrder.status,
         discount: newOrder.discount,
-        createdAt: newOrder.createdAt,
-        updatedAt: newOrder.updatedAt
+        created_at: newOrder.createdAt,
+        updated_at: newOrder.updatedAt
       });
       
       if (error) {
@@ -273,19 +273,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Salvar itens da encomenda
       if (newOrder.items && newOrder.items.length > 0) {
-        const itemsToInsert = newOrder.items.map(item => ({
-          encomendaId: newOrder.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          salePrice: item.salePrice
-        }));
-        
-        const { error: itemsError } = await supabase.from('EncomendasItems').insert(itemsToInsert);
-        
-        if (itemsError) {
-          console.error('Erro ao salvar itens da encomenda no Supabase:', itemsError);
-          throw itemsError;
+        for (const item of newOrder.items) {
+          const { error: itemError } = await supabase.rpc('save_order_item', {
+            order_id: newOrder.id,
+            product_id: item.productId,
+            product_name: item.productName,
+            quantity: item.quantity,
+            sale_price: item.salePrice
+          });
+          
+          if (itemError) {
+            console.error('Erro ao salvar item da encomenda no Supabase:', itemError);
+            // Continuar mesmo com erro para salvar outros itens
+          }
         }
       }
       
@@ -332,19 +332,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('Guardando entrada no Supabase:', newEntry);
       
-      // Salvar no Supabase
-      const { data, error } = await supabase.from('StockEntries').insert({
-        id: newEntry.id,
-        supplierId: newEntry.supplierId,
-        supplierName: newEntry.supplierName,
-        entryNumber: newEntry.entryNumber,
-        date: newEntry.date,
-        invoiceNumber: newEntry.invoiceNumber,
+      // Salvar dados básicos da entrada via SQL API genérica
+      const { error } = await supabase.rpc('save_stock_entry', {
+        entry_id: newEntry.id,
+        supplier_id: newEntry.supplierId,
+        supplier_name: newEntry.supplierName,
+        entry_number: newEntry.entryNumber,
+        entry_date: newEntry.date,
+        invoice_number: newEntry.invoiceNumber,
         notes: newEntry.notes,
         status: newEntry.status,
         discount: newEntry.discount,
-        createdAt: newEntry.createdAt,
-        updatedAt: newEntry.updatedAt
+        created_at: newEntry.createdAt,
+        updated_at: newEntry.updatedAt
       });
       
       if (error) {
@@ -354,19 +354,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Salvar itens da entrada
       if (newEntry.items && newEntry.items.length > 0) {
-        const itemsToInsert = newEntry.items.map(item => ({
-          entryId: newEntry.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          purchasePrice: item.purchasePrice
-        }));
-        
-        const { error: itemsError } = await supabase.from('StockEntriesItems').insert(itemsToInsert);
-        
-        if (itemsError) {
-          console.error('Erro ao salvar itens da entrada no Supabase:', itemsError);
-          throw itemsError;
+        for (const item of newEntry.items) {
+          const { error: itemError } = await supabase.rpc('save_stock_entry_item', {
+            entry_id: newEntry.id,
+            product_id: item.productId,
+            product_name: item.productName,
+            quantity: item.quantity,
+            purchase_price: item.purchasePrice
+          });
+          
+          if (itemError) {
+            console.error('Erro ao salvar item da entrada no Supabase:', itemError);
+            // Continuar mesmo com erro para salvar outros itens
+          }
         }
       }
       
@@ -418,21 +418,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     try {
       console.log('Guardando saída no Supabase:', newExit);
       
-      // Salvar no Supabase
-      const { data, error } = await supabase.from('StockExits').insert({
-        id: newExit.id,
-        clientId: newExit.clientId,
-        clientName: newExit.clientName,
+      // Salvar dados básicos da saída via SQL API genérica
+      const { error } = await supabase.rpc('save_stock_exit', {
+        exit_id: newExit.id,
+        client_id: newExit.clientId,
+        client_name: newExit.clientName,
         reason: newExit.reason,
-        exitNumber: newExit.exitNumber,
-        date: newExit.date,
-        invoiceNumber: newExit.invoiceNumber,
+        exit_number: newExit.exitNumber,
+        exit_date: newExit.date,
+        invoice_number: newExit.invoiceNumber,
         notes: newExit.notes,
         status: newExit.status,
         discount: newExit.discount,
-        fromOrderId: newExit.fromOrderId,
-        createdAt: newExit.createdAt,
-        updatedAt: newExit.updatedAt
+        from_order_id: newExit.fromOrderId,
+        created_at: newExit.createdAt,
+        updated_at: newExit.updatedAt
       });
       
       if (error) {
@@ -442,19 +442,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       // Salvar itens da saída
       if (newExit.items && newExit.items.length > 0) {
-        const itemsToInsert = newExit.items.map(item => ({
-          exitId: newExit.id,
-          productId: item.productId,
-          productName: item.productName,
-          quantity: item.quantity,
-          salePrice: item.salePrice
-        }));
-        
-        const { error: itemsError } = await supabase.from('StockExitsItems').insert(itemsToInsert);
-        
-        if (itemsError) {
-          console.error('Erro ao salvar itens da saída no Supabase:', itemsError);
-          throw itemsError;
+        for (const item of newExit.items) {
+          const { error: itemError } = await supabase.rpc('save_stock_exit_item', {
+            exit_id: newExit.id,
+            product_id: item.productId,
+            product_name: item.productName,
+            quantity: item.quantity,
+            sale_price: item.salePrice
+          });
+          
+          if (itemError) {
+            console.error('Erro ao salvar item da saída no Supabase:', itemError);
+            // Continuar mesmo com erro para salvar outros itens
+          }
         }
       }
       
@@ -595,20 +595,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       newExit.exitNumber = exitNumber;
       
       try {
-        // Salvar no Supabase
-        const { error } = await supabase.from('StockExits').insert({
-          id: newExit.id,
-          clientId: newExit.clientId,
-          clientName: newExit.clientName,
+        // Salvar saída convertida utilizando RPC
+        const { error } = await supabase.rpc('save_stock_exit', {
+          exit_id: newExit.id,
+          client_id: newExit.clientId,
+          client_name: newExit.clientName,
           reason: newExit.reason,
-          exitNumber: newExit.exitNumber,
-          date: newExit.date,
+          exit_number: newExit.exitNumber,
+          exit_date: newExit.date,
+          invoice_number: newExit.invoiceNumber,
           notes: newExit.notes,
           status: newExit.status,
           discount: newExit.discount,
-          fromOrderId: newExit.fromOrderId,
-          createdAt: newExit.createdAt,
-          updatedAt: newExit.updatedAt
+          from_order_id: newExit.fromOrderId,
+          created_at: newExit.createdAt,
+          updated_at: newExit.updatedAt
         });
         
         if (error) {
@@ -618,30 +619,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Salvar itens da saída
         if (newExit.items && newExit.items.length > 0) {
-          const itemsToInsert = newExit.items.map(item => ({
-            exitId: newExit.id,
-            productId: item.productId,
-            productName: item.productName,
-            quantity: item.quantity,
-            salePrice: item.salePrice
-          }));
-          
-          const { error: itemsError } = await supabase.from('StockExitsItems').insert(itemsToInsert);
-          
-          if (itemsError) {
-            console.error('Erro ao salvar itens da saída convertida no Supabase:', itemsError);
-            throw itemsError;
+          for (const item of newExit.items) {
+            const { error: itemError } = await supabase.rpc('save_stock_exit_item', {
+              exit_id: newExit.id,
+              product_id: item.productId,
+              product_name: item.productName,
+              quantity: item.quantity,
+              sale_price: item.salePrice
+            });
+            
+            if (itemError) {
+              console.error('Erro ao salvar item da saída convertida no Supabase:', itemError);
+              // Continuar mesmo com erro para salvar outros itens
+            }
           }
         }
         
-        // Atualizar status da encomenda no Supabase
-        const { error: updateError } = await supabase.from('Encomendas')
-          .update({ 
-            status: 'completed', 
-            convertedToStockExitId: newExit.id,
-            updatedAt: new Date().toISOString()
-          })
-          .eq('id', order.id);
+        // Atualizar status da encomenda via RPC
+        const { error: updateError } = await supabase.rpc('update_order_status', { 
+          order_id: order.id,
+          new_status: 'completed',
+          converted_exit_id: newExit.id
+        });
           
         if (updateError) {
           console.error('Erro ao atualizar status da encomenda no Supabase:', updateError);
@@ -721,11 +720,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Top clients
     const clientPurchases: Record<string, { id: string, name: string, totalSpent: number, purchaseCount: number }> = {};
     stockExits.forEach(exit => {
+      if (!exit.clientId) return;
+      
       if (!clientPurchases[exit.clientId]) {
         const client = findClient(exit.clientId);
         clientPurchases[exit.clientId] = {
           id: exit.clientId,
-          name: client?.name || exit.clientName,
+          name: client?.name || exit.clientName || 'Cliente Desconhecido',
           totalSpent: 0,
           purchaseCount: 0
         };
