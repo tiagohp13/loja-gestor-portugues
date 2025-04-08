@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Product, Category, Client, Supplier, Order, OrderItem, StockEntry, StockEntryItem, StockExit, StockExitItem } from '../types';
@@ -454,10 +453,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (newExit.items && newExit.items.length > 0) {
         const exitItems = newExit.items.map(item => ({
           exitid: newExit.id,
-          productid: item.productId,
-          productname: item.productName,
+          productid: newExit.productId,
+          productname: newExit.productName,
           quantity: item.quantity,
-          saleprice: item.salePrice
+          saleprice: item.salePrice,
+          discount: item.discount || 0
         }));
         
         const { error: itemsError } = await supabase
@@ -590,7 +590,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
-        salePrice: item.salePrice
+        salePrice: item.salePrice,
+        discount: item.discount || 0  // Make sure to include the discount
       })),
       date: new Date().toISOString(),
       notes: order.notes,
@@ -635,8 +636,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (newExit.items && newExit.items.length > 0) {
           const exitItems = newExit.items.map(item => ({
             exitid: newExit.id,
-            productid: item.productId,
-            productname: item.productName,
+            productid: newExit.productId,
+            productname: newExit.productName,
             quantity: item.quantity,
             saleprice: item.salePrice
           }));
@@ -859,10 +860,4 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-export const useData = (): DataContextType => {
-  const context = useContext(DataContext);
-  if (context === undefined) {
-    throw new Error('useData must be used within a DataProvider');
-  }
-  return context;
-};
+export const

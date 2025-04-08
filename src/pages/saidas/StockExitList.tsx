@@ -82,7 +82,7 @@ const StockExitList = () => {
             productName: item.productname,
             quantity: item.quantity,
             salePrice: item.saleprice,
-            discount: item.discount || 0
+            discount: item.discount || 0  // Add default 0 discount if it doesn't exist
           }));
 
           // Retornar a saída com seus itens mapeados
