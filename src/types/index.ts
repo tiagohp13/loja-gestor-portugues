@@ -72,6 +72,7 @@ export interface StockEntryItem {
 
 export interface StockEntry {
   id: string;
+  number: string; // Added sequential number
   supplierId: string;
   supplierName: string;
   items: StockEntryItem[];
@@ -90,6 +91,7 @@ export interface StockExitItem {
 
 export interface StockExit {
   id: string;
+  number: string; // Added sequential number
   clientId: string;
   clientName: string;
   items: StockExitItem[];
@@ -98,6 +100,7 @@ export interface StockExit {
   date: string;
   createdAt: string;
   fromOrderId?: string;
+  fromOrderNumber?: string; // Added order number reference
 }
 
 export interface OrderItem {
@@ -109,12 +112,14 @@ export interface OrderItem {
 
 export interface Order {
   id: string;
+  number: string; // Added sequential number
   clientId: string;
   clientName?: string;
   items: OrderItem[];
   date: string;
   notes?: string;
   convertedToStockExitId?: string;
+  convertedToStockExitNumber?: string; // Added exit number reference
 }
 
 // Backward compatibility interfaces for code that still uses the old format
@@ -159,3 +164,6 @@ export interface LegacyOrder {
   notes?: string;
   convertedToStockExitId?: string;
 }
+
+// Added export data type interface for settings page
+export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';

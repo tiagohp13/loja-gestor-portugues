@@ -1,13 +1,13 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import EmptyState from '@/components/common/EmptyState';
-import { ClipboardList, Search, Plus } from 'lucide-react';
+import { ClipboardList, Search, Plus, LogOut } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 
@@ -18,7 +18,8 @@ const OrderList = () => {
   
   const filteredOrders = orders.filter(order => 
     order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()))
+    order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    order.number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleViewOrder = (id: string) => {
@@ -54,7 +55,7 @@ const OrderList = () => {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
             <Input
-              placeholder="Pesquisar por cliente ou produto..."
+              placeholder="Pesquisar por cliente, produto ou número..."
               className="pl-10"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -79,6 +80,9 @@ const OrderList = () => {
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                    Número
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Data
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
@@ -93,6 +97,9 @@ const OrderList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Valor Total
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                    Estado
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Ações
                   </th>
@@ -105,6 +112,9 @@ const OrderList = () => {
                   
                   return (
                     <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
+                        {order.number}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                         {format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}
                       </td>
@@ -121,6 +131,26 @@ const OrderList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                         {totalValue.toFixed(2)} €
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {order.convertedToStockExitId ? (
+                          <div className="flex items-center">
+                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 mr-2">
+                              Convertida
+                            </span>
+                            <Link 
+                              to={`/saidas/editar/${order.convertedToStockExitId}`}
+                              className="text-gestorApp-blue hover:underline flex items-center"
+                            >
+                              <LogOut className="w-3 h-3 mr-1" />
+                              {order.convertedToStockExitNumber}
+                            </Link>
+                          </div>
+                        ) : (
+                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                            Pendente
+                          </span>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Button 

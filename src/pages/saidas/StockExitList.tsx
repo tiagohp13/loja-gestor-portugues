@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Eye, Edit, Trash2, ClipboardList } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDateTime } from '@/utils/formatting';
@@ -66,6 +66,7 @@ const StockExitList = () => {
         
         return (
           hasMatchingProduct ||
+          exit.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
           (client && client.name.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       })
@@ -125,7 +126,7 @@ const StockExitList = () => {
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
                 <Input
                   className="pl-10"
-                  placeholder="Pesquisar por produto ou cliente"
+                  placeholder="Pesquisar por número, produto ou cliente"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onClick={() => setSearchOpen(true)}
@@ -164,18 +165,20 @@ const StockExitList = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Número</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Produtos</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Total Itens</TableHead>
                 <TableHead>Valor Total</TableHead>
+                <TableHead>Origem</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredExits.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={8} className="text-center py-6 text-gestorApp-gray">
                     Nenhuma saída encontrada
                   </TableCell>
                 </TableRow>
@@ -198,11 +201,26 @@ const StockExitList = () => {
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => handleRowClick(exit.id)}
                     >
+                      <TableCell className="font-medium text-gestorApp-blue">
+                        {exit.number}
+                      </TableCell>
                       <TableCell>{formatDateTime(new Date(exit.createdAt))}</TableCell>
                       <TableCell className="font-medium">{productDisplay}</TableCell>
                       <TableCell>{client ? client.name : 'Cliente removido'}</TableCell>
                       <TableCell>{totalItems} unid.</TableCell>
                       <TableCell className="font-medium">{formatCurrency(totalValue)}</TableCell>
+                      <TableCell>
+                        {exit.fromOrderId && exit.fromOrderNumber && (
+                          <Link 
+                            to={`/encomendas/${exit.fromOrderId}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center text-gestorApp-blue hover:underline"
+                          >
+                            <ClipboardList className="w-3 h-3 mr-1" />
+                            {exit.fromOrderNumber}
+                          </Link>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end space-x-2">
                           <Button 
@@ -261,6 +279,11 @@ const StockExitList = () => {
           {selectedExitData && (
             <div className="space-y-4 mt-4">
               <div>
+                <p className="text-sm font-medium text-gray-500">Número</p>
+                <p className="font-medium text-gestorApp-blue">{selectedExitData.number}</p>
+              </div>
+              
+              <div>
                 <p className="text-sm font-medium text-gray-500">Data</p>
                 <p>{formatDateTime(new Date(selectedExitData.createdAt))}</p>
               </div>
@@ -270,14 +293,19 @@ const StockExitList = () => {
                 <p>{selectedClient ? selectedClient.name : 'Cliente removido'}</p>
               </div>
               
-              {selectedExitData.fromOrderId && (
+              {selectedExitData.fromOrderId && selectedExitData.fromOrderNumber && (
                 <div className="p-3 bg-blue-50 rounded-md">
                   <p className="text-sm font-medium text-blue-800">
                     Esta saída foi criada a partir de uma encomenda
                   </p>
-                  <p className="text-xs text-blue-600">
-                    ID da encomenda: {selectedExitData.fromOrderId}
-                  </p>
+                  <Link 
+                    to={`/encomendas/${selectedExitData.fromOrderId}`}
+                    className="text-xs text-blue-600 hover:underline flex items-center"
+                    onClick={() => setDetailsOpen(false)}
+                  >
+                    <ClipboardList className="w-3 h-3 mr-1" />
+                    {selectedExitData.fromOrderNumber}
+                  </Link>
                 </div>
               )}
               

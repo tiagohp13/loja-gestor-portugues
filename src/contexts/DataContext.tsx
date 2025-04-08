@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
@@ -10,7 +9,6 @@ import {
   LegacyStockEntry, LegacyStockExit, LegacyOrder
 } from '../types';
 
-// Define the context type
 interface DataContextType {
   products: Product[];
   categories: Category[];
@@ -36,15 +34,15 @@ interface DataContextType {
   updateSupplier: (id: string, supplier: Partial<Supplier>) => void;
   deleteSupplier: (id: string) => void;
   
-  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt'>) => void;
+  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'number'>) => void;
   updateStockEntry: (id: string, entry: Partial<StockEntry>) => void;
   deleteStockEntry: (id: string) => void;
   
-  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt'>) => void;
+  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt' | 'number'>) => void;
   updateStockExit: (id: string, exit: Partial<StockExit>) => void;
   deleteStockExit: (id: string) => void;
   
-  addOrder: (order: Omit<Order, 'id'>) => void;
+  addOrder: (order: Omit<Order, 'id' | 'number'>) => void;
   updateOrder: (id: string, order: Partial<Order>) => void;
   deleteOrder: (id: string) => void;
   convertOrderToStockExit: (orderId: string) => void;
@@ -66,13 +64,12 @@ interface DataContextType {
   getBusinessAnalytics: () => any;
 }
 
-// Create the context
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Helper to convert old format to new format (for backward compatibility)
 const convertOldStockEntriesToNew = (oldEntries: any[]): StockEntry[] => {
-  return oldEntries.map(entry => ({
+  return oldEntries.map((entry, index) => ({
     id: entry.id,
+    number: `ENT${String(index + 1).padStart(6, '0')}`,
     supplierId: entry.supplierId,
     supplierName: entry.supplierName,
     items: [{
@@ -88,70 +85,95 @@ const convertOldStockEntriesToNew = (oldEntries: any[]): StockEntry[] => {
   }));
 };
 
-const convertOldStockExitsToNew = (oldExits: any[]): StockExit[] => {
-  return oldExits.map(exit => ({
-    id: exit.id,
-    clientId: exit.clientId,
-    clientName: exit.clientName,
-    items: [{
-      productId: exit.productId,
-      productName: exit.productName,
-      quantity: exit.quantity,
-      salePrice: exit.salePrice
-    }],
-    invoiceNumber: exit.invoiceNumber,
-    notes: exit.notes,
-    date: exit.date,
-    createdAt: exit.createdAt,
-    fromOrderId: exit.fromOrderId
-  }));
+const convertOldStockExitsToNew = (oldExits: any[], oldOrders: any[]): StockExit[] => {
+  return oldExits.map((exit, index) => {
+    const fromOrder = oldOrders?.find(order => order.id === exit.fromOrderId);
+    
+    return {
+      id: exit.id,
+      number: `SAI${String(index + 1).padStart(6, '0')}`,
+      clientId: exit.clientId,
+      clientName: exit.clientName,
+      items: [{
+        productId: exit.productId,
+        productName: exit.productName,
+        quantity: exit.quantity,
+        salePrice: exit.salePrice
+      }],
+      invoiceNumber: exit.invoiceNumber,
+      notes: exit.notes,
+      date: exit.date,
+      createdAt: exit.createdAt,
+      fromOrderId: exit.fromOrderId,
+      fromOrderNumber: fromOrder ? `ENC${String(oldOrders.indexOf(fromOrder) + 1).padStart(6, '0')}` : undefined
+    };
+  });
 };
 
-const convertOldOrdersToNew = (oldOrders: any[]): Order[] => {
-  return oldOrders.map(order => ({
-    id: order.id,
-    clientId: order.clientId,
-    clientName: order.clientName,
-    items: [{
-      productId: order.productId,
-      productName: order.productName,
-      quantity: order.quantity,
-      salePrice: order.salePrice
-    }],
-    date: order.date,
-    notes: order.notes,
-    convertedToStockExitId: order.convertedToStockExitId
-  }));
+const convertOldOrdersToNew = (oldOrders: any[], oldExits: any[]): Order[] => {
+  return oldOrders.map((order, index) => {
+    const convertedToExit = oldExits?.find(exit => exit.fromOrderId === order.id);
+    
+    return {
+      id: order.id,
+      number: `ENC${String(index + 1).padStart(6, '0')}`,
+      clientId: order.clientId,
+      clientName: order.clientName,
+      items: [{
+        productId: order.productId,
+        productName: order.productName,
+        quantity: order.quantity,
+        salePrice: order.salePrice
+      }],
+      date: order.date,
+      notes: order.notes,
+      convertedToStockExitId: order.convertedToStockExitId,
+      convertedToStockExitNumber: convertedToExit ? `SAI${String(oldExits.indexOf(convertedToExit) + 1).padStart(6, '0')}` : undefined
+    };
+  });
 };
 
-// Create a provider component
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>(mockData.products as Product[]);
   const [categories, setCategories] = useState<Category[]>(mockData.categories as Category[]);
   const [clients, setClients] = useState<Client[]>(mockData.clients as Client[]);
   const [suppliers, setSuppliers] = useState<Supplier[]>(mockData.suppliers as Supplier[]);
-  
-  // Convert old format to new format for stockEntries, stockExits, and orders
+
   const [stockEntries, setStockEntries] = useState<StockEntry[]>(() => 
     convertOldStockEntriesToNew(mockData.stockEntries as any[])
   );
   
   const [stockExits, setStockExits] = useState<StockExit[]>(() => 
-    convertOldStockExitsToNew(mockData.stockExits as any[])
+    convertOldStockExitsToNew(mockData.stockExits as any[], mockData.orders as any[] || [])
   );
   
   const [orders, setOrders] = useState<Order[]>(() => 
-    convertOldOrdersToNew(mockData.orders || [])
+    convertOldOrdersToNew(mockData.orders || [], mockData.stockExits as any[])
   );
 
-  // Make window.appData available for exporting
   useEffect(() => {
     window.appData = { products, categories, clients, suppliers, stockEntries, stockExits, orders };
   }, [products, categories, clients, suppliers, stockEntries, stockExits, orders]);
 
-  // Products
+  const getNextOrderNumber = () => {
+    const lastOrderNumber = orders.length > 0 ? 
+      parseInt(orders[orders.length - 1].number.replace('ENC', '')) : 0;
+    return `ENC${String(lastOrderNumber + 1).padStart(6, '0')}`;
+  };
+
+  const getNextEntryNumber = () => {
+    const lastEntryNumber = stockEntries.length > 0 ? 
+      parseInt(stockEntries[stockEntries.length - 1].number.replace('ENT', '')) : 0;
+    return `ENT${String(lastEntryNumber + 1).padStart(6, '0')}`;
+  };
+
+  const getNextExitNumber = () => {
+    const lastExitNumber = stockExits.length > 0 ? 
+      parseInt(stockExits[stockExits.length - 1].number.replace('SAI', '')) : 0;
+    return `SAI${String(lastExitNumber + 1).padStart(6, '0')}`;
+  };
+
   const addProduct = (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
-    // Check if product code already exists
     const codeExists = products.some(p => p.code.toLowerCase() === product.code.toLowerCase());
     if (codeExists) {
       toast.error(`O código de produto "${product.code}" já existe. Use um código único.`);
@@ -170,7 +192,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateProduct = (id: string, product: Partial<Product>) => {
-    // Check if product code already exists and it's not the same product
     if (product.code) {
       const codeExists = products.some(p => p.code.toLowerCase() === product.code?.toLowerCase() && p.id !== id);
       if (codeExists) {
@@ -188,7 +209,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteProduct = (id: string) => {
-    // Check if the product is used in stock entries or exits
     const usedInEntry = stockEntries.some(entry => 
       entry.items.some(item => item.productId === id)
     );
@@ -210,7 +230,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Produto excluído com sucesso!');
   };
 
-  // Categories
   const addCategory = (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
     const newCategory = { 
@@ -233,7 +252,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteCategory = (id: string) => {
-    // Check if the category is used in products
     const usedInProducts = products.some(product => product.category === id);
     
     if (usedInProducts) {
@@ -245,7 +263,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Categoria excluída com sucesso!');
   };
 
-  // Clients
   const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
     const newClient = { 
@@ -268,7 +285,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteClient = (id: string) => {
-    // Check if the client is used in stock exits or orders
     const usedInExit = stockExits.some(exit => exit.clientId === id);
     const usedInOrder = orders.some(order => order.clientId === id);
     
@@ -281,7 +297,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Cliente excluído com sucesso!');
   };
 
-  // Suppliers
   const addSupplier = (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => {
     const now = new Date().toISOString();
     const newSupplier = { 
@@ -304,7 +319,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteSupplier = (id: string) => {
-    // Check if the supplier is used in stock entries
     const usedInEntry = stockEntries.some(entry => entry.supplierId === id);
     
     if (usedInEntry) {
@@ -316,15 +330,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Fornecedor excluído com sucesso!');
   };
 
-  // Stock Entries
-  const addStockEntry = (entry: Omit<StockEntry, 'id' | 'createdAt'>) => {
+  const addStockEntry = (entry: Omit<StockEntry, 'id' | 'createdAt' | 'number'>) => {
     const newEntry = { 
       ...entry, 
       id: uuidv4(),
+      number: getNextEntryNumber(),
       createdAt: new Date().toISOString() 
     };
     
-    // Update product stock for each item
     entry.items.forEach(item => {
       setProducts(products.map(product => 
         product.id === item.productId 
@@ -345,18 +358,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // If items changed, update product stock
     if (entry.items) {
-      // Revert old quantities
       oldEntry.items.forEach(oldItem => {
         setProducts(products.map(product => 
           product.id === oldItem.productId 
-            ? { ...product, currentStock: product.currentStock - oldItem.quantity }
+            ? { ...product, currentStock: product.currentStock + oldItem.quantity }
             : product
         ));
       });
       
-      // Add new quantities
       entry.items.forEach(newItem => {
         setProducts(products.map(product => 
           product.id === newItem.productId 
@@ -378,7 +388,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Update product stock for each item
     let canDelete = true;
     
     entry.items.forEach(item => {
@@ -393,7 +402,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Update quantities
     entry.items.forEach(item => {
       setProducts(products.map(p => 
         p.id === item.productId 
@@ -406,9 +414,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Entrada de stock excluída com sucesso!');
   };
 
-  // Stock Exits
-  const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt'>) => {
-    // Check if we have enough stock for each product
+  const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt' | 'number'>) => {
     let hasEnoughStock = true;
     
     exit.items.forEach(item => {
@@ -421,13 +427,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!hasEnoughStock) return;
     
+    const newExitNumber = getNextExitNumber();
+    
     const newExit = { 
       ...exit, 
       id: uuidv4(),
+      number: newExitNumber,
       createdAt: new Date().toISOString() 
     };
     
-    // Update product stock for each item
     exit.items.forEach(item => {
       setProducts(products.map(product => 
         product.id === item.productId 
@@ -436,11 +444,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ));
     });
     
-    // If this exit is from an order, update the order
     if (exit.fromOrderId) {
       setOrders(orders.map(order => 
         order.id === exit.fromOrderId 
-          ? { ...order, convertedToStockExitId: newExit.id }
+          ? { 
+              ...order, 
+              convertedToStockExitId: newExit.id,
+              convertedToStockExitNumber: newExitNumber 
+            }
           : order
       ));
     }
@@ -457,9 +468,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // If items changed, update product stock
     if (exit.items) {
-      // Revert old quantities
       oldExit.items.forEach(oldItem => {
         setProducts(products.map(product => 
           product.id === oldItem.productId 
@@ -468,7 +477,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ));
       });
       
-      // Check if we have enough stock for new quantities
       let hasEnoughStock = true;
       
       exit.items.forEach(newItem => {
@@ -476,7 +484,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const oldItemIndex = oldExit.items.findIndex(item => item.productId === newItem.productId);
         const oldQuantity = oldItemIndex >= 0 ? oldExit.items[oldItemIndex].quantity : 0;
         
-        // Calculate adjusted current stock (after reverting old quantity)
         const adjustedCurrentStock = product ? product.currentStock + oldQuantity : 0;
         
         if (!product || adjustedCurrentStock < newItem.quantity) {
@@ -487,7 +494,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!hasEnoughStock) return;
       
-      // Apply new quantities
       exit.items.forEach(newItem => {
         setProducts(products.map(product => 
           product.id === newItem.productId 
@@ -509,7 +515,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // If this exit is from an order, update the order to not be converted
     if (exit.fromOrderId) {
       setOrders(orders.map(order => 
         order.id === exit.fromOrderId 
@@ -518,7 +523,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ));
     }
     
-    // Update product stock for each item
     exit.items.forEach(item => {
       setProducts(products.map(p => 
         p.id === item.productId 
@@ -530,10 +534,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setStockExits(stockExits.filter(e => e.id !== id));
     toast.success('Saída de stock excluída com sucesso!');
   };
-  
-  // Orders
-  const addOrder = (order: Omit<Order, 'id'>) => {
-    const newOrder = { ...order, id: uuidv4() };
+
+  const addOrder = (order: Omit<Order, 'id' | 'number'>) => {
+    const newOrder = { 
+      ...order, 
+      id: uuidv4(),
+      number: getNextOrderNumber() 
+    };
     setOrders([...orders, newOrder as Order]);
     toast.success('Encomenda registada com sucesso!');
   };
@@ -546,7 +553,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Cannot update an order that has been converted to stock exit
     if (existingOrder.convertedToStockExitId) {
       toast.error('Não é possível editar uma encomenda já convertida em saída de stock.');
       return;
@@ -564,7 +570,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Cannot delete an order that has been converted to stock exit
     if (existingOrder.convertedToStockExitId) {
       toast.error('Não é possível excluir uma encomenda já convertida em saída de stock.');
       return;
@@ -573,7 +578,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setOrders(orders.filter(o => o.id !== id));
     toast.success('Encomenda excluída com sucesso!');
   };
-  
+
   const convertOrderToStockExit = (orderId: string) => {
     const order = orders.find(o => o.id === orderId);
     
@@ -582,13 +587,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Order not found');
     }
     
-    // Check if order is already converted
     if (order.convertedToStockExitId) {
       toast.error('Esta encomenda já foi convertida em saída de stock.');
       throw new Error('Order already converted');
     }
     
-    // Check if we have enough stock for each product
     let hasEnoughStock = true;
     
     order.items.forEach(item => {
@@ -603,8 +606,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Insufficient stock');
     }
     
-    // Create a stock exit
-    const stockExit: Omit<StockExit, 'id' | 'createdAt'> = {
+    const stockExit: Omit<StockExit, 'id' | 'createdAt' | 'number'> = {
       clientId: order.clientId,
       clientName: order.clientName || '',
       items: order.items.map(item => ({
@@ -614,23 +616,21 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         salePrice: item.salePrice
       })),
       date: new Date().toISOString().split('T')[0],
-      fromOrderId: order.id
+      fromOrderId: order.id,
+      fromOrderNumber: order.number
     };
     
-    // Add the stock exit
     addStockExit(stockExit);
     
     return 'success';
   };
 
-  // Helper functions
   const findProduct = (id: string) => products.find(p => p.id === id);
   const findCategory = (id: string) => categories.find(c => c.id === id);
   const findClient = (id: string) => clients.find(c => c.id === id);
   const findSupplier = (id: string) => suppliers.find(s => s.id === id);
   const findOrder = (id: string) => orders.find(o => o.id === id);
 
-  // Add the missing getter methods
   const getProduct = (id: string) => products.find(p => p.id === id);
   const getCategory = (id: string) => categories.find(c => c.id === id);
   const getClient = (id: string) => clients.find(c => c.id === id);
@@ -679,16 +679,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
     return { supplier, entryItems };
   };
-  
-  // Business Analytics 
+
   const getBusinessAnalytics = () => {
-    // Calculate total sales, revenue, profit
     let totalSales = 0;
     let totalRevenue = 0;
     let totalCost = 0;
     let totalProfit = 0;
     
-    // Product sales analysis
     const productSales: Record<string, {
       productId: string,
       name: string,
@@ -697,7 +694,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       averagePrice: number
     }> = {};
     
-    // Client analysis
     const clientPurchases: Record<string, {
       clientId: string,
       name: string,
@@ -706,19 +702,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastPurchaseDate: string
     }> = {};
     
-    // Calculate stock value
     const currentStockValue = products.reduce((total, product) => {
       return total + (product.purchasePrice * product.currentStock);
     }, 0);
     
-    // Process all sales
     stockExits.forEach(exit => {
       exit.items.forEach(item => {
         totalSales += item.quantity;
         const saleRevenue = item.quantity * item.salePrice;
         totalRevenue += saleRevenue;
         
-        // Find product for cost calculation
         const product = products.find(p => p.id === item.productId);
         if (product) {
           const itemCost = item.quantity * product.purchasePrice;
@@ -726,7 +719,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           totalProfit += (saleRevenue - itemCost);
         }
         
-        // Update product sales data
         if (!productSales[item.productId]) {
           productSales[item.productId] = {
             productId: item.productId,
@@ -741,7 +733,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         productSales[item.productId].totalRevenue += saleRevenue;
       });
       
-      // Update client purchase data
       if (!clientPurchases[exit.clientId]) {
         const client = clients.find(c => c.id === exit.clientId);
         clientPurchases[exit.clientId] = {
@@ -757,36 +748,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clientPurchases[exit.clientId].purchaseCount++;
       clientPurchases[exit.clientId].totalSpent += exitTotal;
       
-      // Update last purchase date if newer
       if (!clientPurchases[exit.clientId].lastPurchaseDate || 
           new Date(exit.date) > new Date(clientPurchases[exit.clientId].lastPurchaseDate)) {
         clientPurchases[exit.clientId].lastPurchaseDate = exit.date;
       }
     });
     
-    // Calculate average prices
     Object.values(productSales).forEach(product => {
       if (product.totalQuantity > 0) {
         product.averagePrice = product.totalRevenue / product.totalQuantity;
       }
     });
     
-    // Get top selling products
     const topSellingProducts = Object.values(productSales)
       .sort((a, b) => b.totalQuantity - a.totalQuantity)
       .slice(0, 5);
     
-    // Get most profitable products
     const mostProfitableProducts = Object.values(productSales)
       .sort((a, b) => b.totalRevenue - a.totalRevenue)
       .slice(0, 5);
     
-    // Get top clients
     const topClients = Object.values(clientPurchases)
       .sort((a, b) => b.totalSpent - a.totalSpent)
       .slice(0, 5);
     
-    // Low stock warnings
     const lowStockProducts = products
       .filter(p => p.currentStock <= p.minStock)
       .map(p => ({
@@ -797,7 +782,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         minStock: p.minStock
       }));
     
-    // Inactive clients (no purchases in the last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -811,7 +795,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       lastPurchaseDate: clientPurchases[client.id]?.lastPurchaseDate || 'Nunca'
     }));
     
-    // Calculate profit margin
     const overallProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
     
     return {
@@ -891,7 +874,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
 };
 
-// Create a hook to use the context
 export const useData = () => {
   const context = useContext(DataContext);
   if (context === undefined) {
@@ -900,7 +882,6 @@ export const useData = () => {
   return context;
 };
 
-// Add global window type for appData
 declare global {
   interface Window {
     appData: {
