@@ -2,30 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, ChevronUp, ChevronDown, Eye, Pencil, Trash } from 'lucide-react';
+import { Truck, Plus, Search, Filter, ArrowDown, ArrowUp, Trash } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDate } from '@/utils/formatting';
+import StatusBadge from '@/components/common/StatusBadge';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { StockEntry } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-
-type SortField = 'entryNumber' | 'date' | 'supplierName' | 'total';
-type SortDirection = 'asc' | 'desc';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries, deleteStockEntry } = useData();
+  const { stockEntries, setStockEntries, deleteStockEntry: contextDeleteStockEntry } = useData();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sortField, setSortField] = useState<keyof StockEntry>('date');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+  const [entries, setEntries] = useState<StockEntry[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedEntryId, setSelectedEntryId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
-  const [sortField, setSortField] = useState<SortField>('entryNumber');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEntries();
@@ -33,6 +33,7 @@ const StockEntryList = () => {
 
   const fetchEntries = async () => {
     setLoading(true);
+    
     try {
       const { data: entriesData, error: entriesError } = await supabase
         .from('StockEntries')
@@ -43,19 +44,30 @@ const StockEntryList = () => {
         throw entriesError;
       }
 
-      if (!entriesData) {
-        throw new Error("No entries found");
-      }
+      if (entriesData) {
+        const entriesWithItems = await Promise.all(
+          entriesData.map(async entry => {
+            const { data: itemsData, error: itemsError } = await supabase
+              .from('StockEntriesItems')
+              .select('*')
+              .eq('entryid', entry.id);
 
-      const entriesWithItems = await Promise.all(
-        entriesData.map(async (entry) => {
-          const { data: itemsData, error: itemsError } = await supabase
-            .from('StockEntriesItems')
-            .select('*')
-            .eq('entryid', entry.id);
+            if (itemsError) {
+              console.error(`Error fetching items for entry ${entry.id}:`, itemsError);
+              return {
+                ...entry,
+                items: []
+              };
+            }
 
-          if (itemsError) {
-            console.error(`Error fetching items for entry ${entry.id}:`, itemsError);
+            const mappedItems = itemsData?.map(item => ({
+              productId: item.productid,
+              productName: item.productname,
+              quantity: item.quantity,
+              purchasePrice: item.purchaseprice,
+              discount: item.discount ?? 0
+            })) || [];
+
             return {
               id: entry.id,
               supplierId: entry.supplierid,
@@ -64,50 +76,28 @@ const StockEntryList = () => {
               date: entry.date,
               invoiceNumber: entry.invoicenumber,
               notes: entry.notes,
-              status: (entry.status as "pending" | "completed" | "cancelled"),
+              status: entry.status as 'pending' | 'completed' | 'cancelled',
               discount: 0,
               createdAt: entry.createdat,
               updatedAt: entry.updatedat,
-              items: []
+              items: mappedItems
             } as StockEntry;
-          }
-
-          const mappedItems = (itemsData || []).map(item => ({
-            productId: item.productid,
-            productName: item.productname,
-            quantity: item.quantity,
-            purchasePrice: item.purchaseprice,
-            discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
-          }));
-
-          return {
-            id: entry.id,
-            supplierId: entry.supplierid,
-            supplierName: entry.suppliername,
-            entryNumber: entry.entrynumber,
-            date: entry.date,
-            invoiceNumber: entry.invoicenumber,
-            notes: entry.notes,
-            status: (entry.status as "pending" | "completed" | "cancelled"),
-            discount: 0,
-            createdAt: entry.createdat,
-            updatedAt: entry.updatedat,
-            items: mappedItems
-          } as StockEntry;
-        })
-      );
+          })
+        );
         
-      setLocalEntries(entriesWithItems);
-    } catch (err) {
-      console.error('Error fetching entries:', err);
-      toast.error('Error loading entries');
-      setLocalEntries(stockEntries);
+        setStockEntries(entriesWithItems);
+        setEntries(entriesWithItems);
+      }
+    } catch (error) {
+      console.error('Error fetching stock entries:', error);
+      toast.error('Erro ao buscar entradas de stock');
+      setEntries(stockEntries);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSort = (field: SortField) => {
+  const handleSort = (field: keyof StockEntry) => {
     if (field === sortField) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -115,29 +105,29 @@ const StockEntryList = () => {
       setSortDirection('asc');
     }
   };
-  
-  const renderSortIcon = (field: SortField) => {
+
+  const renderSortIcon = (field: keyof StockEntry) => {
     if (field !== sortField) return null;
     
     return sortDirection === 'asc' 
-      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
-      : <ChevronDown className="inline w-4 h-4 ml-1" />;
+      ? <ArrowUp className="inline w-4 h-4 ml-1" /> 
+      : <ArrowDown className="inline w-4 h-4 ml-1" />;
   };
 
   const handleDeleteEntry = async (id: string) => {
     try {
-      await deleteStockEntry(id);
+      await contextDeleteStockEntry(id);
       toast.success('Entrada eliminada com sucesso');
       fetchEntries();
     } catch (error) {
       console.error('Error deleting entry:', error);
       toast.error('Erro ao eliminar entrada');
     }
-    setEntryToDelete(null);
+    setIsDeleteDialogOpen(false);
   };
 
   useEffect(() => {
-    let results = [...localEntries];
+    let results = [...entries];
     
     if (searchTerm) {
       results = results.filter(
@@ -174,8 +164,8 @@ const StockEntryList = () => {
       return sortDirection === 'asc' ? comparison : -comparison;
     });
     
-    setFilteredEntries(results);
-  }, [localEntries, searchTerm, sortField, sortDirection]);
+    setEntries(results);
+  }, [entries, searchTerm, sortField, sortDirection]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -209,7 +199,7 @@ const StockEntryList = () => {
           <div className="text-center py-8">
             <p>Carregando entradas...</p>
           </div>
-        ) : filteredEntries.length > 0 ? (
+        ) : entries.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white">
               <thead className="bg-gray-50">
@@ -247,7 +237,7 @@ const StockEntryList = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredEntries.map(entry => {
+                {entries.map(entry => {
                   const total = entry.items && entry.items.length > 0 
                     ? entry.items.reduce(
                         (sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 
@@ -293,7 +283,7 @@ const StockEntryList = () => {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => setEntryToDelete(entry.id)}
+                            onClick={() => setSelectedEntryId(entry.id)}
                             title="Eliminar"
                             className="text-red-500 hover:text-red-700"
                           >
@@ -323,9 +313,9 @@ const StockEntryList = () => {
       <DeleteConfirmDialog
         title="Eliminar Entrada de Stock"
         description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
-        onDelete={() => entryToDelete && handleDeleteEntry(entryToDelete)}
-        open={!!entryToDelete}
-        onOpenChange={() => setEntryToDelete(null)}
+        onDelete={() => selectedEntryId && handleDeleteEntry(selectedEntryId)}
+        open={isDeleteDialogOpen}
+        onOpenChange={() => setSelectedEntryId(null)}
       />
     </div>
   );
