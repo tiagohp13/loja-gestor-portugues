@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { Loader2, ArrowLeft, Pencil, Ban, ArrowRightLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, Pencil, Ban } from 'lucide-react';
 import StatusBadge from '@/components/common/StatusBadge';
 import { formatCurrency } from '@/utils/formatting';
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -72,7 +73,7 @@ const StockExitDetail = () => {
         date: exitData.date,
         notes: exitData.notes,
         status: exitData.status as "pending" | "completed" | "cancelled",
-        discount: exitData.discount || 0,
+        discount: 0,
         fromOrderId: exitData.fromorderid,
         createdAt: exitData.createdat,
         updatedAt: exitData.updatedat,
@@ -143,14 +144,12 @@ const StockExitDetail = () => {
     </div>;
   }
 
-  // Calculate stockExit subtotal
+  // Calculate subtotal (sum of item prices)
   const subtotal = stockExit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
   
-  // Calculate discount amount
-  const discountAmount = subtotal * (stockExit.discount / 100);
-  
-  // Calculate total with discount
-  const total = subtotal - discountAmount;
+  // Calculate total with item discounts
+  const total = stockExit.items.reduce((sum, item) => 
+    sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -196,7 +195,7 @@ const StockExitDetail = () => {
               </div>
               <div>
                 <dt className="font-medium text-gestorApp-gray-dark">Cliente</dt>
-                <dd>{stockExit.clientName}</dd>
+                <dd>{stockExit.clientName || "N/A"}</dd>
               </div>
               <div>
                 <dt className="font-medium text-gestorApp-gray-dark">Estado</dt>
@@ -222,12 +221,8 @@ const StockExitDetail = () => {
                 <dt className="font-medium text-gestorApp-gray-dark">Subtotal</dt>
                 <dd>{formatCurrency(subtotal)}</dd>
               </div>
-              <div>
-                <dt className="font-medium text-gestorApp-gray-dark">Desconto</dt>
-                <dd>{stockExit.discount}% ({formatCurrency(discountAmount)})</dd>
-              </div>
               <div className="col-span-2 border-t pt-2 mt-2">
-                <dt className="font-medium text-gestorApp-gray-dark">Total</dt>
+                <dt className="font-medium text-gestorApp-gray-dark">Total (com descontos)</dt>
                 <dd className="text-xl font-bold text-gestorApp-blue mt-1">
                   {formatCurrency(total)}
                 </dd>
@@ -249,30 +244,34 @@ const StockExitDetail = () => {
                   <th className="text-left py-3 px-4 font-medium">Produto</th>
                   <th className="text-right py-3 px-4 font-medium">Quantidade</th>
                   <th className="text-right py-3 px-4 font-medium">Preço Unit.</th>
+                  <th className="text-right py-3 px-4 font-medium">Desconto</th>
                   <th className="text-right py-3 px-4 font-medium">Subtotal</th>
                 </tr>
               </thead>
               <tbody>
-                {stockExit.items.map((item, index) => (
-                  <tr key={index} className="border-b">
-                    <td className="py-3 px-4">{item.productName}</td>
-                    <td className="text-right py-3 px-4">{item.quantity}</td>
-                    <td className="text-right py-3 px-4">{formatCurrency(item.salePrice)}</td>
-                    <td className="text-right py-3 px-4">{formatCurrency(item.quantity * item.salePrice)}</td>
-                  </tr>
-                ))}
+                {stockExit.items.map((item, index) => {
+                  const discount = item.discount || 0;
+                  const subtotal = item.quantity * item.salePrice;
+                  const discountedSubtotal = subtotal * (1 - discount / 100);
+                  
+                  return (
+                    <tr key={index} className="border-b">
+                      <td className="py-3 px-4">{item.productName}</td>
+                      <td className="text-right py-3 px-4">{item.quantity}</td>
+                      <td className="text-right py-3 px-4">{formatCurrency(item.salePrice)}</td>
+                      <td className="text-right py-3 px-4">{discount}%</td>
+                      <td className="text-right py-3 px-4">{formatCurrency(discountedSubtotal)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
               <tfoot>
                 <tr>
-                  <td colSpan={3} className="text-right py-3 px-4 font-medium">Subtotal</td>
+                  <td colSpan={4} className="text-right py-3 px-4 font-medium">Subtotal</td>
                   <td className="text-right py-3 px-4">{formatCurrency(subtotal)}</td>
                 </tr>
                 <tr>
-                  <td colSpan={3} className="text-right py-3 px-4 font-medium">Desconto ({stockExit.discount}%)</td>
-                  <td className="text-right py-3 px-4">{formatCurrency(discountAmount)}</td>
-                </tr>
-                <tr>
-                  <td colSpan={3} className="text-right py-3 px-4 font-bold">Total</td>
+                  <td colSpan={4} className="text-right py-3 px-4 font-bold">Total com Descontos</td>
                   <td className="text-right py-3 px-4 font-bold">{formatCurrency(total)}</td>
                 </tr>
               </tfoot>

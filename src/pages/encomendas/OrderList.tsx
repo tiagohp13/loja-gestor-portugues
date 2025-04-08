@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -70,7 +71,7 @@ const OrderList = () => {
               date: order.date,
               notes: order.notes,
               status: (order.status as "pending" | "completed" | "cancelled"),
-              discount: order.discount || 0,
+              discount: 0,
               convertedToStockExitId: order.convertedtostockexitid,
               createdAt: order.createdat,
               updatedAt: order.updatedat,
@@ -96,7 +97,7 @@ const OrderList = () => {
             date: order.date,
             notes: order.notes,
             status: (order.status as "pending" | "completed" | "cancelled"),
-            discount: order.discount || 0,
+            discount: 0,
             convertedToStockExitId: order.convertedtostockexitid,
             createdAt: order.createdat,
             updatedAt: order.updatedat,
@@ -348,6 +349,9 @@ const OrderList = () => {
                     0
                   );
                   
+                  // Check if order is already converted or cancelled
+                  const isConvertedOrCancelled = order.convertedToStockExitId || order.status === 'cancelled';
+                  
                   return (
                     <tr 
                       key={order.id} 
@@ -382,7 +386,7 @@ const OrderList = () => {
                             <Eye className="h-4 w-4" />
                           </Button>
                           
-                          {order.status !== 'cancelled' && !order.convertedToStockExitId && (
+                          {!isConvertedOrCancelled && (
                             <>
                               <Button 
                                 variant="ghost" 
@@ -396,7 +400,7 @@ const OrderList = () => {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={() => handleConvertOrder(order.id)}
+                                onClick={() => navigate(`/encomendas/converter/${order.id}`)}
                                 title="Converter em Saída"
                               >
                                 <ArrowRightLeft className="h-4 w-4" />
@@ -411,18 +415,31 @@ const OrderList = () => {
                               >
                                 <Ban className="h-4 w-4" />
                               </Button>
+                              
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => setOrderToDelete(order.id)}
+                                title="Eliminar"
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
                             </>
                           )}
                           
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => setOrderToDelete(order.id)}
-                            title="Eliminar"
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                          {/* Only show delete button for converted or cancelled orders if needed */}
+                          {isConvertedOrCancelled && order.status !== 'completed' && (
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => setOrderToDelete(order.id)}
+                              title="Eliminar"
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

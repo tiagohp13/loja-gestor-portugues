@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -12,7 +13,7 @@ import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 
-type SortField = 'exitNumber' | 'date' | 'reason' | 'total';
+type SortField = 'exitNumber' | 'date' | 'clientName' | 'total';
 type SortDirection = 'asc' | 'desc';
 
 const StockExitList = () => {
@@ -66,7 +67,7 @@ const StockExitList = () => {
               invoiceNumber: exit.invoicenumber,
               notes: exit.notes,
               status: (exit.status as "pending" | "completed" | "cancelled"),
-              discount: exit.discount || 0,
+              discount: 0,
               fromOrderId: exit.fromorderid,
               createdAt: exit.createdat,
               updatedAt: exit.updatedat,
@@ -92,7 +93,7 @@ const StockExitList = () => {
             invoiceNumber: exit.invoicenumber,
             notes: exit.notes,
             status: (exit.status as "pending" | "completed" | "cancelled"),
-            discount: exit.discount || 0,
+            discount: 0,
             fromOrderId: exit.fromorderid,
             createdAt: exit.createdat,
             updatedAt: exit.updatedat,
@@ -146,9 +147,8 @@ const StockExitList = () => {
     if (searchTerm) {
       results = results.filter(
         exit => 
-          (exit.reason && exit.reason.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (exit.exitNumber && exit.exitNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (exit.clientName && exit.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
+          (exit.clientName && exit.clientName.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (exit.exitNumber && exit.exitNumber.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
@@ -162,8 +162,8 @@ const StockExitList = () => {
         case 'date':
           comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
           break;
-        case 'reason':
-          comparison = (a.reason || '').localeCompare(b.reason || '');
+        case 'clientName':
+          comparison = (a.clientName || '').localeCompare(b.clientName || '');
           break;
         case 'total':
           const totalA = a.items && a.items.length > 0 
@@ -200,7 +200,7 @@ const StockExitList = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
             <Input
               className="pl-10"
-              placeholder="Pesquisar saídas..."
+              placeholder="Pesquisar por cliente ou número..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -233,9 +233,9 @@ const StockExitList = () => {
                   </th>
                   <th 
                     className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
-                    onClick={() => handleSort('reason')}
+                    onClick={() => handleSort('clientName')}
                   >
-                    Motivo {renderSortIcon('reason')}
+                    Cliente {renderSortIcon('clientName')}
                   </th>
                   <th 
                     className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
@@ -269,7 +269,7 @@ const StockExitList = () => {
                         {formatDate(exit.date)}
                       </td>
                       <td className="py-3 px-4">
-                        {exit.reason}
+                        {exit.clientName || "N/A"}
                       </td>
                       <td className="py-3 px-4">
                         {formatCurrency(total)}

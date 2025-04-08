@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { Order, OrderItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -45,7 +46,7 @@ export async function fetchOrders(): Promise<Order[]> {
             date: order.date,
             notes: order.notes,
             status: (order.status as "pending" | "completed" | "cancelled"),
-            discount: order.discount || 0,
+            discount: 0, // Setting default discount to 0 instead of using order.discount
             convertedToStockExitId: order.convertedtostockexitid,
             createdAt: order.createdat,
             updatedAt: order.updatedat,
@@ -71,7 +72,7 @@ export async function fetchOrders(): Promise<Order[]> {
           date: order.date,
           notes: order.notes,
           status: (order.status as "pending" | "completed" | "cancelled"),
-          discount: order.discount || 0,
+          discount: 0, // Setting default discount to 0 instead of using order.discount
           convertedToStockExitId: order.convertedtostockexitid,
           createdAt: order.createdat,
           updatedAt: order.updatedat,
@@ -98,7 +99,8 @@ export async function createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'u
       orderNumber,
       status: 'pending',
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+      discount: 0 // Setting fixed discount to 0
     };
     
     // Insert order data
@@ -112,7 +114,7 @@ export async function createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'u
         date: newOrder.date,
         notes: newOrder.notes,
         status: newOrder.status,
-        discount: newOrder.discount,
+        discount: 0, // Setting fixed discount to 0
         createdat: newOrder.createdAt,
         updatedat: newOrder.updatedAt
       });
@@ -162,7 +164,7 @@ export async function updateOrder(id: string, updates: Partial<Order>): Promise<
         date: updates.date,
         notes: updates.notes,
         status: updates.status,
-        discount: updates.discount,
+        discount: 0, // Setting fixed discount to 0
         updatedat: new Date().toISOString()
       })
       .eq('id', id);
@@ -288,7 +290,7 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
       date: orderData.date,
       notes: orderData.notes,
       status: orderData.status as "pending" | "completed" | "cancelled",
-      discount: orderData.discount || 0,
+      discount: 0, // Setting fixed discount to 0
       convertedToStockExitId: orderData.convertedtostockexitid,
       createdAt: orderData.createdat,
       updatedAt: orderData.updatedat,

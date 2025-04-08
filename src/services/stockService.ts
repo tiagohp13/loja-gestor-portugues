@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { StockEntry, StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -54,7 +55,7 @@ export async function fetchStockEntries(): Promise<StockEntry[]> {
             invoiceNumber: entry.invoicenumber,
             notes: entry.notes,
             status: (entry.status as "pending" | "completed" | "cancelled"),
-            discount: entry.discount || 0,
+            discount: 0, // Setting fixed discount to 0
             createdAt: entry.createdat,
             updatedAt: entry.updatedat,
             items: []
@@ -80,7 +81,7 @@ export async function fetchStockEntries(): Promise<StockEntry[]> {
           invoiceNumber: entry.invoicenumber,
           notes: entry.notes,
           status: entry.status as "pending" | "completed" | "cancelled",
-          discount: entry.discount || 0,
+          discount: 0, // Setting fixed discount to 0
           createdAt: entry.createdat,
           updatedAt: entry.updatedat,
           items: mappedItems
@@ -105,6 +106,7 @@ export async function createStockEntry(entryData: Omit<StockEntry, 'id' | 'creat
       ...entryData,
       entryNumber,
       status: 'completed',
+      discount: 0, // Setting fixed discount to 0
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -121,7 +123,7 @@ export async function createStockEntry(entryData: Omit<StockEntry, 'id' | 'creat
         invoicenumber: newEntry.invoiceNumber,
         notes: newEntry.notes,
         status: newEntry.status,
-        discount: newEntry.discount,
+        discount: 0, // Setting fixed discount to 0
         createdat: newEntry.createdAt,
         updatedat: newEntry.updatedAt
       });
@@ -195,7 +197,7 @@ export async function fetchStockExits(): Promise<StockExit[]> {
             invoiceNumber: exit.invoicenumber,
             notes: exit.notes,
             status: exit.status as "pending" | "completed" | "cancelled",
-            discount: exit.discount || 0,
+            discount: 0, // Setting fixed discount to 0
             fromOrderId: exit.fromorderid,
             createdAt: exit.createdat,
             updatedAt: exit.updatedat,
@@ -223,7 +225,7 @@ export async function fetchStockExits(): Promise<StockExit[]> {
           invoiceNumber: exit.invoicenumber,
           notes: exit.notes,
           status: exit.status as "pending" | "completed" | "cancelled",
-          discount: exit.discount || 0,
+          discount: 0, // Setting fixed discount to 0
           fromOrderId: exit.fromorderid,
           createdAt: exit.createdat,
           updatedAt: exit.updatedat,
@@ -249,6 +251,7 @@ export async function createStockExit(exitData: Omit<StockExit, 'id' | 'createdA
       ...exitData,
       exitNumber,
       status: 'completed',
+      discount: 0, // Setting fixed discount to 0
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -266,7 +269,7 @@ export async function createStockExit(exitData: Omit<StockExit, 'id' | 'createdA
         invoicenumber: newExit.invoiceNumber,
         notes: newExit.notes,
         status: newExit.status,
-        discount: newExit.discount,
+        discount: 0, // Setting fixed discount to 0
         fromorderid: newExit.fromOrderId,
         createdat: newExit.createdAt,
         updatedat: newExit.updatedAt
@@ -317,7 +320,7 @@ export async function updateStockEntry(id: string, updates: Partial<StockEntry>)
         invoicenumber: updates.invoiceNumber,
         notes: updates.notes,
         status: updates.status,
-        discount: updates.discount,
+        discount: 0, // Setting fixed discount to 0
         updatedat: new Date().toISOString()
       })
       .eq('id', id);
@@ -369,7 +372,7 @@ export async function updateStockEntry(id: string, updates: Partial<StockEntry>)
       invoiceNumber: updatedEntryData.invoicenumber,
       notes: updatedEntryData.notes,
       status: updatedEntryData.status as "pending" | "completed" | "cancelled",
-      discount: updatedEntryData.discount || 0,
+      discount: 0, // Setting fixed discount to 0
       createdAt: updatedEntryData.createdat,
       updatedAt: updatedEntryData.updatedat,
       items: mappedItems
@@ -396,7 +399,7 @@ export async function updateStockExit(id: string, updates: Partial<StockExit>): 
         invoicenumber: updates.invoiceNumber,
         notes: updates.notes,
         status: updates.status,
-        discount: updates.discount,
+        discount: 0, // Setting fixed discount to 0
         fromorderid: updates.fromOrderId,
         updatedat: new Date().toISOString()
       })
@@ -450,7 +453,7 @@ export async function updateStockExit(id: string, updates: Partial<StockExit>): 
       invoiceNumber: updatedExitData.invoicenumber,
       notes: updatedExitData.notes,
       status: updatedExitData.status as "pending" | "completed" | "cancelled",
-      discount: updatedExitData.discount || 0,
+      discount: 0, // Setting fixed discount to 0
       fromOrderId: updatedExitData.fromorderid,
       createdAt: updatedExitData.createdat,
       updatedAt: updatedExitData.updatedat,

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -9,8 +10,8 @@ import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockEntry } from '@/types';
 import { toast } from 'sonner';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import { supabase } from '@/integrations/supabase/client';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 
 type SortField = 'entryNumber' | 'date' | 'supplierName' | 'total';
 type SortDirection = 'asc' | 'desc';
@@ -22,9 +23,9 @@ const StockEntryList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
   const [sortField, setSortField] = useState<SortField>('entryNumber');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
@@ -65,7 +66,7 @@ const StockEntryList = () => {
               invoiceNumber: entry.invoicenumber,
               notes: entry.notes,
               status: (entry.status as "pending" | "completed" | "cancelled"),
-              discount: entry.discount || 0,
+              discount: 0,
               createdAt: entry.createdat,
               updatedAt: entry.updatedat,
               items: []
@@ -89,7 +90,7 @@ const StockEntryList = () => {
             invoiceNumber: entry.invoicenumber,
             notes: entry.notes,
             status: (entry.status as "pending" | "completed" | "cancelled"),
-            discount: entry.discount || 0,
+            discount: 0,
             createdAt: entry.createdat,
             updatedAt: entry.updatedat,
             items: mappedItems
@@ -107,23 +108,6 @@ const StockEntryList = () => {
     }
   };
 
-  const handleSort = (field: SortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-  
-  const renderSortIcon = (field: SortField) => {
-    if (field !== sortField) return null;
-    
-    return sortDirection === 'asc' 
-      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
-      : <ChevronDown className="inline w-4 h-4 ml-1" />;
-  };
-
   const handleDeleteEntry = async (id: string) => {
     try {
       await deleteStockEntry(id);
@@ -134,6 +118,23 @@ const StockEntryList = () => {
       toast.error('Erro ao eliminar entrada');
     }
     setEntryToDelete(null);
+  };
+
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const renderSortIcon = (field: SortField) => {
+    if (field !== sortField) return null;
+    
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
+      : <ChevronDown className="inline w-4 h-4 ml-1" />;
   };
 
   useEffect(() => {
@@ -195,7 +196,7 @@ const StockEntryList = () => {
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
             <Input
               className="pl-10"
-              placeholder="Pesquisar entradas..."
+              placeholder="Pesquisar por fornecedor ou número..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
@@ -249,10 +250,7 @@ const StockEntryList = () => {
               <tbody className="divide-y divide-gray-200">
                 {filteredEntries.map(entry => {
                   const total = entry.items && entry.items.length > 0 
-                    ? entry.items.reduce(
-                        (sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 
-                        0
-                      )
+                    ? entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 0)
                     : 0;
                   
                   return (
@@ -264,7 +262,7 @@ const StockEntryList = () => {
                         {formatDate(entry.date)}
                       </td>
                       <td className="py-3 px-4">
-                        {entry.supplierName}
+                        {entry.supplierName || "N/A"}
                       </td>
                       <td className="py-3 px-4">
                         {formatCurrency(total)}
