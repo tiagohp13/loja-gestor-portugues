@@ -126,7 +126,7 @@ const StockEntryList = () => {
         title="Histórico de Entradas" 
         description="Consulte e gerencie entradas de stock" 
         actions={
-          <Button onClick={() => navigate('/entradas/novo')}>
+          <Button onClick={() => navigate('/entradas/nova')}>
             <Plus className="mr-2 h-4 w-4" /> Nova Entrada
           </Button>
         }
@@ -170,7 +170,10 @@ const StockEntryList = () => {
                     Fatura
                   </th>
                   <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Valor
+                    Preço Total
+                  </th>
+                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
+                    Desconto
                   </th>
                   <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
                     Itens
@@ -207,7 +210,10 @@ const StockEntryList = () => {
                         {entry.invoiceNumber || "-"}
                       </td>
                       <td className="py-3 px-4">
-                        {formatCurrency(total)}
+                        {formatCurrency(subtotal)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {entry.discount ? `${entry.discount}%` : "-"}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {entry.items ? entry.items.length : 0}
@@ -232,7 +238,7 @@ const StockEntryList = () => {
             title="Nenhuma entrada encontrada" 
             description="Não existem entradas de stock que correspondam à sua pesquisa."
             action={
-              <Button onClick={() => navigate('/entradas/novo')}>
+              <Button onClick={() => navigate('/entradas/nova')}>
                 <Plus className="mr-2 h-4 w-4" /> Nova Entrada
               </Button>
             }

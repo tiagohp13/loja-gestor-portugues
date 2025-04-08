@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -23,7 +22,6 @@ const OrderList = () => {
   const [sortField, setSortField] = useState<SortField>('orderNumber');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
-  // Handle search and filtering
   useEffect(() => {
     let results = [...orders];
     
@@ -35,7 +33,6 @@ const OrderList = () => {
       );
     }
     
-    // Apply sorting
     results.sort((a, b) => {
       let comparison = 0;
       
@@ -136,6 +133,9 @@ const OrderList = () => {
                   >
                     Valor {renderSortIcon('total')}
                   </th>
+                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
+                    Desconto
+                  </th>
                   <th 
                     className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer" 
                     onClick={() => handleSort('status')}
@@ -149,7 +149,6 @@ const OrderList = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredOrders.map(order => {
-                  // Calculate order total
                   const subtotal = order.items.reduce(
                     (sum, item) => sum + (item.quantity * item.salePrice), 
                     0
@@ -173,7 +172,10 @@ const OrderList = () => {
                         {order.clientName}
                       </td>
                       <td className="py-3 px-4">
-                        {formatCurrency(total)}
+                        {formatCurrency(subtotal)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {order.discount ? `${order.discount}%` : "-"}
                       </td>
                       <td className="py-3 px-4">
                         <StatusBadge status={order.status} />

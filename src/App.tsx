@@ -107,12 +107,13 @@ function App() {
               <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
               <Route path="/encomendas/converter/:id" element={<OrderConverting />} />
               
-              {/* Stock Entries - Corrigindo as rotas */}
+              {/* Stock Entries - Fix for 404 error */}
               <Route path="/entradas/historico" element={<StockEntryList />} />
               <Route path="/entradas/nova" element={<StockEntryNew />} />
+              <Route path="/entradas/novo" element={<StockEntryNew />} />
               <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
               
-              {/* Stock Exits - Corrigindo as rotas */}
+              {/* Stock Exits */}
               <Route path="/saidas/historico" element={<StockExitList />} />
               <Route path="/saidas/nova" element={<StockExitNew />} />
               <Route path="/saidas/editar/:id" element={<StockExitEdit />} />

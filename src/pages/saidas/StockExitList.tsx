@@ -173,6 +173,9 @@ const StockExitList = () => {
                   <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
                     Valor
                   </th>
+                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
+                    Desconto
+                  </th>
                   <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
                     Itens
                   </th>
@@ -205,7 +208,10 @@ const StockExitList = () => {
                         {exit.reason}
                       </td>
                       <td className="py-3 px-4">
-                        {formatCurrency(total)}
+                        {formatCurrency(subtotal)}
+                      </td>
+                      <td className="py-3 px-4">
+                        {exit.discount ? `${exit.discount}%` : "-"}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {exit.items ? exit.items.length : 0}
