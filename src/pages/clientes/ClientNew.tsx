@@ -116,7 +116,7 @@ const ClientNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/clientes/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting} className="When this button is clicked, insert a new row into the Clientes table in Supabase using the values from the input fields in this form.\n">
+            <Button type="submit" disabled={isSubmitting} className="Connect this button to Supabase to insert data into the Clientes table.\n">
               {isSubmitting ? 'A guardar...' : 'Guardar Cliente'}
             </Button>
           </div>
