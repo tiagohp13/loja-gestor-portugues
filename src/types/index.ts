@@ -1,28 +1,34 @@
 
-export interface AuthState {
-  isAuthenticated: boolean;
-  user: User | null;
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
-  role: 'admin' | 'user';
+  role: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
 }
 
 export interface Product {
   id: string;
-  name: string;
   code: string;
+  name: string;
   description: string;
   category: string;
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
   minStock: number;
-  image: string;
-  status: 'active' | 'inactive';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -34,8 +40,7 @@ export interface Client {
   phone: string;
   address: string;
   taxId: string;
-  notes?: string;
-  status: 'active' | 'inactive';
+  notes: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,18 +52,8 @@ export interface Supplier {
   phone: string;
   address: string;
   taxId: string;
-  notes?: string;
-  status: 'active' | 'inactive';
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Category {
-  id: string;
-  name: string;
-  description: string;
-  productCount: number;
-  status: 'active' | 'inactive';
+  paymentTerms: string;
+  notes: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -68,11 +63,34 @@ export interface StockEntryItem {
   productName: string;
   quantity: number;
   purchasePrice: number;
+  discountPercent?: number;
+}
+
+export interface StockExit {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  items: StockExitItem[];
+  date: string;
+  invoiceNumber?: string;
+  notes?: string;
+  fromOrderId?: string;
+  fromOrderNumber?: string;
+  createdAt: string;
+}
+
+export interface StockExitItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
+  discountPercent?: number;
 }
 
 export interface StockEntry {
   id: string;
-  number: string; // Added sequential number
+  number: string;
   supplierId: string;
   supplierName: string;
   items: StockEntryItem[];
@@ -82,25 +100,16 @@ export interface StockEntry {
   createdAt: string;
 }
 
-export interface StockExitItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  salePrice: number;
-}
-
-export interface StockExit {
+export interface Order {
   id: string;
-  number: string; // Added sequential number
+  number: string;
   clientId: string;
-  clientName: string;
-  items: StockExitItem[];
-  invoiceNumber?: string;
-  notes?: string;
+  clientName?: string;
+  items: OrderItem[];
   date: string;
-  createdAt: string;
-  fromOrderId?: string;
-  fromOrderNumber?: string; // Added order number reference
+  notes?: string;
+  convertedToStockExitId?: string;
+  convertedToStockExitNumber?: string;
 }
 
 export interface OrderItem {
@@ -110,43 +119,31 @@ export interface OrderItem {
   salePrice: number;
 }
 
-export interface Order {
-  id: string;
-  number: string; // Added sequential number
-  clientId: string;
-  clientName?: string;
-  items: OrderItem[];
-  date: string;
-  notes?: string;
-  convertedToStockExitId?: string;
-  convertedToStockExitNumber?: string; // Added exit number reference
-}
-
-// Backward compatibility interfaces for code that still uses the old format
+// Legacy types for compatibility
 export interface LegacyStockEntry {
   id: string;
-  supplierId: string;
-  supplierName: string;
   productId: string;
   productName: string;
+  supplierId: string;
+  supplierName: string;
   quantity: number;
   purchasePrice: number;
-  invoiceNumber?: string;
-  notes?: string;
+  invoiceNumber: string;
+  notes: string;
   date: string;
   createdAt: string;
 }
 
 export interface LegacyStockExit {
   id: string;
-  clientId: string;
-  clientName: string;
   productId: string;
   productName: string;
+  clientId: string;
+  clientName: string;
   quantity: number;
   salePrice: number;
-  invoiceNumber?: string;
-  notes?: string;
+  invoiceNumber: string;
+  notes: string;
   date: string;
   createdAt: string;
   fromOrderId?: string;
@@ -154,16 +151,13 @@ export interface LegacyStockExit {
 
 export interface LegacyOrder {
   id: string;
-  clientId: string;
-  clientName?: string;
   productId: string;
   productName: string;
+  clientId: string;
+  clientName: string;
   quantity: number;
   salePrice: number;
   date: string;
-  notes?: string;
+  notes: string;
   convertedToStockExitId?: string;
 }
-
-// Added export data type interface for settings page
-export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';

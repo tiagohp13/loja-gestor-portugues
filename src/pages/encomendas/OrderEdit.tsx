@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,9 +17,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Search, Check, Plus, Trash, ShoppingCart } from 'lucide-react';
 import { OrderItem } from '@/types';
 
-const OrderNew = () => {
+const OrderEdit = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { addOrder, products, clients } = useData();
+  const { updateOrder, products, clients, findOrder } = useData();
   const [orderDetails, setOrderDetails] = useState({
     clientId: '',
     clientName: '',
@@ -44,6 +45,31 @@ const OrderNew = () => {
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+
+  useEffect(() => {
+    if (id) {
+      const order = findOrder(id);
+      if (order) {
+        if (order.convertedToStockExitId) {
+          toast.error('Não é possível editar uma encomenda já convertida em saída de stock.');
+          navigate(`/encomendas/${id}`);
+          return;
+        }
+        
+        setOrderDetails({
+          clientId: order.clientId,
+          clientName: order.clientName || '',
+          date: order.date,
+          notes: order.notes || ''
+        });
+        
+        setItems(order.items);
+      } else {
+        toast.error('Encomenda não encontrada.');
+        navigate('/encomendas/consultar');
+      }
+    }
+  }, [id, findOrder, navigate]);
 
   const handleOrderDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -169,8 +195,8 @@ const OrderNew = () => {
       return;
     }
     
-    // Add the order
-    addOrder({
+    // Update the order
+    updateOrder(id!, {
       clientId: orderDetails.clientId,
       clientName: client.name,
       items: items,
@@ -178,7 +204,7 @@ const OrderNew = () => {
       notes: orderDetails.notes
     });
     
-    navigate('/encomendas/consultar');
+    navigate(`/encomendas/${id}`);
   };
 
   // Calculate total value
@@ -188,11 +214,11 @@ const OrderNew = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Nova Encomenda" 
-        description="Registar uma nova encomenda de cliente" 
+        title="Editar Encomenda" 
+        description="Alterar dados da encomenda" 
         actions={
-          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
-            Voltar à Lista
+          <Button variant="outline" onClick={() => navigate(`/encomendas/${id}`)}>
+            Voltar à Encomenda
           </Button>
         }
       />
@@ -202,7 +228,7 @@ const OrderNew = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="clientSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                Pesquisar Cliente
+                Cliente
               </label>
               <Popover open={isClientSearchOpen} onOpenChange={setIsClientSearchOpen}>
                 <PopoverTrigger asChild>
@@ -288,13 +314,13 @@ const OrderNew = () => {
             <div className="border-t pt-4 mt-4">
               <h3 className="text-md font-medium mb-4 flex items-center">
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Adicionar Produtos
+                Produtos da Encomenda
               </h3>
               
               <div className="space-y-4">
                 <div className="space-y-2">
                   <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                    Pesquisar Produto
+                    Adicionar Produto
                   </label>
                   <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
                     <PopoverTrigger asChild>
@@ -458,14 +484,14 @@ const OrderNew = () => {
           </div>
           
           <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/encomendas/consultar')}>
+            <Button variant="outline" type="button" onClick={() => navigate(`/encomendas/${id}`)}>
               Cancelar
             </Button>
             <Button 
               type="submit"
               disabled={items.length === 0 || !orderDetails.clientId}
             >
-              Registar Encomenda
+              Guardar Alterações
             </Button>
           </div>
         </form>
@@ -474,4 +500,4 @@ const OrderNew = () => {
   );
 };
 
-export default OrderNew;
+export default OrderEdit;

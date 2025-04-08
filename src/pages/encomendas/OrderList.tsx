@@ -7,14 +7,19 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import EmptyState from '@/components/common/EmptyState';
-import { ClipboardList, Search, Plus, LogOut } from 'lucide-react';
+import { ClipboardList, Search, Plus, LogOut, ChevronUp, ChevronDown, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+
+type SortField = 'number' | 'date' | 'clientName' | 'totalValue';
+type SortDirection = 'asc' | 'desc';
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { orders } = useData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<SortField>('number');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   
   const filteredOrders = orders.filter(order => 
     order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -22,20 +27,55 @@ const OrderList = () => {
     order.number.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    if (sortField === 'number') {
+      return sortDirection === 'asc' 
+        ? a.number.localeCompare(b.number)
+        : b.number.localeCompare(a.number);
+    } else if (sortField === 'date') {
+      return sortDirection === 'asc' 
+        ? new Date(a.date).getTime() - new Date(b.date).getTime()
+        : new Date(b.date).getTime() - new Date(a.date).getTime();
+    } else if (sortField === 'clientName') {
+      return sortDirection === 'asc' 
+        ? (a.clientName || '').localeCompare(b.clientName || '')
+        : (b.clientName || '').localeCompare(a.clientName || '');
+    } else if (sortField === 'totalValue') {
+      const aTotal = a.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      const bTotal = b.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      return sortDirection === 'asc' ? aTotal - bTotal : bTotal - aTotal;
+    }
+    return 0;
+  });
+
   const handleViewOrder = (id: string) => {
     navigate(`/encomendas/${id}`);
+  };
+
+  const handleEditOrder = (id: string) => {
+    navigate(`/encomendas/editar/${id}`);
   };
 
   const handleCreateStockExit = (orderId: string) => {
     navigate(`/encomendas/converter/${orderId}`);
   };
 
-  // Helper to calculate total value of an order
-  const calculateOrderTotal = (orderId: string) => {
-    const order = orders.find(o => o.id === orderId);
-    if (!order) return 0;
-    
-    return order.items.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? (
+      <ChevronUp className="ml-1 h-4 w-4 inline" />
+    ) : (
+      <ChevronDown className="ml-1 h-4 w-4 inline" />
+    );
   };
 
   return (
@@ -63,7 +103,7 @@ const OrderList = () => {
           </div>
         </div>
         
-        {filteredOrders.length === 0 ? (
+        {sortedOrders.length === 0 ? (
           <EmptyState 
             icon={<ClipboardList className="w-12 h-12 text-gestorApp-gray" />}
             title="Nenhuma encomenda encontrada"
@@ -79,14 +119,29 @@ const OrderList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Número
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => toggleSort('number')}
+                  >
+                    <span className="flex items-center">
+                      Número {getSortIcon('number')}
+                    </span>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Data
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => toggleSort('date')}
+                  >
+                    <span className="flex items-center">
+                      Data {getSortIcon('date')}
+                    </span>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Cliente
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => toggleSort('clientName')}
+                  >
+                    <span className="flex items-center">
+                      Cliente {getSortIcon('clientName')}
+                    </span>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Produtos
@@ -94,8 +149,13 @@ const OrderList = () => {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Qtd. Total
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Valor Total
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => toggleSort('totalValue')}
+                  >
+                    <span className="flex items-center">
+                      Valor Total {getSortIcon('totalValue')}
+                    </span>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Estado
@@ -106,7 +166,7 @@ const OrderList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => {
+                {sortedOrders.map((order) => {
                   const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
                   const totalValue = order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
                   
@@ -162,12 +222,22 @@ const OrderList = () => {
                           Ver
                         </Button>
                         {!order.convertedToStockExitId && (
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleCreateStockExit(order.id)}
-                          >
-                            Converter em Saída
-                          </Button>
+                          <>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => handleEditOrder(order.id)}
+                              className="mr-2"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              onClick={() => handleCreateStockExit(order.id)}
+                            >
+                              Converter em Saída
+                            </Button>
+                          </>
                         )}
                       </td>
                     </tr>

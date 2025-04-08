@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AuthLayout from '../components/layouts/AuthLayout';
@@ -11,8 +11,15 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,7 +76,10 @@ const Login: React.FC = () => {
       
       <div className="mt-6 text-sm text-center text-gestorApp-gray">
         <p className="text-muted-foreground">
-          Demo: Use email <strong>"admin@gestor.pt"</strong> e password <strong>"password"</strong>
+          Use <strong>tiagohp13@hotmail.com</strong> e <strong>*Silva*2020</strong> para login
+        </p>
+        <p className="text-muted-foreground mt-1">
+          Ou <strong>teste@suporte.com</strong> e <strong>teste123</strong>
         </p>
       </div>
     </AuthLayout>

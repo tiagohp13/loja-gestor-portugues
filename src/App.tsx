@@ -39,6 +39,7 @@ import SupplierEdit from './pages/fornecedores/SupplierEdit';
 import OrderList from './pages/encomendas/OrderList';
 import OrderDetail from './pages/encomendas/OrderDetail';
 import OrderNew from './pages/encomendas/OrderNew';
+import OrderEdit from './pages/encomendas/OrderEdit';
 import OrderConverting from './pages/encomendas/OrderConverting';
 
 // Stock Entries
@@ -103,6 +104,7 @@ function App() {
               <Route path="/encomendas/consultar" element={<OrderList />} />
               <Route path="/encomendas/nova" element={<OrderNew />} />
               <Route path="/encomendas/:id" element={<OrderDetail />} />
+              <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
               <Route path="/encomendas/converter/:id" element={<OrderConverting />} />
               
               {/* Stock Entries */}

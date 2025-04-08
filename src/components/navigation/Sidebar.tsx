@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -67,16 +66,16 @@ const AppSidebar: React.FC = () => {
       isActive: location.pathname.includes('/saidas')
     },
     { 
-      path: '/configuracoes', 
-      label: 'Configurações', 
-      icon: <Settings className="w-5 h-5" />,
-      isActive: location.pathname.includes('/configuracoes')
-    },
-    { 
       path: '/suporte', 
       label: 'Suporte', 
       icon: <HelpCircle className="w-5 h-5" />,
       isActive: location.pathname.includes('/suporte')
+    },
+    { 
+      path: '/configuracoes', 
+      label: 'Configurações', 
+      icon: <Settings className="w-5 h-5" />,
+      isActive: location.pathname.includes('/configuracoes')
     }
   ];
 

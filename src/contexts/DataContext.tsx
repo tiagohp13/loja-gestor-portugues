@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import * as mockData from '../data/mockData';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   Product, Category, Client, Supplier, 
   StockEntry, StockExit, Order, 
@@ -116,7 +117,7 @@ const convertOldOrdersToNew = (oldOrders: any[], oldExits: any[]): Order[] => {
     
     return {
       id: order.id,
-      number: `ENC${String(index + 1).padStart(6, '0')}`,
+      number: `2025/${String(index + 1).padStart(3, '0')}`,
       clientId: order.clientId,
       clientName: order.clientName,
       items: [{
@@ -128,7 +129,7 @@ const convertOldOrdersToNew = (oldOrders: any[], oldExits: any[]): Order[] => {
       date: order.date,
       notes: order.notes,
       convertedToStockExitId: order.convertedToStockExitId,
-      convertedToStockExitNumber: convertedToExit ? `SAI${String(oldExits.indexOf(convertedToExit) + 1).padStart(6, '0')}` : undefined
+      convertedToStockExitNumber: convertedToExit ? `2025/${String(oldExits.indexOf(convertedToExit) + 1).padStart(3, '0')}` : undefined
     };
   });
 };
@@ -155,22 +156,58 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     window.appData = { products, categories, clients, suppliers, stockEntries, stockExits, orders };
   }, [products, categories, clients, suppliers, stockEntries, stockExits, orders]);
 
-  const getNextOrderNumber = () => {
-    const lastOrderNumber = orders.length > 0 ? 
-      parseInt(orders[orders.length - 1].number.replace('ENC', '')) : 0;
-    return `ENC${String(lastOrderNumber + 1).padStart(6, '0')}`;
+  const getNextOrderNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_counter', {
+        counter_id: 'orders'
+      });
+      
+      if (error) {
+        console.error("Error getting order number:", error);
+        return `${new Date().getFullYear()}/${String(orders.length + 1).padStart(3, '0')}`;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in getNextOrderNumber:", error);
+      return `${new Date().getFullYear()}/${String(orders.length + 1).padStart(3, '0')}`;
+    }
   };
 
-  const getNextEntryNumber = () => {
-    const lastEntryNumber = stockEntries.length > 0 ? 
-      parseInt(stockEntries[stockEntries.length - 1].number.replace('ENT', '')) : 0;
-    return `ENT${String(lastEntryNumber + 1).padStart(6, '0')}`;
+  const getNextEntryNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_counter', {
+        counter_id: 'stock_entries'
+      });
+      
+      if (error) {
+        console.error("Error getting stock entry number:", error);
+        return `${new Date().getFullYear()}/${String(stockEntries.length + 1).padStart(3, '0')}`;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in getNextEntryNumber:", error);
+      return `${new Date().getFullYear()}/${String(stockEntries.length + 1).padStart(3, '0')}`;
+    }
   };
 
-  const getNextExitNumber = () => {
-    const lastExitNumber = stockExits.length > 0 ? 
-      parseInt(stockExits[stockExits.length - 1].number.replace('SAI', '')) : 0;
-    return `SAI${String(lastExitNumber + 1).padStart(6, '0')}`;
+  const getNextExitNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_counter', {
+        counter_id: 'stock_exits'
+      });
+      
+      if (error) {
+        console.error("Error getting stock exit number:", error);
+        return `${new Date().getFullYear()}/${String(stockExits.length + 1).padStart(3, '0')}`;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in getNextExitNumber:", error);
+      return `${new Date().getFullYear()}/${String(stockExits.length + 1).padStart(3, '0')}`;
+    }
   };
 
   const addProduct = (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
@@ -330,11 +367,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Fornecedor excluído com sucesso!');
   };
 
-  const addStockEntry = (entry: Omit<StockEntry, 'id' | 'createdAt' | 'number'>) => {
+  const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' | 'number'>) => {
+    const newEntryNumber = await getNextEntryNumber();
+    
     const newEntry = { 
       ...entry, 
       id: uuidv4(),
-      number: getNextEntryNumber(),
+      number: newEntryNumber,
       createdAt: new Date().toISOString() 
     };
     
@@ -414,7 +453,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Entrada de stock excluída com sucesso!');
   };
 
-  const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt' | 'number'>) => {
+  const addStockExit = async (exit: Omit<StockExit, 'id' | 'createdAt' | 'number'>) => {
     let hasEnoughStock = true;
     
     exit.items.forEach(item => {
@@ -427,7 +466,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     if (!hasEnoughStock) return;
     
-    const newExitNumber = getNextExitNumber();
+    const newExitNumber = await getNextExitNumber();
     
     const newExit = { 
       ...exit, 
@@ -535,11 +574,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     toast.success('Saída de stock excluída com sucesso!');
   };
 
-  const addOrder = (order: Omit<Order, 'id' | 'number'>) => {
+  const addOrder = async (order: Omit<Order, 'id' | 'number'>) => {
+    const newOrderNumber = await getNextOrderNumber();
+    
     const newOrder = { 
       ...order, 
       id: uuidv4(),
-      number: getNextOrderNumber() 
+      number: newOrderNumber
     };
     setOrders([...orders, newOrder as Order]);
     toast.success('Encomenda registada com sucesso!');

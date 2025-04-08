@@ -35,11 +35,13 @@ const StockExitNew = () => {
     productName: string;
     quantity: number;
     salePrice: number;
+    discountPercent: number;
   }>({
     productId: '',
     productName: '',
     quantity: 1,
-    salePrice: 0
+    salePrice: 0,
+    discountPercent: 0
   });
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -59,7 +61,7 @@ const StockExitNew = () => {
     const { name, value } = e.target;
     setCurrentItem(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' 
+      [name]: name === 'quantity' || name === 'salePrice' || name === 'discountPercent'
               ? parseFloat(value) || 0 
               : value
     }));
@@ -80,8 +82,16 @@ const StockExitNew = () => {
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: 1,
-        salePrice: selectedProduct.salePrice
+        salePrice: selectedProduct.salePrice,
+        discountPercent: 0
       });
+      
+      // Automatically add product if this is the first selection
+      if (items.length === 0 && !isProductSearchOpen) {
+        setTimeout(() => {
+          addItemToExit();
+        }, 100);
+      }
     }
     setIsProductSearchOpen(false);
   };
@@ -129,7 +139,8 @@ const StockExitNew = () => {
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice // Update the price in case it changed
+        salePrice: currentItem.salePrice, // Update the price in case it changed
+        discountPercent: currentItem.discountPercent // Update the discount in case it changed
       };
       setItems(updatedItems);
     } else {
@@ -142,7 +153,8 @@ const StockExitNew = () => {
       productId: '',
       productName: '',
       quantity: 1,
-      salePrice: 0
+      salePrice: 0,
+      discountPercent: 0
     });
     setSearchTerm('');
   };
@@ -204,8 +216,15 @@ const StockExitNew = () => {
     navigate('/saidas/historico');
   };
 
+  // Helper function to calculate item price after discount
+  const getDiscountedPrice = (price: number, discountPercent: number) => {
+    if (!discountPercent) return price;
+    return price * (1 - discountPercent / 100);
+  };
+
+  // Calculate total value with discounts
   const totalValue = items.reduce((total, item) => 
-    total + (item.quantity * item.salePrice), 0);
+    total + (item.quantity * getDiscountedPrice(item.salePrice, item.discountPercent || 0)), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -373,7 +392,7 @@ const StockExitNew = () => {
                 </div>
                 
                 {currentItem.productId && (
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
                         Produto Selecionado
@@ -419,6 +438,23 @@ const StockExitNew = () => {
                         required
                       />
                     </div>
+                    
+                    <div className="space-y-2">
+                      <label htmlFor="discountPercent" className="text-sm font-medium text-gestorApp-gray-dark">
+                        Desconto (%)
+                      </label>
+                      <Input
+                        id="discountPercent"
+                        name="discountPercent"
+                        type="number"
+                        step="1"
+                        min="0"
+                        max="100"
+                        value={currentItem.discountPercent}
+                        onChange={handleItemChange}
+                        placeholder="0"
+                      />
+                    </div>
                   </div>
                 )}
                 
@@ -451,29 +487,40 @@ const StockExitNew = () => {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P. Final</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeItem(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {items.map((item, index) => {
+                      const discountedPrice = getDiscountedPrice(item.salePrice, item.discountPercent || 0);
+                      return (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {item.discountPercent ? `${item.discountPercent}%` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {discountedPrice.toFixed(2)} €
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * discountedPrice).toFixed(2)} €</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => removeItem(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

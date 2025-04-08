@@ -33,12 +33,54 @@ export type Database = {
         }
         Relationships: []
       }
+      counters: {
+        Row: {
+          current_count: number
+          id: string
+          year: number
+        }
+        Insert: {
+          current_count?: number
+          id: string
+          year: number
+        }
+        Update: {
+          current_count?: number
+          id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      users: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          password: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          password: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          password?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_next_counter: {
+        Args: { counter_id: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

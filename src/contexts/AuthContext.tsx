@@ -1,7 +1,7 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { AuthState, User } from '../types';
-import { users } from '../data/mockData';
+import { loginUser } from '../services/authService';
 import { toast } from 'sonner';
 
 interface AuthContextType extends AuthState {
@@ -25,24 +25,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   });
 
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, this would be an API call
-    // Here we're mocking authentication
     try {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      // In a real app, we would check credentials against backend
-      // For demo, we'll allow any user from our mock data
-      const user = users.find(u => u.email === email);
+      const { user } = await loginUser(email, password);
       
       if (!user) {
         throw new Error('Utilizador não encontrado');
-      }
-      
-      // In a real app, we would check password hash
-      // For demo, let's assume "password" is the password for all users
-      if (password !== 'password') {
-        throw new Error('Palavra-passe incorreta');
       }
       
       setState({ user, isAuthenticated: true });
