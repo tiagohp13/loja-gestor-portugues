@@ -43,6 +43,36 @@ const channels = {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_entry_items' }, payload => {
       console.log('Stock entry item change received!', payload);
     })
+    .subscribe(),
+    
+  stockExits: supabase.channel('public:stock_exits')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_exits' }, payload => {
+      console.log('Stock exit change received!', payload);
+    })
+    .subscribe(),
+    
+  stockExitItems: supabase.channel('public:stock_exit_items')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'stock_exit_items' }, payload => {
+      console.log('Stock exit item change received!', payload);
+    })
+    .subscribe(),
+    
+  orders: supabase.channel('public:orders')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, payload => {
+      console.log('Order change received!', payload);
+    })
+    .subscribe(),
+    
+  orderItems: supabase.channel('public:order_items')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'order_items' }, payload => {
+      console.log('Order item change received!', payload);
+    })
+    .subscribe(),
+    
+  products: supabase.channel('public:products')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
+      console.log('Product change received!', payload);
+    })
     .subscribe()
 };
 
@@ -126,3 +156,4 @@ export const decrement = async (table: 'products' | 'categories' | 'counters', c
   
   return updateData[column];
 };
+

@@ -35,6 +35,7 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { StockEntry } from '@/types';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const StockEntryList = () => {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [localEntries, setLocalEntries] = useState([]);
+  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
 
   // Force fetch on component mount and whenever we return to this page
   useEffect(() => {
@@ -81,6 +82,7 @@ const StockEntryList = () => {
             date: entry.date,
             createdAt: entry.created_at,
             items: entry.stock_entry_items.map((item: any) => ({
+              id: item.id,
               productId: item.product_id,
               productName: item.product_name,
               quantity: item.quantity,
@@ -104,7 +106,7 @@ const StockEntryList = () => {
     fetchEntries();
     
     // Set up a realtime listener for stock entries
-    const channel = supabase
+    const entriesChannel = supabase
       .channel('stock_entries_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_entries' }, 
@@ -114,15 +116,27 @@ const StockEntryList = () => {
         }
       )
       .subscribe();
+    
+    const itemsChannel = supabase
+      .channel('stock_entry_items_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_entry_items' }, 
+        (payload) => {
+          console.log('Stock entry item change detected:', payload);
+          fetchEntries(); // Refresh the data when changes occur
+        }
+      )
+      .subscribe();
       
     // Cleanup the subscription when the component unmounts
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(entriesChannel);
+      supabase.removeChannel(itemsChannel);
     };
   }, [setStockEntries]);
 
   // Use the entries from the context or local state
-  const displayEntries = stockEntries.length > 0 ? stockEntries : localEntries;
+  const displayEntries = localEntries.length > 0 ? localEntries : stockEntries;
   
   const sortedEntries = [...displayEntries].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
@@ -154,10 +168,31 @@ const StockEntryList = () => {
       })
     : sortedEntries;
 
-  const handleDeleteEntry = (id: string) => {
-    deleteStockEntry(id);
-    if (detailsOpen) {
-      setDetailsOpen(false);
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stock_entries')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Error deleting stock entry:", error);
+        toast.error("Erro ao eliminar entrada de stock");
+        return;
+      }
+
+      // Remove from local state immediately for optimistic UI update
+      setLocalEntries(prev => prev.filter(entry => entry.id !== id));
+      // Also update context
+      deleteStockEntry(id);
+      toast.success("Entrada eliminada com sucesso");
+      
+      if (detailsOpen) {
+        setDetailsOpen(false);
+      }
+    } catch (error) {
+      console.error("Error in handleDeleteEntry:", error);
+      toast.error("Erro ao eliminar entrada de stock");
     }
   };
 
@@ -188,7 +223,7 @@ const StockEntryList = () => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
 
-  const calculateEntryTotal = (entry: typeof displayEntries[0]) => {
+  const calculateEntryTotal = (entry: StockEntry) => {
     return entry.items.reduce((total, item) => total + (item.quantity * item.purchasePrice), 0);
   };
 

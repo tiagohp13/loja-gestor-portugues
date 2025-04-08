@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Search, Plus, Eye, Edit, Trash2, ClipboardList } from 'lucide-react';
@@ -33,17 +33,115 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { StockExit } from '@/types';
 
 const StockExitList = () => {
   const navigate = useNavigate();
-  const { stockExits, products, clients, deleteStockExit } = useData();
+  const { stockExits, products, clients, deleteStockExit, setStockExits } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedExit, setSelectedExit] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [localExits, setLocalExits] = useState<StockExit[]>([]);
 
+  // Force fetch on component mount and whenever we return to this page
+  useEffect(() => {
+    const fetchExits = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching stock exits directly in StockExitList component...");
+        
+        const { data, error } = await supabase
+          .from('stock_exits')
+          .select(`
+            *,
+            stock_exit_items(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching stock exits:", error);
+          toast.error("Erro ao carregar saídas de stock");
+          return;
+        }
+
+        if (data) {
+          console.log("Stock exits data received:", data);
+          
+          // Map the database fields to match our StockExit type
+          const mappedExits = data.map(exit => ({
+            id: exit.id,
+            clientId: exit.client_id,
+            clientName: exit.client_name,
+            number: exit.number,
+            invoiceNumber: exit.invoice_number,
+            notes: exit.notes,
+            date: exit.date,
+            createdAt: exit.created_at,
+            fromOrderId: exit.from_order_id,
+            fromOrderNumber: exit.from_order_number,
+            items: exit.stock_exit_items.map((item: any) => ({
+              id: item.id,
+              productId: item.product_id,
+              productName: item.product_name,
+              quantity: item.quantity,
+              salePrice: item.sale_price,
+              discountPercent: item.discount_percent
+            }))
+          }));
+          
+          // Update both the local state and the context state
+          setLocalExits(mappedExits);
+          setStockExits(mappedExits);
+        }
+      } catch (error) {
+        console.error("Error in fetchExits:", error);
+        toast.error("Erro ao carregar saídas de stock");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchExits();
+    
+    // Set up a realtime listener for stock exits
+    const exitsChannel = supabase
+      .channel('stock_exits_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_exits' }, 
+        (payload) => {
+          console.log('Stock exit change detected:', payload);
+          fetchExits(); // Refresh the data when changes occur
+        }
+      )
+      .subscribe();
+      
+    const itemsChannel = supabase
+      .channel('stock_exit_items_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_exit_items' }, 
+        (payload) => {
+          console.log('Stock exit item change detected:', payload);
+          fetchExits(); // Refresh the data when changes occur
+        }
+      )
+      .subscribe();
+      
+    // Cleanup the subscription when the component unmounts
+    return () => {
+      supabase.removeChannel(exitsChannel);
+      supabase.removeChannel(itemsChannel);
+    };
+  }, [setStockExits]);
+
+  // Use the exits from the context or local state
+  const displayExits = localExits.length > 0 ? localExits : stockExits;
+  
   // Sort exits by date (most recent first)
-  const sortedExits = [...stockExits].sort((a, b) => 
+  const sortedExits = [...displayExits].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
 
@@ -72,8 +170,32 @@ const StockExitList = () => {
       })
     : sortedExits;
 
-  const handleDeleteExit = (id: string) => {
-    deleteStockExit(id);
+  const handleDeleteExit = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stock_exits')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        console.error("Error deleting stock exit:", error);
+        toast.error("Erro ao eliminar saída de stock");
+        return;
+      }
+
+      // Remove from local state immediately for optimistic UI update
+      setLocalExits(prev => prev.filter(exit => exit.id !== id));
+      // Also update context
+      deleteStockExit(id);
+      toast.success("Saída eliminada com sucesso");
+      
+      if (detailsOpen) {
+        setDetailsOpen(false);
+      }
+    } catch (error) {
+      console.error("Error in handleDeleteExit:", error);
+      toast.error("Erro ao eliminar saída de stock");
+    }
   };
 
   const handleEditExit = (id: string) => {
@@ -97,13 +219,27 @@ const StockExitList = () => {
     setSearchOpen(false);
   };
 
-  const selectedExitData = selectedExit ? stockExits.find(exit => exit.id === selectedExit) : null;
+  const selectedExitData = selectedExit ? displayExits.find(exit => exit.id === selectedExit) : null;
   const selectedClient = selectedExitData ? clients.find(c => c.id === selectedExitData.clientId) : null;
 
   // Helper function to calculate total for an exit
-  const calculateExitTotal = (exit: typeof stockExits[0]) => {
+  const calculateExitTotal = (exit: StockExit) => {
     return exit.items.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Histórico de Saídas" 
+          description="A carregar dados..." 
+        />
+        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
+          Carregando saídas de stock...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

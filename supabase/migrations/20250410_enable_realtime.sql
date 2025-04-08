@@ -22,3 +22,12 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.stock_exits;
 -- Enable realtime for stock_exit_items
 ALTER TABLE public.stock_exit_items REPLICA IDENTITY FULL;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.stock_exit_items;
+
+-- Enable realtime for orders
+ALTER TABLE public.orders REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.orders;
+
+-- Enable realtime for order_items
+ALTER TABLE public.order_items REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.order_items;
+
