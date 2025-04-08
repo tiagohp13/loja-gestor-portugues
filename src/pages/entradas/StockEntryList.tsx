@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { Truck, Plus, Search, Filter, ArrowDown, ArrowUp, Trash, Eye, Pencil } from 'lucide-react';
+import { Truck, Plus, Search, ArrowDown, ArrowUp, Trash, Eye, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -69,6 +69,7 @@ const StockEntryList = () => {
               discount: item.discount ?? 0
             })) || [];
 
+            // Transform database column names to match our TypeScript interface
             return {
               id: entry.id,
               supplierId: entry.supplierid,
@@ -78,7 +79,7 @@ const StockEntryList = () => {
               invoiceNumber: entry.invoicenumber,
               notes: entry.notes,
               status: entry.status as 'pending' | 'completed' | 'cancelled',
-              discount: 0, // We're keeping this to maintain type compatibility, but will not use it in UI
+              discount: 0, // We're keeping this at 0 since we removed the discount functionality
               createdAt: entry.createdat,
               updatedAt: entry.updatedat,
               items: mappedItems

@@ -164,7 +164,8 @@ const StockExitNew = () => {
       items: items,
       date: exitDetails.date,
       notes: exitDetails.notes,
-      reason: "N/A" // We still need to provide this for type compatibility
+      reason: "N/A", // We still need to provide this for type compatibility
+      discount: 0 // Add discount with default value of 0
     });
     
     navigate('/saidas/historico');
