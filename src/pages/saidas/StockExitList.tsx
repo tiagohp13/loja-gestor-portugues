@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -8,6 +9,8 @@ import { Search, Plus, Pencil } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockExit } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const StockExitList = () => {
   const navigate = useNavigate();
@@ -15,20 +18,68 @@ const StockExitList = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredExits, setFilteredExits] = useState<StockExit[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [localExits, setLocalExits] = useState<StockExit[]>([]);
 
   useEffect(() => {
-    let results = [...stockExits];
+    fetchExits();
+  }, []);
+
+  const fetchExits = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('StockExits')
+        .select('*')
+        .order('createdAt', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar saídas:', error);
+        toast.error('Erro ao carregar as saídas: ' + error.message);
+        // Fallback to local data
+        setLocalExits(stockExits);
+      } else if (data) {
+        // For each exit, get the items
+        const exitsWithItems = await Promise.all(
+          data.map(async (exit) => {
+            const { data: items, error: itemsError } = await supabase
+              .from('StockExitsItems')
+              .select('*')
+              .eq('exitId', exit.id);
+
+            if (itemsError) {
+              console.error(`Erro ao buscar itens da saída ${exit.id}:`, itemsError);
+              return { ...exit, items: [] };
+            }
+
+            return { ...exit, items: items || [] };
+          })
+        );
+        
+        setLocalExits(exitsWithItems);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar saídas:', err);
+      // Fallback to local data
+      setLocalExits(stockExits);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let results = [...localExits];
     
     if (searchTerm) {
       results = results.filter(
         exit => 
-          exit.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (exit.reason && exit.reason.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (exit.exitNumber && exit.exitNumber.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
     setFilteredExits(results);
-  }, [stockExits, searchTerm]);
+  }, [localExits, searchTerm]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -53,9 +104,16 @@ const StockExitList = () => {
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
+          <Button variant="outline" onClick={fetchExits}>
+            Atualizar
+          </Button>
         </div>
         
-        {filteredExits.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8">
+            <p>Carregando saídas...</p>
+          </div>
+        ) : filteredExits.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white">
               <thead className="bg-gray-50">
@@ -83,11 +141,13 @@ const StockExitList = () => {
               <tbody className="divide-y divide-gray-200">
                 {filteredExits.map(exit => {
                   // Calculate exit total with discount
-                  const subtotal = exit.items.reduce(
-                    (sum, item) => sum + (item.quantity * item.salePrice), 
-                    0
-                  );
-                  const discount = subtotal * (exit.discount / 100);
+                  const subtotal = exit.items && exit.items.length > 0 
+                    ? exit.items.reduce(
+                        (sum, item) => sum + (item.quantity * item.salePrice), 
+                        0
+                      )
+                    : 0;
+                  const discount = subtotal * ((exit.discount || 0) / 100);
                   const total = subtotal - discount;
                   
                   return (
@@ -105,7 +165,7 @@ const StockExitList = () => {
                         {formatCurrency(total)}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        {exit.items.length}
+                        {exit.items ? exit.items.length : 0}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Button 

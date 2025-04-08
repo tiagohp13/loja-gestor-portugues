@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Product, Category, Client, Supplier, Order, OrderItem, StockEntry, StockEntryItem, StockExit, StockExitItem } from '../types';
@@ -237,15 +238,65 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber'>) => {
     const orderNumber = await generateOrderNumber();
+    
     const newOrder: Order = {
       id: uuidv4(),
       ...orderData,
       orderNumber: orderNumber,
-      status: 'pending', // Default status
-      discount: 0, // Default discount
+      status: 'pending',
+      discount: orderData.discount || 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    try {
+      console.log('Guardando encomenda no Supabase:', newOrder);
+      
+      // Salvar no Supabase
+      const { data, error } = await supabase.from('Encomendas').insert({
+        id: newOrder.id,
+        clientId: newOrder.clientId,
+        clientName: newOrder.clientName,
+        orderNumber: newOrder.orderNumber,
+        date: newOrder.date,
+        notes: newOrder.notes,
+        status: newOrder.status,
+        discount: newOrder.discount,
+        createdAt: newOrder.createdAt,
+        updatedAt: newOrder.updatedAt
+      });
+      
+      if (error) {
+        console.error('Erro ao salvar encomenda no Supabase:', error);
+        throw error;
+      }
+      
+      // Salvar itens da encomenda
+      if (newOrder.items && newOrder.items.length > 0) {
+        const itemsToInsert = newOrder.items.map(item => ({
+          encomendaId: newOrder.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          salePrice: item.salePrice
+        }));
+        
+        const { error: itemsError } = await supabase.from('EncomendasItems').insert(itemsToInsert);
+        
+        if (itemsError) {
+          console.error('Erro ao salvar itens da encomenda no Supabase:', itemsError);
+          throw itemsError;
+        }
+      }
+      
+      console.log('Encomenda guardada com sucesso no Supabase');
+    } catch (error) {
+      console.error('Erro ao guardar encomenda:', error);
+      // Continue saving locally even if Supabase fails
+      console.warn('Salvando apenas localmente devido a erro no Supabase');
+    }
+    
+    // Save to local state
     setOrders(prev => [newOrder, ...prev]);
     saveData('orders', [...orders, newOrder]);
     return newOrder;
@@ -267,21 +318,71 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addStockEntry = async (entryData: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>) => {
     const entryNumber = await generateStockEntryNumber();
+    
     const newEntry: StockEntry = {
       id: uuidv4(),
       ...entryData,
       entryNumber: entryNumber,
-      status: 'completed', // Default status
-      discount: 0, // Default discount
+      status: 'completed',
+      discount: entryData.discount || 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    try {
+      console.log('Guardando entrada no Supabase:', newEntry);
+      
+      // Salvar no Supabase
+      const { data, error } = await supabase.from('StockEntries').insert({
+        id: newEntry.id,
+        supplierId: newEntry.supplierId,
+        supplierName: newEntry.supplierName,
+        entryNumber: newEntry.entryNumber,
+        date: newEntry.date,
+        invoiceNumber: newEntry.invoiceNumber,
+        notes: newEntry.notes,
+        status: newEntry.status,
+        discount: newEntry.discount,
+        createdAt: newEntry.createdAt,
+        updatedAt: newEntry.updatedAt
+      });
+      
+      if (error) {
+        console.error('Erro ao salvar entrada no Supabase:', error);
+        throw error;
+      }
+      
+      // Salvar itens da entrada
+      if (newEntry.items && newEntry.items.length > 0) {
+        const itemsToInsert = newEntry.items.map(item => ({
+          entryId: newEntry.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          purchasePrice: item.purchasePrice
+        }));
+        
+        const { error: itemsError } = await supabase.from('StockEntriesItems').insert(itemsToInsert);
+        
+        if (itemsError) {
+          console.error('Erro ao salvar itens da entrada no Supabase:', itemsError);
+          throw itemsError;
+        }
+      }
+      
+      console.log('Entrada guardada com sucesso no Supabase');
+    } catch (error) {
+      console.error('Erro ao guardar entrada:', error);
+      // Continue saving locally even if Supabase fails
+      console.warn('Salvando apenas localmente devido a erro no Supabase');
+    }
     
     // Update product stock quantities
     newEntry.items.forEach(item => {
       updateProductStock(item.productId, item.quantity);
     });
     
+    // Save to local state
     setStockEntries(prev => [newEntry, ...prev]);
     saveData('stockEntries', [...stockEntries, newEntry]);
     return newEntry;
@@ -303,21 +404,73 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const addStockExit = async (exitData: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>) => {
     const exitNumber = await generateStockExitNumber();
+    
     const newExit: StockExit = {
       id: uuidv4(),
       ...exitData,
       exitNumber: exitNumber,
-      status: 'completed', // Default status
-      discount: 0, // Default discount
+      status: 'completed',
+      discount: exitData.discount || 0,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
+    
+    try {
+      console.log('Guardando saída no Supabase:', newExit);
+      
+      // Salvar no Supabase
+      const { data, error } = await supabase.from('StockExits').insert({
+        id: newExit.id,
+        clientId: newExit.clientId,
+        clientName: newExit.clientName,
+        reason: newExit.reason,
+        exitNumber: newExit.exitNumber,
+        date: newExit.date,
+        invoiceNumber: newExit.invoiceNumber,
+        notes: newExit.notes,
+        status: newExit.status,
+        discount: newExit.discount,
+        fromOrderId: newExit.fromOrderId,
+        createdAt: newExit.createdAt,
+        updatedAt: newExit.updatedAt
+      });
+      
+      if (error) {
+        console.error('Erro ao salvar saída no Supabase:', error);
+        throw error;
+      }
+      
+      // Salvar itens da saída
+      if (newExit.items && newExit.items.length > 0) {
+        const itemsToInsert = newExit.items.map(item => ({
+          exitId: newExit.id,
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          salePrice: item.salePrice
+        }));
+        
+        const { error: itemsError } = await supabase.from('StockExitsItems').insert(itemsToInsert);
+        
+        if (itemsError) {
+          console.error('Erro ao salvar itens da saída no Supabase:', itemsError);
+          throw itemsError;
+        }
+      }
+      
+      console.log('Saída guardada com sucesso no Supabase');
+    } catch (error) {
+      console.error('Erro ao guardar saída:', error);
+      // Continue saving locally even if Supabase fails
+      console.warn('Salvando apenas localmente devido a erro no Supabase');
+    }
     
     // Update product stock quantities (negative for exits)
     newExit.items.forEach(item => {
       updateProductStock(item.productId, -item.quantity);
     });
     
+    // Save to local state
     setStockExits(prev => [newExit, ...prev]);
     saveData('stockExits', [...stockExits, newExit]);
     return newExit;
@@ -438,8 +591,69 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     // Generate a number for the exit
-    generateStockExitNumber().then(number => {
-      newExit.exitNumber = number;
+    generateStockExitNumber().then(async (exitNumber) => {
+      newExit.exitNumber = exitNumber;
+      
+      try {
+        // Salvar no Supabase
+        const { error } = await supabase.from('StockExits').insert({
+          id: newExit.id,
+          clientId: newExit.clientId,
+          clientName: newExit.clientName,
+          reason: newExit.reason,
+          exitNumber: newExit.exitNumber,
+          date: newExit.date,
+          notes: newExit.notes,
+          status: newExit.status,
+          discount: newExit.discount,
+          fromOrderId: newExit.fromOrderId,
+          createdAt: newExit.createdAt,
+          updatedAt: newExit.updatedAt
+        });
+        
+        if (error) {
+          console.error('Erro ao salvar saída convertida no Supabase:', error);
+          throw error;
+        }
+        
+        // Salvar itens da saída
+        if (newExit.items && newExit.items.length > 0) {
+          const itemsToInsert = newExit.items.map(item => ({
+            exitId: newExit.id,
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            salePrice: item.salePrice
+          }));
+          
+          const { error: itemsError } = await supabase.from('StockExitsItems').insert(itemsToInsert);
+          
+          if (itemsError) {
+            console.error('Erro ao salvar itens da saída convertida no Supabase:', itemsError);
+            throw itemsError;
+          }
+        }
+        
+        // Atualizar status da encomenda no Supabase
+        const { error: updateError } = await supabase.from('Encomendas')
+          .update({ 
+            status: 'completed', 
+            convertedToStockExitId: newExit.id,
+            updatedAt: new Date().toISOString()
+          })
+          .eq('id', order.id);
+          
+        if (updateError) {
+          console.error('Erro ao atualizar status da encomenda no Supabase:', updateError);
+          throw updateError;
+        }
+        
+        console.log('Conversão de encomenda para saída registrada com sucesso no Supabase');
+      } catch (error) {
+        console.error('Erro ao registrar conversão:', error);
+        // Continue local conversion even if Supabase fails
+        console.warn('Conversão apenas local devido a erro no Supabase');
+      }
       
       // Update product stock quantities (negative for exits)
       newExit.items.forEach(item => {

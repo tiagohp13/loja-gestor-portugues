@@ -7,11 +7,13 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import { StockExitItem, StockExit } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 const StockExitEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { stockExits, updateStockExit, products, clients } = useData();
+  const [loading, setLoading] = useState(true);
   
   const [exit, setExit] = useState<Partial<StockExit>>({
     clientId: '',
@@ -25,23 +27,68 @@ const StockExitEdit = () => {
 
   useEffect(() => {
     if (id) {
-      const foundExit = stockExits.find(exit => exit.id === id);
-      if (foundExit) {
-        setExit({
-          clientId: foundExit.clientId,
-          clientName: foundExit.clientName,
-          items: foundExit.items || [],
-          date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : '',
-          invoiceNumber: foundExit.invoiceNumber || '',
-          notes: foundExit.notes || '',
-          fromOrderId: foundExit.fromOrderId
-        });
-      } else {
-        toast.error('Saída não encontrada');
-        navigate('/saidas/historico');
-      }
+      fetchExit(id);
     }
-  }, [id, stockExits, navigate]);
+  }, [id]);
+
+  const fetchExit = async (exitId: string) => {
+    setLoading(true);
+    try {
+      // Primeiro tenta buscar do Supabase
+      const { data: exitData, error: exitError } = await supabase
+        .from('StockExits')
+        .select('*')
+        .eq('id', exitId)
+        .single();
+
+      if (exitError) {
+        console.error('Erro ao buscar saída no Supabase:', exitError);
+        
+        // Se falhar, busca local
+        const foundExit = stockExits.find(exit => exit.id === exitId);
+        if (foundExit) {
+          setExit({
+            clientId: foundExit.clientId,
+            clientName: foundExit.clientName,
+            items: foundExit.items || [],
+            date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : '',
+            invoiceNumber: foundExit.invoiceNumber || '',
+            notes: foundExit.notes || '',
+            fromOrderId: foundExit.fromOrderId,
+            discount: foundExit.discount
+          });
+          setLoading(false);
+        } else {
+          toast.error('Saída não encontrada');
+          navigate('/saidas/historico');
+        }
+        return;
+      }
+
+      if (exitData) {
+        // Buscar itens da saída
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('StockExitsItems')
+          .select('*')
+          .eq('exitId', exitId);
+
+        if (itemsError) {
+          console.error('Erro ao buscar itens da saída:', itemsError);
+        }
+
+        setExit({
+          ...exitData,
+          items: itemsData || [],
+          date: exitData.date ? new Date(exitData.date).toISOString().split('T')[0] : ''
+        });
+      }
+    } catch (error) {
+      console.error('Erro ao buscar detalhes da saída:', error);
+      toast.error('Erro ao carregar detalhes da saída');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -51,29 +98,69 @@ const StockExitEdit = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (id) {
-      // Get the client associated with this exit
-      const client = clients.find(c => c.id === exit.clientId);
-      
-      if (!client) {
-        toast.error('Cliente não encontrado');
-        return;
+      try {
+        // Get the client associated with this exit
+        const client = clients.find(c => c.id === exit.clientId);
+        
+        if (!client) {
+          toast.error('Cliente não encontrado');
+          return;
+        }
+        
+        const updateData = {
+          ...exit,
+          clientName: client.name,
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Atualizar no Supabase
+        const { error } = await supabase
+          .from('StockExits')
+          .update({
+            clientId: updateData.clientId,
+            clientName: updateData.clientName,
+            date: updateData.date,
+            invoiceNumber: updateData.invoiceNumber,
+            notes: updateData.notes,
+            updatedAt: updateData.updatedAt
+          })
+          .eq('id', id);
+
+        if (error) {
+          console.error('Erro ao atualizar saída no Supabase:', error);
+          toast.error('Erro ao atualizar saída: ' + error.message);
+          
+          // Continue updating locally even if Supabase fails
+          console.warn('Atualizando apenas localmente devido a erro no Supabase');
+        } else {
+          console.log('Saída atualizada com sucesso no Supabase');
+        }
+        
+        // Update local state
+        updateStockExit(id, updateData);
+        
+        toast.success('Saída atualizada com sucesso');
+        navigate('/saidas/historico');
+      } catch (error) {
+        console.error('Erro ao atualizar saída:', error);
+        toast.error('Erro ao atualizar saída');
       }
-      
-      // Update the stock exit
-      updateStockExit(id, {
-        ...exit,
-        clientName: client.name
-      });
-      
-      toast.success('Saída atualizada com sucesso');
-      navigate('/saidas/historico');
     }
   };
 
-  // Note: This is a simplified version. In a real app, you'd want to allow editing of individual items
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="text-center py-8">
+          <p>Carregando detalhes da saída...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -168,7 +255,7 @@ const StockExitEdit = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {exit.items.map((item, index) => (
+                  {exit.items && exit.items.map((item, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                         {item.productName}
@@ -177,10 +264,10 @@ const StockExitEdit = () => {
                         {item.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {item.salePrice.toFixed(2)} €
+                        {item.salePrice?.toFixed(2)} €
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {(item.quantity * item.salePrice).toFixed(2)} €
+                        {(item.quantity * (item.salePrice || 0)).toFixed(2)} €
                       </td>
                     </tr>
                   ))}

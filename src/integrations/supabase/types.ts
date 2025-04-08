@@ -60,6 +60,243 @@ export type Database = {
         }
         Relationships: []
       }
+      Encomendas: {
+        Row: {
+          clientid: string
+          clientname: string
+          convertedtostockexitid: string | null
+          createdat: string | null
+          date: string
+          discount: number | null
+          id: string
+          notes: string | null
+          ordernumber: string
+          status: string
+          updatedat: string | null
+        }
+        Insert: {
+          clientid: string
+          clientname: string
+          convertedtostockexitid?: string | null
+          createdat?: string | null
+          date: string
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          ordernumber: string
+          status: string
+          updatedat?: string | null
+        }
+        Update: {
+          clientid?: string
+          clientname?: string
+          convertedtostockexitid?: string | null
+          createdat?: string | null
+          date?: string
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          ordernumber?: string
+          status?: string
+          updatedat?: string | null
+        }
+        Relationships: []
+      }
+      EncomendasItems: {
+        Row: {
+          encomendaid: string | null
+          id: string
+          productid: string
+          productname: string
+          quantity: number
+          saleprice: number
+        }
+        Insert: {
+          encomendaid?: string | null
+          id?: string
+          productid: string
+          productname: string
+          quantity: number
+          saleprice: number
+        }
+        Update: {
+          encomendaid?: string | null
+          id?: string
+          productid?: string
+          productname?: string
+          quantity?: number
+          saleprice?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "EncomendasItems_encomendaid_fkey"
+            columns: ["encomendaid"]
+            isOneToOne: false
+            referencedRelation: "Encomendas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      StockEntries: {
+        Row: {
+          createdat: string | null
+          date: string
+          discount: number | null
+          entrynumber: string
+          id: string
+          invoicenumber: string | null
+          notes: string | null
+          status: string
+          supplierid: string
+          suppliername: string
+          updatedat: string | null
+        }
+        Insert: {
+          createdat?: string | null
+          date: string
+          discount?: number | null
+          entrynumber: string
+          id?: string
+          invoicenumber?: string | null
+          notes?: string | null
+          status: string
+          supplierid: string
+          suppliername: string
+          updatedat?: string | null
+        }
+        Update: {
+          createdat?: string | null
+          date?: string
+          discount?: number | null
+          entrynumber?: string
+          id?: string
+          invoicenumber?: string | null
+          notes?: string | null
+          status?: string
+          supplierid?: string
+          suppliername?: string
+          updatedat?: string | null
+        }
+        Relationships: []
+      }
+      StockEntriesItems: {
+        Row: {
+          entryid: string | null
+          id: string
+          productid: string
+          productname: string
+          purchaseprice: number
+          quantity: number
+        }
+        Insert: {
+          entryid?: string | null
+          id?: string
+          productid: string
+          productname: string
+          purchaseprice: number
+          quantity: number
+        }
+        Update: {
+          entryid?: string | null
+          id?: string
+          productid?: string
+          productname?: string
+          purchaseprice?: number
+          quantity?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "StockEntriesItems_entryid_fkey"
+            columns: ["entryid"]
+            isOneToOne: false
+            referencedRelation: "StockEntries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      StockExits: {
+        Row: {
+          clientid: string | null
+          clientname: string | null
+          createdat: string | null
+          date: string
+          discount: number | null
+          exitnumber: string
+          fromorderid: string | null
+          id: string
+          invoicenumber: string | null
+          notes: string | null
+          reason: string
+          status: string
+          updatedat: string | null
+        }
+        Insert: {
+          clientid?: string | null
+          clientname?: string | null
+          createdat?: string | null
+          date: string
+          discount?: number | null
+          exitnumber: string
+          fromorderid?: string | null
+          id?: string
+          invoicenumber?: string | null
+          notes?: string | null
+          reason: string
+          status: string
+          updatedat?: string | null
+        }
+        Update: {
+          clientid?: string | null
+          clientname?: string | null
+          createdat?: string | null
+          date?: string
+          discount?: number | null
+          exitnumber?: string
+          fromorderid?: string | null
+          id?: string
+          invoicenumber?: string | null
+          notes?: string | null
+          reason?: string
+          status?: string
+          updatedat?: string | null
+        }
+        Relationships: []
+      }
+      StockExitsItems: {
+        Row: {
+          exitid: string | null
+          id: string
+          productid: string
+          productname: string
+          quantity: number
+          saleprice: number
+        }
+        Insert: {
+          exitid?: string | null
+          id?: string
+          productid: string
+          productname: string
+          quantity: number
+          saleprice: number
+        }
+        Update: {
+          exitid?: string | null
+          id?: string
+          productid?: string
+          productname?: string
+          quantity?: number
+          saleprice?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "StockExitsItems_exitid_fkey"
+            columns: ["exitid"]
+            isOneToOne: false
+            referencedRelation: "StockExits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           created_at: string

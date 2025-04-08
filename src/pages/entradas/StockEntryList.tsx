@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -8,6 +9,8 @@ import { Search, Plus, Pencil } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockEntry } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -15,20 +18,68 @@ const StockEntryList = () => {
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
 
   useEffect(() => {
-    let results = [...stockEntries];
+    fetchEntries();
+  }, []);
+
+  const fetchEntries = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('StockEntries')
+        .select('*')
+        .order('createdAt', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao buscar entradas:', error);
+        toast.error('Erro ao carregar as entradas: ' + error.message);
+        // Fallback to local data
+        setLocalEntries(stockEntries);
+      } else if (data) {
+        // For each entry, get the items
+        const entriesWithItems = await Promise.all(
+          data.map(async (entry) => {
+            const { data: items, error: itemsError } = await supabase
+              .from('StockEntriesItems')
+              .select('*')
+              .eq('entryId', entry.id);
+
+            if (itemsError) {
+              console.error(`Erro ao buscar itens da entrada ${entry.id}:`, itemsError);
+              return { ...entry, items: [] };
+            }
+
+            return { ...entry, items: items || [] };
+          })
+        );
+        
+        setLocalEntries(entriesWithItems);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar entradas:', err);
+      // Fallback to local data
+      setLocalEntries(stockEntries);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    let results = [...localEntries];
     
     if (searchTerm) {
       results = results.filter(
         entry => 
-          entry.supplierName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (entry.supplierName && entry.supplierName.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (entry.entryNumber && entry.entryNumber.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
     setFilteredEntries(results);
-  }, [stockEntries, searchTerm]);
+  }, [localEntries, searchTerm]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -53,9 +104,16 @@ const StockEntryList = () => {
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
+          <Button variant="outline" onClick={fetchEntries}>
+            Atualizar
+          </Button>
         </div>
         
-        {filteredEntries.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8">
+            <p>Carregando entradas...</p>
+          </div>
+        ) : filteredEntries.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white">
               <thead className="bg-gray-50">
@@ -86,11 +144,13 @@ const StockEntryList = () => {
               <tbody className="divide-y divide-gray-200">
                 {filteredEntries.map(entry => {
                   // Calculate entry total with discount
-                  const subtotal = entry.items.reduce(
-                    (sum, item) => sum + (item.quantity * item.purchasePrice), 
-                    0
-                  );
-                  const discount = subtotal * (entry.discount / 100);
+                  const subtotal = entry.items && entry.items.length > 0
+                    ? entry.items.reduce(
+                        (sum, item) => sum + (item.quantity * item.purchasePrice), 
+                        0
+                      )
+                    : 0;
+                  const discount = subtotal * ((entry.discount || 0) / 100);
                   const total = subtotal - discount;
                   
                   return (
@@ -111,7 +171,7 @@ const StockEntryList = () => {
                         {formatCurrency(total)}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        {entry.items.length}
+                        {entry.items ? entry.items.length : 0}
                       </td>
                       <td className="py-3 px-4 text-right">
                         <Button 
