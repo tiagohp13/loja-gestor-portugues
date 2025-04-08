@@ -149,9 +149,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
-      // For now, just log this - we'll fix once the tables are created in Supabase
       console.log('Would save product to Supabase:', newProduct);
-      // We're commenting out the Supabase calls as the tables don't exist yet
       /*
       const { error } = await supabase
         .from('products')
@@ -211,7 +209,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
-      // We're commenting out the Supabase calls as the tables don't exist yet
       console.log('Would save category to Supabase:', newCategory);
       /*
       const { error } = await supabase
@@ -316,7 +313,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
-      // We're commenting out the Supabase calls as the tables don't exist yet
       console.log('Would save supplier to Supabase:', newSupplier);
       /*
       const { error } = await supabase
@@ -404,7 +400,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           productid: item.productId,
           productname: item.productName,
           quantity: item.quantity,
-          saleprice: item.salePrice
+          saleprice: item.salePrice,
+          discount: item.discount || 0
         }));
         
         const { error: itemsError } = await supabase
@@ -861,4 +858,95 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }));
     
     // Top clients
-    const clientSales = stockExits.reduce((acc, exit)
+    const clientSales = stockExits.reduce((acc, exit) => {
+      const { clientId, clientName, items } = exit;
+      if (clientId && !acc[clientId]) {
+        acc[clientId] = {
+          name: clientName || 'Unknown',
+          totalRevenue: 0,
+          orderCount: 0
+        };
+      }
+      
+      if (clientId) {
+        const saleTotal = items.reduce((sum, item) => 
+          sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
+        acc[clientId].totalRevenue += saleTotal;
+        acc[clientId].orderCount += 1;
+      }
+      
+      return acc;
+    }, {} as Record<string, { name: string, totalRevenue: number, orderCount: number }>);
+    
+    const topClients = Object.entries(clientSales)
+      .sort(([, a], [, b]) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 5)
+      .map(([clientId, data]) => ({
+        id: clientId,
+        name: data.name,
+        totalRevenue: data.totalRevenue,
+        orderCount: data.orderCount
+      }));
+    
+    return {
+      totalRevenue,
+      totalCost,
+      totalProfit,
+      profitMargin,
+      currentStockValue,
+      topSellingProducts,
+      mostProfitableProducts,
+      topClients
+    };
+  };
+  
+  return (
+    <DataContext.Provider
+      value={{
+        products,
+        categories,
+        clients,
+        suppliers,
+        orders,
+        stockEntries,
+        stockExits,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        getProduct,
+        getProductHistory,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        getCategory,
+        addClient,
+        updateClient,
+        deleteClient,
+        getClient,
+        getClientHistory,
+        addSupplier,
+        updateSupplier,
+        deleteSupplier,
+        getSupplier,
+        getSupplierHistory,
+        addOrder,
+        updateOrder,
+        deleteOrder,
+        findOrder,
+        addStockEntry,
+        updateStockEntry,
+        deleteStockEntry,
+        addStockExit,
+        updateStockExit,
+        deleteStockExit,
+        updateProductStock,
+        findProduct,
+        findClient,
+        convertOrderToStockExit,
+        getBusinessAnalytics
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
+};

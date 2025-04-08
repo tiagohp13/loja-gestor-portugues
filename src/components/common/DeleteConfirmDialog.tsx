@@ -17,6 +17,7 @@ interface DeleteConfirmDialogProps {
   description: string;
   trigger?: React.ReactNode;
   onDelete: () => void;
+  onConfirm?: () => Promise<void>;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
@@ -26,6 +27,7 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   title,
   description,
   onDelete,
+  onConfirm,
   trigger,
   open,
   onOpenChange,
@@ -45,8 +47,13 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
     }
   };
   
-  const handleDelete = () => {
-    onDelete();
+  const handleDelete = async () => {
+    if (onConfirm) {
+      await onConfirm();
+    } else {
+      onDelete();
+    }
+    
     if (!isControlled) {
       setOpenState(false);
     }
