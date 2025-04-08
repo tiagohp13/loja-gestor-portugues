@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -8,7 +7,6 @@ import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-
 const ClientNew = () => {
   const navigate = useNavigate();
   const {
@@ -21,11 +19,9 @@ const ClientNew = () => {
   const [taxId, setTaxId] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
       // Add to local state via DataContext
       addClient({
@@ -37,26 +33,24 @@ const ClientNew = () => {
         notes,
         status: 'active'
       });
-      
+
       // Save to Supabase
-      const { error } = await supabase
-        .from('Clientes')
-        .insert({
-          nome: name,
-          email: email,
-          telefone: phone,
-          morada: address,
-          nif: taxId,
-          notas: notes
-        });
-        
+      const {
+        error
+      } = await supabase.from('Clientes').insert({
+        nome: name,
+        email: email,
+        telefone: phone,
+        morada: address,
+        nif: taxId,
+        notas: notes
+      });
       if (error) {
         console.error('Error inserting client:', error);
         toast.error('Erro ao guardar cliente: ' + error.message);
         setIsSubmitting(false);
         return;
       }
-      
       toast.success('Cliente guardado com sucesso!');
       navigate('/clientes/consultar');
     } catch (error) {
@@ -65,7 +59,6 @@ const ClientNew = () => {
       setIsSubmitting(false);
     }
   };
-
   return <div className="container mx-auto px-4 py-6">
       <PageHeader title="Novo Cliente" description="Adicione um novo cliente ao sistema" actions={<Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
             Voltar à Lista
@@ -123,7 +116,7 @@ const ClientNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/clientes/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="When this button is clicked, insert a new row into the Clientes table in Supabase using the values from the input fields in this form.\n">
               {isSubmitting ? 'A guardar...' : 'Guardar Cliente'}
             </Button>
           </div>
@@ -131,5 +124,4 @@ const ClientNew = () => {
       </div>
     </div>;
 };
-
 export default ClientNew;
