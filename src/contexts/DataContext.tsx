@@ -2,85 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import * as mockData from '../data/mockData';
-
-// Define types for our data
-type Product = {
-  id: string;
-  code: string;
-  name: string;
-  description: string;
-  category: string;
-  purchasePrice: number;
-  salePrice: number;
-  currentStock: number;
-  minStock?: number;
-  image?: string;
-  status: 'active' | 'inactive';
-};
-
-type Category = {
-  id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'inactive';
-  productCount?: number;
-};
-
-type Client = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  status: 'active' | 'inactive';
-};
-
-type Supplier = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  address: string;
-  status: 'active' | 'inactive';
-};
-
-type StockEntry = {
-  id: string;
-  date: string;
-  productId: string;
-  productName: string;
-  supplierId: string;
-  supplierName: string;
-  quantity: number;
-  purchasePrice: number;
-  invoiceNumber?: string;
-  createdAt: string;
-};
-
-type StockExit = {
-  id: string;
-  date: string;
-  productId: string;
-  productName: string;
-  clientId: string;
-  clientName: string;
-  quantity: number;
-  salePrice: number;
-  invoiceNumber?: string;
-  createdAt: string;
-};
-
-type Order = {
-  id: string;
-  date: string;
-  productId: string;
-  productName: string;
-  clientId: string;
-  clientName: string;
-  quantity: number;
-  salePrice: number;
-  notes?: string;
-};
+import { Product, Category, Client, Supplier, StockEntry, StockExit, Order } from '../types';
 
 // Define the context type
 interface DataContextType {
@@ -92,27 +14,27 @@ interface DataContextType {
   stockExits: StockExit[];
   orders: Order[];
   
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
   
-  addCategory: (category: Omit<Category, 'id'>) => void;
+  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
   
-  addClient: (client: Omit<Client, 'id'>) => void;
+  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateClient: (id: string, client: Partial<Client>) => void;
   deleteClient: (id: string) => void;
   
-  addSupplier: (supplier: Omit<Supplier, 'id'>) => void;
+  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => void;
   updateSupplier: (id: string, supplier: Partial<Supplier>) => void;
   deleteSupplier: (id: string) => void;
   
-  addStockEntry: (entry: Omit<StockEntry, 'id'>) => void;
+  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt'>) => void;
   updateStockEntry: (id: string, entry: Partial<StockEntry>) => void;
   deleteStockEntry: (id: string) => void;
   
-  addStockExit: (exit: Omit<StockExit, 'id'>) => void;
+  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt'>) => void;
   updateStockExit: (id: string, exit: Partial<StockExit>) => void;
   deleteStockExit: (id: string) => void;
   
@@ -140,12 +62,12 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 
 // Create a provider component
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>(mockData.products);
-  const [categories, setCategories] = useState<Category[]>(mockData.categories);
-  const [clients, setClients] = useState<Client[]>(mockData.clients);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(mockData.suppliers);
-  const [stockEntries, setStockEntries] = useState<StockEntry[]>(mockData.stockEntries);
-  const [stockExits, setStockExits] = useState<StockExit[]>(mockData.stockExits);
+  const [products, setProducts] = useState<Product[]>(mockData.products as Product[]);
+  const [categories, setCategories] = useState<Category[]>(mockData.categories as Category[]);
+  const [clients, setClients] = useState<Client[]>(mockData.clients as Client[]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(mockData.suppliers as Supplier[]);
+  const [stockEntries, setStockEntries] = useState<StockEntry[]>(mockData.stockEntries as StockEntry[]);
+  const [stockExits, setStockExits] = useState<StockExit[]>(mockData.stockExits as StockExit[]);
   const [orders, setOrders] = useState<Order[]>([]);
 
   // Make window.appData available for exporting
@@ -154,7 +76,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [products, categories, clients, suppliers, stockEntries, stockExits, orders]);
 
   // Products
-  const addProduct = (product: Omit<Product, 'id'>) => {
+  const addProduct = (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     // Check if product code already exists
     const codeExists = products.some(p => p.code.toLowerCase() === product.code.toLowerCase());
     if (codeExists) {
@@ -162,7 +84,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error(`Product code "${product.code}" already exists. Use a unique code.`);
     }
     
-    const newProduct = { ...product, id: uuidv4() };
+    const now = new Date().toISOString();
+    const newProduct = { 
+      ...product, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
     setProducts([...products, newProduct as Product]);
     toast.success('Produto adicionado com sucesso!');
   };
@@ -177,7 +105,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
     
-    setProducts(products.map(p => p.id === id ? { ...p, ...product } : p));
+    setProducts(products.map(p => p.id === id ? { 
+      ...p, 
+      ...product,
+      updatedAt: new Date().toISOString()
+    } : p));
     toast.success('Produto atualizado com sucesso!');
   };
 
@@ -197,14 +129,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Categories
-  const addCategory = (category: Omit<Category, 'id'>) => {
-    const newCategory = { ...category, id: uuidv4() };
+  const addCategory = (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newCategory = { 
+      ...category, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
     setCategories([...categories, newCategory as Category]);
     toast.success('Categoria adicionada com sucesso!');
   };
 
   const updateCategory = (id: string, category: Partial<Category>) => {
-    setCategories(categories.map(c => c.id === id ? { ...c, ...category } : c));
+    setCategories(categories.map(c => c.id === id ? { 
+      ...c, 
+      ...category,
+      updatedAt: new Date().toISOString()
+    } : c));
     toast.success('Categoria atualizada com sucesso!');
   };
 
@@ -222,14 +164,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Clients
-  const addClient = (client: Omit<Client, 'id'>) => {
-    const newClient = { ...client, id: uuidv4() };
+  const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newClient = { 
+      ...client, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
     setClients([...clients, newClient as Client]);
     toast.success('Cliente adicionado com sucesso!');
   };
 
   const updateClient = (id: string, client: Partial<Client>) => {
-    setClients(clients.map(c => c.id === id ? { ...c, ...client } : c));
+    setClients(clients.map(c => c.id === id ? { 
+      ...c, 
+      ...client,
+      updatedAt: new Date().toISOString()
+    } : c));
     toast.success('Cliente atualizado com sucesso!');
   };
 
@@ -248,14 +200,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Suppliers
-  const addSupplier = (supplier: Omit<Supplier, 'id'>) => {
-    const newSupplier = { ...supplier, id: uuidv4() };
+  const addSupplier = (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newSupplier = { 
+      ...supplier, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
     setSuppliers([...suppliers, newSupplier as Supplier]);
     toast.success('Fornecedor adicionado com sucesso!');
   };
 
   const updateSupplier = (id: string, supplier: Partial<Supplier>) => {
-    setSuppliers(suppliers.map(s => s.id === id ? { ...s, ...supplier } : s));
+    setSuppliers(suppliers.map(s => s.id === id ? { 
+      ...s, 
+      ...supplier,
+      updatedAt: new Date().toISOString()
+    } : s));
     toast.success('Fornecedor atualizado com sucesso!');
   };
 
@@ -273,7 +235,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Stock Entries
-  const addStockEntry = (entry: Omit<StockEntry, 'id'>) => {
+  const addStockEntry = (entry: Omit<StockEntry, 'id' | 'createdAt'>) => {
     const newEntry = { 
       ...entry, 
       id: uuidv4(),
@@ -340,7 +302,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Stock Exits
-  const addStockExit = (exit: Omit<StockExit, 'id'>) => {
+  const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt'>) => {
     const product = products.find(p => p.id === exit.productId);
     
     if (!product) {
@@ -556,7 +518,6 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       findClient,
       findSupplier,
       
-      // Add the missing methods to the context value
       getProduct,
       getProductHistory,
       getCategory,

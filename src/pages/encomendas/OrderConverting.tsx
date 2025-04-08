@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,210 +9,134 @@ import { toast } from 'sonner';
 const OrderConverting = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orders, products, addStockExit } = useData();
-  
-  const [exit, setExit] = useState({
-    productId: '',
-    clientId: '',
-    quantity: 1,
-    salePrice: 0,
-    date: new Date().toISOString().split('T')[0],
-    invoiceNumber: ''
-  });
-  
-  const order = orders.find(o => o.id === id);
-  
+  const { findOrder, findProduct, findClient, addStockExit, deleteOrder } = useData();
+  const [invoiceNumber, setInvoiceNumber] = useState('');
+  const [orderData, setOrderData] = useState<{
+    productId: string;
+    productName: string | undefined;
+    clientId: string;
+    clientName: string | undefined;
+    quantity: number;
+    salePrice: number;
+  } | null>(null);
+
   useEffect(() => {
-    if (!order) {
-      toast.error('Encomenda não encontrada');
-      navigate('/encomendas/consultar');
+    if (id) {
+      const order = findOrder(id);
+      if (order) {
+        setOrderData({
+          productId: order.productId,
+          productName: order.productName,
+          clientId: order.clientId,
+          clientName: order.clientName,
+          quantity: order.quantity,
+          salePrice: order.salePrice,
+        });
+      } else {
+        toast.error('Encomenda não encontrada');
+        navigate('/encomendas/consultar');
+      }
+    }
+  }, [id, findOrder, navigate]);
+
+  const product = orderData ? findProduct(orderData.productId) : null;
+  const client = orderData ? findClient(orderData.clientId) : null;
+
+  const handleConvert = () => {
+    if (!orderData) {
+      toast.error('Dados da encomenda não encontrados');
       return;
     }
-    
-    setExit({
-      productId: order.productId,
-      clientId: order.clientId,
-      quantity: order.quantity,
-      salePrice: order.salePrice,
-      date: new Date().toISOString().split('T')[0],
-      invoiceNumber: ''
-    });
-  }, [order, navigate]);
-  
-  if (!order) {
-    return null;
-  }
-  
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setExit(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' 
-              ? parseFloat(value) || 0 
-              : value
-    }));
-  };
-  
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validate form
-    if (!exit.productId || !exit.clientId || exit.quantity <= 0) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-    
-    // Get the product
-    const product = products.find(p => p.id === exit.productId);
-    
+
     if (!product) {
       toast.error('Produto não encontrado');
       return;
     }
-    
-    // Check if we have enough stock
-    if (product.currentStock < exit.quantity) {
-      toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades`);
+
+    if (!client) {
+      toast.error('Cliente não encontrado');
       return;
     }
     
-    // Add the stock exit
     addStockExit({
-      ...exit,
-      productName: order.productName,
-      clientName: order.clientName,
-      createdAt: new Date().toISOString() // Add createdAt field
+      productId: orderData.productId,
+      productName: product?.name || orderData.productName || '',
+      clientId: orderData.clientId,
+      clientName: client?.name || orderData.clientName || '',
+      quantity: orderData.quantity,
+      salePrice: orderData.salePrice,
+      date: new Date().toISOString().split('T')[0],
+      invoiceNumber: invoiceNumber,
+      createdAt: new Date().toISOString()
     });
     
-    // Navigate back to the stock exits list
+    deleteOrder(id as string);
+    toast.success('Encomenda convertida em saída de stock!');
     navigate('/saidas/historico');
   };
-  
-  // Get the selected product
-  const selectedProduct = products.find(p => p.id === exit.productId);
-  
-  // Calculate total value
-  const totalValue = selectedProduct 
-    ? exit.quantity * exit.salePrice
-    : 0;
-  
+
+  if (!orderData) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
+          <h2 className="text-xl font-semibold mb-2">Encomenda não encontrada</h2>
+          <Button onClick={() => navigate('/encomendas/consultar')}>
+            Voltar à lista de encomendas
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Converter Encomenda em Saída" 
-        description="Finalize a encomenda e crie uma saída de stock"
+      <PageHeader
+        title="Converter Encomenda em Saída de Stock"
+        description="Registar a saída de stock correspondente a esta encomenda"
         actions={
-          <Button variant="outline" onClick={() => navigate(`/encomendas/${id}`)}>
-            Voltar à Encomenda
+          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            Voltar à Lista de Encomendas
           </Button>
         }
       />
-      
+
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="grid gap-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gestorApp-gray-dark">
-                Cliente
-              </label>
-              <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                <div className="font-medium">{order.clientName}</div>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gestorApp-gray-dark">
-                Produto
-              </label>
-              <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                <div className="font-medium">{order.productName}</div>
-                <div className="text-sm text-gestorApp-gray mt-1">
-                  Stock disponível: {selectedProduct?.currentStock || 0} unidades
-                </div>
-              </div>
-            </div>
+        <div className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gestorApp-gray-dark">Produto</p>
+            <p className="font-medium">{product?.name || orderData.productName}</p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="quantity" className="text-sm font-medium text-gestorApp-gray-dark">
-                Quantidade
-              </label>
-              <Input
-                id="quantity"
-                name="quantity"
-                type="number"
-                min="1"
-                value={exit.quantity}
-                onChange={handleChange}
-                placeholder="0"
-                required
-              />
-              {selectedProduct && (
-                <p className="text-xs text-gestorApp-gray">
-                  Stock disponível: {selectedProduct.currentStock} unidades
-                </p>
-              )}
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço Unitário (€)
-              </label>
-              <Input
-                id="salePrice"
-                name="salePrice"
-                type="number"
-                step="0.01"
-                min="0"
-                value={exit.salePrice}
-                onChange={handleChange}
-                placeholder="0.00"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
-                Data
-              </label>
-              <Input
-                id="date"
-                name="date"
-                type="date"
-                value={exit.date}
-                onChange={handleChange}
-                required
-              />
-            </div>
+          <div>
+            <p className="text-sm font-medium text-gestorApp-gray-dark">Cliente</p>
+            <p className="font-medium">{client?.name || orderData.clientName}</p>
           </div>
-          
-          <div className="space-y-2">
+          <div>
+            <p className="text-sm font-medium text-gestorApp-gray-dark">Quantidade</p>
+            <p className="font-medium">{orderData.quantity}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gestorApp-gray-dark">Preço Unitário</p>
+            <p className="font-medium">{orderData.salePrice} €</p>
+          </div>
+          <div>
             <label htmlFor="invoiceNumber" className="text-sm font-medium text-gestorApp-gray-dark">
-              Número da Fatura
+              Número da Fatura (Opcional)
             </label>
             <Input
               id="invoiceNumber"
-              name="invoiceNumber"
-              value={exit.invoiceNumber}
-              onChange={handleChange}
-              placeholder="FAT2023XXXX"
+              placeholder="Insira o número da fatura"
+              value={invoiceNumber}
+              onChange={(e) => setInvoiceNumber(e.target.value)}
             />
           </div>
-          
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <p className="text-lg font-semibold text-blue-800">
-              Valor Total: {totalValue.toFixed(2)} €
-            </p>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate(`/encomendas/${id}`)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Confirmar Saída</Button>
-          </div>
-        </form>
+        </div>
+
+        <div className="flex justify-end space-x-4 mt-6">
+          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            Cancelar
+          </Button>
+          <Button onClick={handleConvert}>Converter em Saída de Stock</Button>
+        </div>
       </div>
     </div>
   );

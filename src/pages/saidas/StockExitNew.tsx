@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -42,7 +41,6 @@ const StockExitNew = () => {
               : value
     }));
 
-    // If selecting a product, set the default sale price
     if (name === 'productId' && value) {
       const selectedProduct = products.find(p => p.id === value);
       if (selectedProduct) {
@@ -98,13 +96,11 @@ const StockExitNew = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     if (!exit.productId || !exit.clientId || exit.quantity <= 0) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
     
-    // Get the product and client
     const product = products.find(p => p.id === exit.productId);
     const client = clients.find(c => c.id === exit.clientId);
     
@@ -113,29 +109,24 @@ const StockExitNew = () => {
       return;
     }
     
-    // Check if we have enough stock
     if (product.currentStock < exit.quantity) {
       toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades`);
       return;
     }
     
-    // Add the stock exit
     addStockExit({
       ...exit,
       productName: product.name,
-      clientName: client.name,
-      createdAt: new Date().toISOString() // Add createdAt field
+      clientName: client.name
     });
     
     navigate('/saidas/historico');
   };
 
-  // Get the selected product
   const selectedProduct = exit.productId 
     ? products.find(p => p.id === exit.productId)
     : null;
 
-  // Calculate total value
   const totalValue = selectedProduct 
     ? exit.quantity * exit.salePrice
     : 0;

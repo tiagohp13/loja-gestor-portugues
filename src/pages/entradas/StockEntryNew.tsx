@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -43,7 +42,6 @@ const StockEntryNew = () => {
               : value
     }));
 
-    // If selecting a product, set the default purchase price
     if (name === 'productId' && value) {
       const selectedProduct = products.find(p => p.id === value);
       if (selectedProduct) {
@@ -99,13 +97,11 @@ const StockEntryNew = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     if (!entry.productId || !entry.supplierId || entry.quantity <= 0) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
     
-    // Get the product and supplier
     const product = products.find(p => p.id === entry.productId);
     const supplier = suppliers.find(s => s.id === entry.supplierId);
     
@@ -114,23 +110,19 @@ const StockEntryNew = () => {
       return;
     }
     
-    // Add the stock entry
     addStockEntry({
       ...entry,
       productName: product.name,
-      supplierName: supplier.name,
-      createdAt: new Date().toISOString() // Add createdAt field
+      supplierName: supplier.name
     });
     
     navigate('/entradas/historico');
   };
 
-  // Get the selected product
   const selectedProduct = entry.productId 
     ? products.find(p => p.id === entry.productId)
     : null;
 
-  // Calculate total value
   const totalValue = selectedProduct 
     ? entry.quantity * entry.purchasePrice
     : 0;
