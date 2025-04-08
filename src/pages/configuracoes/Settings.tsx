@@ -7,9 +7,11 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, FileText, FileArrowDown } from 'lucide-react';
+import { Upload, Download, FileText, FileDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ExportDataType } from '@/types';
+
+// Define the ExportDataType type since it's missing from @/types
+type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
 const Settings = () => {
   const { products, categories, clients, suppliers, orders, stockEntries, stockExits } = useData();
@@ -292,7 +294,7 @@ const Settings = () => {
                     </div>
                     
                     <Button onClick={handleExportData} className="w-full sm:w-auto">
-                      <FileArrowDown className="w-4 h-4 mr-2" />
+                      <FileDown className="w-4 h-4 mr-2" />
                       Exportar Dados Selecionados (CSV)
                     </Button>
                   </CardContent>

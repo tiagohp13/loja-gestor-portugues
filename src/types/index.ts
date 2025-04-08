@@ -23,6 +23,7 @@ export interface Product {
   minStock: number;
   createdAt: string;
   updatedAt: string;
+  image?: string; // Add image field that is optional
 }
 
 export interface Category {
@@ -31,6 +32,8 @@ export interface Category {
   description: string;
   createdAt: string;
   updatedAt: string;
+  status?: string; // Add status field that is optional
+  productCount?: number; // Add productCount field that is optional
 }
 
 export interface Client {
@@ -43,6 +46,7 @@ export interface Client {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  status?: string; // Add status field that is optional
 }
 
 export interface Supplier {
@@ -56,6 +60,7 @@ export interface Supplier {
   notes: string;
   createdAt: string;
   updatedAt: string;
+  status?: string; // Add status field that is optional
 }
 
 export interface StockEntryItem {
@@ -78,6 +83,7 @@ export interface StockExit {
   fromOrderId?: string;
   fromOrderNumber?: string;
   createdAt: string;
+  discount?: number; // Add discount field that is optional
 }
 
 export interface StockExitItem {
@@ -118,6 +124,9 @@ export interface OrderItem {
   quantity: number;
   salePrice: number;
 }
+
+// Define the ExportDataType type
+export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
 // Legacy types for compatibility
 export interface LegacyStockEntry {
