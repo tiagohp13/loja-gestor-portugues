@@ -10,6 +10,7 @@ import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockExit } from '@/types';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const StockExitList = () => {
   const navigate = useNavigate();
@@ -27,13 +28,74 @@ const StockExitList = () => {
   const fetchExits = async () => {
     setLoading(true);
     try {
-      // Para simplificar, usamos apenas dados locais
-      const availableExits = stockExits.map(exit => ({
-        ...exit,
-        items: exit.items || []
-      }));
-      
-      setLocalExits(availableExits);
+      // Buscar dados básicos das saídas
+      const { data: exitsData, error: exitsError } = await supabase
+        .from('StockExits')
+        .select('*')
+        .order('createdat', { ascending: false });
+
+      if (exitsError) {
+        throw exitsError;
+      }
+
+      // Transformar os dados retornados
+      const exitsWithItems = await Promise.all(
+        exitsData.map(async (exit) => {
+          // Buscar itens para cada saída
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('StockExitsItems')
+            .select('*')
+            .eq('exitid', exit.id);
+
+          if (itemsError) {
+            console.error(`Erro ao buscar itens da saída ${exit.id}:`, itemsError);
+            return {
+              id: exit.id,
+              clientId: exit.clientid,
+              clientName: exit.clientname,
+              reason: exit.reason,
+              exitNumber: exit.exitnumber,
+              date: exit.date,
+              invoiceNumber: exit.invoicenumber,
+              notes: exit.notes,
+              status: exit.status,
+              discount: exit.discount,
+              fromOrderId: exit.fromorderid,
+              createdAt: exit.createdat,
+              updatedAt: exit.updatedat,
+              items: []
+            };
+          }
+
+          // Mapear items para o formato esperado em StockExitItem[]
+          const mappedItems = itemsData.map(item => ({
+            productId: item.productid,
+            productName: item.productname,
+            quantity: item.quantity,
+            salePrice: item.saleprice
+          }));
+
+          // Retornar a saída com seus itens mapeados
+          return {
+            id: exit.id,
+            clientId: exit.clientid,
+            clientName: exit.clientname,
+            reason: exit.reason,
+            exitNumber: exit.exitnumber,
+            date: exit.date,
+            invoiceNumber: exit.invoicenumber,
+            notes: exit.notes,
+            status: exit.status,
+            discount: exit.discount,
+            fromOrderId: exit.fromorderid,
+            createdAt: exit.createdat,
+            updatedAt: exit.updatedat,
+            items: mappedItems
+          };
+        })
+      );
+        
+      setLocalExits(exitsWithItems);
     } catch (err) {
       console.error('Erro ao buscar saídas:', err);
       toast.error('Erro ao carregar as saídas');

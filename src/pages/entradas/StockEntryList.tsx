@@ -28,38 +28,73 @@ const StockEntryList = () => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Buscar dados básicos das entradas
+      const { data: entriesData, error: entriesError } = await supabase
         .from('StockEntries')
         .select('*')
-        .order('createdAt', { ascending: false });
+        .order('createdat', { ascending: false });
 
-      if (error) {
-        console.error('Erro ao buscar entradas:', error);
-        toast.error('Erro ao carregar as entradas: ' + error.message);
-        // Fallback to local data
-        setLocalEntries(stockEntries);
-      } else if (data) {
-        // For each entry, get the items
-        const entriesWithItems = await Promise.all(
-          data.map(async (entry) => {
-            const { data: items, error: itemsError } = await supabase
-              .from('StockEntriesItems')
-              .select('*')
-              .eq('entryId', entry.id);
-
-            if (itemsError) {
-              console.error(`Erro ao buscar itens da entrada ${entry.id}:`, itemsError);
-              return { ...entry, items: [] };
-            }
-
-            return { ...entry, items: items || [] };
-          })
-        );
-        
-        setLocalEntries(entriesWithItems);
+      if (entriesError) {
+        throw entriesError;
       }
+
+      // Transformar os dados retornados
+      const entriesWithItems = await Promise.all(
+        entriesData.map(async (entry) => {
+          // Buscar itens para cada entrada
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('StockEntriesItems')
+            .select('*')
+            .eq('entryid', entry.id);
+
+          if (itemsError) {
+            console.error(`Erro ao buscar itens da entrada ${entry.id}:`, itemsError);
+            return {
+              id: entry.id,
+              supplierId: entry.supplierid,
+              supplierName: entry.suppliername,
+              entryNumber: entry.entrynumber,
+              date: entry.date,
+              invoiceNumber: entry.invoicenumber,
+              notes: entry.notes,
+              status: entry.status,
+              discount: entry.discount,
+              createdAt: entry.createdat,
+              updatedAt: entry.updatedat,
+              items: []
+            };
+          }
+
+          // Mapear items para o formato esperado em StockEntryItem[]
+          const mappedItems = itemsData.map(item => ({
+            productId: item.productid,
+            productName: item.productname,
+            quantity: item.quantity,
+            purchasePrice: item.purchaseprice
+          }));
+
+          // Retornar a entrada com seus itens mapeados
+          return {
+            id: entry.id,
+            supplierId: entry.supplierid,
+            supplierName: entry.suppliername,
+            entryNumber: entry.entrynumber,
+            date: entry.date,
+            invoiceNumber: entry.invoicenumber,
+            notes: entry.notes,
+            status: entry.status,
+            discount: entry.discount,
+            createdAt: entry.createdat,
+            updatedAt: entry.updatedat,
+            items: mappedItems
+          };
+        })
+      );
+        
+      setLocalEntries(entriesWithItems);
     } catch (err) {
       console.error('Erro ao buscar entradas:', err);
+      toast.error('Erro ao carregar as entradas');
       // Fallback to local data
       setLocalEntries(stockEntries);
     } finally {
