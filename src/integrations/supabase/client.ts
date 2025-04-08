@@ -45,24 +45,22 @@ export const snakeToCamel = (obj: any) => {
 
 // Add database functions for increment and decrement
 export const increment = async (table: string, column: string, id: string, value: number) => {
-  const { data, error } = await supabase.rpc('increment_value', { 
-    inc: value, 
-    col_name: column,
-    table_name: table,
-    row_id: id
-  });
+  const { data, error } = await supabase
+    .from(table)
+    .update({ [column]: supabase.rpc('get_next_counter', { counter_id: column }) })
+    .eq('id', id)
+    .select();
   
   if (error) console.error(`Error incrementing ${column} in ${table}:`, error);
   return data;
 };
 
 export const decrement = async (table: string, column: string, id: string, value: number) => {
-  const { data, error } = await supabase.rpc('decrement_value', { 
-    dec: value, 
-    col_name: column,
-    table_name: table,
-    row_id: id
-  });
+  const { data, error } = await supabase
+    .from(table)
+    .update({ [column]: column + ' - ' + value })
+    .eq('id', id)
+    .select();
   
   if (error) console.error(`Error decrementing ${column} in ${table}:`, error);
   return data;
