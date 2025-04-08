@@ -25,20 +25,9 @@ const ClientNew = () => {
     setIsSubmitting(true);
     
     try {
-      // Add to local state via DataContext
-      const newClient = await addClient({
-        name,
-        email,
-        phone,
-        address,
-        taxId,
-        notes,
-        status: 'active'
-      });
-
-      console.log('Client added to local state:', newClient);
-
-      // Save to Supabase
+      console.log('Começando a salvar cliente...');
+      
+      // Salvar no Supabase primeiro
       const { data, error } = await supabase.from('Clientes').insert({
         nome: name,
         email: email,
@@ -49,17 +38,34 @@ const ClientNew = () => {
       });
 
       if (error) {
-        console.error('Error inserting client to Supabase:', error);
+        console.error('Erro ao inserir cliente no Supabase:', error);
         toast.error('Erro ao guardar cliente: ' + error.message);
         setIsSubmitting(false);
         return;
       }
 
-      console.log('Client saved to Supabase:', data);
+      console.log('Cliente salvo no Supabase com sucesso:', data);
+      
+      // Adicionar ao estado local via DataContext
+      try {
+        const newClient = await addClient({
+          name,
+          email,
+          phone,
+          address,
+          taxId,
+          notes,
+          status: 'active'
+        });
+        console.log('Cliente adicionado ao estado local:', newClient);
+      } catch (localError) {
+        console.warn('Aviso: Erro ao adicionar cliente ao estado local, mas cliente foi salvo no Supabase:', localError);
+      }
+
       toast.success('Cliente guardado com sucesso!');
       navigate('/clientes/consultar');
     } catch (error) {
-      console.error('Error saving client:', error);
+      console.error('Erro ao guardar cliente:', error);
       toast.error('Erro ao guardar cliente');
       setIsSubmitting(false);
     }
