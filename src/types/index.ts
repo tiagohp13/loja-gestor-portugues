@@ -31,7 +31,7 @@ export interface Client {
   email: string;
   phone: string;
   address: string;
-  taxId: string;
+  taxId: string; // Changed from taxNumber to taxId
   notes: string;
   status?: 'active' | 'inactive';
   createdAt: string;
@@ -44,7 +44,7 @@ export interface Supplier {
   email: string;
   phone: string;
   address: string;
-  taxId: string;
+  taxId: string; // Changed from taxNumber to taxId
   notes: string;
   status?: 'active' | 'inactive';
   createdAt: string;
@@ -106,6 +106,13 @@ export interface Order {
   orderNumber: string;
   discount: number; // Order-level discount
   convertedToStockExitId?: string;
+  // Additional fields
+  deliveryDate?: string;
+  paymentMethod?: string;
+  shippingAddress?: string;
+  billingAddress?: string;
+  shippingCost?: number;
+  totalAmount?: number;
 }
 
 export interface StockEntry {
@@ -126,6 +133,7 @@ export interface StockEntry {
   purchasePrice?: number;
   productId?: string;
   productName?: string;
+  reason?: string; // Added this field to match db column
 }
 
 export interface StockExit {
