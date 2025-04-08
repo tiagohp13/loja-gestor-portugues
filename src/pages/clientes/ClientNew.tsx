@@ -1,186 +1,145 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import PageHeader from '@/components/ui/PageHeader';
-import { supabase } from '@/integrations/supabase/client';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Client } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+const formSchema = z.object({
+  name: z.string().min(2, {
+    message: "O nome deve ter pelo menos 2 caracteres.",
+  }),
+  email: z.string().email({
+    message: "Email inválido.",
+  }),
+  phone: z.string().min(9, {
+    message: "O número de telefone deve ter pelo menos 9 dígitos.",
+  }),
+  address: z.string().min(5, {
+    message: "A morada deve ter pelo menos 5 caracteres.",
+  }),
+  taxId: z.string().min(9, {
+    message: "O NIF deve ter exatamente 9 dígitos.",
+  }).max(9, {
+    message: "O NIF deve ter exatamente 9 dígitos.",
+  }),
+  notes: z.string().optional(),
+});
 
 const ClientNew = () => {
   const navigate = useNavigate();
-  const { addClient } = useData();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-  const [taxId, setTaxId] = useState('');
-  const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      taxId: "",
+      notes: "",
+    },
+  });
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsSubmitting(true);
-    
+    const newClient: Client = {
+      id: uuidv4(),
+      ...values,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
     try {
-      console.log('Começando a salvar cliente...');
-      
-      // Salvar no Supabase primeiro
-      const { data, error } = await supabase.from('Clientes').insert({
-        nome: name,
-        email: email,
-        telefone: phone,
-        morada: address,
-        nif: taxId,
-        notas: notes
-      });
-
-      if (error) {
-        console.error('Erro ao inserir cliente no Supabase:', error);
-        toast.error('Erro ao guardar cliente: ' + error.message);
-        setIsSubmitting(false);
-        return;
-      }
-
-      console.log('Cliente salvo no Supabase com sucesso:', data);
-      
-      // Adicionar ao estado local via DataContext
-      try {
-        const newClient = await addClient({
-          name,
-          email,
-          phone,
-          address,
-          taxId,
-          notes,
-          status: 'active'
+      const { error } = await supabase
+        .from('Clientes')
+        .insert({
+          id: newClient.id,
+          name: newClient.name,
+          email: newClient.email,
+          phone: newClient.phone,
+          address: newClient.address,
+          taxId: newClient.taxId,
+          notes: newClient.notes,
+          created_at: newClient.createdAt
         });
-        console.log('Cliente adicionado ao estado local:', newClient);
-      } catch (localError) {
-        console.warn('Aviso: Erro ao adicionar cliente ao estado local, mas cliente foi salvo no Supabase:', localError);
-      }
 
-      toast.success('Cliente guardado com sucesso!');
-      navigate('/clientes/consultar');
+      if (error) throw error;
+      
+      toast.success("Cliente adicionado com sucesso!");
+      navigate("/clientes/consultar");
     } catch (error) {
-      console.error('Erro ao guardar cliente:', error);
-      toast.error('Erro ao guardar cliente');
+      console.error('Error saving client:', error);
+      toast.error("Erro ao adicionar cliente.");
       setIsSubmitting(false);
     }
-  };
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Novo Cliente" 
-        description="Adicione um novo cliente ao sistema" 
-        actions={
-          <Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
-            Voltar à Lista
-          </Button>
-        } 
-      />
-      
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium text-gestorApp-gray-dark">
-                Nome
-              </label>
-              <Input 
-                id="name" 
-                value={name} 
-                onChange={e => setName(e.target.value)} 
-                placeholder="Nome completo" 
-                required 
-              />
+    <div className="container mx-auto py-10">
+      <Card>
+        <CardHeader>
+          <CardTitle>Novo Cliente</CardTitle>
+          <CardDescription>Adicione um novo cliente ao sistema.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nome</Label>
+              <Input id="name" placeholder="Nome do cliente" {...form.register("name")} />
+              {form.formState.errors.name && (
+                <p className="text-sm text-red-500">{form.formState.errors.name.message}</p>
+              )}
             </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gestorApp-gray-dark">
-                Email
-              </label>
-              <Input 
-                id="email" 
-                type="email" 
-                value={email} 
-                onChange={e => setEmail(e.target.value)} 
-                placeholder="email@exemplo.com" 
-              />
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" placeholder="Email do cliente" type="email" {...form.register("email")} />
+              {form.formState.errors.email && (
+                <p className="text-sm text-red-500">{form.formState.errors.email.message}</p>
+              )}
             </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="phone" className="text-sm font-medium text-gestorApp-gray-dark">
-                Telefone
-              </label>
-              <Input 
-                id="phone" 
-                value={phone} 
-                onChange={e => setPhone(e.target.value)} 
-                placeholder="912 345 678" 
-              />
+            <div>
+              <Label htmlFor="phone">Telefone</Label>
+              <Input id="phone" placeholder="Telefone do cliente" type="tel" {...form.register("phone")} />
+              {form.formState.errors.phone && (
+                <p className="text-sm text-red-500">{form.formState.errors.phone.message}</p>
+              )}
             </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="taxId" className="text-sm font-medium text-gestorApp-gray-dark">
-                NIF
-              </label>
-              <Input 
-                id="taxId" 
-                value={taxId} 
-                onChange={e => setTaxId(e.target.value)} 
-                placeholder="123456789" 
-              />
+            <div>
+              <Label htmlFor="address">Morada</Label>
+              <Input id="address" placeholder="Morada do cliente" {...form.register("address")} />
+              {form.formState.errors.address && (
+                <p className="text-sm text-red-500">{form.formState.errors.address.message}</p>
+              )}
             </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="address" className="text-sm font-medium text-gestorApp-gray-dark">
-              Morada
-            </label>
-            <Input 
-              id="address" 
-              value={address} 
-              onChange={e => setAddress(e.target.value)} 
-              placeholder="Morada completa" 
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-              Notas
-            </label>
-            <Textarea 
-              id="notes" 
-              value={notes} 
-              onChange={e => setNotes(e.target.value)} 
-              placeholder="Informações adicionais sobre o cliente" 
-              rows={4} 
-            />
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button 
-              variant="outline" 
-              type="button" 
-              onClick={() => navigate('/clientes/consultar')}
-            >
-              Cancelar
-            </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'A guardar...' : 'Guardar Cliente'}
-            </Button>
-          </div>
-        </form>
-      </div>
+            <div>
+              <Label htmlFor="taxId">NIF</Label>
+              <Input id="taxId" placeholder="NIF do cliente" {...form.register("taxId")} />
+              {form.formState.errors.taxId && (
+                <p className="text-sm text-red-500">{form.formState.errors.taxId.message}</p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="notes">Notas</Label>
+              <Textarea id="notes" placeholder="Notas adicionais" {...form.register("notes")} />
+            </div>
+            <CardFooter>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Aguarde..." : "Adicionar Cliente"}
+              </Button>
+            </CardFooter>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

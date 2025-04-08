@@ -28,6 +28,8 @@ export const getProducts = async (): Promise<Product[]> => {
   // First, try to get from localStorage
   const localProducts = loadProducts();
   
+  // Since the 'Produtos' table doesn't exist yet in Supabase, we'll just use local storage
+  /* Commenting out Supabase calls for now
   try {
     // Try to fetch from Supabase
     const { data, error } = await supabase
@@ -61,13 +63,13 @@ export const getProducts = async (): Promise<Product[]> => {
       
       return mappedProducts;
     }
-    
-    return localProducts;
   } catch (error) {
     console.error('Error fetching products from Supabase:', error);
-    // Return localStorage data as fallback
-    return localProducts;
   }
+  */
+  
+  // Return localStorage data as fallback
+  return localProducts;
 };
 
 // Add a new product
@@ -79,6 +81,8 @@ export const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'up
     updatedAt: new Date().toISOString()
   };
   
+  // Since 'Produtos' table doesn't exist yet, let's only save locally
+  /* Commenting out Supabase calls for now
   try {
     const { error } = await supabase
       .from('Produtos')
@@ -110,13 +114,14 @@ export const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'up
     return newProduct;
   } catch (error) {
     console.error('Error adding product:', error);
-    
-    // Save locally as fallback
-    const products = loadProducts();
-    saveProducts([...products, newProduct]);
-    
-    return newProduct;
   }
+  */
+  
+  // Save locally as fallback
+  const products = loadProducts();
+  saveProducts([...products, newProduct]);
+  
+  return newProduct;
 };
 
 // Update a product
@@ -136,6 +141,8 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
   
   products[productIndex] = updatedProduct;
   
+  // Since 'Produtos' table doesn't exist yet, let's only save locally
+  /* Commenting out Supabase calls for now
   try {
     // Update in Supabase
     const { error } = await supabase
@@ -163,6 +170,7 @@ export const updateProduct = async (id: string, updates: Partial<Product>): Prom
     console.error('Error updating product:', error);
     // Continue with local update even if Supabase fails
   }
+  */
   
   // Save to localStorage
   saveProducts(products);
@@ -175,6 +183,8 @@ export const deleteProduct = async (id: string): Promise<void> => {
   const products = loadProducts();
   const filteredProducts = products.filter(product => product.id !== id);
   
+  // Since 'Produtos' table doesn't exist yet, let's only save locally
+  /* Commenting out Supabase calls for now
   try {
     // Delete from Supabase
     const { error } = await supabase
@@ -190,6 +200,7 @@ export const deleteProduct = async (id: string): Promise<void> => {
     console.error('Error deleting product:', error);
     // Continue with local delete even if Supabase fails
   }
+  */
   
   // Save to localStorage
   saveProducts(filteredProducts);
@@ -223,6 +234,8 @@ export const updateProductStock = async (productId: string, quantityChange: numb
   
   const productToUpdate = updatedProducts.find(p => p.id === productId);
   
+  // Since 'Produtos' table doesn't exist yet, let's only save locally
+  /* Commenting out Supabase calls for now
   if (productToUpdate) {
     try {
       // Update in Supabase
@@ -243,6 +256,7 @@ export const updateProductStock = async (productId: string, quantityChange: numb
       // Continue with local update even if Supabase fails
     }
   }
+  */
   
   // Save to localStorage
   saveProducts(updatedProducts);

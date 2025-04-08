@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -447,11 +446,11 @@ const OrderList = () => {
       
       {/* Confirmation Dialog for Delete */}
       <DeleteConfirmDialog
-        open={!!orderToDelete}
-        onOpenChange={() => setOrderToDelete(null)}
-        onConfirm={() => orderToDelete && handleDeleteOrder(orderToDelete)}
         title="Eliminar Encomenda"
         description="Tem certeza que deseja eliminar esta encomenda? Esta ação não pode ser desfeita."
+        onDelete={() => orderToDelete && handleDeleteOrder(orderToDelete)}
+        open={!!orderToDelete}
+        onOpenChange={() => setOrderToDelete(null)}
       />
     </div>
   );

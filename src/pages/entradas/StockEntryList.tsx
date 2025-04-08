@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -35,7 +34,6 @@ const StockEntryList = () => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      // Fetch data directly from the table
       const { data: entriesData, error: entriesError } = await supabase
         .from('StockEntries')
         .select('*')
@@ -49,10 +47,8 @@ const StockEntryList = () => {
         throw new Error("No entries found");
       }
 
-      // Transform the returned data
       const entriesWithItems = await Promise.all(
         entriesData.map(async (entry) => {
-          // Fetch items for each entry directly from the table
           const { data: itemsData, error: itemsError } = await supabase
             .from('StockEntriesItems')
             .select('*')
@@ -76,7 +72,6 @@ const StockEntryList = () => {
             } as StockEntry;
           }
 
-          // Map items to the expected format in StockEntryItem[]
           const mappedItems = (itemsData || []).map(item => ({
             productId: item.productid,
             productName: item.productname,
@@ -85,7 +80,6 @@ const StockEntryList = () => {
             discount: item.discount || 0
           }));
 
-          // Return the entry with its mapped items
           return {
             id: entry.id,
             supplierId: entry.supplierid,
@@ -107,7 +101,6 @@ const StockEntryList = () => {
     } catch (err) {
       console.error('Error fetching entries:', err);
       toast.error('Error loading entries');
-      // Fallback to local data
       setLocalEntries(stockEntries);
     } finally {
       setLoading(false);
@@ -154,7 +147,6 @@ const StockEntryList = () => {
       );
     }
     
-    // Apply sorting
     results.sort((a, b) => {
       let comparison = 0;
       
@@ -256,7 +248,6 @@ const StockEntryList = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredEntries.map(entry => {
-                  // Calculate entry total with item discounts
                   const total = entry.items && entry.items.length > 0 
                     ? entry.items.reduce(
                         (sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 
@@ -329,13 +320,12 @@ const StockEntryList = () => {
         )}
       </div>
 
-      {/* Confirmation Dialog for Delete */}
       <DeleteConfirmDialog
+        title="Eliminar Entrada de Stock"
+        description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
+        onDelete={() => entryToDelete && handleDeleteEntry(entryToDelete)}
         open={!!entryToDelete}
         onOpenChange={() => setEntryToDelete(null)}
-        onConfirm={() => entryToDelete && handleDeleteEntry(entryToDelete)}
-        title="Eliminar Entrada"
-        description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
       />
     </div>
   );

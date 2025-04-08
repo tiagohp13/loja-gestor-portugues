@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { StockEntry, StockExit } from '../types';
 import { supabase } from '@/integrations/supabase/client';
@@ -318,7 +317,7 @@ export const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' |
       
       if (itemsError) {
         console.error('Error saving entry items to Supabase:', itemsError);
-        // Continue even with error to save other items
+        // Continue even with errors to save other items
       }
     }
   } catch (error) {
@@ -389,7 +388,7 @@ export const addStockExit = async (exit: Omit<StockExit, 'id' | 'createdAt' | 'u
       
       if (itemsError) {
         console.error('Error saving exit items to Supabase:', itemsError);
-        // Continue even with error to save other items
+        // Continue even with errors to save other items
       }
     }
   } catch (error) {

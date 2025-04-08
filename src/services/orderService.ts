@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { Order, StockExit } from '../types';
 import { supabase } from '@/integrations/supabase/client';
@@ -184,7 +183,7 @@ export const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedA
       
       if (itemsError) {
         console.error('Error saving order items to Supabase:', itemsError);
-        // Continue even with error to save other items
+        // Continue even with errors to save other items
       }
     }
   } catch (error) {

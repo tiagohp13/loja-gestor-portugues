@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -55,7 +54,7 @@ const OrderDetail = () => {
         throw itemsError;
       }
       
-      // Map the data to our expected format
+      // Map items to the expected format
       const mappedItems = (itemsData || []).map(item => ({
         productId: item.productid,
         productName: item.productname,

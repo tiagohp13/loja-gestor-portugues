@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -35,7 +34,6 @@ const StockExitList = () => {
   const fetchExits = async () => {
     setLoading(true);
     try {
-      // Fetch data directly from the table
       const { data: exitsData, error: exitsError } = await supabase
         .from('StockExits')
         .select('*')
@@ -49,10 +47,8 @@ const StockExitList = () => {
         throw new Error("No exits found");
       }
 
-      // Transform the returned data
       const exitsWithItems = await Promise.all(
         exitsData.map(async (exit) => {
-          // Fetch items for each exit directly from the table
           const { data: itemsData, error: itemsError } = await supabase
             .from('StockExitsItems')
             .select('*')
@@ -78,16 +74,14 @@ const StockExitList = () => {
             } as StockExit;
           }
 
-          // Map items to the expected format in StockExitItem[]
           const mappedItems = (itemsData || []).map(item => ({
             productId: item.productid,
             productName: item.productname,
             quantity: item.quantity,
             salePrice: item.saleprice,
-            discount: item.discount || 0  // Add default value for discount
+            discount: item.discount || 0
           }));
 
-          // Return the exit with its mapped items
           return {
             id: exit.id,
             clientId: exit.clientid,
@@ -111,7 +105,6 @@ const StockExitList = () => {
     } catch (err) {
       console.error('Error fetching exits:', err);
       toast.error('Error loading exits');
-      // Fallback to local data
       setLocalExits(stockExits);
     } finally {
       setLoading(false);
@@ -159,7 +152,6 @@ const StockExitList = () => {
       );
     }
     
-    // Apply sorting
     results.sort((a, b) => {
       let comparison = 0;
       
@@ -261,7 +253,6 @@ const StockExitList = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredExits.map(exit => {
-                  // Calculate exit total with item discounts
                   const total = exit.items && exit.items.length > 0 
                     ? exit.items.reduce(
                         (sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 
@@ -334,13 +325,12 @@ const StockExitList = () => {
         )}
       </div>
 
-      {/* Confirmation Dialog for Delete */}
       <DeleteConfirmDialog
+        title="Eliminar Saída de Stock"
+        description="Tem certeza que deseja eliminar esta saída? Esta ação não pode ser desfeita."
+        onDelete={() => exitToDelete && handleDeleteExit(exitToDelete)}
         open={!!exitToDelete}
         onOpenChange={() => setExitToDelete(null)}
-        onConfirm={() => exitToDelete && handleDeleteExit(exitToDelete)}
-        title="Eliminar Saída"
-        description="Tem certeza que deseja eliminar esta saída? Esta ação não pode ser desfeita."
       />
     </div>
   );

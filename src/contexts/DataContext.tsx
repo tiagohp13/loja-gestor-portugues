@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Product, Category, Client, Supplier, Order, OrderItem, StockEntry, StockEntryItem, StockExit, StockExitItem } from '../types';
@@ -269,12 +268,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .from('Clientes')
         .insert({
           id: newClient.id,
-          nome: newClient.name,
+          name: newClient.name,
           email: newClient.email,
-          telefone: newClient.phone,
-          morada: newClient.address,
-          nif: newClient.taxId,
-          notas: newClient.notes,
+          phone: newClient.phone,
+          address: newClient.address,
+          taxId: newClient.taxId,
+          notes: newClient.notes,
           created_at: newClient.createdAt
         });
       
@@ -862,112 +861,4 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }));
     
     // Top clients
-    const clientSales = stockExits.reduce((acc, exit) => {
-      if (!exit.clientId) return acc;
-      
-      const clientId = exit.clientId;
-      if (!acc[clientId]) {
-        acc[clientId] = {
-          name: exit.clientName || 'Unknown',
-          totalSpent: 0,
-          orderCount: 0
-        };
-      }
-      
-      const orderTotal = exit.items.reduce(
-        (sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 
-        0
-      );
-      
-      acc[clientId].totalSpent += orderTotal;
-      acc[clientId].orderCount += 1;
-      
-      return acc;
-    }, {} as Record<string, { name: string, totalSpent: number, orderCount: number }>);
-    
-    const topClients = Object.entries(clientSales)
-      .sort(([, a], [, b]) => b.totalSpent - a.totalSpent)
-      .slice(0, 5)
-      .map(([clientId, data]) => ({
-        id: clientId,
-        name: data.name,
-        totalSpent: data.totalSpent,
-        orderCount: data.orderCount
-      }));
-    
-    // Low stock products
-    const lowStockProducts = products
-      .filter(product => product.currentStock <= product.minStock)
-      .map(product => ({
-        id: product.id,
-        name: product.name,
-        currentStock: product.currentStock,
-        minStock: product.minStock,
-        status: product.status || 'active'
-      }))
-      .sort((a, b) => a.currentStock - b.currentStock);
-    
-    // Return all analytics
-    return {
-      totalRevenue,
-      totalCost,
-      totalProfit,
-      profitMargin,
-      currentStockValue,
-      topSellingProducts,
-      mostProfitableProducts,
-      topClients,
-      lowStockProducts
-    };
-  };
-
-  return (
-    <DataContext.Provider
-      value={{
-        products,
-        categories,
-        clients,
-        suppliers,
-        orders,
-        stockEntries,
-        stockExits,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        getProduct,
-        getProductHistory,
-        addCategory,
-        updateCategory,
-        deleteCategory,
-        getCategory,
-        addClient,
-        updateClient,
-        deleteClient,
-        getClient,
-        getClientHistory,
-        addSupplier,
-        updateSupplier,
-        deleteSupplier,
-        getSupplier,
-        getSupplierHistory,
-        addOrder,
-        updateOrder,
-        deleteOrder,
-        findOrder,
-        addStockEntry,
-        updateStockEntry,
-        deleteStockEntry,
-        addStockExit,
-        updateStockExit,
-        deleteStockExit,
-        updateProductStock,
-        findProduct,
-        findClient,
-        convertOrderToStockExit,
-        getBusinessAnalytics
-      }}
-    >
-      {children}
-    </DataContext.Provider>
-  );
-};
+    const clientSales = stockExits.reduce((acc, exit)
