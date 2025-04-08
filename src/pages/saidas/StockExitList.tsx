@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -82,7 +81,7 @@ const StockExitList = () => {
             productName: item.productname,
             quantity: item.quantity,
             salePrice: item.saleprice,
-            discount: item.discount || 0  // Add default 0 discount if it doesn't exist
+            discount: item.discount || 0  // Handle possible undefined discount
           }));
 
           // Retornar a saída com seus itens mapeados
