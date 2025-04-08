@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -163,7 +164,60 @@ const OrderList = () => {
   
   const handleConvertOrder = async (id: string) => {
     try {
-      await convertOrderToStockExit(id);
+      const selectedOrder = localOrders.find(order => order.id === id);
+      if (!selectedOrder) {
+        throw new Error("Order not found");
+      }
+      
+      // Create a stock exit from the order
+      const { data: exitData, error: exitError } = await supabase
+        .from('StockExits')
+        .insert({
+          clientid: selectedOrder.clientId,
+          clientname: selectedOrder.clientName,
+          reason: "Convertido de encomenda",
+          exitnumber: `SAI-${Math.floor(Math.random() * 100000).toString().padStart(5, '0')}`,
+          date: new Date().toISOString(),
+          notes: `Convertido da encomenda: ${selectedOrder.orderNumber}`,
+          status: 'completed',
+          discount: 0,
+          fromorderid: selectedOrder.id,
+          createdat: new Date().toISOString(),
+          updatedat: new Date().toISOString()
+        })
+        .select('id')
+        .single();
+        
+      if (exitError) throw exitError;
+      
+      // Add items to the stock exit
+      const exitItems = selectedOrder.items.map(item => ({
+        exitid: exitData.id,
+        productid: item.productId,
+        productname: item.productName,
+        quantity: item.quantity,
+        saleprice: item.salePrice,
+        discount: item.discount || 0
+      }));
+      
+      const { error: itemsError } = await supabase
+        .from('StockExitsItems')
+        .insert(exitItems);
+        
+      if (itemsError) throw itemsError;
+      
+      // Update the order to mark it as converted
+      const { error: orderUpdateError } = await supabase
+        .from('Encomendas')
+        .update({ 
+          status: 'completed',
+          convertedtostockexitid: exitData.id,
+          updatedat: new Date().toISOString()
+        })
+        .eq('id', id);
+        
+      if (orderUpdateError) throw orderUpdateError;
+      
       toast.success('Encomenda convertida em saída com sucesso');
       fetchOrders();
     } catch (error) {
@@ -384,7 +438,7 @@ const OrderList = () => {
                               <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                onClick={() => navigate(`/encomendas/converter/${order.id}`)}
+                                onClick={() => handleConvertOrder(order.id)}
                                 title="Converter em Saída"
                               >
                                 <ArrowRightLeft className="h-4 w-4" />
@@ -412,7 +466,7 @@ const OrderList = () => {
                             </>
                           )}
                           
-                          {isConvertedOrCancelled && order.status !== 'completed' && (
+                          {isConvertedOrCancelled && order.status === 'cancelled' && (
                             <Button 
                               variant="ghost" 
                               size="sm" 

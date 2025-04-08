@@ -16,17 +16,17 @@ import {
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Check, Search, Plus, Trash, Package } from 'lucide-react';
-import { StockExitItem } from '@/types';
+import { StockExitItem, Client } from '@/types';
 
 const StockExitNew = () => {
   const navigate = useNavigate();
-  const { addStockExit, products } = useData();
+  const { addStockExit, products, clients } = useData();
   
   const [exitDetails, setExitDetails] = useState({
-    reason: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
-    discount: 0
+    clientId: '',
+    clientName: ''
   });
   
   const [items, setItems] = useState<StockExitItem[]>([]);
@@ -44,8 +44,10 @@ const StockExitNew = () => {
     discount: 0
   });
   
-  const [searchTerm, setSearchTerm] = useState('');
+  const [productSearchTerm, setProductSearchTerm] = useState('');
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
+  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
 
   const handleExitDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -65,8 +67,12 @@ const StockExitNew = () => {
     }));
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  const handleProductSearch = (value: string) => {
+    setProductSearchTerm(value);
+  };
+
+  const handleClientSearch = (value: string) => {
+    setClientSearchTerm(value);
   };
 
   const handleProductSelect = (productId: string) => {
@@ -81,6 +87,18 @@ const StockExitNew = () => {
       });
     }
     setIsProductSearchOpen(false);
+  };
+
+  const handleClientSelect = (clientId: string) => {
+    const selectedClient = clients.find(c => c.id === clientId);
+    if (selectedClient) {
+      setExitDetails(prev => ({
+        ...prev,
+        clientId: selectedClient.id,
+        clientName: selectedClient.name
+      }));
+    }
+    setIsClientSearchOpen(false);
   };
   
   const addItemToExit = () => {
@@ -111,43 +129,50 @@ const StockExitNew = () => {
       salePrice: 0,
       discount: 0
     });
-    setSearchTerm('');
+    setProductSearchTerm('');
   };
   
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const filteredProducts = searchTerm
+  const filteredProducts = productSearchTerm
     ? products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())
+        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
+        product.code.toLowerCase().includes(productSearchTerm.toLowerCase())
       )
     : products;
+
+  const filteredClients = clientSearchTerm
+    ? clients.filter(client => 
+        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+        (client.taxId && client.taxId.toLowerCase().includes(clientSearchTerm.toLowerCase()))
+      )
+    : clients;
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!exitDetails.reason || items.length === 0) {
-      toast.error('Preencha o motivo e adicione pelo menos um produto');
+    if (items.length === 0) {
+      toast.error('Adicione pelo menos um produto');
       return;
     }
     
     addStockExit({
-      reason: exitDetails.reason,
+      clientId: exitDetails.clientId,
+      clientName: exitDetails.clientName,
       items: items,
       date: exitDetails.date,
       notes: exitDetails.notes,
-      discount: parseFloat(exitDetails.discount.toString()) || 0
+      reason: "N/A" // We still need to provide this for type compatibility
     });
     
     navigate('/saidas/historico');
   };
   
   const subtotal = items.reduce((total, item) => 
-    total + (item.quantity * item.salePrice), 0);
-  const discountAmount = subtotal * (exitDetails.discount / 100);
-  const totalValue = subtotal - discountAmount;
+    total + (item.quantity * item.salePrice * (1 - (item.discount / 100))), 0);
+  const totalValue = subtotal;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -165,18 +190,60 @@ const StockExitNew = () => {
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="reason" className="text-sm font-medium text-gestorApp-gray-dark">
-                Motivo da Saída
+              <label htmlFor="clientSearch" className="text-sm font-medium text-gestorApp-gray-dark">
+                Cliente
               </label>
-              <Input
-                id="reason"
-                name="reason"
-                type="text"
-                value={exitDetails.reason}
-                onChange={handleExitDetailsChange}
-                placeholder="Ex: Devolução, Venda, etc."
-                required
-              />
+              <Popover open={isClientSearchOpen} onOpenChange={setIsClientSearchOpen}>
+                <PopoverTrigger asChild>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+                    <Input
+                      id="clientSearch"
+                      className="pl-10"
+                      placeholder="Pesquisar cliente por nome ou NIF..."
+                      value={exitDetails.clientName || clientSearchTerm}
+                      onChange={(e) => setClientSearchTerm(e.target.value)}
+                      onClick={() => setIsClientSearchOpen(true)}
+                    />
+                  </div>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Pesquisar cliente por nome ou NIF..." 
+                      value={clientSearchTerm}
+                      onValueChange={handleClientSearch}
+                    />
+                    <CommandList>
+                      <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
+                      <CommandGroup heading="Clientes">
+                        {filteredClients.map((client) => (
+                          <CommandItem 
+                            key={client.id} 
+                            value={`${client.name} ${client.taxId || ''}`}
+                            onSelect={() => handleClientSelect(client.id)}
+                          >
+                            <div className="flex items-center justify-between w-full">
+                              <div>
+                                <span className="font-medium">{client.name}</span>
+                                {client.taxId && (
+                                  <>
+                                    <span className="mx-2">-</span>
+                                    <span className="text-sm text-gray-500">NIF: {client.taxId}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            {exitDetails.clientId === client.id && (
+                              <Check className="ml-2 h-4 w-4" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             
             <div className="grid md:grid-cols-2 gap-4">
@@ -214,8 +281,8 @@ const StockExitNew = () => {
                           id="productSearch"
                           className="pl-10"
                           placeholder="Pesquisar por nome ou código"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
+                          value={productSearchTerm}
+                          onChange={(e) => setProductSearchTerm(e.target.value)}
                           onClick={() => setIsProductSearchOpen(true)}
                         />
                       </div>
@@ -224,8 +291,8 @@ const StockExitNew = () => {
                       <Command>
                         <CommandInput 
                           placeholder="Pesquisar produto por nome ou código..." 
-                          value={searchTerm}
-                          onValueChange={handleSearch}
+                          value={productSearchTerm}
+                          onValueChange={handleProductSearch}
                         />
                         <CommandList>
                           <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
@@ -386,32 +453,11 @@ const StockExitNew = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-                Desconto Total (%)
-              </label>
-              <Input
-                id="discount"
-                name="discount"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={exitDetails.discount}
-                onChange={handleExitDetailsChange}
-                placeholder="0.00"
-              />
-            </div>
-            
             <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-              <dl className="grid md:grid-cols-3 gap-4">
+              <dl className="grid md:grid-cols-2 gap-4">
                 <div>
                   <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
                   <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-blue-800">Desconto ({exitDetails.discount}%):</dt>
-                  <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
                 </div>
                 <div>
                   <dt className="text-sm font-medium text-blue-800">Total:</dt>
@@ -426,7 +472,7 @@ const StockExitNew = () => {
               </Button>
               <Button 
                 type="submit"
-                disabled={items.length === 0 || !exitDetails.reason}
+                disabled={items.length === 0}
               >
                 Registar Saída
               </Button>

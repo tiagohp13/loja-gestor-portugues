@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { Truck, Plus, Search, Filter, ArrowDown, ArrowUp, Trash } from 'lucide-react';
+import { Truck, Plus, Search, Filter, ArrowDown, ArrowUp, Trash, Eye, Pencil } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -16,11 +17,11 @@ import { supabase } from '@/integrations/supabase/client';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries, setStockEntries, deleteStockEntry: contextDeleteStockEntry } = useData();
+  const { stockEntries, deleteStockEntry: contextDeleteStockEntry } = useData();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<string>('all');
-  const [sortField, setSortField] = useState<keyof StockEntry>('date');
+  const [sortField, setSortField] = useState<keyof StockEntry | 'totalValue'>('date');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
   const [entries, setEntries] = useState<StockEntry[]>([]);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -77,7 +78,7 @@ const StockEntryList = () => {
               invoiceNumber: entry.invoicenumber,
               notes: entry.notes,
               status: entry.status as 'pending' | 'completed' | 'cancelled',
-              discount: 0,
+              discount: 0, // We're keeping this to maintain type compatibility, but will not use it in UI
               createdAt: entry.createdat,
               updatedAt: entry.updatedat,
               items: mappedItems
@@ -85,7 +86,6 @@ const StockEntryList = () => {
           })
         );
         
-        setStockEntries(entriesWithItems);
         setEntries(entriesWithItems);
       }
     } catch (error) {
@@ -97,7 +97,7 @@ const StockEntryList = () => {
     }
   };
 
-  const handleSort = (field: keyof StockEntry) => {
+  const handleSort = (field: keyof StockEntry | 'totalValue') => {
     if (field === sortField) {
       setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
     } else {
@@ -106,7 +106,7 @@ const StockEntryList = () => {
     }
   };
 
-  const renderSortIcon = (field: keyof StockEntry) => {
+  const renderSortIcon = (field: keyof StockEntry | 'totalValue') => {
     if (field !== sortField) return null;
     
     return sortDirection === 'asc' 
@@ -150,7 +150,7 @@ const StockEntryList = () => {
         case 'supplierName':
           comparison = (a.supplierName || '').localeCompare(b.supplierName || '');
           break;
-        case 'total':
+        case 'totalValue':
           const totalA = a.items && a.items.length > 0 
             ? a.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 0)
             : 0;
@@ -224,9 +224,9 @@ const StockEntryList = () => {
                   </th>
                   <th 
                     className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
-                    onClick={() => handleSort('total')}
+                    onClick={() => handleSort('totalValue')}
                   >
-                    Valor {renderSortIcon('total')}
+                    Valor {renderSortIcon('totalValue')}
                   </th>
                   <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
                     Itens
@@ -314,8 +314,8 @@ const StockEntryList = () => {
         title="Eliminar Entrada de Stock"
         description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
         onDelete={() => selectedEntryId && handleDeleteEntry(selectedEntryId)}
-        open={isDeleteDialogOpen}
-        onOpenChange={() => setSelectedEntryId(null)}
+        open={!!selectedEntryId}
+        onOpenChange={setIsDeleteDialogOpen}
       />
     </div>
   );
