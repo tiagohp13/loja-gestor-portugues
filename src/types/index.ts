@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -118,13 +117,15 @@ export interface Order {
   notes?: string;
   convertedToStockExitId?: string;
   convertedToStockExitNumber?: string;
+  discount?: number; // Add discount field that is optional
 }
 
 export interface OrderItem {
   productId: string;
   productName: string;
   quantity: number;
-  salePrice: number;
+  salePrice: number; // This field already exists, which is good
+  discountPercent?: number; // Add discount percent field that is optional
 }
 
 // Define the ExportDataType type

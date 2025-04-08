@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
@@ -43,21 +42,18 @@ const OrderNew = () => {
   
   const [notes, setNotes] = useState('');
   
-  // Filter clients based on search term
   const filteredClients = clientSearchTerm 
     ? clients.filter(client => 
         client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
         (client.taxId && client.taxId.toLowerCase().includes(clientSearchTerm.toLowerCase())))
     : clients;
   
-  // Filter products based on search term
   const filteredProducts = productSearchTerm
     ? products.filter(product => 
         product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
         product.code.toLowerCase().includes(productSearchTerm.toLowerCase()))
     : products;
   
-  // Select client handler
   const handleSelectClient = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
     setSelectedClientId(clientId);
@@ -66,7 +62,6 @@ const OrderNew = () => {
     setClientSearchOpen(false);
   };
   
-  // Select product handler
   const handleSelectProduct = (productId: string) => {
     const product = products.find(p => p.id === productId);
     if (product) {
@@ -76,7 +71,6 @@ const OrderNew = () => {
     setProductSearchOpen(false);
   };
   
-  // Add product to order
   const handleAddProduct = () => {
     if (!currentProduct) {
       toast.error("Selecione um produto primeiro");
@@ -88,16 +82,13 @@ const OrderNew = () => {
       return;
     }
     
-    // Check if product already exists in order
     const existingItemIndex = orderItems.findIndex(item => item.productId === currentProduct.id);
     
     if (existingItemIndex >= 0) {
-      // Update existing item quantity
       const updatedItems = [...orderItems];
       updatedItems[existingItemIndex].quantity += currentQuantity;
       setOrderItems(updatedItems);
     } else {
-      // Add new item
       setOrderItems([...orderItems, {
         productId: currentProduct.id,
         productName: `${currentProduct.code} - ${currentProduct.name}`,
@@ -106,7 +97,6 @@ const OrderNew = () => {
       }]);
     }
     
-    // Reset product form
     setCurrentProduct(null);
     setProductSearchTerm('');
     setCurrentQuantity(1);
@@ -114,19 +104,16 @@ const OrderNew = () => {
     toast.success("Produto adicionado à encomenda");
   };
   
-  // Remove product from order
   const handleRemoveProduct = (index: number) => {
     const updatedItems = [...orderItems];
     updatedItems.splice(index, 1);
     setOrderItems(updatedItems);
   };
   
-  // Calculate order total
   const calculateTotal = () => {
     return orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
   };
   
-  // Save order
   const handleSaveOrder = async () => {
     if (!selectedClientId) {
       toast.error("Selecione um cliente para a encomenda");
@@ -343,6 +330,24 @@ const OrderNew = () => {
                 min="1"
                 value={currentQuantity}
                 onChange={(e) => setCurrentQuantity(Number(e.target.value))}
+                className="mt-1"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="salePrice">Preço Venda (€)</Label>
+              <Input 
+                id="salePrice"
+                type="number" 
+                min="0"
+                step="0.01"
+                value={currentProduct?.salePrice || 0}
+                onChange={(e) => {
+                  if (currentProduct) {
+                    const updatedProduct = { ...currentProduct, salePrice: Number(e.target.value) };
+                    setCurrentProduct(updatedProduct);
+                  }
+                }}
                 className="mt-1"
               />
             </div>
