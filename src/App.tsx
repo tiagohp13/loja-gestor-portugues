@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -41,7 +42,7 @@ import { Support } from './pages';
 import { NotFound } from './pages';
 
 // Layout
-import AppLayout from './components/layout/AppLayout';
+import AppLayout from './components/navigation/AppSidebar';
 
 function App() {
   return (
