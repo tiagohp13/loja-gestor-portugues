@@ -74,7 +74,7 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   salePrice: number;
-  discount: number; // Added item-level discount
+  discount: number; // Item-level discount
 }
 
 export interface StockEntryItem {
@@ -82,7 +82,7 @@ export interface StockEntryItem {
   productName: string;
   quantity: number;
   purchasePrice: number;
-  discount: number; // Added item-level discount
+  discount: number; // Item-level discount
 }
 
 export interface StockExitItem {
@@ -90,7 +90,7 @@ export interface StockExitItem {
   productName: string;
   quantity: number;
   salePrice: number;
-  discount: number; // Added item-level discount
+  discount: number; // Item-level discount
 }
 
 export interface Order {
@@ -104,7 +104,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   orderNumber: string;
-  discount: number; // Keeping for backward compatibility, but will be deprecated
+  discount: number; // Order-level discount
   convertedToStockExitId?: string;
 }
 
@@ -120,7 +120,7 @@ export interface StockEntry {
   createdAt: string;
   updatedAt: string;
   entryNumber: string;
-  discount: number;
+  discount: number; // Entry-level discount
   // Properties for individual entry items
   quantity?: number;
   purchasePrice?: number;
@@ -141,7 +141,7 @@ export interface StockExit {
   createdAt: string;
   updatedAt: string;
   exitNumber: string;
-  discount: number;
+  discount: number; // Exit-level discount
   fromOrderId?: string;
   // Properties for individual exit items
   quantity?: number;

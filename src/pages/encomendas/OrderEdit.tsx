@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -34,11 +35,13 @@ const OrderEdit = () => {
     productName: string;
     quantity: number;
     salePrice: number;
+    discount: number;
   }>({
     productId: '',
     productName: '',
     quantity: 1,
-    salePrice: 0
+    salePrice: 0,
+    discount: 0
   });
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,7 +86,7 @@ const OrderEdit = () => {
     const { name, value } = e.target;
     setCurrentItem(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' 
+      [name]: name === 'quantity' || name === 'salePrice' || name === 'discount'
               ? parseFloat(value) || 0 
               : value
     }));
@@ -104,7 +107,8 @@ const OrderEdit = () => {
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: 1,
-        salePrice: selectedProduct.salePrice
+        salePrice: selectedProduct.salePrice,
+        discount: 0
       });
       
       // Automatically add product if this is the first selection
@@ -143,7 +147,8 @@ const OrderEdit = () => {
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice // Update the price in case it changed
+        salePrice: currentItem.salePrice, // Update the price in case it changed
+        discount: currentItem.discount
       };
       setItems(updatedItems);
     } else {
@@ -156,7 +161,8 @@ const OrderEdit = () => {
       productId: '',
       productName: '',
       quantity: 1,
-      salePrice: 0
+      salePrice: 0,
+      discount: 0
     });
     setSearchTerm('');
   };
@@ -209,7 +215,7 @@ const OrderEdit = () => {
 
   // Calculate total value
   const totalValue = items.reduce((total, item) => 
-    total + (item.quantity * item.salePrice), 0);
+    total + (item.quantity * item.salePrice * (1 - item.discount / 100)), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -372,7 +378,7 @@ const OrderEdit = () => {
                 </div>
                 
                 {currentItem.productId && (
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
                         Produto Selecionado
@@ -414,6 +420,23 @@ const OrderEdit = () => {
                         required
                       />
                     </div>
+                    
+                    <div className="space-y-2">
+                      <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
+                        Desconto (%)
+                      </label>
+                      <Input
+                        id="discount"
+                        name="discount"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={currentItem.discount}
+                        onChange={handleItemChange}
+                        placeholder="0.00"
+                      />
+                    </div>
                   </div>
                 )}
                 
@@ -445,6 +468,7 @@ const OrderEdit = () => {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto (%)</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
@@ -455,7 +479,10 @@ const OrderEdit = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.discount}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {(item.quantity * item.salePrice * (1 - item.discount / 100)).toFixed(2)} €
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                           <Button 
                             variant="ghost" 

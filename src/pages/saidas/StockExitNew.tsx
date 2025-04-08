@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -34,11 +35,13 @@ const StockExitNew = () => {
     productName: string;
     quantity: number;
     salePrice: number;
+    discount: number;
   }>({
     productId: '',
     productName: '',
     quantity: 1,
-    salePrice: 0
+    salePrice: 0,
+    discount: 0
   });
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -56,7 +59,7 @@ const StockExitNew = () => {
     const { name, value } = e.target;
     setCurrentItem(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' 
+      [name]: name === 'quantity' || name === 'salePrice' || name === 'discount'
               ? parseFloat(value) || 0 
               : value
     }));
@@ -73,7 +76,8 @@ const StockExitNew = () => {
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: 1,
-        salePrice: selectedProduct.salePrice
+        salePrice: selectedProduct.salePrice,
+        discount: 0
       });
     }
     setIsProductSearchOpen(false);
@@ -92,7 +96,8 @@ const StockExitNew = () => {
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice
+        salePrice: currentItem.salePrice,
+        discount: currentItem.discount
       };
       setItems(updatedItems);
     } else {
@@ -103,7 +108,8 @@ const StockExitNew = () => {
       productId: '',
       productName: '',
       quantity: 1,
-      salePrice: 0
+      salePrice: 0,
+      discount: 0
     });
     setSearchTerm('');
   };
@@ -253,7 +259,7 @@ const StockExitNew = () => {
                 </div>
                 
                 {currentItem.productId && (
-                  <div className="grid md:grid-cols-3 gap-4">
+                  <div className="grid md:grid-cols-4 gap-4">
                     <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
                       <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
                     </div>
@@ -290,6 +296,23 @@ const StockExitNew = () => {
                         required
                       />
                     </div>
+                    
+                    <div className="space-y-2">
+                      <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
+                        Desconto (%)
+                      </label>
+                      <Input
+                        id="discount"
+                        name="discount"
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="0.01"
+                        value={currentItem.discount}
+                        onChange={handleItemChange}
+                        placeholder="0.00"
+                      />
+                    </div>
                   </div>
                 )}
                 
@@ -316,6 +339,7 @@ const StockExitNew = () => {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto (%)</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
@@ -326,7 +350,10 @@ const StockExitNew = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.discount}%</td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {(item.quantity * item.salePrice * (1 - item.discount / 100)).toFixed(2)} €
+                        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                           <Button 
                             variant="ghost" 
@@ -361,7 +388,7 @@ const StockExitNew = () => {
             
             <div className="space-y-2">
               <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-                Desconto (%)
+                Desconto Total (%)
               </label>
               <Input
                 id="discount"
