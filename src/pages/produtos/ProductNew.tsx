@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -102,8 +101,7 @@ const ProductNew = () => {
         minStock: product.minStock,
         category: product.category,
         description: product.description,
-        image: product.image,
-        status: 'active'
+        image: product.image
       });
       
       navigate('/produtos/consultar');

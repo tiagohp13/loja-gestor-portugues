@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -67,15 +66,18 @@ const StockEntryList = () => {
             id: entry.id,
             supplierId: entry.supplierid,
             supplierName: entry.suppliername,
-            entryNumber: entry.entrynumber,
+            number: entry.entrynumber,
             invoiceNumber: entry.invoicenumber,
             notes: entry.notes,
-            status: entry.status,
-            createdAt: entry.createdat,
-            updatedAt: entry.updatedat,
             date: entry.date,
-            discount: 0, // Set discount to 0 as we're removing this field
-            items: entry.StockEntriesItems
+            createdAt: entry.createdat,
+            items: entry.StockEntriesItems.map((item: any) => ({
+              productId: item.productid,
+              productName: item.productname,
+              quantity: item.quantity,
+              purchasePrice: item.purchaseprice,
+              discountPercent: item.discount
+            }))
           }));
           
           // Update the state with the mapped entries
@@ -91,7 +93,6 @@ const StockEntryList = () => {
     fetchEntries();
   }, [setStockEntries]);
 
-  // Sort entries by date (most recent first)
   const sortedEntries = [...stockEntries].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
@@ -117,7 +118,7 @@ const StockEntryList = () => {
           hasMatchingProduct ||
           (supplier && supplier.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (entry.entryNumber && entry.entryNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+          (entry.number && entry.number.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       })
     : sortedEntries;
@@ -152,12 +153,10 @@ const StockEntryList = () => {
   const selectedEntryData = selectedEntry ? stockEntries.find(entry => entry.id === selectedEntry) : null;
   const selectedSupplier = selectedEntryData ? suppliers.find(s => s.id === selectedEntryData.supplierId) : null;
 
-  // Helper function to ensure we're working with Date objects
   const ensureDate = (dateInput: string | Date): Date => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
 
-  // Helper function to calculate total for an entry
   const calculateEntryTotal = (entry: typeof stockEntries[0]) => {
     return entry.items.reduce((total, item) => total + (item.quantity * item.purchasePrice), 0);
   };
@@ -274,7 +273,7 @@ const StockEntryList = () => {
                     >
                       <TableCell>{formatDateTime(ensureDate(entry.createdAt))}</TableCell>
                       <TableCell className="font-medium">
-                        <span className="text-gestorApp-blue">{entry.entryNumber}</span>
+                        <span className="text-gestorApp-blue">{entry.number}</span>
                       </TableCell>
                       <TableCell className="font-medium">{productDisplay}</TableCell>
                       <TableCell>{supplier ? supplier.name : 'Fornecedor removido'}</TableCell>

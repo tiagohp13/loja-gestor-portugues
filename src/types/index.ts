@@ -23,7 +23,8 @@ export interface Product {
   minStock: number;
   createdAt: string;
   updatedAt: string;
-  image?: string; // Add image field that is optional
+  image?: string;
+  status?: string; // Add status field that is optional
 }
 
 export interface Category {
@@ -32,8 +33,8 @@ export interface Category {
   description: string;
   createdAt: string;
   updatedAt: string;
-  status?: string; // Add status field that is optional
-  productCount?: number; // Add productCount field that is optional
+  status?: string;
+  productCount?: number;
 }
 
 export interface Client {
@@ -46,7 +47,7 @@ export interface Client {
   notes: string;
   createdAt: string;
   updatedAt: string;
-  status?: string; // Add status field that is optional
+  status?: string;
 }
 
 export interface Supplier {
@@ -60,7 +61,7 @@ export interface Supplier {
   notes: string;
   createdAt: string;
   updatedAt: string;
-  status?: string; // Add status field that is optional
+  status?: string;
 }
 
 export interface StockEntryItem {
@@ -83,7 +84,7 @@ export interface StockExit {
   fromOrderId?: string;
   fromOrderNumber?: string;
   createdAt: string;
-  discount?: number; // Add discount field that is optional
+  discount?: number;
 }
 
 export interface StockExitItem {
@@ -104,6 +105,7 @@ export interface StockEntry {
   notes?: string;
   date: string;
   createdAt: string;
+  // Use number instead of entryNumber to maintain consistency with other interfaces
 }
 
 export interface Order {

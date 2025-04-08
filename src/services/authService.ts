@@ -17,11 +17,11 @@ export async function loginUser(email: string, password: string) {
     
     // Check password (in a real app, you'd use bcrypt or similar)
     // Here we're trusting the database's crypt function that we used in SQL
-    // Correct RPC function name based on what's available
+    // Using a custom RPC function outside of get_next_counter, etc.
     const { data: pwCheck, error: pwError } = await supabase.rpc(
       'verify_password',
       { email, password_to_check: password }
-    );
+    ) as { data: boolean, error: any };
     
     if (pwError) throw pwError;
     

@@ -16,6 +16,7 @@ const SupplierNew = () => {
   const [address, setAddress] = useState('');
   const [taxId, setTaxId] = useState('');
   const [notes, setNotes] = useState('');
+  const [paymentTerms, setPaymentTerms] = useState(''); // Add paymentTerms state
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +28,7 @@ const SupplierNew = () => {
       address,
       taxId,
       notes,
+      paymentTerms, // Include paymentTerms
       status: 'active'
     });
     
@@ -110,6 +112,18 @@ const SupplierNew = () => {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               placeholder="Morada completa"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="paymentTerms" className="text-sm font-medium text-gestorApp-gray-dark">
+              Condições de Pagamento
+            </label>
+            <Input
+              id="paymentTerms"
+              value={paymentTerms}
+              onChange={(e) => setPaymentTerms(e.target.value)}
+              placeholder="30 dias, pronto pagamento, etc."
             />
           </div>
           

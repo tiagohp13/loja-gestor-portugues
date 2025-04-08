@@ -63,6 +63,8 @@ interface DataContextType {
   getSupplierHistory: (id: string) => any;
   
   getBusinessAnalytics: () => any;
+  
+  setStockEntries: (entries: StockEntry[]) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -908,7 +910,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getSupplier,
       getSupplierHistory,
       
-      getBusinessAnalytics
+      getBusinessAnalytics,
+      
+      setStockEntries
     }}>
       {children}
     </DataContext.Provider>

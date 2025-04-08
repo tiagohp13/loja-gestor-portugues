@@ -29,11 +29,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      const { user } = await loginUser(email, password);
+      const { user: userData } = await loginUser(email, password);
       
-      if (!user) {
+      if (!userData) {
         throw new Error('Utilizador não encontrado');
       }
+      
+      // Map database user to our User type
+      const user: User = {
+        id: userData.id,
+        name: userData.email.split('@')[0], // Use email username as name
+        email: userData.email,
+        role: 'admin' // Default role
+      };
       
       setState({ user, isAuthenticated: true });
       localStorage.setItem('user', JSON.stringify(user));
