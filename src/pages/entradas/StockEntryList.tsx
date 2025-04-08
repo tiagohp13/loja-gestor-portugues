@@ -56,9 +56,19 @@ const StockEntryList = () => {
             if (itemsError) {
               console.error(`Error fetching items for entry ${entry.id}:`, itemsError);
               return {
-                ...entry,
+                id: entry.id,
+                supplierId: entry.supplierid,
+                supplierName: entry.suppliername,
+                entryNumber: entry.entrynumber,
+                date: entry.date,
+                invoiceNumber: entry.invoicenumber,
+                notes: entry.notes,
+                status: entry.status as 'pending' | 'completed' | 'cancelled',
+                discount: 0, 
+                createdAt: entry.createdat,
+                updatedAt: entry.updatedat,
                 items: []
-              };
+              } as StockEntry;
             }
 
             const mappedItems = itemsData?.map(item => ({
@@ -284,7 +294,10 @@ const StockEntryList = () => {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => setSelectedEntryId(entry.id)}
+                            onClick={() => {
+                              setSelectedEntryId(entry.id);
+                              setIsDeleteDialogOpen(true);
+                            }}
                             title="Eliminar"
                             className="text-red-500 hover:text-red-700"
                           >
@@ -315,7 +328,7 @@ const StockEntryList = () => {
         title="Eliminar Entrada de Stock"
         description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
         onDelete={() => selectedEntryId && handleDeleteEntry(selectedEntryId)}
-        open={!!selectedEntryId}
+        open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       />
     </div>
