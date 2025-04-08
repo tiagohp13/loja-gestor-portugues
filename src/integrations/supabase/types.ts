@@ -327,6 +327,107 @@ export type Database = {
         Args: { counter_id: string }
         Returns: string
       }
+      get_order_items: {
+        Args: { p_order_id: string }
+        Returns: {
+          id: string
+          order_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          sale_price: number
+        }[]
+      }
+      get_orders: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          client_id: string
+          client_name: string
+          order_number: string
+          date: string
+          notes: string
+          status: string
+          discount: number
+          created_at: string
+          updated_at: string
+          converted_to_exit_id: string
+        }[]
+      }
+      get_stock_entries: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          supplier_id: string
+          supplier_name: string
+          entry_number: string
+          date: string
+          invoice_number: string
+          notes: string
+          status: string
+          discount: number
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_stock_entry_items: {
+        Args: { p_entry_id: string }
+        Returns: {
+          id: string
+          entry_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          purchase_price: number
+        }[]
+      }
+      get_stock_exit: {
+        Args: { p_exit_id: string }
+        Returns: {
+          id: string
+          client_id: string
+          client_name: string
+          reason: string
+          exit_number: string
+          date: string
+          invoice_number: string
+          notes: string
+          status: string
+          discount: number
+          from_order_id: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
+      get_stock_exit_items: {
+        Args: { p_exit_id: string }
+        Returns: {
+          id: string
+          exit_id: string
+          product_id: string
+          product_name: string
+          quantity: number
+          sale_price: number
+        }[]
+      }
+      get_stock_exits: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          id: string
+          client_id: string
+          client_name: string
+          reason: string
+          exit_number: string
+          date: string
+          invoice_number: string
+          notes: string
+          status: string
+          discount: number
+          from_order_id: string
+          created_at: string
+          updated_at: string
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

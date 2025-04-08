@@ -28,11 +28,9 @@ const StockEntryList = () => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      // Buscar dados básicos das entradas
+      // Buscar dados usando a função RPC
       const { data: entriesData, error: entriesError } = await supabase
-        .from('StockEntries')
-        .select('*')
-        .order('createdat', { ascending: false });
+        .rpc('get_stock_entries');
 
       if (entriesError) {
         throw entriesError;
@@ -41,53 +39,51 @@ const StockEntryList = () => {
       // Transformar os dados retornados
       const entriesWithItems = await Promise.all(
         entriesData.map(async (entry) => {
-          // Buscar itens para cada entrada
+          // Buscar itens para cada entrada usando a função RPC
           const { data: itemsData, error: itemsError } = await supabase
-            .from('StockEntriesItems')
-            .select('*')
-            .eq('entryid', entry.id);
+            .rpc('get_stock_entry_items', { p_entry_id: entry.id });
 
           if (itemsError) {
             console.error(`Erro ao buscar itens da entrada ${entry.id}:`, itemsError);
             return {
               id: entry.id,
-              supplierId: entry.supplierid,
-              supplierName: entry.suppliername,
-              entryNumber: entry.entrynumber,
+              supplierId: entry.supplier_id,
+              supplierName: entry.supplier_name,
+              entryNumber: entry.entry_number,
               date: entry.date,
-              invoiceNumber: entry.invoicenumber,
+              invoiceNumber: entry.invoice_number,
               notes: entry.notes,
-              status: entry.status,
+              status: (entry.status as "pending" | "completed" | "cancelled"),
               discount: entry.discount,
-              createdAt: entry.createdat,
-              updatedAt: entry.updatedat,
+              createdAt: entry.created_at,
+              updatedAt: entry.updated_at,
               items: []
-            };
+            } as StockEntry;
           }
 
           // Mapear items para o formato esperado em StockEntryItem[]
           const mappedItems = itemsData.map(item => ({
-            productId: item.productid,
-            productName: item.productname,
+            productId: item.product_id,
+            productName: item.product_name,
             quantity: item.quantity,
-            purchasePrice: item.purchaseprice
+            purchasePrice: item.purchase_price
           }));
 
           // Retornar a entrada com seus itens mapeados
           return {
             id: entry.id,
-            supplierId: entry.supplierid,
-            supplierName: entry.suppliername,
-            entryNumber: entry.entrynumber,
+            supplierId: entry.supplier_id,
+            supplierName: entry.supplier_name,
+            entryNumber: entry.entry_number,
             date: entry.date,
-            invoiceNumber: entry.invoicenumber,
+            invoiceNumber: entry.invoice_number,
             notes: entry.notes,
-            status: entry.status,
+            status: (entry.status as "pending" | "completed" | "cancelled"),
             discount: entry.discount,
-            createdAt: entry.createdat,
-            updatedAt: entry.updatedat,
+            createdAt: entry.created_at,
+            updatedAt: entry.updated_at,
             items: mappedItems
-          };
+          } as StockEntry;
         })
       );
         
