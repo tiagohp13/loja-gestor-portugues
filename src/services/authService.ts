@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 export async function loginUser(email: string, password: string) {
   try {
@@ -23,9 +24,11 @@ export async function loginUser(email: string, password: string) {
       throw new Error('Credenciais inválidas');
     }
     
+    const userData = data as Tables<'users'>;
+    
     return { user: { 
-      ...data, 
-      name: data.nome || data.email,
+      ...userData, 
+      name: userData.email,
       role: 'user'
     }};
   } catch (error) {

@@ -30,14 +30,14 @@ interface DataContextType {
   deleteSupplier: (id: string) => void;
   getSupplier: (id: string) => Supplier | undefined;
   getSupplierHistory: (id: string) => { entries: StockEntry[] };
-  addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber' | 'discount'>) => Promise<Order>;
+  addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber'>) => Promise<Order>;
   updateOrder: (id: string, updates: Partial<Order>) => void;
   deleteOrder: (id: string) => void;
   findOrder: (id: string) => Order | undefined;
-  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber' | 'discount'>) => Promise<StockEntry>;
+  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>) => Promise<StockEntry>;
   updateStockEntry: (id: string, updates: Partial<StockEntry>) => void;
   deleteStockEntry: (id: string) => void;
-  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber' | 'discount'>) => Promise<StockExit>;
+  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>) => Promise<StockExit>;
   updateStockExit: (id: string, updates: Partial<StockExit>) => void;
   deleteStockExit: (id: string) => void;
   updateProductStock: (productId: string, quantityChange: number) => void;
@@ -235,7 +235,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     saveData('suppliers', updatedSuppliers);
   };
 
-  const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber' | 'discount'>) => {
+  const addOrder = async (orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber'>) => {
     const orderNumber = await generateOrderNumber();
     const newOrder: Order = {
       id: uuidv4(),
@@ -265,7 +265,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     saveData('orders', updatedOrders);
   };
 
-  const addStockEntry = async (entryData: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber' | 'discount'>) => {
+  const addStockEntry = async (entryData: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>) => {
     const entryNumber = await generateStockEntryNumber();
     const newEntry: StockEntry = {
       id: uuidv4(),
@@ -301,7 +301,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     saveData('stockEntries', updatedStockEntries);
   };
 
-  const addStockExit = async (exitData: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber' | 'discount'>) => {
+  const addStockExit = async (exitData: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>) => {
     const exitNumber = await generateStockExitNumber();
     const newExit: StockExit = {
       id: uuidv4(),
