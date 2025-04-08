@@ -6,40 +6,59 @@ import { DataProvider } from './contexts/DataContext';
 import { Toaster } from 'sonner';
 
 // Authentication
-import { LoginPage } from './pages';
+import LoginPage from './pages/Login';
 
 // Dashboard
-import { DashboardPage } from './pages';
+import DashboardPage from './pages/Dashboard';
 
 // Products
-import { ProductList, ProductDetail, ProductNew, ProductEdit } from './pages';
+import ProductList from './pages/produtos/ProductList';
+import ProductDetail from './pages/produtos/ProductDetail';
+import ProductNew from './pages/produtos/ProductNew';
+import ProductEdit from './pages/produtos/ProductEdit';
 
 // Categories
-import { CategoryList, CategoryDetail, CategoryNew, CategoryEdit } from './pages';
+import CategoryList from './pages/categorias/CategoryList';
+import CategoryDetail from './pages/categorias/CategoryDetail';
+import CategoryNew from './pages/categorias/CategoryNew';
+import CategoryEdit from './pages/categorias/CategoryEdit';
 
 // Clients
-import { ClientList, ClientDetail, ClientNew, ClientEdit } from './pages';
+import ClientList from './pages/clientes/ClientList';
+import ClientDetail from './pages/clientes/ClientDetail';
+import ClientNew from './pages/clientes/ClientNew';
+import ClientEdit from './pages/clientes/ClientEdit';
 
 // Suppliers
-import { SupplierList, SupplierDetail, SupplierNew, SupplierEdit } from './pages';
+import SupplierList from './pages/fornecedores/SupplierList';
+import SupplierDetail from './pages/fornecedores/SupplierDetail';
+import SupplierNew from './pages/fornecedores/SupplierNew';
+import SupplierEdit from './pages/fornecedores/SupplierEdit';
 
 // Orders
-import { OrderList, OrderDetail, OrderNew, OrderConverting } from './pages';
+import OrderList from './pages/encomendas/OrderList';
+import OrderDetail from './pages/encomendas/OrderDetail';
+import OrderNew from './pages/encomendas/OrderNew';
+import OrderConverting from './pages/encomendas/OrderConverting';
 
 // Stock Entries
-import { StockEntryList, StockEntryNew, StockEntryEdit } from './pages';
+import StockEntryList from './pages/entradas/StockEntryList';
+import StockEntryNew from './pages/entradas/StockEntryNew';
+import StockEntryEdit from './pages/entradas/StockEntryEdit';
 
 // Stock Exits
-import { StockExitList, StockExitNew, StockExitEdit } from './pages';
+import StockExitList from './pages/saidas/StockExitList';
+import StockExitNew from './pages/saidas/StockExitNew';
+import StockExitEdit from './pages/saidas/StockExitEdit';
 
 // Settings
-import { Settings } from './pages';
+import Settings from './pages/configuracoes/Settings';
 
 // Support
-import { Support } from './pages';
+import Support from './pages/Suporte';
 
 // Error pages
-import { NotFound } from './pages';
+import NotFound from './pages/NotFound';
 
 // Layout
 import AppLayout from './components/navigation/AppSidebar';
