@@ -1,5 +1,5 @@
 
-import { User, Product, Client, Supplier, StockEntry, StockExit, Category } from '../types';
+import { User, Product, Client, Supplier, StockEntry, StockExit, Category, Order, LegacyStockEntry, LegacyStockExit, LegacyOrder } from '../types';
 
 // Mock Users
 export const users: User[] = [
@@ -14,22 +14,30 @@ export const suppliers: Supplier[] = [];
 export const stockEntries: StockEntry[] = [];
 export const stockExits: StockExit[] = [];
 export const categories: Category[] = [];
+export const orders: Order[] = [];
 
 // Helper function to get a product with its stock movements
 export const getProductWithHistory = (productId: string) => {
   const product = products.find(p => p.id === productId);
-  const entries = stockEntries.filter(e => e.productId === productId).map(entry => {
-    return {
-      ...entry,
-      supplier: suppliers.find(s => s.id === entry.supplierId)
-    };
-  });
-  const exits = stockExits.filter(e => e.productId === productId).map(exit => {
-    return {
-      ...exit,
-      client: clients.find(c => c.id === exit.clientId)
-    };
-  });
+  
+  // Filter entries and exits where this product is included in the items array
+  const entries = stockEntries
+    .filter(entry => entry.items.some(item => item.productId === productId))
+    .map(entry => {
+      return {
+        ...entry,
+        supplier: suppliers.find(s => s.id === entry.supplierId)
+      };
+    });
+    
+  const exits = stockExits
+    .filter(exit => exit.items.some(item => item.productId === productId))
+    .map(exit => {
+      return {
+        ...exit,
+        client: clients.find(c => c.id === exit.clientId)
+      };
+    });
 
   return {
     product,
@@ -41,32 +49,58 @@ export const getProductWithHistory = (productId: string) => {
 // Helper function to get a client with purchase history
 export const getClientWithHistory = (clientId: string) => {
   const client = clients.find(c => c.id === clientId);
-  const purchases = stockExits.filter(e => e.clientId === clientId).map(exit => {
-    return {
-      ...exit,
-      product: products.find(p => p.id === exit.productId)
-    };
-  });
+  
+  const purchases = stockExits
+    .filter(exit => exit.clientId === clientId)
+    .map(exit => {
+      // For each exit, map all items that were part of it
+      const exitItems = exit.items.map(item => {
+        return {
+          ...item,
+          exitId: exit.id,
+          exitDate: exit.date,
+          product: products.find(p => p.id === item.productId)
+        };
+      });
+      
+      return {
+        exit,
+        items: exitItems
+      };
+    });
 
   return {
     client,
-    purchases
+    purchases: purchases.flatMap(p => p.items) // Flatten to get all items
   };
 };
 
 // Helper function to get a supplier with delivery history
 export const getSupplierWithHistory = (supplierId: string) => {
   const supplier = suppliers.find(s => s.id === supplierId);
-  const deliveries = stockEntries.filter(e => e.supplierId === supplierId).map(entry => {
-    return {
-      ...entry,
-      product: products.find(p => p.id === entry.productId)
-    };
-  });
+  
+  const deliveries = stockEntries
+    .filter(entry => entry.supplierId === supplierId)
+    .map(entry => {
+      // For each entry, map all items that were part of it
+      const entryItems = entry.items.map(item => {
+        return {
+          ...item,
+          entryId: entry.id,
+          entryDate: entry.date,
+          product: products.find(p => p.id === item.productId)
+        };
+      });
+      
+      return {
+        entry,
+        items: entryItems
+      };
+    });
 
   return {
     supplier,
-    deliveries
+    deliveries: deliveries.flatMap(d => d.items) // Flatten to get all items
   };
 };
 
@@ -93,18 +127,24 @@ export const getDashboardData = () => {
     return sum + (product.currentStock * product.purchasePrice);
   }, 0);
 
-  // Total sales value
+  // Total sales value - calculate from all items in all exits
   const totalSalesValue = stockExits.reduce((sum, exit) => {
-    return sum + (exit.quantity * exit.salePrice);
+    const exitTotal = exit.items.reduce((itemSum, item) => 
+      itemSum + (item.quantity * item.salePrice), 0);
+    return sum + exitTotal;
   }, 0);
 
   // Most sold product
   const productSales: Record<string, number> = {};
+  
+  // Count total quantity sold for each product across all exits
   stockExits.forEach(exit => {
-    if (!productSales[exit.productId]) {
-      productSales[exit.productId] = 0;
-    }
-    productSales[exit.productId] += exit.quantity;
+    exit.items.forEach(item => {
+      if (!productSales[item.productId]) {
+        productSales[item.productId] = 0;
+      }
+      productSales[item.productId] += item.quantity;
+    });
   });
   
   let mostSoldProductId = '';
@@ -166,26 +206,26 @@ export const getDashboardData = () => {
 
   // Recent transactions - ensure we can combine and sort
   const allTransactions = [
-    ...stockEntries.map(entry => ({
+    ...stockEntries.flatMap(entry => entry.items.map(item => ({
       id: entry.id,
       date: entry.date,
-      type: 'entry' as const, // Type assertion here
-      productId: entry.productId,
-      quantity: entry.quantity,
-      price: entry.purchasePrice,
+      type: 'entry' as const,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.purchasePrice,
       entityId: entry.supplierId,
       createdAt: entry.createdAt
-    })),
-    ...stockExits.map(exit => ({
+    }))),
+    ...stockExits.flatMap(exit => exit.items.map(item => ({
       id: exit.id,
       date: exit.date,
-      type: 'exit' as const, // Type assertion here
-      productId: exit.productId,
-      quantity: exit.quantity,
-      price: exit.salePrice,
+      type: 'exit' as const,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.salePrice,
       entityId: exit.clientId,
       createdAt: exit.createdAt
-    }))
+    })))
   ];
 
   const sortedTransactions = allTransactions.sort((a, b) => {

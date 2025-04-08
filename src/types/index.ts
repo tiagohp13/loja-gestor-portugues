@@ -116,3 +116,46 @@ export interface Order {
   notes?: string;
   convertedToStockExitId?: string;
 }
+
+// Backward compatibility interfaces for code that still uses the old format
+export interface LegacyStockEntry {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  purchasePrice: number;
+  invoiceNumber?: string;
+  notes?: string;
+  date: string;
+  createdAt: string;
+}
+
+export interface LegacyStockExit {
+  id: string;
+  clientId: string;
+  clientName: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
+  invoiceNumber?: string;
+  notes?: string;
+  date: string;
+  createdAt: string;
+  fromOrderId?: string;
+}
+
+export interface LegacyOrder {
+  id: string;
+  clientId: string;
+  clientName?: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
+  date: string;
+  notes?: string;
+  convertedToStockExitId?: string;
+}

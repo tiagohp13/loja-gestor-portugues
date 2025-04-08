@@ -12,7 +12,7 @@ import { ArrowLeft, Truck } from 'lucide-react';
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orders, convertOrderToStockExit } = useData();
+  const { orders, stockExits, convertOrderToStockExit } = useData();
   
   const order = orders.find(o => o.id === id);
   
@@ -35,7 +35,13 @@ const OrderDetail = () => {
     );
   }
   
-  const totalValue = order.quantity * order.salePrice;
+  // Calculate total value from all items
+  const totalValue = order.items.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
+  
+  // If order was converted, find the related stock exit
+  const relatedStockExit = order.convertedToStockExitId 
+    ? stockExits.find(exit => exit.id === order.convertedToStockExitId) 
+    : null;
   
   const handleConvertToStockExit = () => {
     try {
@@ -57,9 +63,11 @@ const OrderDetail = () => {
             <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
               <ArrowLeft className="mr-2 h-4 w-4" /> Voltar à Lista
             </Button>
-            <Button onClick={handleConvertToStockExit}>
-              <Truck className="mr-2 h-4 w-4" /> Converter em Saída
-            </Button>
+            {!order.convertedToStockExitId && (
+              <Button onClick={handleConvertToStockExit}>
+                <Truck className="mr-2 h-4 w-4" /> Converter em Saída
+              </Button>
+            )}
           </div>
         }
       />
@@ -79,21 +87,39 @@ const OrderDetail = () => {
                 <p className="font-medium">{order.clientName}</p>
               </div>
               
-              <div>
-                <p className="text-sm text-gestorApp-gray">Produto</p>
-                <p className="font-medium">{order.productName}</p>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm text-gestorApp-gray">Quantidade</p>
-                  <p className="font-medium">{order.quantity}</p>
-                </div>
-                
-                <div>
-                  <p className="text-sm text-gestorApp-gray">Preço Unitário</p>
-                  <p className="font-medium">{order.salePrice.toFixed(2)} €</p>
-                </div>
+              <div className="border rounded-md mt-2 overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {order.items.map((item, index) => {
+                      const subtotal = item.quantity * item.salePrice;
+                      
+                      return (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            {item.productName}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {item.quantity}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {item.salePrice.toFixed(2)} €
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {subtotal.toFixed(2)} €
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
               
               <div>
@@ -115,15 +141,31 @@ const OrderDetail = () => {
             
             <div className="mt-8">
               <h3 className="text-lg font-semibold mb-4 text-gestorApp-blue">Ações</h3>
-              <div className="space-y-4">
-                <Button 
-                  className="w-full" 
-                  onClick={handleConvertToStockExit}
-                >
-                  <Truck className="mr-2 h-4 w-4" />
-                  Converter em Saída de Stock
-                </Button>
-              </div>
+              {order.convertedToStockExitId ? (
+                <div className="bg-green-50 border border-green-200 p-4 rounded-md">
+                  <p className="text-green-800 font-medium">Esta encomenda já foi convertida em saída de stock.</p>
+                  <p className="text-sm text-green-600 mt-1">
+                    ID da saída: {order.convertedToStockExitId}
+                  </p>
+                  <Button 
+                    className="w-full mt-4" 
+                    onClick={() => navigate(`/saidas/historico`)}
+                  >
+                    <Truck className="mr-2 h-4 w-4" />
+                    Ver Saídas de Stock
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <Button 
+                    className="w-full" 
+                    onClick={handleConvertToStockExit}
+                  >
+                    <Truck className="mr-2 h-4 w-4" />
+                    Converter em Saída de Stock
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>

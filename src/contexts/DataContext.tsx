@@ -3,7 +3,12 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import * as mockData from '../data/mockData';
-import { Product, Category, Client, Supplier, StockEntry, StockExit, Order, StockEntryItem, StockExitItem, OrderItem } from '../types';
+import { 
+  Product, Category, Client, Supplier, 
+  StockEntry, StockExit, Order, 
+  StockEntryItem, StockExitItem, OrderItem,
+  LegacyStockEntry, LegacyStockExit, LegacyOrder
+} from '../types';
 
 // Define the context type
 interface DataContextType {
@@ -98,7 +103,7 @@ const convertOldStockExitsToNew = (oldExits: any[]): StockExit[] => {
     notes: exit.notes,
     date: exit.date,
     createdAt: exit.createdAt,
-    fromOrderId: undefined
+    fromOrderId: exit.fromOrderId
   }));
 };
 
@@ -115,7 +120,7 @@ const convertOldOrdersToNew = (oldOrders: any[]): Order[] => {
     }],
     date: order.date,
     notes: order.notes,
-    convertedToStockExitId: undefined
+    convertedToStockExitId: order.convertedToStockExitId
   }));
 };
 
@@ -136,7 +141,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   );
   
   const [orders, setOrders] = useState<Order[]>(() => 
-    convertOldOrdersToNew([])
+    convertOldOrdersToNew(mockData.orders || [])
   );
 
   // Make window.appData available for exporting
@@ -184,9 +189,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteProduct = (id: string) => {
     // Check if the product is used in stock entries or exits
-    const usedInEntry = stockEntries.some(entry => entry.productId === id);
-    const usedInExit = stockExits.some(exit => exit.productId === id);
-    const usedInOrder = orders.some(order => order.productId === id);
+    const usedInEntry = stockEntries.some(entry => 
+      entry.items.some(item => item.productId === id)
+    );
+    
+    const usedInExit = stockExits.some(exit => 
+      exit.items.some(item => item.productId === id)
+    );
+    
+    const usedInOrder = orders.some(order => 
+      order.items.some(item => item.productId === id)
+    );
     
     if (usedInEntry || usedInExit || usedInOrder) {
       toast.error('Não é possível excluir um produto que possui movimentações.');
@@ -460,7 +473,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       exit.items.forEach(newItem => {
         const product = products.find(p => p.id === newItem.productId);
-        const oldQuantity = oldExit.items.find(item => item.productId === newItem.productId)?.quantity || 0;
+        const oldItemIndex = oldExit.items.findIndex(item => item.productId === newItem.productId);
+        const oldQuantity = oldItemIndex >= 0 ? oldExit.items[oldItemIndex].quantity : 0;
         
         // Calculate adjusted current stock (after reverting old quantity)
         const adjustedCurrentStock = product ? product.currentStock + oldQuantity : 0;
@@ -624,26 +638,46 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getProductHistory = (id: string) => {
     const product = products.find(p => p.id === id);
+    
     const entries = stockEntries.filter(entry => 
       entry.items.some(item => item.productId === id)
     );
+    
     const exits = stockExits.filter(exit => 
       exit.items.some(item => item.productId === id)
     );
+    
     return { product, entries, exits };
   };
 
   const getClientHistory = (id: string) => {
     const client = clients.find(c => c.id === id);
-    const exits = stockExits.filter(exit => exit.clientId === id);
+    const exitItems = stockExits
+      .filter(exit => exit.clientId === id)
+      .flatMap(exit => exit.items.map(item => ({
+        ...item,
+        exitId: exit.id,
+        exitDate: exit.date,
+        exitCreatedAt: exit.createdAt
+      })));
+      
     const clientOrders = orders.filter(order => order.clientId === id);
-    return { client, exits, orders: clientOrders };
+    
+    return { client, exitItems, orders: clientOrders };
   };
 
   const getSupplierHistory = (id: string) => {
     const supplier = suppliers.find(s => s.id === id);
-    const entries = stockEntries.filter(entry => entry.supplierId === id);
-    return { supplier, entries };
+    const entryItems = stockEntries
+      .filter(entry => entry.supplierId === id)
+      .flatMap(entry => entry.items.map(item => ({
+        ...item,
+        entryId: entry.id,
+        entryDate: entry.date,
+        entryCreatedAt: entry.createdAt
+      })));
+      
+    return { supplier, entryItems };
   };
   
   // Business Analytics 
