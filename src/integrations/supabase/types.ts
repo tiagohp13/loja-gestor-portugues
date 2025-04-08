@@ -184,6 +184,7 @@ export type Database = {
       }
       StockEntriesItems: {
         Row: {
+          discount: number | null
           entryid: string | null
           id: string
           productid: string
@@ -192,6 +193,7 @@ export type Database = {
           quantity: number
         }
         Insert: {
+          discount?: number | null
           entryid?: string | null
           id?: string
           productid: string
@@ -200,6 +202,7 @@ export type Database = {
           quantity: number
         }
         Update: {
+          discount?: number | null
           entryid?: string | null
           id?: string
           productid?: string

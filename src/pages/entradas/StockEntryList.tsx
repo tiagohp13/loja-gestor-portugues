@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -23,9 +22,9 @@ const StockEntryList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
   const [sortField, setSortField] = useState<SortField>('entryNumber');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
-  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
@@ -108,6 +107,23 @@ const StockEntryList = () => {
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  const renderSortIcon = (field: SortField) => {
+    if (field !== sortField) return null;
+    
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
+      : <ChevronDown className="inline w-4 h-4 ml-1" />;
+  };
+
   const handleDeleteEntry = async (id: string) => {
     try {
       await deleteStockEntry(id);
@@ -118,23 +134,6 @@ const StockEntryList = () => {
       toast.error('Erro ao eliminar entrada');
     }
     setEntryToDelete(null);
-  };
-
-  const handleSort = (field: SortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const renderSortIcon = (field: SortField) => {
-    if (field !== sortField) return null;
-    
-    return sortDirection === 'asc' 
-      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
-      : <ChevronDown className="inline w-4 h-4 ml-1" />;
   };
 
   useEffect(() => {
@@ -250,7 +249,10 @@ const StockEntryList = () => {
               <tbody className="divide-y divide-gray-200">
                 {filteredEntries.map(entry => {
                   const total = entry.items && entry.items.length > 0 
-                    ? entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 0)
+                    ? entry.items.reduce(
+                        (sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 
+                        0
+                      )
                     : 0;
                   
                   return (

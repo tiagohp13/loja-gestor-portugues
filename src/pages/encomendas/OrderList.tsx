@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -38,7 +37,6 @@ const OrderList = () => {
   const fetchOrders = async () => {
     setLoading(true);
     try {
-      // Fetch data directly from the table
       const { data: ordersData, error: ordersError } = await supabase
         .from('Encomendas')
         .select('*')
@@ -52,10 +50,8 @@ const OrderList = () => {
         throw new Error("No orders found");
       }
 
-      // Transform the returned data
       const ordersWithItems = await Promise.all(
         ordersData.map(async (order) => {
-          // Fetch items for each order directly from the table
           const { data: itemsData, error: itemsError } = await supabase
             .from('EncomendasItems')
             .select('*')
@@ -79,16 +75,14 @@ const OrderList = () => {
             } as Order;
           }
 
-          // Map items to the expected format in OrderItem[]
           const mappedItems = (itemsData || []).map(item => ({
             productId: item.productid,
             productName: item.productname,
             quantity: item.quantity,
             salePrice: item.saleprice,
-            discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
+            discount: item.discount ?? 0
           }));
 
-          // Return the order with its mapped items
           return {
             id: order.id,
             clientId: order.clientid,
@@ -110,7 +104,6 @@ const OrderList = () => {
     } catch (err) {
       console.error('Error fetching orders:', err);
       toast.error('Error loading orders');
-      // Fallback to local data
       setLocalOrders(orders);
     } finally {
       setLoading(false);
@@ -121,7 +114,6 @@ const OrderList = () => {
     try {
       await updateOrder(id, { status: 'cancelled' });
 
-      // Update in Supabase
       const { error } = await supabase
         .from('Encomendas')
         .update({ 
@@ -144,8 +136,6 @@ const OrderList = () => {
     try {
       await deleteOrder(id);
       
-      // Delete from Supabase
-      // First delete items
       const { error: itemsError } = await supabase
         .from('EncomendasItems')
         .delete()
@@ -155,7 +145,6 @@ const OrderList = () => {
         console.error('Error deleting order items:', itemsError);
       }
       
-      // Then delete order
       const { error } = await supabase
         .from('Encomendas')
         .delete()
@@ -203,7 +192,6 @@ const OrderList = () => {
   useEffect(() => {
     let results = [...localOrders];
     
-    // Apply search filter
     if (searchTerm) {
       results = results.filter(
         order => 
@@ -212,12 +200,10 @@ const OrderList = () => {
       );
     }
     
-    // Apply status filter
     if (statusFilter !== 'all') {
       results = results.filter(order => order.status === statusFilter);
     }
     
-    // Apply sorting
     results.sort((a, b) => {
       let comparison = 0;
       
@@ -271,7 +257,6 @@ const OrderList = () => {
             />
           </div>
           
-          {/* Status filter */}
           <div className="flex items-center space-x-2">
             <Filter className="h-4 w-4 text-gestorApp-gray" />
             <Select
@@ -349,7 +334,6 @@ const OrderList = () => {
                     0
                   );
                   
-                  // Check if order is already converted or cancelled
                   const isConvertedOrCancelled = order.convertedToStockExitId || order.status === 'cancelled';
                   
                   return (
@@ -428,7 +412,6 @@ const OrderList = () => {
                             </>
                           )}
                           
-                          {/* Only show delete button for converted or cancelled orders if needed */}
                           {isConvertedOrCancelled && order.status !== 'completed' && (
                             <Button 
                               variant="ghost" 
@@ -461,7 +444,6 @@ const OrderList = () => {
         )}
       </div>
       
-      {/* Confirmation Dialog for Delete */}
       <DeleteConfirmDialog
         title="Eliminar Encomenda"
         description="Tem certeza que deseja eliminar esta encomenda? Esta ação não pode ser desfeita."
