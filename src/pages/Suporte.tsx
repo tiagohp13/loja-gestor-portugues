@@ -5,10 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
-import { MessageSquare, Bot, User, Search } from 'lucide-react';
+import { MessageSquare, Bot, User, Search, TrendingUp, Users, ShoppingCart, AlertTriangle } from 'lucide-react';
 
 const Suporte = () => {
-  const { clients, stockExits } = useData();
+  const { clients, stockExits, getBusinessAnalytics } = useData();
   const [userMessage, setUserMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messages, setMessages] = useState<{ role: 'system' | 'user' | 'assistant'; content: string }[]>([
@@ -22,85 +22,68 @@ const Suporte = () => {
     }
   ]);
   
-  // Find inactive clients (no purchases in the last 30 days)
+  // Generate business insights on component mount
   useEffect(() => {
-    const generateInitialInsights = async () => {
-      // Only execute if we have clients and stock exits
+    const generateBusinessInsights = async () => {
       if (clients.length === 0 || stockExits.length === 0) return;
       
       setIsLoading(true);
       
       try {
-        // Get the current date
-        const currentDate = new Date();
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(currentDate.getDate() - 30);
+        const analytics = getBusinessAnalytics();
         
-        // Find clients with no purchases in the last 30 days
-        const clientPurchases = new Map();
-        
-        // Record the most recent purchase for each client
-        stockExits.forEach(exit => {
-          const exitDate = new Date(exit.date);
-          if (!clientPurchases.has(exit.clientId) || 
-              new Date(clientPurchases.get(exit.clientId).date) < exitDate) {
-            clientPurchases.set(exit.clientId, {
-              date: exit.date,
-              name: exit.clientName
-            });
-          }
-        });
-        
-        // Find inactive clients
-        const inactiveClients = [];
-        
-        for (const client of clients) {
-          const lastPurchase = clientPurchases.get(client.id);
-          if (!lastPurchase || new Date(lastPurchase.date) < thirtyDaysAgo) {
-            inactiveClients.push({
-              id: client.id,
-              name: client.name,
-              lastPurchaseDate: lastPurchase ? new Date(lastPurchase.date).toLocaleDateString() : 'Nunca'
-            });
-          }
-        }
-        
-        // Analyze top selling products
-        const productSales = new Map();
-        
-        stockExits.forEach(exit => {
-          const productId = exit.productId;
-          if (!productSales.has(productId)) {
-            productSales.set(productId, {
-              name: exit.productName,
-              quantity: 0,
-              revenue: 0
-            });
-          }
-          
-          const currentProduct = productSales.get(productId);
-          currentProduct.quantity += exit.quantity;
-          currentProduct.revenue += exit.quantity * exit.salePrice;
-          productSales.set(productId, currentProduct);
-        });
-        
-        // Sort products by revenue
-        const sortedProducts = Array.from(productSales.values())
-          .sort((a, b) => b.revenue - a.revenue)
-          .slice(0, 3);
-        
-        // Create insights message
         let insightsMessage = '';
         
-        if (inactiveClients.length > 0) {
-          insightsMessage += `Identifiquei ${inactiveClients.length} clientes que não fizeram compras nos últimos 30 dias. `;
-          insightsMessage += `Os principais são: ${inactiveClients.slice(0, 3).map(c => c.name).join(', ')}.\n\n`;
+        // Revenue and profit insights
+        insightsMessage += `**Resumo Financeiro:**\n`;
+        insightsMessage += `- Receita Total: ${analytics.summary.totalRevenue.toFixed(2)}€\n`;
+        insightsMessage += `- Lucro Total: ${analytics.summary.totalProfit.toFixed(2)}€\n`;
+        insightsMessage += `- Margem de Lucro: ${analytics.summary.profitMargin.toFixed(2)}%\n`;
+        insightsMessage += `- Valor atual do inventário: ${analytics.summary.currentStockValue.toFixed(2)}€\n\n`;
+        
+        // Top selling products
+        if (analytics.topSellingProducts.length > 0) {
+          insightsMessage += `**Produtos Mais Vendidos:**\n`;
+          analytics.topSellingProducts.forEach((product, index) => {
+            insightsMessage += `${index + 1}. ${product.name} - ${product.totalQuantity} unidades (${product.totalRevenue.toFixed(2)}€)\n`;
+          });
+          insightsMessage += '\n';
         }
         
-        if (sortedProducts.length > 0) {
-          insightsMessage += `Os produtos mais vendidos são: \n`;
-          sortedProducts.forEach((product, index) => {
-            insightsMessage += `${index + 1}. ${product.name} - Quantidade: ${product.quantity}, Receita: ${product.revenue.toFixed(2)}€\n`;
+        // Most profitable products
+        if (analytics.mostProfitableProducts.length > 0) {
+          insightsMessage += `**Produtos Mais Lucrativos:**\n`;
+          analytics.mostProfitableProducts.forEach((product, index) => {
+            insightsMessage += `${index + 1}. ${product.name} - ${product.totalRevenue.toFixed(2)}€\n`;
+          });
+          insightsMessage += '\n';
+        }
+        
+        // Top clients
+        if (analytics.topClients.length > 0) {
+          insightsMessage += `**Melhores Clientes:**\n`;
+          analytics.topClients.forEach((client, index) => {
+            insightsMessage += `${index + 1}. ${client.name} - ${client.totalSpent.toFixed(2)}€ (${client.purchaseCount} compras)\n`;
+          });
+          insightsMessage += '\n';
+        }
+        
+        // Low stock warnings
+        if (analytics.lowStockProducts.length > 0) {
+          insightsMessage += `**Alerta de Stock Baixo:**\n`;
+          analytics.lowStockProducts.forEach((product, index) => {
+            insightsMessage += `${index + 1}. ${product.name} (${product.code}) - Stock: ${product.currentStock}/${product.minStock}\n`;
+          });
+          insightsMessage += '\n';
+        }
+        
+        // Inactive clients
+        if (analytics.inactiveClients.length > 0) {
+          insightsMessage += `**Clientes Inativos (sem compras nos últimos 30 dias):**\n`;
+          const inactiveCount = analytics.inactiveClients.length;
+          insightsMessage += `Existem ${inactiveCount} clientes inativos. Os principais são:\n`;
+          analytics.inactiveClients.slice(0, 5).forEach((client, index) => {
+            insightsMessage += `${index + 1}. ${client.name} - Última compra: ${client.lastPurchaseDate === 'Nunca' ? 'Nunca' : new Date(client.lastPurchaseDate).toLocaleDateString()}\n`;
           });
         }
         
@@ -108,7 +91,7 @@ const Suporte = () => {
           ...prev,
           {
             role: 'assistant',
-            content: `Aqui estão algumas informações sobre o seu negócio:\n\n${insightsMessage}\n\nPosso ajudar com mais alguma coisa?`
+            content: `Aqui está uma análise detalhada do seu negócio:\n\n${insightsMessage}\n\nPosso ajudar com mais alguma informação específica?`
           }
         ]);
       } catch (error) {
@@ -118,8 +101,8 @@ const Suporte = () => {
       }
     };
     
-    generateInitialInsights();
-  }, [clients, stockExits]);
+    generateBusinessInsights();
+  }, [clients, stockExits, getBusinessAnalytics]);
   
   const handleSendMessage = async () => {
     if (!userMessage.trim()) return;
@@ -131,11 +114,9 @@ const Suporte = () => {
     setIsLoading(true);
     
     try {
-      // This is a mockup simulation of an AI response for demonstration purposes
-      // In a real implementation, you would use an API call to ChatGPT
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const aiMessage = await generateAIResponse(newUserMessage.content);
+      // Generate AI response based on the user question and business analytics
+      const analytics = getBusinessAnalytics();
+      const aiMessage = await generateAIResponse(newUserMessage.content, analytics);
       
       setMessages(prev => [
         ...prev, 
@@ -149,49 +130,132 @@ const Suporte = () => {
     }
   };
   
-  // Mock function to simulate AI response
-  const generateAIResponse = async (message: string): Promise<string> => {
-    // In a real implementation, you would call the ChatGPT API here
-    // For now, we'll return a canned response based on the query
-    
+  // Function to generate AI responses based on business analytics
+  const generateAIResponse = async (message: string, analytics: any): Promise<string> => {
     const messageLower = message.toLowerCase();
     
-    if (messageLower.includes('cliente') && (messageLower.includes('inativo') || messageLower.includes('não compra'))) {
-      return `Baseado nos dados, recomendo entrar em contato com os clientes inativos para entender suas necessidades atuais. Considere oferecer um desconto especial para reconquistar estes clientes. Algumas razões para a inatividade podem incluir:
-      
-1. Encontraram um concorrente
-2. Não estão satisfeitos com algum aspecto do produto/serviço
-3. Mudança nas necessidades de compra
-      
-Uma campanha de email personalizada ou ligação direta pode ser eficaz para reengajá-los.`;
-    } 
-    else if (messageLower.includes('venda') || messageLower.includes('produto') && messageLower.includes('popular')) {
-      return `Analisando suas vendas recentes, percebo que você poderia aumentar a rentabilidade focando nos seus produtos mais vendidos. Considere:
-      
-1. Aumentar o estoque dos produtos populares para evitar falta
-2. Criar pacotes ou bundles com esses produtos
-3. Oferecer descontos em volumes maiores
-      
-Recomendo também verificar se os preços estão otimizados - um pequeno aumento nos produtos mais populares pode resultar em aumento significativo nas receitas sem impactar muito as vendas.`;
+    // Financial analysis
+    if (messageLower.includes('finan') || messageLower.includes('lucro') || messageLower.includes('receita') || messageLower.includes('margem')) {
+      return `**Análise Financeira**
+
+Receita Total: ${analytics.summary.totalRevenue.toFixed(2)}€
+Custo Total: ${analytics.summary.totalCost.toFixed(2)}€
+Lucro Total: ${analytics.summary.totalProfit.toFixed(2)}€
+Margem de Lucro: ${analytics.summary.profitMargin.toFixed(2)}%
+
+Esta margem de lucro ${analytics.summary.profitMargin > 20 ? 'está saudável' : 'poderia ser melhorada'}. 
+${analytics.summary.profitMargin < 15 
+  ? 'Recomendo analisar os custos e considerar um ajuste nos preços de venda.'
+  : 'Continue monitorando os custos para manter esta performance.'}
+
+O valor atual do seu inventário é de ${analytics.summary.currentStockValue.toFixed(2)}€.`;
     }
-    else if (messageLower.includes('tendência') || messageLower.includes('padrão')) {
-      return `Identificando padrões de compra nos seus dados:
+    
+    // Product analysis
+    else if (messageLower.includes('produto') || messageLower.includes('vend') || messageLower.includes('popular')) {
+      const topProducts = analytics.topSellingProducts;
+      const profitProducts = analytics.mostProfitableProducts;
       
-1. Os clientes tendem a comprar mais no início e fim do mês
-2. Produtos comprados frequentemente juntos poderiam ser oferecidos em pacotes
-3. Há uma sazonalidade em alguns produtos que poderia ser explorada com promoções antecipadas
-      
-Recomendo criar uma estratégia de marketing que considere estes padrões para maximizar as vendas.`;
+      return `**Análise de Produtos**
+
+**Produtos Mais Vendidos:**
+${topProducts.map((p: any, i: number) => `${i+1}. ${p.name} - ${p.totalQuantity} unidades vendidas (${p.totalRevenue.toFixed(2)}€)`).join('\n')}
+
+**Produtos Mais Lucrativos:**
+${profitProducts.map((p: any, i: number) => `${i+1}. ${p.name} - ${p.totalRevenue.toFixed(2)}€ em receita`).join('\n')}
+
+**Recomendações:**
+- Os produtos mais vendidos devem ser mantidos sempre em estoque
+- Considere promoções para os produtos menos vendidos mas com boa margem
+- Avalie aumentar levemente o preço dos produtos mais populares`;
     }
+    
+    // Client analysis
+    else if (messageLower.includes('cliente') || messageLower.includes('compra')) {
+      const topClients = analytics.topClients;
+      const inactiveClients = analytics.inactiveClients;
+      
+      return `**Análise de Clientes**
+
+**Melhores Clientes:**
+${topClients.map((c: any, i: number) => `${i+1}. ${c.name} - ${c.totalSpent.toFixed(2)}€ (${c.purchaseCount} compras)`).join('\n')}
+
+**Clientes Inativos (sem compras em 30 dias):**
+- Total: ${inactiveClients.length} clientes
+- Principais: ${inactiveClients.slice(0, 3).map((c: any) => c.name).join(', ')}
+
+**Recomendações:**
+- Ofereça descontos especiais para os melhores clientes fidelizando-os
+- Crie uma campanha de reativação para os clientes inativos
+- Implemente um programa de fidelidade para aumentar o valor médio por cliente`;
+    }
+    
+    // Inventory/Stock analysis
+    else if (messageLower.includes('stock') || messageLower.includes('inventário') || messageLower.includes('estoque')) {
+      const lowStock = analytics.lowStockProducts;
+      
+      return `**Análise de Inventário**
+
+**Valor Total do Inventário:** ${analytics.summary.currentStockValue.toFixed(2)}€
+
+**Produtos com Estoque Baixo:**
+${lowStock.length > 0 
+  ? lowStock.map((p: any, i: number) => `${i+1}. ${p.name} (${p.code}) - Atual: ${p.currentStock}, Mínimo: ${p.minStock}`).join('\n')
+  : 'Nenhum produto com estoque abaixo do mínimo.'}
+
+**Recomendações:**
+${lowStock.length > 0 
+  ? '- Faça pedidos imediatos para repor o estoque dos itens indicados\n- Revise os níveis mínimos de estoque com base na demanda atual'
+  : '- Continue monitorando seus níveis de estoque\n- Considere reduzir o estoque de produtos menos vendidos'}`;
+    }
+    
+    // General recommendations
+    else if (messageLower.includes('recomend') || messageLower.includes('sugest') || messageLower.includes('melhor')) {
+      return `**Recomendações Estratégicas**
+
+Com base na análise dos seus dados, recomendo:
+
+1. **Gestão de Inventário**
+   - Repor imediatamente os ${analytics.lowStockProducts.length} produtos com estoque baixo
+   - Otimizar níveis de estoque baseado no histórico de vendas
+
+2. **Clientes**
+   - Lançar campanha para os ${analytics.inactiveClients.length} clientes inativos
+   - Criar programa VIP para os top 5 clientes (representam ${(analytics.topClients.reduce((sum: number, c: any) => sum + c.totalSpent, 0) / analytics.summary.totalRevenue * 100).toFixed(1)}% da receita)
+
+3. **Produtos**
+   - Aumentar preço dos produtos mais vendidos em 3-5%
+   - Criar pacotes/bundles com produtos complementares
+
+4. **Marketing**
+   - Direcionar promoções para produtos com menor rotatividade
+   - Destacar produtos com melhor margem de lucro
+
+Estas ações podem aumentar sua receita em aproximadamente 10-15% e melhorar a margem de lucro.`;
+    }
+    
+    // General overview/summary
     else {
-      return `Obrigado pela sua pergunta. Para lhe dar uma resposta mais precisa, eu precisaria analisar mais dados do seu negócio. Posso ajudar com:
+      return `**Resumo Geral do Negócio**
 
-1. Identificação de padrões de compra
-2. Análise de clientes inativos
-3. Recomendações para aumentar vendas de produtos específicos
-4. Tendências e sazonalidade
+**Performance Financeira:**
+- Receita Total: ${analytics.summary.totalRevenue.toFixed(2)}€
+- Lucro Total: ${analytics.summary.totalProfit.toFixed(2)}€
+- Margem de Lucro: ${analytics.summary.profitMargin.toFixed(2)}%
 
-Por favor, pergunte sobre algum desses tópicos para que eu possa fornecer uma análise mais detalhada.`;
+**Destaques:**
+- Produto mais vendido: ${analytics.topSellingProducts[0]?.name || 'N/A'} (${analytics.topSellingProducts[0]?.totalQuantity || 0} unidades)
+- Cliente que mais compra: ${analytics.topClients[0]?.name || 'N/A'} (${analytics.topClients[0]?.totalSpent.toFixed(2) || 0}€)
+- Produtos com estoque baixo: ${analytics.lowStockProducts.length}
+- Clientes inativos: ${analytics.inactiveClients.length}
+
+Posso fornecer análises detalhadas sobre:
+- Produtos (vendas, lucratividade)
+- Clientes (comportamento de compra, inatividade)
+- Finanças (receitas, custos, margens)
+- Inventário (nível de estoque, alertas)
+
+Me pergunte sobre qualquer um destes temas para informações específicas.`;
     }
   };
 
@@ -269,22 +333,32 @@ Por favor, pergunte sobre algum desses tópicos para que eu possa fornecer uma a
             <p>Sugestões de perguntas:</p>
             <div className="flex flex-wrap gap-2 mt-1">
               <button
-                onClick={() => setUserMessage("Quais clientes não compram há muito tempo?")}
-                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200"
+                onClick={() => setUserMessage("Como está a performance financeira do negócio?")}
+                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200 flex items-center space-x-1"
               >
-                Clientes inativos
+                <TrendingUp className="w-3 h-3" />
+                <span>Análise financeira</span>
               </button>
               <button
                 onClick={() => setUserMessage("Quais são os produtos mais populares?")}
-                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200"
+                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200 flex items-center space-x-1"
               >
-                Produtos populares
+                <ShoppingCart className="w-3 h-3" />
+                <span>Produtos populares</span>
               </button>
               <button
-                onClick={() => setUserMessage("Alguma tendência ou padrão nas compras?")}
-                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200"
+                onClick={() => setUserMessage("Quais clientes estão inativos?")}
+                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200 flex items-center space-x-1"
               >
-                Tendências de compra
+                <Users className="w-3 h-3" />
+                <span>Clientes inativos</span>
+              </button>
+              <button
+                onClick={() => setUserMessage("Algum produto com estoque baixo?")}
+                className="py-1 px-2 bg-gray-100 rounded-full text-gestorApp-gray-dark hover:bg-gray-200 flex items-center space-x-1"
+              >
+                <AlertTriangle className="w-3 h-3" />
+                <span>Alertas de estoque</span>
               </button>
             </div>
           </div>

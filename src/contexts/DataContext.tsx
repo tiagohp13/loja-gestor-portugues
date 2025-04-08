@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 import * as mockData from '../data/mockData';
-import { Product, Category, Client, Supplier, StockEntry, StockExit, Order } from '../types';
+import { Product, Category, Client, Supplier, StockEntry, StockExit, Order, StockEntryItem, StockExitItem, OrderItem } from '../types';
 
 // Define the context type
 interface DataContextType {
@@ -47,6 +48,7 @@ interface DataContextType {
   findCategory: (id: string) => Category | undefined;
   findClient: (id: string) => Client | undefined;
   findSupplier: (id: string) => Supplier | undefined;
+  findOrder: (id: string) => Order | undefined;
   
   getProduct: (id: string) => Product | undefined;
   getProductHistory: (id: string) => any;
@@ -55,10 +57,67 @@ interface DataContextType {
   getClientHistory: (id: string) => any;
   getSupplier: (id: string) => Supplier | undefined;
   getSupplierHistory: (id: string) => any;
+  
+  getBusinessAnalytics: () => any;
 }
 
 // Create the context
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+// Helper to convert old format to new format (for backward compatibility)
+const convertOldStockEntriesToNew = (oldEntries: any[]): StockEntry[] => {
+  return oldEntries.map(entry => ({
+    id: entry.id,
+    supplierId: entry.supplierId,
+    supplierName: entry.supplierName,
+    items: [{
+      productId: entry.productId,
+      productName: entry.productName,
+      quantity: entry.quantity,
+      purchasePrice: entry.purchasePrice
+    }],
+    invoiceNumber: entry.invoiceNumber,
+    notes: entry.notes,
+    date: entry.date,
+    createdAt: entry.createdAt
+  }));
+};
+
+const convertOldStockExitsToNew = (oldExits: any[]): StockExit[] => {
+  return oldExits.map(exit => ({
+    id: exit.id,
+    clientId: exit.clientId,
+    clientName: exit.clientName,
+    items: [{
+      productId: exit.productId,
+      productName: exit.productName,
+      quantity: exit.quantity,
+      salePrice: exit.salePrice
+    }],
+    invoiceNumber: exit.invoiceNumber,
+    notes: exit.notes,
+    date: exit.date,
+    createdAt: exit.createdAt,
+    fromOrderId: undefined
+  }));
+};
+
+const convertOldOrdersToNew = (oldOrders: any[]): Order[] => {
+  return oldOrders.map(order => ({
+    id: order.id,
+    clientId: order.clientId,
+    clientName: order.clientName,
+    items: [{
+      productId: order.productId,
+      productName: order.productName,
+      quantity: order.quantity,
+      salePrice: order.salePrice
+    }],
+    date: order.date,
+    notes: order.notes,
+    convertedToStockExitId: undefined
+  }));
+};
 
 // Create a provider component
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -66,9 +125,19 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [categories, setCategories] = useState<Category[]>(mockData.categories as Category[]);
   const [clients, setClients] = useState<Client[]>(mockData.clients as Client[]);
   const [suppliers, setSuppliers] = useState<Supplier[]>(mockData.suppliers as Supplier[]);
-  const [stockEntries, setStockEntries] = useState<StockEntry[]>(mockData.stockEntries as StockEntry[]);
-  const [stockExits, setStockExits] = useState<StockExit[]>(mockData.stockExits as StockExit[]);
-  const [orders, setOrders] = useState<Order[]>([]);
+  
+  // Convert old format to new format for stockEntries, stockExits, and orders
+  const [stockEntries, setStockEntries] = useState<StockEntry[]>(() => 
+    convertOldStockEntriesToNew(mockData.stockEntries as any[])
+  );
+  
+  const [stockExits, setStockExits] = useState<StockExit[]>(() => 
+    convertOldStockExitsToNew(mockData.stockExits as any[])
+  );
+  
+  const [orders, setOrders] = useState<Order[]>(() => 
+    convertOldOrdersToNew([])
+  );
 
   // Make window.appData available for exporting
   useEffect(() => {
@@ -242,12 +311,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString() 
     };
     
-    // Update product stock
-    setProducts(products.map(product => 
-      product.id === entry.productId 
-        ? { ...product, currentStock: product.currentStock + entry.quantity }
-        : product
-    ));
+    // Update product stock for each item
+    entry.items.forEach(item => {
+      setProducts(products.map(product => 
+        product.id === item.productId 
+          ? { ...product, currentStock: product.currentStock + item.quantity }
+          : product
+      ));
+    });
     
     setStockEntries([...stockEntries, newEntry as StockEntry]);
     toast.success('Entrada de stock registada com sucesso!');
@@ -261,15 +332,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // If quantity changed, update product stock
-    if (entry.quantity !== undefined && entry.quantity !== oldEntry.quantity) {
-      const diff = entry.quantity - oldEntry.quantity;
+    // If items changed, update product stock
+    if (entry.items) {
+      // Revert old quantities
+      oldEntry.items.forEach(oldItem => {
+        setProducts(products.map(product => 
+          product.id === oldItem.productId 
+            ? { ...product, currentStock: product.currentStock - oldItem.quantity }
+            : product
+        ));
+      });
       
-      setProducts(products.map(product => 
-        product.id === oldEntry.productId 
-          ? { ...product, currentStock: product.currentStock + diff }
-          : product
-      ));
+      // Add new quantities
+      entry.items.forEach(newItem => {
+        setProducts(products.map(product => 
+          product.id === newItem.productId 
+            ? { ...product, currentStock: product.currentStock + newItem.quantity }
+            : product
+        ));
+      });
     }
     
     setStockEntries(stockEntries.map(e => e.id === id ? { ...e, ...entry } : e));
@@ -284,36 +365,48 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Update product stock
-    const product = products.find(p => p.id === entry.productId);
+    // Update product stock for each item
+    let canDelete = true;
     
-    if (product && product.currentStock >= entry.quantity) {
+    entry.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (product && product.currentStock < item.quantity) {
+        canDelete = false;
+      }
+    });
+    
+    if (!canDelete) {
+      toast.error('Não é possível excluir esta entrada. O stock ficaria negativo.');
+      return;
+    }
+    
+    // Update quantities
+    entry.items.forEach(item => {
       setProducts(products.map(p => 
-        p.id === entry.productId 
-          ? { ...p, currentStock: p.currentStock - entry.quantity }
+        p.id === item.productId 
+          ? { ...p, currentStock: p.currentStock - item.quantity }
           : p
       ));
-      
-      setStockEntries(stockEntries.filter(e => e.id !== id));
-      toast.success('Entrada de stock excluída com sucesso!');
-    } else {
-      toast.error('Não é possível excluir esta entrada. O stock ficaria negativo.');
-    }
+    });
+    
+    setStockEntries(stockEntries.filter(e => e.id !== id));
+    toast.success('Entrada de stock excluída com sucesso!');
   };
 
   // Stock Exits
   const addStockExit = (exit: Omit<StockExit, 'id' | 'createdAt'>) => {
-    const product = products.find(p => p.id === exit.productId);
+    // Check if we have enough stock for each product
+    let hasEnoughStock = true;
     
-    if (!product) {
-      toast.error('Produto não encontrado.');
-      return;
-    }
+    exit.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product || product.currentStock < item.quantity) {
+        hasEnoughStock = false;
+        toast.error(`Stock insuficiente para ${item.productName}. Disponível: ${product?.currentStock || 0} unidades.`);
+      }
+    });
     
-    if (product.currentStock < exit.quantity) {
-      toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades.`);
-      return;
-    }
+    if (!hasEnoughStock) return;
     
     const newExit = { 
       ...exit, 
@@ -321,12 +414,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: new Date().toISOString() 
     };
     
-    // Update product stock
-    setProducts(products.map(p => 
-      p.id === exit.productId 
-        ? { ...p, currentStock: p.currentStock - exit.quantity }
-        : p
-    ));
+    // Update product stock for each item
+    exit.items.forEach(item => {
+      setProducts(products.map(product => 
+        product.id === item.productId 
+          ? { ...product, currentStock: product.currentStock - item.quantity }
+          : product
+      ));
+    });
+    
+    // If this exit is from an order, update the order
+    if (exit.fromOrderId) {
+      setOrders(orders.map(order => 
+        order.id === exit.fromOrderId 
+          ? { ...order, convertedToStockExitId: newExit.id }
+          : order
+      ));
+    }
     
     setStockExits([...stockExits, newExit as StockExit]);
     toast.success('Saída de stock registada com sucesso!');
@@ -340,26 +444,43 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // If quantity changed, update product stock
-    if (exit.quantity !== undefined && exit.quantity !== oldExit.quantity) {
-      const diff = oldExit.quantity - exit.quantity;
-      const product = products.find(p => p.id === oldExit.productId);
+    // If items changed, update product stock
+    if (exit.items) {
+      // Revert old quantities
+      oldExit.items.forEach(oldItem => {
+        setProducts(products.map(product => 
+          product.id === oldItem.productId 
+            ? { ...product, currentStock: product.currentStock + oldItem.quantity }
+            : product
+        ));
+      });
       
-      if (!product) {
-        toast.error('Produto não encontrado.');
-        return;
-      }
+      // Check if we have enough stock for new quantities
+      let hasEnoughStock = true;
       
-      if (product.currentStock + diff < 0) {
-        toast.error(`Stock insuficiente. Disponível: ${product.currentStock + oldExit.quantity} unidades.`);
-        return;
-      }
+      exit.items.forEach(newItem => {
+        const product = products.find(p => p.id === newItem.productId);
+        const oldQuantity = oldExit.items.find(item => item.productId === newItem.productId)?.quantity || 0;
+        
+        // Calculate adjusted current stock (after reverting old quantity)
+        const adjustedCurrentStock = product ? product.currentStock + oldQuantity : 0;
+        
+        if (!product || adjustedCurrentStock < newItem.quantity) {
+          hasEnoughStock = false;
+          toast.error(`Stock insuficiente para ${newItem.productName}. Disponível: ${adjustedCurrentStock} unidades.`);
+        }
+      });
       
-      setProducts(products.map(p => 
-        p.id === oldExit.productId 
-          ? { ...p, currentStock: p.currentStock + diff }
-          : p
-      ));
+      if (!hasEnoughStock) return;
+      
+      // Apply new quantities
+      exit.items.forEach(newItem => {
+        setProducts(products.map(product => 
+          product.id === newItem.productId 
+            ? { ...product, currentStock: product.currentStock - newItem.quantity }
+            : product
+        ));
+      });
     }
     
     setStockExits(stockExits.map(e => e.id === id ? { ...e, ...exit } : e));
@@ -374,12 +495,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    // Update product stock
-    setProducts(products.map(p => 
-      p.id === exit.productId 
-        ? { ...p, currentStock: p.currentStock + exit.quantity }
-        : p
-    ));
+    // If this exit is from an order, update the order to not be converted
+    if (exit.fromOrderId) {
+      setOrders(orders.map(order => 
+        order.id === exit.fromOrderId 
+          ? { ...order, convertedToStockExitId: undefined }
+          : order
+      ));
+    }
+    
+    // Update product stock for each item
+    exit.items.forEach(item => {
+      setProducts(products.map(p => 
+        p.id === item.productId 
+          ? { ...p, currentStock: p.currentStock + item.quantity }
+          : p
+      ));
+    });
     
     setStockExits(stockExits.filter(e => e.id !== id));
     toast.success('Saída de stock excluída com sucesso!');
@@ -393,11 +525,37 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateOrder = (id: string, order: Partial<Order>) => {
+    const existingOrder = orders.find(o => o.id === id);
+    
+    if (!existingOrder) {
+      toast.error('Encomenda não encontrada.');
+      return;
+    }
+    
+    // Cannot update an order that has been converted to stock exit
+    if (existingOrder.convertedToStockExitId) {
+      toast.error('Não é possível editar uma encomenda já convertida em saída de stock.');
+      return;
+    }
+    
     setOrders(orders.map(o => o.id === id ? { ...o, ...order } : o));
     toast.success('Encomenda atualizada com sucesso!');
   };
 
   const deleteOrder = (id: string) => {
+    const existingOrder = orders.find(o => o.id === id);
+    
+    if (!existingOrder) {
+      toast.error('Encomenda não encontrada.');
+      return;
+    }
+    
+    // Cannot delete an order that has been converted to stock exit
+    if (existingOrder.convertedToStockExitId) {
+      toast.error('Não é possível excluir uma encomenda já convertida em saída de stock.');
+      return;
+    }
+    
     setOrders(orders.filter(o => o.id !== id));
     toast.success('Encomenda excluída com sucesso!');
   };
@@ -410,35 +568,43 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       throw new Error('Order not found');
     }
     
-    const product = products.find(p => p.id === order.productId);
-    
-    if (!product) {
-      toast.error('Produto não encontrado.');
-      throw new Error('Product not found');
+    // Check if order is already converted
+    if (order.convertedToStockExitId) {
+      toast.error('Esta encomenda já foi convertida em saída de stock.');
+      throw new Error('Order already converted');
     }
     
-    if (product.currentStock < order.quantity) {
-      toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades.`);
+    // Check if we have enough stock for each product
+    let hasEnoughStock = true;
+    
+    order.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product || product.currentStock < item.quantity) {
+        hasEnoughStock = false;
+        toast.error(`Stock insuficiente para ${item.productName}. Disponível: ${product?.currentStock || 0} unidades.`);
+      }
+    });
+    
+    if (!hasEnoughStock) {
       throw new Error('Insufficient stock');
     }
     
     // Create a stock exit
-    const stockExit: Omit<StockExit, 'id'> = {
-      productId: order.productId,
-      productName: order.productName,
+    const stockExit: Omit<StockExit, 'id' | 'createdAt'> = {
       clientId: order.clientId,
-      clientName: order.clientName,
-      quantity: order.quantity,
-      salePrice: order.salePrice,
+      clientName: order.clientName || '',
+      items: order.items.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        salePrice: item.salePrice
+      })),
       date: new Date().toISOString().split('T')[0],
-      createdAt: new Date().toISOString()
+      fromOrderId: order.id
     };
     
     // Add the stock exit
     addStockExit(stockExit);
-    
-    // Remove the order
-    deleteOrder(orderId);
     
     return 'success';
   };
@@ -448,6 +614,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const findCategory = (id: string) => categories.find(c => c.id === id);
   const findClient = (id: string) => clients.find(c => c.id === id);
   const findSupplier = (id: string) => suppliers.find(s => s.id === id);
+  const findOrder = (id: string) => orders.find(o => o.id === id);
 
   // Add the missing getter methods
   const getProduct = (id: string) => products.find(p => p.id === id);
@@ -457,21 +624,177 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const getProductHistory = (id: string) => {
     const product = products.find(p => p.id === id);
-    const entries = stockEntries.filter(entry => entry.productId === id);
-    const exits = stockExits.filter(exit => exit.productId === id);
+    const entries = stockEntries.filter(entry => 
+      entry.items.some(item => item.productId === id)
+    );
+    const exits = stockExits.filter(exit => 
+      exit.items.some(item => item.productId === id)
+    );
     return { product, entries, exits };
   };
 
   const getClientHistory = (id: string) => {
     const client = clients.find(c => c.id === id);
     const exits = stockExits.filter(exit => exit.clientId === id);
-    return { client, exits };
+    const clientOrders = orders.filter(order => order.clientId === id);
+    return { client, exits, orders: clientOrders };
   };
 
   const getSupplierHistory = (id: string) => {
     const supplier = suppliers.find(s => s.id === id);
     const entries = stockEntries.filter(entry => entry.supplierId === id);
     return { supplier, entries };
+  };
+  
+  // Business Analytics 
+  const getBusinessAnalytics = () => {
+    // Calculate total sales, revenue, profit
+    let totalSales = 0;
+    let totalRevenue = 0;
+    let totalCost = 0;
+    let totalProfit = 0;
+    
+    // Product sales analysis
+    const productSales: Record<string, {
+      productId: string,
+      name: string,
+      totalQuantity: number,
+      totalRevenue: number,
+      averagePrice: number
+    }> = {};
+    
+    // Client analysis
+    const clientPurchases: Record<string, {
+      clientId: string,
+      name: string,
+      purchaseCount: number,
+      totalSpent: number,
+      lastPurchaseDate: string
+    }> = {};
+    
+    // Calculate stock value
+    const currentStockValue = products.reduce((total, product) => {
+      return total + (product.purchasePrice * product.currentStock);
+    }, 0);
+    
+    // Process all sales
+    stockExits.forEach(exit => {
+      exit.items.forEach(item => {
+        totalSales += item.quantity;
+        const saleRevenue = item.quantity * item.salePrice;
+        totalRevenue += saleRevenue;
+        
+        // Find product for cost calculation
+        const product = products.find(p => p.id === item.productId);
+        if (product) {
+          const itemCost = item.quantity * product.purchasePrice;
+          totalCost += itemCost;
+          totalProfit += (saleRevenue - itemCost);
+        }
+        
+        // Update product sales data
+        if (!productSales[item.productId]) {
+          productSales[item.productId] = {
+            productId: item.productId,
+            name: item.productName,
+            totalQuantity: 0,
+            totalRevenue: 0,
+            averagePrice: 0
+          };
+        }
+        
+        productSales[item.productId].totalQuantity += item.quantity;
+        productSales[item.productId].totalRevenue += saleRevenue;
+      });
+      
+      // Update client purchase data
+      if (!clientPurchases[exit.clientId]) {
+        const client = clients.find(c => c.id === exit.clientId);
+        clientPurchases[exit.clientId] = {
+          clientId: exit.clientId,
+          name: client?.name || exit.clientName,
+          purchaseCount: 0,
+          totalSpent: 0,
+          lastPurchaseDate: ''
+        };
+      }
+      
+      const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      clientPurchases[exit.clientId].purchaseCount++;
+      clientPurchases[exit.clientId].totalSpent += exitTotal;
+      
+      // Update last purchase date if newer
+      if (!clientPurchases[exit.clientId].lastPurchaseDate || 
+          new Date(exit.date) > new Date(clientPurchases[exit.clientId].lastPurchaseDate)) {
+        clientPurchases[exit.clientId].lastPurchaseDate = exit.date;
+      }
+    });
+    
+    // Calculate average prices
+    Object.values(productSales).forEach(product => {
+      if (product.totalQuantity > 0) {
+        product.averagePrice = product.totalRevenue / product.totalQuantity;
+      }
+    });
+    
+    // Get top selling products
+    const topSellingProducts = Object.values(productSales)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 5);
+    
+    // Get most profitable products
+    const mostProfitableProducts = Object.values(productSales)
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 5);
+    
+    // Get top clients
+    const topClients = Object.values(clientPurchases)
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 5);
+    
+    // Low stock warnings
+    const lowStockProducts = products
+      .filter(p => p.currentStock <= p.minStock)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        code: p.code,
+        currentStock: p.currentStock,
+        minStock: p.minStock
+      }));
+    
+    // Inactive clients (no purchases in the last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const inactiveClients = clients.filter(client => {
+      const clientData = clientPurchases[client.id];
+      return !clientData || !clientData.lastPurchaseDate || 
+             new Date(clientData.lastPurchaseDate) < thirtyDaysAgo;
+    }).map(client => ({
+      id: client.id,
+      name: client.name,
+      lastPurchaseDate: clientPurchases[client.id]?.lastPurchaseDate || 'Nunca'
+    }));
+    
+    // Calculate profit margin
+    const overallProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    
+    return {
+      summary: {
+        totalSales,
+        totalRevenue,
+        totalCost,
+        totalProfit,
+        profitMargin: overallProfitMargin,
+        currentStockValue
+      },
+      topSellingProducts,
+      mostProfitableProducts,
+      topClients,
+      lowStockProducts,
+      inactiveClients
+    };
   };
 
   return (
@@ -517,6 +840,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       findCategory,
       findClient,
       findSupplier,
+      findOrder,
       
       getProduct,
       getProductHistory,
@@ -524,7 +848,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       getClient,
       getClientHistory,
       getSupplier,
-      getSupplierHistory
+      getSupplierHistory,
+      
+      getBusinessAnalytics
     }}>
       {children}
     </DataContext.Provider>

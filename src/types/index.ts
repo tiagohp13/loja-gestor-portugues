@@ -63,42 +63,56 @@ export interface Category {
   updatedAt: string;
 }
 
-export interface StockEntry {
-  id: string;
+export interface StockEntryItem {
   productId: string;
   productName: string;
-  supplierId: string;
-  supplierName: string;
   quantity: number;
   purchasePrice: number;
+}
+
+export interface StockEntry {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  items: StockEntryItem[];
   invoiceNumber?: string;
   notes?: string;
   date: string;
   createdAt: string;
+}
+
+export interface StockExitItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
 }
 
 export interface StockExit {
   id: string;
-  productId: string;
-  productName: string;
   clientId: string;
   clientName: string;
-  quantity: number;
-  salePrice: number;
+  items: StockExitItem[];
   invoiceNumber?: string;
   notes?: string;
   date: string;
   createdAt: string;
+  fromOrderId?: string;
+}
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
 }
 
 export interface Order {
   id: string;
-  date: string;
-  productId: string;
-  productName?: string;
   clientId: string;
   clientName?: string;
-  quantity: number;
-  salePrice: number;
+  items: OrderItem[];
+  date: string;
   notes?: string;
+  convertedToStockExitId?: string;
 }

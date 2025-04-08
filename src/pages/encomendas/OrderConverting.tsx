@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -9,29 +10,22 @@ import { toast } from 'sonner';
 const OrderConverting = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { findOrder, findProduct, findClient, addStockExit, deleteOrder } = useData();
+  const { findOrder, findProduct, findClient, addStockExit, deleteOrder, convertOrderToStockExit } = useData();
   const [invoiceNumber, setInvoiceNumber] = useState('');
-  const [orderData, setOrderData] = useState<{
-    productId: string;
-    productName: string | undefined;
-    clientId: string;
-    clientName: string | undefined;
-    quantity: number;
-    salePrice: number;
-  } | null>(null);
+  const [order, setOrder] = useState<any>(null);
 
   useEffect(() => {
     if (id) {
-      const order = findOrder(id);
-      if (order) {
-        setOrderData({
-          productId: order.productId,
-          productName: order.productName,
-          clientId: order.clientId,
-          clientName: order.clientName,
-          quantity: order.quantity,
-          salePrice: order.salePrice,
-        });
+      const orderData = findOrder(id);
+      if (orderData) {
+        // Check if order is already converted
+        if (orderData.convertedToStockExitId) {
+          toast.error('Esta encomenda já foi convertida em saída de stock');
+          navigate('/encomendas/consultar');
+          return;
+        }
+        
+        setOrder(orderData);
       } else {
         toast.error('Encomenda não encontrada');
         navigate('/encomendas/consultar');
@@ -39,43 +33,25 @@ const OrderConverting = () => {
     }
   }, [id, findOrder, navigate]);
 
-  const product = orderData ? findProduct(orderData.productId) : null;
-  const client = orderData ? findClient(orderData.clientId) : null;
-
   const handleConvert = () => {
-    if (!orderData) {
+    if (!order) {
       toast.error('Dados da encomenda não encontrados');
       return;
     }
-
-    if (!product) {
-      toast.error('Produto não encontrado');
-      return;
-    }
-
-    if (!client) {
-      toast.error('Cliente não encontrado');
-      return;
-    }
     
-    addStockExit({
-      productId: orderData.productId,
-      productName: product?.name || orderData.productName || '',
-      clientId: orderData.clientId,
-      clientName: client?.name || orderData.clientName || '',
-      quantity: orderData.quantity,
-      salePrice: orderData.salePrice,
-      date: new Date().toISOString().split('T')[0],
-      invoiceNumber: invoiceNumber,
-      createdAt: new Date().toISOString()
-    });
-    
-    deleteOrder(id as string);
-    toast.success('Encomenda convertida em saída de stock!');
-    navigate('/saidas/historico');
+    try {
+      // Use the context function to convert order to stock exit
+      convertOrderToStockExit(id as string);
+      
+      toast.success('Encomenda convertida em saída de stock!');
+      navigate('/saidas/historico');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao converter encomenda');
+    }
   };
 
-  if (!orderData) {
+  if (!order) {
     return (
       <div className="container mx-auto px-4 py-6">
         <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
@@ -87,6 +63,10 @@ const OrderConverting = () => {
       </div>
     );
   }
+
+  const client = findClient(order.clientId);
+  const totalValue = order.items.reduce((total: number, item: any) => 
+    total + (item.quantity * item.salePrice), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -103,21 +83,54 @@ const OrderConverting = () => {
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-gestorApp-gray-dark">Produto</p>
-            <p className="font-medium">{product?.name || orderData.productName}</p>
-          </div>
-          <div>
             <p className="text-sm font-medium text-gestorApp-gray-dark">Cliente</p>
-            <p className="font-medium">{client?.name || orderData.clientName}</p>
+            <p className="font-medium">{client?.name || order.clientName}</p>
           </div>
+          
           <div>
-            <p className="text-sm font-medium text-gestorApp-gray-dark">Quantidade</p>
-            <p className="font-medium">{orderData.quantity}</p>
+            <p className="text-sm font-medium text-gestorApp-gray-dark">Produtos</p>
+            <div className="border rounded-md mt-2 overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {order.items.map((item: any, index: number) => {
+                    const product = findProduct(item.productId);
+                    const subtotal = item.quantity * item.salePrice;
+                    
+                    return (
+                      <tr key={index}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          {product?.name || item.productName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {item.quantity}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {item.salePrice.toFixed(2)} €
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          {subtotal.toFixed(2)} €
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
+          
           <div>
-            <p className="text-sm font-medium text-gestorApp-gray-dark">Preço Unitário</p>
-            <p className="font-medium">{orderData.salePrice} €</p>
+            <p className="text-sm font-medium text-gestorApp-gray-dark">Valor Total</p>
+            <p className="font-medium text-lg">{totalValue.toFixed(2)} €</p>
           </div>
+          
           <div>
             <label htmlFor="invoiceNumber" className="text-sm font-medium text-gestorApp-gray-dark">
               Número da Fatura (Opcional)
