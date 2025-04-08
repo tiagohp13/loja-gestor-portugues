@@ -9,18 +9,22 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true
-  },
-  global: {
-    fetch: fetch
-  },
-  db: {
-    schema: 'public'
+export const supabase = createClient<Database>(
+  SUPABASE_URL, 
+  SUPABASE_PUBLISHABLE_KEY, 
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true
+    },
+    global: {
+      fetch: fetch
+    },
+    db: {
+      schema: 'public'
+    }
   }
-});
+);
 
 // Utility function to convert Supabase snake_case to camelCase
 export const snakeToCamel = (obj: any) => {
@@ -41,22 +45,24 @@ export const snakeToCamel = (obj: any) => {
 
 // Add database functions for increment and decrement
 export const increment = async (table: string, column: string, id: string, value: number) => {
-  const { data, error } = await supabase
-    .from(table)
-    .update({ [column]: supabase.rpc('increment_value', { inc: value, col_name: column }) })
-    .eq('id', id)
-    .select();
+  const { data, error } = await supabase.rpc('increment_value', { 
+    inc: value, 
+    col_name: column,
+    table_name: table,
+    row_id: id
+  });
   
   if (error) console.error(`Error incrementing ${column} in ${table}:`, error);
   return data;
 };
 
 export const decrement = async (table: string, column: string, id: string, value: number) => {
-  const { data, error } = await supabase
-    .from(table)
-    .update({ [column]: supabase.rpc('decrement_value', { dec: value, col_name: column }) })
-    .eq('id', id)
-    .select();
+  const { data, error } = await supabase.rpc('decrement_value', { 
+    dec: value, 
+    col_name: column,
+    table_name: table,
+    row_id: id
+  });
   
   if (error) console.error(`Error decrementing ${column} in ${table}:`, error);
   return data;

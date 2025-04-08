@@ -971,4 +971,290 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Error updating order:', error);
       toast.error('Erro ao atualizar encomenda');
-      throw
+      throw error;
+    }
+  };
+  
+  const deleteOrder = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setOrders(orders.filter(o => o.id !== id));
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Erro ao eliminar encomenda');
+      throw error;
+    }
+  };
+  
+  // CRUD functions for Stock Entries
+  const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('stock_entries')
+        .insert({
+          number: entry.number,
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          date: entry.date,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        const newEntry: StockEntry = {
+          id: data.id,
+          number: data.number,
+          supplierId: data.supplier_id,
+          supplierName: data.supplier_name,
+          date: data.date,
+          invoiceNumber: data.invoice_number,
+          notes: data.notes,
+          createdAt: data.created_at,
+          items: entry.items.map(item => ({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            purchasePrice: item.purchasePrice,
+            discountPercent: item.discountPercent
+          }))
+        };
+        
+        setStockEntries([...stockEntries, newEntry]);
+        return newEntry;
+      }
+      
+      throw new Error('Failed to add stock entry');
+    } catch (error) {
+      console.error('Error adding stock entry:', error);
+      toast.error('Erro ao adicionar entrada de stock');
+      throw error;
+    }
+  };
+  
+  const updateStockEntry = async (id: string, entry: Partial<StockEntry>) => {
+    try {
+      const { error } = await supabase
+        .from('stock_entries')
+        .update({
+          number: entry.number,
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          date: entry.date,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setStockEntries(stockEntries.map(e => 
+        e.id === id ? { ...e, ...entry } : e
+      ));
+    } catch (error) {
+      console.error('Error updating stock entry:', error);
+      toast.error('Erro ao atualizar entrada de stock');
+      throw error;
+    }
+  };
+  
+  const deleteStockEntry = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stock_entries')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setStockEntries(stockEntries.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting stock entry:', error);
+      toast.error('Erro ao eliminar entrada de stock');
+      throw error;
+    }
+  };
+  
+  // CRUD functions for Stock Exits
+  const addStockExit = async (exit: Omit<StockExit, 'id' | 'number' | 'createdAt'>) => {
+    try {
+      const { data, error } = await supabase
+        .from('stock_exits')
+        .insert({
+          number: exit.number,
+          client_id: exit.clientId,
+          client_name: exit.clientName,
+          date: exit.date,
+          invoice_number: exit.invoiceNumber,
+          notes: exit.notes
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        const newExit: StockExit = {
+          id: data.id,
+          number: data.number,
+          clientId: data.client_id,
+          clientName: data.client_name,
+          date: data.date,
+          invoiceNumber: data.invoice_number,
+          notes: data.notes,
+          createdAt: data.created_at,
+          items: exit.items.map(item => ({
+            productId: item.productId,
+            productName: item.productName,
+            quantity: item.quantity,
+            salePrice: item.salePrice,
+            discountPercent: item.discountPercent
+          }))
+        };
+        
+        setStockExits([...stockExits, newExit]);
+        return newExit;
+      }
+      
+      throw new Error('Failed to add stock exit');
+    } catch (error) {
+      console.error('Error adding stock exit:', error);
+      toast.error('Erro ao adicionar saída de stock');
+      throw error;
+    }
+  };
+  
+  const updateStockExit = async (id: string, exit: Partial<StockExit>) => {
+    try {
+      const { error } = await supabase
+        .from('stock_exits')
+        .update({
+          number: exit.number,
+          client_id: exit.clientId,
+          client_name: exit.clientName,
+          date: exit.date,
+          invoice_number: exit.invoiceNumber,
+          notes: exit.notes
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setStockExits(stockExits.map(e => 
+        e.id === id ? { ...e, ...exit } : e
+      ));
+    } catch (error) {
+      console.error('Error updating stock exit:', error);
+      toast.error('Erro ao atualizar saída de stock');
+      throw error;
+    }
+  };
+  
+  const deleteStockExit = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stock_exits')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      // Update local state
+      setStockExits(stockExits.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting stock exit:', error);
+      toast.error('Erro ao eliminar saída de stock');
+      throw error;
+    }
+  };
+  
+  // Export/Import
+  const exportData = (type: ExportDataType) => {
+    // Implementation for exporting data
+  };
+  
+  const importData = async (type: ExportDataType, data: string) => {
+    try {
+      // Implementation for importing data
+    } catch (error) {
+      console.error('Error importing data:', error);
+      toast.error('Erro ao importar dados');
+    }
+  };
+  
+  // Context value
+  const contextValue: DataContextType = {
+    products,
+    setProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    getProduct,
+    getProductHistory,
+    categories,
+    setCategories,
+    addCategory,
+    updateCategory,
+    deleteCategory,
+    getCategory,
+    clients,
+    setClients,
+    addClient,
+    updateClient,
+    deleteClient,
+    getClient,
+    getClientHistory,
+    suppliers,
+    setSuppliers,
+    addSupplier,
+    updateSupplier,
+    deleteSupplier,
+    getSupplier,
+    getSupplierHistory,
+    orders,
+    setOrders,
+    addOrder,
+    updateOrder,
+    deleteOrder,
+    findOrder,
+    findProduct,
+    findClient,
+    convertOrderToStockExit,
+    stockEntries,
+    setStockEntries,
+    addStockEntry,
+    updateStockEntry,
+    deleteStockEntry,
+    stockExits,
+    setStockExits,
+    addStockExit,
+    updateStockExit,
+    deleteStockExit,
+    exportData,
+    importData,
+    getBusinessAnalytics,
+    isLoading,
+    setIsLoading
+  };
+  
+  return (
+    <DataContext.Provider value={contextValue}>
+      {children}
+    </DataContext.Provider>
+  );
+};
+
+export default DataProvider;
