@@ -44,71 +44,81 @@ import StockExitList from "./pages/saidas/StockExitList";
 import StockExitEdit from "./pages/saidas/StockExitEdit";
 
 // Create a client for React Query
-const queryClient = new QueryClient();
+// The issue was in this part - we need to create the client properly
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <DataProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected routes */}
-              <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
-              <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
-              
-              {/* Product routes */}
-              <Route path="/produtos" element={<Navigate to="/produtos/consultar" replace />} />
-              <Route path="/produtos/novo" element={<AppLayout><ProductNew /></AppLayout>} />
-              <Route path="/produtos/consultar" element={<AppLayout><ProductList /></AppLayout>} />
-              <Route path="/produtos/:id" element={<AppLayout><ProductDetail /></AppLayout>} />
-              <Route path="/produtos/editar/:id" element={<AppLayout><ProductEdit /></AppLayout>} />
-              
-              {/* Category routes */}
-              <Route path="/categorias" element={<Navigate to="/categorias/consultar" replace />} />
-              <Route path="/categorias/nova" element={<AppLayout><CategoryNew /></AppLayout>} />
-              <Route path="/categorias/consultar" element={<AppLayout><CategoryList /></AppLayout>} />
-              <Route path="/categorias/:id" element={<AppLayout><CategoryDetail /></AppLayout>} />
-              <Route path="/categorias/editar/:id" element={<AppLayout><CategoryEdit /></AppLayout>} />
-              
-              {/* Client routes */}
-              <Route path="/clientes" element={<Navigate to="/clientes/consultar" replace />} />
-              <Route path="/clientes/novo" element={<AppLayout><ClientNew /></AppLayout>} />
-              <Route path="/clientes/consultar" element={<AppLayout><ClientList /></AppLayout>} />
-              <Route path="/clientes/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
-              <Route path="/clientes/editar/:id" element={<AppLayout><ClientEdit /></AppLayout>} />
-              
-              {/* Supplier routes */}
-              <Route path="/fornecedores" element={<Navigate to="/fornecedores/consultar" replace />} />
-              <Route path="/fornecedores/novo" element={<AppLayout><SupplierNew /></AppLayout>} />
-              <Route path="/fornecedores/consultar" element={<AppLayout><SupplierList /></AppLayout>} />
-              <Route path="/fornecedores/:id" element={<AppLayout><SupplierDetail /></AppLayout>} />
-              <Route path="/fornecedores/editar/:id" element={<AppLayout><SupplierEdit /></AppLayout>} />
-              
-              {/* Stock Entry routes */}
-              <Route path="/entradas" element={<Navigate to="/entradas/historico" replace />} />
-              <Route path="/entradas/nova" element={<AppLayout><StockEntryNew /></AppLayout>} />
-              <Route path="/entradas/historico" element={<AppLayout><StockEntryList /></AppLayout>} />
-              <Route path="/entradas/editar/:id" element={<AppLayout><StockEntryEdit /></AppLayout>} />
-              
-              {/* Stock Exit routes */}
-              <Route path="/saidas" element={<Navigate to="/saidas/historico" replace />} />
-              <Route path="/saidas/nova" element={<AppLayout><StockExitNew /></AppLayout>} />
-              <Route path="/saidas/historico" element={<AppLayout><StockExitList /></AppLayout>} />
-              <Route path="/saidas/editar/:id" element={<AppLayout><StockExitEdit /></AppLayout>} />
-              
-              {/* Catch-all route */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </DataProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <AuthProvider>
+          <DataProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                
+                {/* Protected routes */}
+                <Route path="/" element={<AppLayout><Dashboard /></AppLayout>} />
+                <Route path="/dashboard" element={<AppLayout><Dashboard /></AppLayout>} />
+                
+                {/* Product routes */}
+                <Route path="/produtos" element={<Navigate to="/produtos/consultar" replace />} />
+                <Route path="/produtos/novo" element={<AppLayout><ProductNew /></AppLayout>} />
+                <Route path="/produtos/consultar" element={<AppLayout><ProductList /></AppLayout>} />
+                <Route path="/produtos/:id" element={<AppLayout><ProductDetail /></AppLayout>} />
+                <Route path="/produtos/editar/:id" element={<AppLayout><ProductEdit /></AppLayout>} />
+                
+                {/* Category routes */}
+                <Route path="/categorias" element={<Navigate to="/categorias/consultar" replace />} />
+                <Route path="/categorias/nova" element={<AppLayout><CategoryNew /></AppLayout>} />
+                <Route path="/categorias/consultar" element={<AppLayout><CategoryList /></AppLayout>} />
+                <Route path="/categorias/:id" element={<AppLayout><CategoryDetail /></AppLayout>} />
+                <Route path="/categorias/editar/:id" element={<AppLayout><CategoryEdit /></AppLayout>} />
+                
+                {/* Client routes */}
+                <Route path="/clientes" element={<Navigate to="/clientes/consultar" replace />} />
+                <Route path="/clientes/novo" element={<AppLayout><ClientNew /></AppLayout>} />
+                <Route path="/clientes/consultar" element={<AppLayout><ClientList /></AppLayout>} />
+                <Route path="/clientes/:id" element={<AppLayout><ClientDetail /></AppLayout>} />
+                <Route path="/clientes/editar/:id" element={<AppLayout><ClientEdit /></AppLayout>} />
+                
+                {/* Supplier routes */}
+                <Route path="/fornecedores" element={<Navigate to="/fornecedores/consultar" replace />} />
+                <Route path="/fornecedores/novo" element={<AppLayout><SupplierNew /></AppLayout>} />
+                <Route path="/fornecedores/consultar" element={<AppLayout><SupplierList /></AppLayout>} />
+                <Route path="/fornecedores/:id" element={<AppLayout><SupplierDetail /></AppLayout>} />
+                <Route path="/fornecedores/editar/:id" element={<AppLayout><SupplierEdit /></AppLayout>} />
+                
+                {/* Stock Entry routes */}
+                <Route path="/entradas" element={<Navigate to="/entradas/historico" replace />} />
+                <Route path="/entradas/nova" element={<AppLayout><StockEntryNew /></AppLayout>} />
+                <Route path="/entradas/historico" element={<AppLayout><StockEntryList /></AppLayout>} />
+                <Route path="/entradas/editar/:id" element={<AppLayout><StockEntryEdit /></AppLayout>} />
+                
+                {/* Stock Exit routes */}
+                <Route path="/saidas" element={<Navigate to="/saidas/historico" replace />} />
+                <Route path="/saidas/nova" element={<AppLayout><StockExitNew /></AppLayout>} />
+                <Route path="/saidas/historico" element={<AppLayout><StockExitList /></AppLayout>} />
+                <Route path="/saidas/editar/:id" element={<AppLayout><StockExitEdit /></AppLayout>} />
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </DataProvider>
+        </AuthProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}
 
 export default App;
