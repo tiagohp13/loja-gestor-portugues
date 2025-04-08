@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -156,6 +157,7 @@ const OrderNew = () => {
       items: items,
       date: orderDetails.date,
       notes: orderDetails.notes,
+      // Add discount as a property that already exists in the Omit type
       discount: parseFloat(orderDetails.discount.toString()) || 0
     });
     

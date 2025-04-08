@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -164,6 +165,7 @@ const StockEntryNew = () => {
       date: entryDetails.date,
       invoiceNumber: entryDetails.invoiceNumber,
       notes: entryDetails.notes,
+      // Add discount as a recognized property
       discount: parseFloat(entryDetails.discount.toString()) || 0
     });
     

@@ -118,8 +118,11 @@ export interface StockEntry {
   updatedAt: string;
   entryNumber: string;
   discount: number;
+  // Properties for individual entry items
   quantity?: number;
   purchasePrice?: number;
+  productId?: string;
+  productName?: string;
 }
 
 export interface StockExit {
@@ -137,8 +140,11 @@ export interface StockExit {
   exitNumber: string;
   discount: number;
   fromOrderId?: string;
+  // Properties for individual exit items
   quantity?: number;
   salePrice?: number;
+  productId?: string;
+  productName?: string;
 }
 
 export interface ClientHistory {

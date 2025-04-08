@@ -85,24 +85,20 @@ const StockExitNew = () => {
       return;
     }
     
-    // Check if the product is already in the exit
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice // Update the price in case it changed
+        salePrice: currentItem.salePrice
       };
       setItems(updatedItems);
     } else {
-      // Add new item
       setItems([...items, { ...currentItem }]);
     }
     
-    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
@@ -312,7 +308,6 @@ const StockExitNew = () => {
               </div>
             </div>
             
-            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
