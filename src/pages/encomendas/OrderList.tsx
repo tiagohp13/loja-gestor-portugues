@@ -88,7 +88,7 @@ const OrderList = () => {
         title="Encomendas" 
         description="Consulte e gerencie encomendas de clientes" 
         actions={
-          <Button onClick={() => navigate('/encomendas/novo')}>
+          <Button onClick={() => navigate('/encomendas/nova')}>
             <Plus className="mr-2 h-4 w-4" /> Nova Encomenda
           </Button>
         }
@@ -161,7 +161,7 @@ const OrderList = () => {
                     <tr 
                       key={order.id} 
                       className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/encomendas/detalhe/${order.id}`)}
+                      onClick={() => navigate(`/encomendas/${order.id}`)}
                     >
                       <td className="py-3 px-4 font-medium text-gestorApp-blue">
                         {order.orderNumber || "N/A"}
@@ -192,7 +192,7 @@ const OrderList = () => {
             title="Nenhuma encomenda encontrada" 
             description="Não existem encomendas que correspondam à sua pesquisa."
             action={
-              <Button onClick={() => navigate('/encomendas/novo')}>
+              <Button onClick={() => navigate('/encomendas/nova')}>
                 <Plus className="mr-2 h-4 w-4" /> Nova Encomenda
               </Button>
             }

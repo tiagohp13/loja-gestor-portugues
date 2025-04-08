@@ -107,12 +107,12 @@ function App() {
               <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
               <Route path="/encomendas/converter/:id" element={<OrderConverting />} />
               
-              {/* Stock Entries */}
+              {/* Stock Entries - Corrigindo as rotas */}
               <Route path="/entradas/historico" element={<StockEntryList />} />
               <Route path="/entradas/nova" element={<StockEntryNew />} />
               <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
               
-              {/* Stock Exits */}
+              {/* Stock Exits - Corrigindo as rotas */}
               <Route path="/saidas/historico" element={<StockExitList />} />
               <Route path="/saidas/nova" element={<StockExitNew />} />
               <Route path="/saidas/editar/:id" element={<StockExitEdit />} />

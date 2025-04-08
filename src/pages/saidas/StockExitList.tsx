@@ -130,7 +130,7 @@ const StockExitList = () => {
         title="Histórico de Saídas" 
         description="Consulte e gerencie saídas de stock" 
         actions={
-          <Button onClick={() => navigate('/saidas/novo')}>
+          <Button onClick={() => navigate('/saidas/nova')}>
             <Plus className="mr-2 h-4 w-4" /> Nova Saída
           </Button>
         }
@@ -230,7 +230,7 @@ const StockExitList = () => {
             title="Nenhuma saída encontrada" 
             description="Não existem saídas de stock que correspondam à sua pesquisa."
             action={
-              <Button onClick={() => navigate('/saidas/novo')}>
+              <Button onClick={() => navigate('/saidas/nova')}>
                 <Plus className="mr-2 h-4 w-4" /> Nova Saída
               </Button>
             }
