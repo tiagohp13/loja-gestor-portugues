@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -5,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+
 const ClientNew = () => {
   const navigate = useNavigate();
   const {
@@ -16,19 +20,52 @@ const ClientNew = () => {
   const [address, setAddress] = useState('');
   const [taxId, setTaxId] = useState('');
   const [notes, setNotes] = useState('');
-  const handleSubmit = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    addClient({
-      name,
-      email,
-      phone,
-      address,
-      taxId,
-      notes,
-      status: 'active'
-    });
-    navigate('/clientes/consultar');
+    setIsSubmitting(true);
+    
+    try {
+      // Add to local state via DataContext
+      addClient({
+        name,
+        email,
+        phone,
+        address,
+        taxId,
+        notes,
+        status: 'active'
+      });
+      
+      // Save to Supabase
+      const { error } = await supabase
+        .from('Clientes')
+        .insert({
+          nome: name,
+          email: email,
+          telefone: phone,
+          morada: address,
+          nif: taxId,
+          notas: notes
+        });
+        
+      if (error) {
+        console.error('Error inserting client:', error);
+        toast.error('Erro ao guardar cliente: ' + error.message);
+        setIsSubmitting(false);
+        return;
+      }
+      
+      toast.success('Cliente guardado com sucesso!');
+      navigate('/clientes/consultar');
+    } catch (error) {
+      console.error('Error saving client:', error);
+      toast.error('Erro ao guardar cliente');
+      setIsSubmitting(false);
+    }
   };
+
   return <div className="container mx-auto px-4 py-6">
       <PageHeader title="Novo Cliente" description="Adicione um novo cliente ao sistema" actions={<Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
             Voltar à Lista
@@ -86,10 +123,13 @@ const ClientNew = () => {
             <Button variant="outline" type="button" onClick={() => navigate('/clientes/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit" className="When this button is clicked, insert a new row into the Clientes table in Supabase using the values from the input fields in this form.\n">Guardar Cliente</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'A guardar...' : 'Guardar Cliente'}
+            </Button>
           </div>
         </form>
       </div>
     </div>;
 };
+
 export default ClientNew;
