@@ -1,10 +1,9 @@
-
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, Support, ClipboardList
+  UserIcon, Settings, Tag, HelpCircle, ClipboardList
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
@@ -75,13 +74,12 @@ const AppSidebar: React.FC = () => {
     { 
       path: '/suporte', 
       label: 'Suporte', 
-      icon: <Support className="w-5 h-5" />,
+      icon: <HelpCircle className="w-5 h-5" />,
       isActive: location.pathname.includes('/suporte')
     }
   ];
 
   const handleExportData = () => {
-    // Create a sample CSV string with headers
     const createCSV = (data: any[], headers: string[]) => {
       const csvContent = [
         headers.join(','),
@@ -96,18 +94,15 @@ const AppSidebar: React.FC = () => {
       const headers = ['id', 'code', 'name', 'description', 'category', 'purchasePrice', 'salePrice', 'currentStock'];
       const csvContent = createCSV(products, headers);
       
-      // Create a Blob with the CSV data
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       
-      // Create a link and trigger download
       const link = document.createElement('a');
       link.href = url;
       link.setAttribute('download', 'produtos_exportados.csv');
       document.body.appendChild(link);
       link.click();
       
-      // Clean up
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
@@ -118,7 +113,6 @@ const AppSidebar: React.FC = () => {
   };
 
   const handleImportData = () => {
-    // Create a sample CSV template for download
     const sampleHeaders = ['code', 'name', 'description', 'category', 'purchasePrice', 'salePrice', 'currentStock'];
     const sampleData = [
       {
@@ -146,18 +140,15 @@ const AppSidebar: React.FC = () => {
       ...sampleData.map(item => sampleHeaders.map(header => JSON.stringify(item[header] || '')).join(','))
     ].join('\n');
     
-    // Create a Blob with the CSV data
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     
-    // Create a link and trigger download
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', 'modelo_importacao.csv');
     document.body.appendChild(link);
     link.click();
     
-    // Clean up
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
     
@@ -193,7 +184,6 @@ const AppSidebar: React.FC = () => {
                 </SidebarMenuItem>
               ))}
               
-              {/* Settings Menu with Dropdown */}
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <DropdownMenu>

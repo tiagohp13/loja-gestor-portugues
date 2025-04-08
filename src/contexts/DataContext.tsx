@@ -1,8 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
-import mockData from '../data/mockData';
+import * as mockData from '../data/mockData';
 
 // Define types for our data
 type Product = {
@@ -14,6 +13,8 @@ type Product = {
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
+  minStock?: number;
+  image?: string;
   status: 'active' | 'inactive';
 };
 
@@ -22,6 +23,7 @@ type Category = {
   name: string;
   description: string;
   status: 'active' | 'inactive';
+  productCount?: number;
 };
 
 type Client = {
@@ -52,6 +54,7 @@ type StockEntry = {
   quantity: number;
   purchasePrice: number;
   invoiceNumber?: string;
+  createdAt: string;
 };
 
 type StockExit = {
@@ -64,6 +67,7 @@ type StockExit = {
   quantity: number;
   salePrice: number;
   invoiceNumber?: string;
+  createdAt: string;
 };
 
 type Order = {
@@ -121,6 +125,14 @@ interface DataContextType {
   findCategory: (id: string) => Category | undefined;
   findClient: (id: string) => Client | undefined;
   findSupplier: (id: string) => Supplier | undefined;
+  
+  getProduct: (id: string) => Product | undefined;
+  getProductHistory: (id: string) => any;
+  getCategory: (id: string) => Category | undefined;
+  getClient: (id: string) => Client | undefined;
+  getClientHistory: (id: string) => any;
+  getSupplier: (id: string) => Supplier | undefined;
+  getSupplierHistory: (id: string) => any;
 }
 
 // Create the context
@@ -262,7 +274,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Stock Entries
   const addStockEntry = (entry: Omit<StockEntry, 'id'>) => {
-    const newEntry = { ...entry, id: uuidv4() };
+    const newEntry = { 
+      ...entry, 
+      id: uuidv4(),
+      createdAt: new Date().toISOString() 
+    };
     
     // Update product stock
     setProducts(products.map(product => 
@@ -337,7 +353,11 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return;
     }
     
-    const newExit = { ...exit, id: uuidv4() };
+    const newExit = { 
+      ...exit, 
+      id: uuidv4(),
+      createdAt: new Date().toISOString() 
+    };
     
     // Update product stock
     setProducts(products.map(p => 
@@ -448,7 +468,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       clientName: order.clientName,
       quantity: order.quantity,
       salePrice: order.salePrice,
-      date: new Date().toISOString().split('T')[0]
+      date: new Date().toISOString().split('T')[0],
+      createdAt: new Date().toISOString()
     };
     
     // Add the stock exit
@@ -465,6 +486,31 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const findCategory = (id: string) => categories.find(c => c.id === id);
   const findClient = (id: string) => clients.find(c => c.id === id);
   const findSupplier = (id: string) => suppliers.find(s => s.id === id);
+
+  // Add the missing getter methods
+  const getProduct = (id: string) => products.find(p => p.id === id);
+  const getCategory = (id: string) => categories.find(c => c.id === id);
+  const getClient = (id: string) => clients.find(c => c.id === id);
+  const getSupplier = (id: string) => suppliers.find(s => s.id === id);
+
+  const getProductHistory = (id: string) => {
+    const product = products.find(p => p.id === id);
+    const entries = stockEntries.filter(entry => entry.productId === id);
+    const exits = stockExits.filter(exit => exit.productId === id);
+    return { product, entries, exits };
+  };
+
+  const getClientHistory = (id: string) => {
+    const client = clients.find(c => c.id === id);
+    const exits = stockExits.filter(exit => exit.clientId === id);
+    return { client, exits };
+  };
+
+  const getSupplierHistory = (id: string) => {
+    const supplier = suppliers.find(s => s.id === id);
+    const entries = stockEntries.filter(entry => entry.supplierId === id);
+    return { supplier, entries };
+  };
 
   return (
     <DataContext.Provider value={{
@@ -508,7 +554,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       findProduct,
       findCategory,
       findClient,
-      findSupplier
+      findSupplier,
+      
+      // Add the missing methods to the context value
+      getProduct,
+      getProductHistory,
+      getCategory,
+      getClient,
+      getClientHistory,
+      getSupplier,
+      getSupplierHistory
     }}>
       {children}
     </DataContext.Provider>

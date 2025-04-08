@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -20,7 +19,7 @@ const ProductNew = () => {
     purchasePrice: 0,
     salePrice: 0,
     currentStock: 0,
-    minStock: 0, // Added the minStock property with default value of 0
+    minStock: 0,
     category: '',
     description: '',
     image: ''
@@ -43,19 +42,15 @@ const ProductNew = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    // Check file type
     if (!file.type.includes('image/jpeg') && !file.type.includes('image/png')) {
       toast.error('Apenas imagens JPG ou PNG são permitidas');
       return;
     }
     
-    // Create object URL for preview
     const objectUrl = URL.createObjectURL(file);
     setPreviewImage(objectUrl);
     setImageUrl('');
     
-    // In a real app, you would upload the file to a server
-    // For now, we'll just use the object URL
     setProduct(prev => ({
       ...prev,
       image: objectUrl
@@ -72,7 +67,6 @@ const ProductNew = () => {
       return;
     }
 
-    // Set the preview and the product image to the URL
     setPreviewImage(imageUrl);
     setProduct(prev => ({
       ...prev,
@@ -89,7 +83,6 @@ const ProductNew = () => {
       image: ''
     }));
     
-    // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -97,8 +90,25 @@ const ProductNew = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    addProduct(product);
-    navigate('/produtos/consultar');
+    
+    try {
+      addProduct({
+        name,
+        code,
+        purchasePrice,
+        salePrice,
+        currentStock,
+        minStock,
+        category,
+        description,
+        image,
+        status: 'active'
+      });
+      
+      navigate('/produtos/consultar');
+    } catch (error) {
+      // Handle error
+    }
   };
 
   return (
