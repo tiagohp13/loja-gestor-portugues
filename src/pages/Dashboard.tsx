@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
@@ -32,30 +31,34 @@ const DashboardPage: React.FC = () => {
     });
   }
   
-  // Calculate sales data
+  // Calculate sales data - Update to use items array
   stockExits.forEach(exit => {
     const date = ensureDate(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
     if (monthlyData.has(monthKey)) {
       const current = monthlyData.get(monthKey);
+      const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      
       monthlyData.set(monthKey, {
         ...current,
-        vendas: current.vendas + (exit.quantity * exit.salePrice)
+        vendas: current.vendas + exitTotal
       });
     }
   });
   
-  // Calculate purchase data
+  // Calculate purchase data - Update to use items array
   stockEntries.forEach(entry => {
     const date = ensureDate(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
     if (monthlyData.has(monthKey)) {
       const current = monthlyData.get(monthKey);
+      const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+      
       monthlyData.set(monthKey, {
         ...current,
-        compras: current.compras + (entry.quantity * entry.purchasePrice)
+        compras: current.compras + entryTotal
       });
     }
   });
@@ -82,28 +85,28 @@ const DashboardPage: React.FC = () => {
     product.currentStock <= (product.minStock || 0) && product.minStock > 0
   );
   
-  // Calculate recent transactions
+  // Calculate recent transactions - Update to use items array
   const allTransactions = [
-    ...stockEntries.map(entry => ({
+    ...stockEntries.flatMap(entry => entry.items.map(item => ({
       id: entry.id,
       type: 'entry' as const,
-      productId: entry.productId,
-      product: products.find(p => p.id === entry.productId),
+      productId: item.productId,
+      product: products.find(p => p.id === item.productId),
       entity: entry.supplierName || suppliers.find(s => s.id === entry.supplierId)?.name || 'Desconhecido',
-      quantity: entry.quantity,
+      quantity: item.quantity,
       date: entry.date,
-      value: entry.quantity * entry.purchasePrice
-    })),
-    ...stockExits.map(exit => ({
+      value: item.quantity * item.purchasePrice
+    }))),
+    ...stockExits.flatMap(exit => exit.items.map(item => ({
       id: exit.id,
       type: 'exit' as const,
-      productId: exit.productId,
-      product: products.find(p => p.id === exit.productId),
+      productId: item.productId,
+      product: products.find(p => p.id === item.productId),
       entity: exit.clientName || clients.find(c => c.id === exit.clientId)?.name || 'Desconhecido',
-      quantity: exit.quantity,
+      quantity: item.quantity,
       date: exit.date,
-      value: exit.quantity * exit.salePrice
-    }))
+      value: item.quantity * item.salePrice
+    })))
   ];
   
   // Sort by date (most recent first)
@@ -111,9 +114,9 @@ const DashboardPage: React.FC = () => {
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 10);
   
-  // Calculate most sold product
-  const productSales = stockExits.reduce((acc, exit) => {
-    const { productId, quantity } = exit;
+  // Calculate most sold product - Update to use items array
+  const productSales = stockExits.flatMap(exit => exit.items).reduce((acc, item) => {
+    const { productId, quantity } = item;
     if (!acc[productId]) {
       acc[productId] = 0;
     }
@@ -177,9 +180,10 @@ const DashboardPage: React.FC = () => {
   
   const mostUsedSupplier = suppliers.find(s => s.id === mostUsedSupplierId);
   
-  // Calculate total sales value
+  // Calculate total sales value - Update to use items array
   const totalSalesValue = stockExits.reduce((total, exit) => {
-    return total + (exit.quantity * exit.salePrice);
+    const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+    return total + exitTotal;
   }, 0);
   
   // Calculate total stock value

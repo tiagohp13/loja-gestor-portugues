@@ -17,8 +17,8 @@ const OrderList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   
   const filteredOrders = orders.filter(order => 
-    order.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.productName.toLowerCase().includes(searchTerm.toLowerCase())
+    order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const handleViewOrder = (id: string) => {
@@ -27,6 +27,14 @@ const OrderList = () => {
 
   const handleCreateStockExit = (orderId: string) => {
     navigate(`/encomendas/converter/${orderId}`);
+  };
+
+  // Helper to calculate total value of an order
+  const calculateOrderTotal = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    if (!order) return 0;
+    
+    return order.items.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
   };
 
   return (
@@ -77,10 +85,10 @@ const OrderList = () => {
                     Cliente
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Produto
+                    Produtos
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Quantidade
+                    Qtd. Total
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Valor Total
@@ -91,41 +99,50 @@ const OrderList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {order.clientName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {order.productName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {order.quantity}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {(order.salePrice * order.quantity).toFixed(2)} €
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleViewOrder(order.id)}
-                        className="mr-2"
-                      >
-                        Ver
-                      </Button>
-                      <Button 
-                        size="sm" 
-                        onClick={() => handleCreateStockExit(order.id)}
-                      >
-                        Converter em Saída
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
+                {filteredOrders.map((order) => {
+                  const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
+                  const totalValue = order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+                  
+                  return (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {order.clientName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {order.items.length > 1 
+                          ? `${order.items[0].productName} e mais ${order.items.length - 1}` 
+                          : order.items[0]?.productName || 'N/A'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {totalItems}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {totalValue.toFixed(2)} €
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleViewOrder(order.id)}
+                          className="mr-2"
+                        >
+                          Ver
+                        </Button>
+                        {!order.convertedToStockExitId && (
+                          <Button 
+                            size="sm" 
+                            onClick={() => handleCreateStockExit(order.id)}
+                          >
+                            Converter em Saída
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

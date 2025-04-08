@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
+import { StockEntryItem } from '@/types';
 
 const StockEntryEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,12 +14,11 @@ const StockEntryEdit = () => {
   const { stockEntries, updateStockEntry, products, suppliers } = useData();
   
   const [entry, setEntry] = useState({
-    productId: '',
     supplierId: '',
-    quantity: 0,
-    purchasePrice: 0,
+    items: [] as StockEntryItem[],
     date: '',
-    invoiceNumber: ''
+    invoiceNumber: '',
+    notes: ''
   });
 
   useEffect(() => {
@@ -26,12 +26,11 @@ const StockEntryEdit = () => {
       const foundEntry = stockEntries.find(entry => entry.id === id);
       if (foundEntry) {
         setEntry({
-          productId: foundEntry.productId || '',
           supplierId: foundEntry.supplierId || '',
-          quantity: foundEntry.quantity || 0,
-          purchasePrice: foundEntry.purchasePrice || 0,
+          items: foundEntry.items || [],
           date: foundEntry.date ? new Date(foundEntry.date).toISOString().split('T')[0] : '',
-          invoiceNumber: foundEntry.invoiceNumber || ''
+          invoiceNumber: foundEntry.invoiceNumber || '',
+          notes: foundEntry.notes || ''
         });
       } else {
         toast.error('Entrada não encontrada');
@@ -40,32 +39,28 @@ const StockEntryEdit = () => {
     }
   }, [id, stockEntries, navigate]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEntry(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'purchasePrice' 
-              ? parseFloat(value) || 0 
-              : value
+      [name]: value
     }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (id) {
-      // Get the product associated with this entry
-      const product = products.find(p => p.id === entry.productId);
+      // Get the supplier associated with this entry
       const supplier = suppliers.find(s => s.id === entry.supplierId);
       
-      if (!product || !supplier) {
-        toast.error('Produto ou fornecedor não encontrado');
+      if (!supplier) {
+        toast.error('Fornecedor não encontrado');
         return;
       }
       
       // Update the stock entry
       updateStockEntry(id, {
         ...entry,
-        productName: product.name,
         supplierName: supplier.name
       });
       
@@ -74,6 +69,7 @@ const StockEntryEdit = () => {
     }
   };
 
+  // Note: This is a simplified version. In a real app, you'd want to allow editing of individual items
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -89,28 +85,6 @@ const StockEntryEdit = () => {
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="productId" className="text-sm font-medium text-gestorApp-gray-dark">
-                Produto
-              </label>
-              <select
-                id="productId"
-                name="productId"
-                value={entry.productId}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                disabled
-              >
-                <option value="">Selecione um produto</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {product.code} - {product.name}
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gestorApp-gray">O produto não pode ser alterado após a criação</p>
-            </div>
-            
             <div className="space-y-2">
               <label htmlFor="supplierId" className="text-sm font-medium text-gestorApp-gray-dark">
                 Fornecedor
@@ -130,41 +104,6 @@ const StockEntryEdit = () => {
                   </option>
                 ))}
               </select>
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="quantity" className="text-sm font-medium text-gestorApp-gray-dark">
-                Quantidade
-              </label>
-              <Input
-                id="quantity"
-                name="quantity"
-                type="number"
-                min="1"
-                value={entry.quantity}
-                onChange={handleChange}
-                placeholder="0"
-                required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço Unitário (€)
-              </label>
-              <Input
-                id="purchasePrice"
-                name="purchasePrice"
-                type="number"
-                step="0.01"
-                min="0"
-                value={entry.purchasePrice}
-                onChange={handleChange}
-                placeholder="0.00"
-                required
-              />
             </div>
             
             <div className="space-y-2">
@@ -195,11 +134,75 @@ const StockEntryEdit = () => {
             />
           </div>
           
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gestorApp-gray-dark">
+              Produtos (Apenas visualização, não é possível editar produtos após a criação)
+            </label>
+            <div className="border rounded-md overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      Produto
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      Quantidade
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      Preço Unitário
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      Subtotal
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {entry.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {item.productName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {item.quantity}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {item.purchasePrice.toFixed(2)} €
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {(item.quantity * item.purchasePrice).toFixed(2)} €
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-xs text-gestorApp-gray mt-1">
+              Nota: Não é possível alterar os produtos após a criação. Se necessário, exclua esta entrada e crie uma nova.
+            </p>
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+              Notas
+            </label>
+            <textarea
+              id="notes"
+              name="notes"
+              value={entry.notes}
+              onChange={handleChange}
+              placeholder="Observações adicionais sobre a entrada..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+              rows={3}
+            />
+          </div>
+          
           <div className="flex justify-end space-x-4">
             <Button variant="outline" type="button" onClick={() => navigate('/entradas/historico')}>
               Cancelar
             </Button>
-            <Button type="submit">Guardar Alterações</Button>
+            <Button type="submit">
+              Atualizar Entrada
+            </Button>
           </div>
         </form>
       </div>
