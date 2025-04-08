@@ -11,9 +11,7 @@ import { toast } from 'sonner';
 
 const ClientNew = () => {
   const navigate = useNavigate();
-  const {
-    addClient
-  } = useData();
+  const { addClient } = useData();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -66,7 +64,8 @@ const ClientNew = () => {
     }
   };
 
-  return <div className="container mx-auto px-4 py-6">
+  return (
+    <div className="container mx-auto px-4 py-6">
       <PageHeader title="Novo Cliente" description="Adicione um novo cliente ao sistema" actions={<Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
             Voltar à Lista
           </Button>} />
@@ -129,7 +128,8 @@ const ClientNew = () => {
           </div>
         </form>
       </div>
-    </div>;
+    </div>
+  );
 };
 
 export default ClientNew;
