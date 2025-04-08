@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const userWithDefaults: User = {
         id: user.id,
         email: user.email,
-        name: user.name || user.nome || user.email,
+        name: user.name || user.email,
         role: 'user',
         ...user
       };

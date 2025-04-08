@@ -12,6 +12,7 @@ export interface User {
   created_at?: string;
   nome?: string;
   telefone?: string;
+  password?: string;
 }
 
 export interface Category {

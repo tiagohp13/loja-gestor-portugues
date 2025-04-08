@@ -14,18 +14,26 @@ interface DataContextType {
   addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Product>;
   updateProduct: (id: string, updates: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
+  getProduct: (id: string) => Product | undefined;
+  getProductHistory: (id: string) => { entries: StockEntry[], exits: StockExit[] };
   addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Category>;
   updateCategory: (id: string, updates: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
+  getCategory: (id: string) => Category | undefined;
   addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Client>;
   updateClient: (id: string, updates: Partial<Client>) => void;
   deleteClient: (id: string) => void;
+  getClient: (id: string) => Client | undefined;
+  getClientHistory: (id: string) => { orders: Order[], stockExits: StockExit[] };
   addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Supplier>;
   updateSupplier: (id: string, updates: Partial<Supplier>) => void;
   deleteSupplier: (id: string) => void;
+  getSupplier: (id: string) => Supplier | undefined;
+  getSupplierHistory: (id: string) => { entries: StockEntry[] };
   addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber' | 'discount'>) => Promise<Order>;
   updateOrder: (id: string, updates: Partial<Order>) => void;
   deleteOrder: (id: string) => void;
+  findOrder: (id: string) => Order | undefined;
   addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber' | 'discount'>) => Promise<StockEntry>;
   updateStockEntry: (id: string, updates: Partial<StockEntry>) => void;
   deleteStockEntry: (id: string) => void;
@@ -33,6 +41,10 @@ interface DataContextType {
   updateStockExit: (id: string, updates: Partial<StockExit>) => void;
   deleteStockExit: (id: string) => void;
   updateProductStock: (productId: string, quantityChange: number) => void;
+  findProduct: (id: string) => Product | undefined;
+  findClient: (id: string) => Client | undefined;
+  convertOrderToStockExit: (orderId: string) => void;
+  getBusinessAnalytics: () => any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -337,6 +349,233 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     saveData('products', updatedProducts);
   };
 
+  const findProduct = (id: string): Product | undefined => {
+    return products.find(product => product.id === id);
+  };
+
+  const getProduct = (id: string): Product | undefined => {
+    return products.find(product => product.id === id);
+  };
+
+  const getProductHistory = (id: string) => {
+    const productEntries = stockEntries.filter(
+      entry => entry.items.some(item => item.productId === id)
+    );
+    
+    const productExits = stockExits.filter(
+      exit => exit.items.some(item => item.productId === id)
+    );
+    
+    return { entries: productEntries, exits: productExits };
+  };
+
+  const findClient = (id: string): Client | undefined => {
+    return clients.find(client => client.id === id);
+  };
+
+  const getClient = (id: string): Client | undefined => {
+    return clients.find(client => client.id === id);
+  };
+
+  const getClientHistory = (id: string) => {
+    const clientOrders = orders.filter(order => order.clientId === id);
+    const clientExits = stockExits.filter(exit => exit.clientId === id);
+    
+    return { orders: clientOrders, stockExits: clientExits };
+  };
+
+  const findSupplier = (id: string): Supplier | undefined => {
+    return suppliers.find(supplier => supplier.id === id);
+  };
+
+  const getSupplier = (id: string): Supplier | undefined => {
+    return suppliers.find(supplier => supplier.id === id);
+  };
+
+  const getSupplierHistory = (id: string) => {
+    const supplierEntries = stockEntries.filter(entry => entry.supplierId === id);
+    return { entries: supplierEntries };
+  };
+
+  const findOrder = (id: string): Order | undefined => {
+    return orders.find(order => order.id === id);
+  };
+
+  const findCategory = (id: string): Category | undefined => {
+    return categories.find(category => category.id === id);
+  };
+
+  const getCategory = (id: string): Category | undefined => {
+    return categories.find(category => category.id === id);
+  };
+
+  const convertOrderToStockExit = (orderId: string) => {
+    const order = findOrder(orderId);
+    if (!order) return;
+    
+    const client = findClient(order.clientId);
+    
+    // Create a new stock exit from the order
+    const newExit: StockExit = {
+      id: uuidv4(),
+      clientId: order.clientId,
+      clientName: client?.name || order.clientName,
+      reason: `Encomenda ${order.orderNumber}`,
+      items: order.items.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        salePrice: item.salePrice
+      })),
+      date: new Date().toISOString(),
+      notes: order.notes,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      exitNumber: '',
+      discount: order.discount,
+      fromOrderId: order.id
+    };
+    
+    // Generate a number for the exit
+    generateStockExitNumber().then(number => {
+      newExit.exitNumber = number;
+      
+      // Update product stock quantities (negative for exits)
+      newExit.items.forEach(item => {
+        updateProductStock(item.productId, -item.quantity);
+      });
+      
+      // Add the exit to the list
+      setStockExits(prev => [newExit, ...prev]);
+      saveData('stockExits', [...stockExits, newExit]);
+      
+      // Update the order to mark it as converted
+      updateOrder(order.id, { 
+        status: 'completed', 
+        convertedToStockExitId: newExit.id 
+      });
+    });
+  };
+
+  const getBusinessAnalytics = () => {
+    // Calculate total revenue, cost, and profit
+    const totalRevenue = stockExits.reduce((sum, exit) => {
+      const subtotal = exit.items.reduce((s, item) => s + (item.quantity * item.salePrice), 0);
+      const discount = subtotal * (exit.discount / 100);
+      return sum + (subtotal - discount);
+    }, 0);
+    
+    const totalCost = stockEntries.reduce((sum, entry) => {
+      const subtotal = entry.items.reduce((s, item) => s + (item.quantity * item.purchasePrice), 0);
+      const discount = subtotal * (entry.discount / 100);
+      return sum + (subtotal - discount);
+    }, 0);
+    
+    // Calculate current stock value
+    const currentStockValue = products.reduce((sum, product) => {
+      return sum + (product.currentStock * product.purchasePrice);
+    }, 0);
+    
+    // Top selling products
+    const productSales: Record<string, { id: string, name: string, totalQuantity: number, totalRevenue: number }> = {};
+    stockExits.forEach(exit => {
+      exit.items.forEach(item => {
+        if (!productSales[item.productId]) {
+          const product = findProduct(item.productId);
+          productSales[item.productId] = {
+            id: item.productId,
+            name: product?.name || item.productName,
+            totalQuantity: 0,
+            totalRevenue: 0
+          };
+        }
+        productSales[item.productId].totalQuantity += item.quantity;
+        productSales[item.productId].totalRevenue += item.quantity * item.salePrice;
+      });
+    });
+    
+    const topSellingProducts = Object.values(productSales)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 5);
+    
+    // Most profitable products
+    const mostProfitableProducts = Object.values(productSales)
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 5);
+    
+    // Top clients
+    const clientPurchases: Record<string, { id: string, name: string, totalSpent: number, purchaseCount: number }> = {};
+    stockExits.forEach(exit => {
+      if (!clientPurchases[exit.clientId]) {
+        const client = findClient(exit.clientId);
+        clientPurchases[exit.clientId] = {
+          id: exit.clientId,
+          name: client?.name || exit.clientName,
+          totalSpent: 0,
+          purchaseCount: 0
+        };
+      }
+      
+      const subtotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      const discount = subtotal * (exit.discount / 100);
+      const total = subtotal - discount;
+      
+      clientPurchases[exit.clientId].totalSpent += total;
+      clientPurchases[exit.clientId].purchaseCount += 1;
+    });
+    
+    const topClients = Object.values(clientPurchases)
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 5);
+    
+    // Low stock products
+    const lowStockProducts = products
+      .filter(product => product.currentStock <= product.minStock)
+      .map(product => ({
+        id: product.id,
+        code: product.code,
+        name: product.name,
+        currentStock: product.currentStock,
+        minStock: product.minStock
+      }))
+      .sort((a, b) => (a.currentStock / a.minStock) - (b.currentStock / b.minStock));
+    
+    // Inactive clients
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const inactiveClients = clients.map(client => {
+      const lastExit = stockExits
+        .filter(exit => exit.clientId === client.id)
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+      
+      return {
+        id: client.id,
+        name: client.name,
+        lastPurchaseDate: lastExit ? lastExit.date : 'Nunca'
+      };
+    }).filter(client => {
+      if (client.lastPurchaseDate === 'Nunca') return true;
+      return new Date(client.lastPurchaseDate) < thirtyDaysAgo;
+    });
+    
+    return {
+      summary: {
+        totalRevenue,
+        totalCost,
+        totalProfit: totalRevenue - totalCost,
+        profitMargin: totalRevenue > 0 ? ((totalRevenue - totalCost) / totalRevenue) * 100 : 0,
+        currentStockValue
+      },
+      topSellingProducts,
+      mostProfitableProducts,
+      topClients,
+      lowStockProducts,
+      inactiveClients
+    };
+  };
+
   return (
     <DataContext.Provider value={{
       products,
@@ -349,18 +588,26 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       addProduct,
       updateProduct,
       deleteProduct,
+      getProduct,
+      getProductHistory,
       addCategory,
       updateCategory,
       deleteCategory,
+      getCategory,
       addClient,
       updateClient,
       deleteClient,
+      getClient,
+      getClientHistory,
       addSupplier,
       updateSupplier,
       deleteSupplier,
+      getSupplier,
+      getSupplierHistory,
       addOrder,
       updateOrder,
       deleteOrder,
+      findOrder,
       addStockEntry,
       updateStockEntry,
       deleteStockEntry,
@@ -368,6 +615,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       updateStockExit,
       deleteStockExit,
       updateProductStock,
+      findProduct,
+      findClient,
+      convertOrderToStockExit,
+      getBusinessAnalytics,
     }}>
       {children}
     </DataContext.Provider>
