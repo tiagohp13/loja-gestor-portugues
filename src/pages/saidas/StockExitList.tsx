@@ -54,12 +54,18 @@ const StockExitList = () => {
 
   const filteredExits = searchTerm 
     ? sortedExits.filter(exit => {
-        const product = products.find(p => p.id === exit.productId);
+        // Check if any item in the exit matches the search term
+        const hasMatchingProduct = exit.items.some(item => {
+          const product = products.find(p => p.id === item.productId);
+          return (product && 
+            (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             product.code.toLowerCase().includes(searchTerm.toLowerCase())));
+        });
+        
         const client = clients.find(c => c.id === exit.clientId);
         
         return (
-          (product && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (product && product.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          hasMatchingProduct ||
           (client && client.name.toLowerCase().includes(searchTerm.toLowerCase()))
         );
       })
@@ -91,8 +97,12 @@ const StockExitList = () => {
   };
 
   const selectedExitData = selectedExit ? stockExits.find(exit => exit.id === selectedExit) : null;
-  const selectedProduct = selectedExitData ? products.find(p => p.id === selectedExitData.productId) : null;
   const selectedClient = selectedExitData ? clients.find(c => c.id === selectedExitData.clientId) : null;
+
+  // Helper function to calculate total for an exit
+  const calculateExitTotal = (exit: typeof stockExits[0]) => {
+    return exit.items.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -155,11 +165,10 @@ const StockExitList = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Produto</TableHead>
+                <TableHead>Produtos</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead>Preço Unit.</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead>Total Itens</TableHead>
+                <TableHead>Valor Total</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -172,8 +181,16 @@ const StockExitList = () => {
                 </TableRow>
               ) : (
                 filteredExits.map((exit) => {
-                  const product = products.find(p => p.id === exit.productId);
                   const client = clients.find(c => c.id === exit.clientId);
+                  const totalItems = exit.items.reduce((sum, item) => sum + item.quantity, 0);
+                  const totalValue = calculateExitTotal(exit);
+                  
+                  // Get the first product to display
+                  const firstItem = exit.items[0];
+                  const firstProduct = firstItem ? products.find(p => p.id === firstItem.productId) : null;
+                  const productDisplay = firstProduct 
+                    ? `${firstProduct.code} - ${firstProduct.name}${exit.items.length > 1 ? ` e mais ${exit.items.length - 1}` : ''}`
+                    : 'Produto removido';
                   
                   return (
                     <TableRow 
@@ -182,15 +199,10 @@ const StockExitList = () => {
                       onClick={() => handleRowClick(exit.id)}
                     >
                       <TableCell>{formatDateTime(new Date(exit.createdAt))}</TableCell>
-                      <TableCell className="font-medium">
-                        {product ? `${product.code} - ${product.name}` : 'Produto removido'}
-                      </TableCell>
+                      <TableCell className="font-medium">{productDisplay}</TableCell>
                       <TableCell>{client ? client.name : 'Cliente removido'}</TableCell>
-                      <TableCell>{exit.quantity} unid.</TableCell>
-                      <TableCell>{formatCurrency(exit.salePrice)}</TableCell>
-                      <TableCell className="font-medium">
-                        {formatCurrency(exit.quantity * exit.salePrice)}
-                      </TableCell>
+                      <TableCell>{totalItems} unid.</TableCell>
+                      <TableCell className="font-medium">{formatCurrency(totalValue)}</TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end space-x-2">
                           <Button 
@@ -254,27 +266,53 @@ const StockExitList = () => {
               </div>
               
               <div>
-                <p className="text-sm font-medium text-gray-500">Produto</p>
-                <p className="font-medium">{selectedProduct ? `${selectedProduct.code} - ${selectedProduct.name}` : 'Produto removido'}</p>
-              </div>
-              
-              <div>
                 <p className="text-sm font-medium text-gray-500">Cliente</p>
                 <p>{selectedClient ? selectedClient.name : 'Cliente removido'}</p>
               </div>
               
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Quantidade</p>
-                  <p>{selectedExitData.quantity} unid.</p>
+              {selectedExitData.fromOrderId && (
+                <div className="p-3 bg-blue-50 rounded-md">
+                  <p className="text-sm font-medium text-blue-800">
+                    Esta saída foi criada a partir de uma encomenda
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    ID da encomenda: {selectedExitData.fromOrderId}
+                  </p>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Preço Unit.</p>
-                  <p>{formatCurrency(selectedExitData.salePrice)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Total</p>
-                  <p className="font-medium">{formatCurrency(selectedExitData.quantity * selectedExitData.salePrice)}</p>
+              )}
+              
+              <div>
+                <p className="text-sm font-medium text-gray-500">Produtos</p>
+                <div className="border rounded-md overflow-hidden mt-2">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Produto</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Qtd</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Preço</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {selectedExitData.items.map((item, index) => {
+                        const product = products.find(p => p.id === item.productId);
+                        return (
+                          <tr key={index} className="text-sm">
+                            <td className="px-3 py-2">{product ? `${product.code} - ${product.name}` : 'Produto removido'}</td>
+                            <td className="px-3 py-2">{item.quantity}</td>
+                            <td className="px-3 py-2">{formatCurrency(item.salePrice)}</td>
+                            <td className="px-3 py-2">{formatCurrency(item.quantity * item.salePrice)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot className="bg-gray-50">
+                      <tr className="font-medium text-sm">
+                        <td className="px-3 py-2" colSpan={3}>Total</td>
+                        <td className="px-3 py-2">{formatCurrency(calculateExitTotal(selectedExitData))}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
               

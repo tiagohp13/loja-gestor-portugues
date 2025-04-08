@@ -54,12 +54,18 @@ const StockEntryList = () => {
 
   const filteredEntries = searchTerm 
     ? sortedEntries.filter(entry => {
-        const product = products.find(p => p.id === entry.productId);
+        // Check if any item in the entry matches the search term
+        const hasMatchingProduct = entry.items.some(item => {
+          const product = products.find(p => p.id === item.productId);
+          return (product && 
+            (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+             product.code.toLowerCase().includes(searchTerm.toLowerCase())));
+        });
+        
         const supplier = suppliers.find(s => s.id === entry.supplierId);
         
         return (
-          (product && product.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (product && product.code.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          hasMatchingProduct ||
           (supplier && supplier.name.toLowerCase().includes(searchTerm.toLowerCase())) ||
           (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
         );
@@ -92,12 +98,16 @@ const StockEntryList = () => {
   };
 
   const selectedEntryData = selectedEntry ? stockEntries.find(entry => entry.id === selectedEntry) : null;
-  const selectedProduct = selectedEntryData ? products.find(p => p.id === selectedEntryData.productId) : null;
   const selectedSupplier = selectedEntryData ? suppliers.find(s => s.id === selectedEntryData.supplierId) : null;
 
   // Helper function to ensure we're working with Date objects
   const ensureDate = (dateInput: string | Date): Date => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
+  };
+
+  // Helper function to calculate total for an entry
+  const calculateEntryTotal = (entry: typeof stockEntries[0]) => {
+    return entry.items.reduce((total, item) => total + (item.quantity * item.purchasePrice), 0);
   };
 
   return (
@@ -161,12 +171,11 @@ const StockEntryList = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Data</TableHead>
-                <TableHead>Produto</TableHead>
+                <TableHead>Produtos</TableHead>
                 <TableHead>Fornecedor</TableHead>
                 <TableHead>Nº Fatura</TableHead>
-                <TableHead>Quantidade</TableHead>
-                <TableHead>Preço Unit.</TableHead>
-                <TableHead>Total</TableHead>
+                <TableHead>Total Itens</TableHead>
+                <TableHead>Valor Total</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
@@ -179,8 +188,16 @@ const StockEntryList = () => {
                 </TableRow>
               ) : (
                 filteredEntries.map((entry) => {
-                  const product = products.find(p => p.id === entry.productId);
                   const supplier = suppliers.find(s => s.id === entry.supplierId);
+                  const totalItems = entry.items.reduce((sum, item) => sum + item.quantity, 0);
+                  const totalValue = calculateEntryTotal(entry);
+                  
+                  // Get the first product to display
+                  const firstItem = entry.items[0];
+                  const firstProduct = firstItem ? products.find(p => p.id === firstItem.productId) : null;
+                  const productDisplay = firstProduct 
+                    ? `${firstProduct.code} - ${firstProduct.name}${entry.items.length > 1 ? ` e mais ${entry.items.length - 1}` : ''}`
+                    : 'Produto removido';
                   
                   return (
                     <TableRow 
@@ -189,15 +206,12 @@ const StockEntryList = () => {
                       onClick={() => handleRowClick(entry.id)}
                     >
                       <TableCell>{formatDateTime(ensureDate(entry.createdAt))}</TableCell>
-                      <TableCell className="font-medium">
-                        {product ? `${product.code} - ${product.name}` : 'Produto removido'}
-                      </TableCell>
+                      <TableCell className="font-medium">{productDisplay}</TableCell>
                       <TableCell>{supplier ? supplier.name : 'Fornecedor removido'}</TableCell>
                       <TableCell>{entry.invoiceNumber || 'N/A'}</TableCell>
-                      <TableCell>{entry.quantity} unid.</TableCell>
-                      <TableCell>{formatCurrency(entry.purchasePrice)}</TableCell>
+                      <TableCell>{totalItems} unid.</TableCell>
                       <TableCell className="font-medium">
-                        {formatCurrency(entry.quantity * entry.purchasePrice)}
+                        {formatCurrency(totalValue)}
                       </TableCell>
                       <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end space-x-2">
@@ -262,11 +276,6 @@ const StockEntryList = () => {
               </div>
               
               <div>
-                <p className="text-sm font-medium text-gray-500">Produto</p>
-                <p className="font-medium">{selectedProduct ? `${selectedProduct.code} - ${selectedProduct.name}` : 'Produto removido'}</p>
-              </div>
-              
-              <div>
                 <p className="text-sm font-medium text-gray-500">Fornecedor</p>
                 <p>{selectedSupplier ? selectedSupplier.name : 'Fornecedor removido'}</p>
               </div>
@@ -276,18 +285,38 @@ const StockEntryList = () => {
                 <p>{selectedEntryData.invoiceNumber || 'N/A'}</p>
               </div>
               
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Quantidade</p>
-                  <p>{selectedEntryData.quantity} unid.</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Preço Unit.</p>
-                  <p>{formatCurrency(selectedEntryData.purchasePrice)}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-500">Total</p>
-                  <p className="font-medium">{formatCurrency(selectedEntryData.quantity * selectedEntryData.purchasePrice)}</p>
+              <div>
+                <p className="text-sm font-medium text-gray-500">Produtos</p>
+                <div className="border rounded-md overflow-hidden mt-2">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Produto</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Qtd</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Preço</th>
+                        <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200">
+                      {selectedEntryData.items.map((item, index) => {
+                        const product = products.find(p => p.id === item.productId);
+                        return (
+                          <tr key={index} className="text-sm">
+                            <td className="px-3 py-2">{product ? `${product.code} - ${product.name}` : 'Produto removido'}</td>
+                            <td className="px-3 py-2">{item.quantity}</td>
+                            <td className="px-3 py-2">{formatCurrency(item.purchasePrice)}</td>
+                            <td className="px-3 py-2">{formatCurrency(item.quantity * item.purchasePrice)}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot className="bg-gray-50">
+                      <tr className="font-medium text-sm">
+                        <td className="px-3 py-2" colSpan={3}>Total</td>
+                        <td className="px-3 py-2">{formatCurrency(calculateEntryTotal(selectedEntryData))}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
               
