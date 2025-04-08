@@ -45,27 +45,64 @@ export const snakeToCamel = (obj: any) => {
 
 // Add database functions for increment and decrement
 export const increment = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
+  // Use raw query instead of RPC function due to type issues
   const { data, error } = await supabase
-    .rpc('increment_value', { 
-      p_table: table, 
-      p_column: column, 
-      p_id: id, 
-      p_value: value 
-    });
+    .from(table)
+    .select(column)
+    .eq('id', id)
+    .single();
   
-  if (error) console.error(`Error incrementing ${column} in ${table}:`, error);
-  return data;
+  if (error) {
+    console.error(`Error fetching ${column} in ${table}:`, error);
+    return null;
+  }
+  
+  const currentValue = data[column];
+  const newValue = currentValue + value;
+  
+  const { data: updateData, error: updateError } = await supabase
+    .from(table)
+    .update({ [column]: newValue })
+    .eq('id', id)
+    .select(column)
+    .single();
+  
+  if (updateError) {
+    console.error(`Error incrementing ${column} in ${table}:`, updateError);
+    return null;
+  }
+  
+  return updateData[column];
 };
 
 export const decrement = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
+  // Use raw query instead of RPC function due to type issues
   const { data, error } = await supabase
-    .rpc('decrement_value', { 
-      p_table: table, 
-      p_column: column, 
-      p_id: id, 
-      p_value: value 
-    });
+    .from(table)
+    .select(column)
+    .eq('id', id)
+    .single();
   
-  if (error) console.error(`Error decrementing ${column} in ${table}:`, error);
-  return data;
+  if (error) {
+    console.error(`Error fetching ${column} in ${table}:`, error);
+    return null;
+  }
+  
+  const currentValue = data[column];
+  // Ensure we don't go below zero
+  const newValue = Math.max(0, currentValue - value);
+  
+  const { data: updateData, error: updateError } = await supabase
+    .from(table)
+    .update({ [column]: newValue })
+    .eq('id', id)
+    .select(column)
+    .single();
+  
+  if (updateError) {
+    console.error(`Error decrementing ${column} in ${table}:`, updateError);
+    return null;
+  }
+  
+  return updateData[column];
 };

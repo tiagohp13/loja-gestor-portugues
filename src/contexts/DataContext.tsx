@@ -83,6 +83,17 @@ interface DataContextType {
     totalStockEntries: number;
     totalStockExits: number;
     lowStockProducts: Product[];
+    summary: {
+      totalRevenue: number;
+      totalCost: number;
+      totalProfit: number;
+      profitMargin: number;
+      currentStockValue: number;
+    };
+    topSellingProducts: { id: string, name: string, totalQuantity: number, totalRevenue: number }[];
+    mostProfitableProducts: { id: string, name: string, totalQuantity: number, totalRevenue: number }[];
+    topClients: { id: string, name: string, purchaseCount: number, totalSpent: number, lastPurchaseDate: string }[];
+    inactiveClients: { id: string, name: string, purchaseCount: number, totalSpent: number, lastPurchaseDate: string }[];
   };
   
   // Loading state
@@ -188,7 +199,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const getBusinessAnalytics = () => {
-    return {
+    // Basic analytics data
+    const basicAnalytics = {
       totalProducts: products.length,
       totalCategories: categories.length,
       totalClients: clients.length,
@@ -197,6 +209,128 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       totalStockEntries: stockEntries.length,
       totalStockExits: stockExits.length,
       lowStockProducts: products.filter(p => p.currentStock <= p.minStock)
+    };
+    
+    // Calculate revenue, cost and profit
+    const totalRevenue = stockExits.reduce((sum, exit) => {
+      const exitTotal = exit.items.reduce((itemSum, item) => {
+        const itemPrice = item.salePrice * item.quantity;
+        const discountAmount = item.discountPercent ? (itemPrice * item.discountPercent / 100) : 0;
+        return itemSum + (itemPrice - discountAmount);
+      }, 0);
+      
+      const orderDiscount = exit.discount || 0;
+      return sum + (exitTotal * (1 - orderDiscount / 100));
+    }, 0);
+    
+    const totalCost = stockEntries.reduce((sum, entry) => {
+      return sum + entry.items.reduce((itemSum, item) => {
+        return itemSum + (item.purchasePrice * item.quantity);
+      }, 0);
+    }, 0);
+    
+    const totalProfit = totalRevenue - totalCost;
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    
+    // Calculate current stock value
+    const currentStockValue = products.reduce((sum, product) => {
+      return sum + (product.purchasePrice * product.currentStock);
+    }, 0);
+    
+    // Get top selling products
+    const productSales = products.map(product => {
+      const totalQuantity = stockExits.reduce((sum, exit) => {
+        const productItems = exit.items.filter(item => item.productId === product.id);
+        return sum + productItems.reduce((itemSum, item) => itemSum + item.quantity, 0);
+      }, 0);
+      
+      const totalRevenue = stockExits.reduce((sum, exit) => {
+        const productItems = exit.items.filter(item => item.productId === product.id);
+        return sum + productItems.reduce((itemSum, item) => {
+          const itemTotal = item.salePrice * item.quantity;
+          const discountAmount = item.discountPercent ? (itemTotal * item.discountPercent / 100) : 0;
+          return itemSum + (itemTotal - discountAmount);
+        }, 0);
+      }, 0);
+      
+      return {
+        id: product.id,
+        name: product.name,
+        totalQuantity,
+        totalRevenue
+      };
+    })
+    .filter(p => p.totalQuantity > 0)
+    .sort((a, b) => b.totalQuantity - a.totalQuantity);
+    
+    // Get clients with most purchases
+    const clientPurchases = clients.map(client => {
+      const clientExits = stockExits.filter(exit => exit.clientId === client.id);
+      const purchaseCount = clientExits.length;
+      
+      const totalSpent = clientExits.reduce((sum, exit) => {
+        const exitTotal = exit.items.reduce((itemSum, item) => {
+          const itemTotal = item.salePrice * item.quantity;
+          const discountAmount = item.discountPercent ? (itemTotal * item.discountPercent / 100) : 0;
+          return itemSum + (itemTotal - discountAmount);
+        }, 0);
+        
+        const orderDiscount = exit.discount || 0;
+        return sum + (exitTotal * (1 - orderDiscount / 100));
+      }, 0);
+      
+      // Get date of last purchase
+      let lastPurchaseDate = 'Nunca';
+      if (clientExits.length > 0) {
+        // Sort by date (newest first) and take the first one
+        const sortedExits = [...clientExits].sort((a, b) => 
+          new Date(b.date).getTime() - new Date(a.date).getTime()
+        );
+        lastPurchaseDate = sortedExits[0].date;
+      }
+      
+      return {
+        id: client.id,
+        name: client.name,
+        purchaseCount,
+        totalSpent,
+        lastPurchaseDate
+      };
+    })
+    .sort((a, b) => b.totalSpent - a.totalSpent);
+    
+    // Get inactive clients (no purchases in the last 30 days)
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const inactiveClients = clientPurchases
+      .filter(client => {
+        if (client.lastPurchaseDate === 'Nunca') return true;
+        
+        const lastPurchase = new Date(client.lastPurchaseDate);
+        return lastPurchase < thirtyDaysAgo;
+      })
+      .sort((a, b) => {
+        if (a.lastPurchaseDate === 'Nunca' && b.lastPurchaseDate === 'Nunca') return 0;
+        if (a.lastPurchaseDate === 'Nunca') return -1;
+        if (b.lastPurchaseDate === 'Nunca') return 1;
+        
+        return new Date(a.lastPurchaseDate).getTime() - new Date(b.lastPurchaseDate).getTime();
+      });
+    
+    return {
+      ...basicAnalytics,
+      summary: {
+        totalRevenue,
+        totalCost,
+        totalProfit,
+        profitMargin,
+        currentStockValue
+      },
+      topSellingProducts: productSales.slice(0, 5),
+      mostProfitableProducts: [...productSales].sort((a, b) => b.totalRevenue - a.totalRevenue).slice(0, 5),
+      topClients: clientPurchases.slice(0, 5),
+      inactiveClients
     };
   };
   
