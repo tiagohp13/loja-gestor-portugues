@@ -18,7 +18,7 @@ export async function loginUser(email: string, password: string) {
     // Use check_password RPC instead of verify_password
     // This matches the actual function name in the database
     const { data: pwCheck, error: pwError } = await supabase.rpc(
-      'check_password',
+      'check_password' as any,
       { email, password_to_check: password }
     ) as { data: boolean, error: any };
     
