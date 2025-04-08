@@ -855,3 +855,112 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }));
     
     // Top clients
+    const clientSales = stockExits.reduce((acc, exit) => {
+      if (!exit.clientId) return acc;
+      
+      const clientId = exit.clientId;
+      if (!acc[clientId]) {
+        acc[clientId] = {
+          name: exit.clientName || 'Unknown',
+          totalSpent: 0,
+          orderCount: 0
+        };
+      }
+      
+      const orderTotal = exit.items.reduce(
+        (sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 
+        0
+      );
+      
+      acc[clientId].totalSpent += orderTotal;
+      acc[clientId].orderCount += 1;
+      
+      return acc;
+    }, {} as Record<string, { name: string, totalSpent: number, orderCount: number }>);
+    
+    const topClients = Object.entries(clientSales)
+      .sort(([, a], [, b]) => b.totalSpent - a.totalSpent)
+      .slice(0, 5)
+      .map(([clientId, data]) => ({
+        id: clientId,
+        name: data.name,
+        totalSpent: data.totalSpent,
+        orderCount: data.orderCount
+      }));
+    
+    // Low stock products
+    const lowStockProducts = products
+      .filter(product => product.currentStock <= product.minStock)
+      .map(product => ({
+        id: product.id,
+        name: product.name,
+        currentStock: product.currentStock,
+        minStock: product.minStock,
+        status: product.status || 'active'
+      }))
+      .sort((a, b) => a.currentStock - b.currentStock);
+    
+    // Return all analytics
+    return {
+      totalRevenue,
+      totalCost,
+      totalProfit,
+      profitMargin,
+      currentStockValue,
+      topSellingProducts,
+      mostProfitableProducts,
+      topClients,
+      lowStockProducts
+    };
+  };
+
+  return (
+    <DataContext.Provider
+      value={{
+        products,
+        categories,
+        clients,
+        suppliers,
+        orders,
+        stockEntries,
+        stockExits,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        getProduct,
+        getProductHistory,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        getCategory,
+        addClient,
+        updateClient,
+        deleteClient,
+        getClient,
+        getClientHistory,
+        addSupplier,
+        updateSupplier,
+        deleteSupplier,
+        getSupplier,
+        getSupplierHistory,
+        addOrder,
+        updateOrder,
+        deleteOrder,
+        findOrder,
+        addStockEntry,
+        updateStockEntry,
+        deleteStockEntry,
+        addStockExit,
+        updateStockExit,
+        deleteStockExit,
+        updateProductStock,
+        findProduct,
+        findClient,
+        convertOrderToStockExit,
+        getBusinessAnalytics
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
+};
