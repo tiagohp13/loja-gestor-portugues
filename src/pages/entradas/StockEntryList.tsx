@@ -9,8 +9,8 @@ import { Search, Plus, Pencil } from 'lucide-react';
 import { formatDate, formatCurrency } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockEntry } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -28,60 +28,68 @@ const StockEntryList = () => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      // Buscar dados usando a função RPC
+      // Buscar dados diretamente da tabela em vez de usar RPC
       const { data: entriesData, error: entriesError } = await supabase
-        .rpc('get_stock_entries');
+        .from('StockEntries')
+        .select('*')
+        .order('createdat', { ascending: false });
 
       if (entriesError) {
         throw entriesError;
       }
 
+      if (!entriesData) {
+        throw new Error("Não foram encontradas entradas");
+      }
+
       // Transformar os dados retornados
       const entriesWithItems = await Promise.all(
         entriesData.map(async (entry) => {
-          // Buscar itens para cada entrada usando a função RPC
+          // Buscar itens para cada entrada diretamente da tabela
           const { data: itemsData, error: itemsError } = await supabase
-            .rpc('get_stock_entry_items', { p_entry_id: entry.id });
+            .from('StockEntriesItems')
+            .select('*')
+            .eq('entryid', entry.id);
 
           if (itemsError) {
             console.error(`Erro ao buscar itens da entrada ${entry.id}:`, itemsError);
             return {
               id: entry.id,
-              supplierId: entry.supplier_id,
-              supplierName: entry.supplier_name,
-              entryNumber: entry.entry_number,
+              supplierId: entry.supplierid,
+              supplierName: entry.suppliername,
+              entryNumber: entry.entrynumber,
               date: entry.date,
-              invoiceNumber: entry.invoice_number,
+              invoiceNumber: entry.invoicenumber,
               notes: entry.notes,
               status: (entry.status as "pending" | "completed" | "cancelled"),
               discount: entry.discount,
-              createdAt: entry.created_at,
-              updatedAt: entry.updated_at,
+              createdAt: entry.createdat,
+              updatedAt: entry.updatedat,
               items: []
             } as StockEntry;
           }
 
           // Mapear items para o formato esperado em StockEntryItem[]
-          const mappedItems = itemsData.map(item => ({
-            productId: item.product_id,
-            productName: item.product_name,
+          const mappedItems = (itemsData || []).map(item => ({
+            productId: item.productid,
+            productName: item.productname,
             quantity: item.quantity,
-            purchasePrice: item.purchase_price
+            purchasePrice: item.purchaseprice
           }));
 
           // Retornar a entrada com seus itens mapeados
           return {
             id: entry.id,
-            supplierId: entry.supplier_id,
-            supplierName: entry.supplier_name,
-            entryNumber: entry.entry_number,
+            supplierId: entry.supplierid,
+            supplierName: entry.suppliername,
+            entryNumber: entry.entrynumber,
             date: entry.date,
-            invoiceNumber: entry.invoice_number,
+            invoiceNumber: entry.invoicenumber,
             notes: entry.notes,
             status: (entry.status as "pending" | "completed" | "cancelled"),
             discount: entry.discount,
-            createdAt: entry.created_at,
-            updatedAt: entry.updated_at,
+            createdAt: entry.createdat,
+            updatedAt: entry.updatedat,
             items: mappedItems
           } as StockEntry;
         })

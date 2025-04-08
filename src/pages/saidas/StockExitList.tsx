@@ -28,64 +28,72 @@ const StockExitList = () => {
   const fetchExits = async () => {
     setLoading(true);
     try {
-      // Buscar dados usando a função RPC
+      // Buscar dados diretamente da tabela em vez de usar RPC
       const { data: exitsData, error: exitsError } = await supabase
-        .rpc('get_stock_exits');
+        .from('StockExits')
+        .select('*')
+        .order('createdat', { ascending: false });
 
       if (exitsError) {
         throw exitsError;
       }
 
+      if (!exitsData) {
+        throw new Error("Não foram encontradas saídas");
+      }
+
       // Transformar os dados retornados
       const exitsWithItems = await Promise.all(
         exitsData.map(async (exit) => {
-          // Buscar itens para cada saída usando a função RPC
+          // Buscar itens para cada saída diretamente da tabela
           const { data: itemsData, error: itemsError } = await supabase
-            .rpc('get_stock_exit_items', { p_exit_id: exit.id });
+            .from('StockExitsItems')
+            .select('*')
+            .eq('exitid', exit.id);
 
           if (itemsError) {
             console.error(`Erro ao buscar itens da saída ${exit.id}:`, itemsError);
             return {
               id: exit.id,
-              clientId: exit.client_id,
-              clientName: exit.client_name,
+              clientId: exit.clientid,
+              clientName: exit.clientname,
               reason: exit.reason,
-              exitNumber: exit.exit_number,
+              exitNumber: exit.exitnumber,
               date: exit.date,
-              invoiceNumber: exit.invoice_number,
+              invoiceNumber: exit.invoicenumber,
               notes: exit.notes,
               status: (exit.status as "pending" | "completed" | "cancelled"),
               discount: exit.discount,
-              fromOrderId: exit.from_order_id,
-              createdAt: exit.created_at,
-              updatedAt: exit.updated_at,
+              fromOrderId: exit.fromorderid,
+              createdAt: exit.createdat,
+              updatedAt: exit.updatedat,
               items: []
             } as StockExit;
           }
 
           // Mapear items para o formato esperado em StockExitItem[]
-          const mappedItems = itemsData.map(item => ({
-            productId: item.product_id,
-            productName: item.product_name,
+          const mappedItems = (itemsData || []).map(item => ({
+            productId: item.productid,
+            productName: item.productname,
             quantity: item.quantity,
-            salePrice: item.sale_price
+            salePrice: item.saleprice
           }));
 
           // Retornar a saída com seus itens mapeados
           return {
             id: exit.id,
-            clientId: exit.client_id,
-            clientName: exit.client_name,
+            clientId: exit.clientid,
+            clientName: exit.clientname,
             reason: exit.reason,
-            exitNumber: exit.exit_number,
+            exitNumber: exit.exitnumber,
             date: exit.date,
-            invoiceNumber: exit.invoice_number,
+            invoiceNumber: exit.invoicenumber,
             notes: exit.notes,
             status: (exit.status as "pending" | "completed" | "cancelled"),
             discount: exit.discount,
-            fromOrderId: exit.from_order_id,
-            createdAt: exit.created_at,
-            updatedAt: exit.updated_at,
+            fromOrderId: exit.fromorderid,
+            createdAt: exit.createdat,
+            updatedAt: exit.updatedat,
             items: mappedItems
           } as StockExit;
         })
