@@ -6,53 +6,40 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
-import { StockExitItem, StockExit } from '@/types';
+import { StockExitItem } from '@/types';
 
 const StockExitEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { stockExits, updateStockExit, products, clients } = useData();
-  const [loading, setLoading] = useState(true);
   
-  const [exit, setExit] = useState<Partial<StockExit>>({
+  const [exit, setExit] = useState({
     clientId: '',
-    clientName: '',
     items: [] as StockExitItem[],
     date: '',
     invoiceNumber: '',
     notes: '',
-    fromOrderId: undefined
+    fromOrderId: undefined as string | undefined
   });
 
   useEffect(() => {
     if (id) {
-      fetchExit(id);
-    }
-  }, [id]);
-
-  const fetchExit = async (exitId: string) => {
-    setLoading(true);
-    try {
-      // Simplificado para usar dados locais
-      const foundExit = stockExits.find(exit => exit.id === exitId);
-      
+      const foundExit = stockExits.find(exit => exit.id === id);
       if (foundExit) {
         setExit({
-          ...foundExit,
+          clientId: foundExit.clientId || '',
           items: foundExit.items || [],
-          date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : ''
+          date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : '',
+          invoiceNumber: foundExit.invoiceNumber || '',
+          notes: foundExit.notes || '',
+          fromOrderId: foundExit.fromOrderId
         });
       } else {
         toast.error('Saída não encontrada');
         navigate('/saidas/historico');
       }
-    } catch (error) {
-      console.error('Erro ao buscar detalhes da saída:', error);
-      toast.error('Erro ao carregar detalhes da saída');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [id, stockExits, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -62,46 +49,29 @@ const StockExitEdit = () => {
     }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (id) {
-      try {
-        // Get the client associated with this exit
-        const client = clients.find(c => c.id === exit.clientId);
-        
-        if (!client) {
-          toast.error('Cliente não encontrado');
-          return;
-        }
-        
-        const updateData = {
-          ...exit,
-          clientName: client.name,
-          updatedAt: new Date().toISOString()
-        };
-        
-        // Atualizar localmente
-        updateStockExit(id, updateData);
-        
-        toast.success('Saída atualizada com sucesso');
-        navigate('/saidas/historico');
-      } catch (error) {
-        console.error('Erro ao atualizar saída:', error);
-        toast.error('Erro ao atualizar saída');
+      // Get the client associated with this exit
+      const client = clients.find(c => c.id === exit.clientId);
+      
+      if (!client) {
+        toast.error('Cliente não encontrado');
+        return;
       }
+      
+      // Update the stock exit
+      updateStockExit(id, {
+        ...exit,
+        clientName: client.name
+      });
+      
+      toast.success('Saída atualizada com sucesso');
+      navigate('/saidas/historico');
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <div className="text-center py-8">
-          <p>Carregando detalhes da saída...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Note: This is a simplified version. In a real app, you'd want to allow editing of individual items
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -196,7 +166,7 @@ const StockExitEdit = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {exit.items && exit.items.map((item, index) => (
+                  {exit.items.map((item, index) => (
                     <tr key={index}>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                         {item.productName}
@@ -205,10 +175,10 @@ const StockExitEdit = () => {
                         {item.quantity}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {item.salePrice?.toFixed(2)} €
+                        {item.salePrice.toFixed(2)} €
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {(item.quantity * (item.salePrice || 0)).toFixed(2)} €
+                        {(item.quantity * item.salePrice).toFixed(2)} €
                       </td>
                     </tr>
                   ))}

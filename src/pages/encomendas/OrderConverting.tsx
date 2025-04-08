@@ -6,16 +6,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { v4 as uuidv4 } from 'uuid';
 
 const OrderConverting = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { findOrder, findProduct, findClient, updateOrder } = useData();
+  const { findOrder, findProduct, findClient, addStockExit, deleteOrder, convertOrderToStockExit } = useData();
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [order, setOrder] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -36,99 +33,21 @@ const OrderConverting = () => {
     }
   }, [id, findOrder, navigate]);
 
-  const generateStockExitNumber = async (): Promise<string> => {
-    const prefix = 'SAI';
-    const randomNumber = Math.floor(Math.random() * 100000);
-    const exitNumber = `${prefix}-${randomNumber.toString().padStart(5, '0')}`;
-    return exitNumber;
-  };
-
-  const handleConvert = async () => {
-    if (!order || !id) {
+  const handleConvert = () => {
+    if (!order) {
       toast.error('Dados da encomenda não encontrados');
       return;
     }
     
-    setIsSubmitting(true);
-    
     try {
-      const client = findClient(order.clientId);
-      const exitId = uuidv4();
-      const exitNumber = await generateStockExitNumber();
-      const now = new Date().toISOString();
+      // Use the context function to convert order to stock exit
+      convertOrderToStockExit(id as string);
       
-      // Create a new stock exit in Supabase
-      const { error: exitError } = await supabase
-        .from('StockExits')
-        .insert({
-          id: exitId,
-          clientid: order.clientId,
-          clientname: client?.name || order.clientName,
-          reason: `Encomenda ${order.orderNumber}`,
-          exitnumber: exitNumber,
-          date: now,
-          invoicenumber: invoiceNumber,
-          notes: order.notes,
-          status: 'completed',
-          discount: 0,
-          fromorderid: id,
-          createdat: now,
-          updatedat: now
-        });
-      
-      if (exitError) {
-        console.error('Error creating stock exit:', exitError);
-        throw exitError;
-      }
-      
-      // Insert exit items
-      if (order.items && order.items.length > 0) {
-        const exitItems = order.items.map((item: any) => ({
-          exitid: exitId,
-          productid: item.productId,
-          productname: item.productName,
-          quantity: item.quantity,
-          saleprice: item.salePrice,
-          discount: item.discount || 0
-        }));
-        
-        const { error: itemsError } = await supabase
-          .from('StockExitsItems')
-          .insert(exitItems);
-        
-        if (itemsError) {
-          console.error('Error creating exit items:', itemsError);
-        }
-      }
-      
-      // Update order status in Supabase
-      const { error: updateError } = await supabase
-        .from('Encomendas')
-        .update({
-          status: 'completed',
-          convertedtostockexitid: exitId,
-          updatedat: now
-        })
-        .eq('id', id);
-      
-      if (updateError) {
-        console.error('Error updating order status:', updateError);
-        throw updateError;
-      }
-      
-      // Update order in local state
-      updateOrder(id, {
-        status: 'completed',
-        convertedToStockExitId: exitId
-      });
-      
-      toast.success('Encomenda convertida em saída de stock com sucesso!');
+      toast.success('Encomenda convertida em saída de stock!');
       navigate('/saidas/historico');
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao converter encomenda em saída de stock');
-    } finally {
-      setIsSubmitting(false);
+      toast.error('Erro ao converter encomenda');
     }
   };
 
@@ -147,7 +66,7 @@ const OrderConverting = () => {
 
   const client = findClient(order.clientId);
   const totalValue = order.items.reduce((total: number, item: any) => 
-    total + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
+    total + (item.quantity * item.salePrice), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -177,15 +96,13 @@ const OrderConverting = () => {
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto</th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {order.items.map((item: any, index: number) => {
                     const product = findProduct(item.productId);
-                    const discount = item.discount || 0;
-                    const subtotal = item.quantity * item.salePrice * (1 - discount / 100);
+                    const subtotal = item.quantity * item.salePrice;
                     
                     return (
                       <tr key={index}>
@@ -197,9 +114,6 @@ const OrderConverting = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {item.salePrice.toFixed(2)} €
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {discount}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">
                           {subtotal.toFixed(2)} €
@@ -234,9 +148,7 @@ const OrderConverting = () => {
           <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
             Cancelar
           </Button>
-          <Button onClick={handleConvert} disabled={isSubmitting}>
-            {isSubmitting ? "Processando..." : "Converter em Saída de Stock"}
-          </Button>
+          <Button onClick={handleConvert}>Converter em Saída de Stock</Button>
         </div>
       </div>
     </div>

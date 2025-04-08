@@ -160,9 +160,9 @@ const ProductDetail = () => {
                             <td className="px-4 py-2">
                               {supplier ? supplier.name : (entry.supplierName || "Desconhecido")}
                             </td>
-                            <td className="px-4 py-2">{entry.quantity || 0} unidades</td>
-                            <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice || 0)}</td>
-                            <td className="px-4 py-2 text-right">{formatCurrency((entry.purchasePrice || 0) * (entry.quantity || 0))}</td>
+                            <td className="px-4 py-2">{entry.quantity} unidades</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice * entry.quantity)}</td>
                           </tr>
                         );
                       })}
@@ -197,9 +197,9 @@ const ProductDetail = () => {
                             <td className="px-4 py-2">
                               {client ? client.name : (exit.clientName || "Desconhecido")}
                             </td>
-                            <td className="px-4 py-2">{exit.quantity || 0} unidades</td>
-                            <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice || 0)}</td>
-                            <td className="px-4 py-2 text-right">{formatCurrency((exit.salePrice || 0) * (exit.quantity || 0))}</td>
+                            <td className="px-4 py-2">{exit.quantity} unidades</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>
+                            <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice * exit.quantity)}</td>
                           </tr>
                         );
                       })}

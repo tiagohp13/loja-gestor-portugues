@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -15,17 +14,17 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Search, Plus, Trash, Package } from 'lucide-react';
+import { Search, Check, Plus, Trash, ShoppingCart } from 'lucide-react';
 import { OrderItem } from '@/types';
 
 const OrderNew = () => {
   const navigate = useNavigate();
   const { addOrder, products, clients } = useData();
-  
   const [orderDetails, setOrderDetails] = useState({
+    clientId: '',
+    clientName: '',
     date: new Date().toISOString().split('T')[0],
-    notes: '',
-    discount: 0
+    notes: ''
   });
   
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -34,20 +33,17 @@ const OrderNew = () => {
     productName: string;
     quantity: number;
     salePrice: number;
-    discount: number;
   }>({
     productId: '',
     productName: '',
     quantity: 1,
-    salePrice: 0,
-    discount: 0
+    salePrice: 0
   });
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
-  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
-  const [selectedClient, setSelectedClient] = useState<{ id: string; name: string } | null>(null);
+  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
 
   const handleOrderDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -61,13 +57,13 @@ const OrderNew = () => {
     const { name, value } = e.target;
     setCurrentItem(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' || name === 'discount'
+      [name]: name === 'quantity' || name === 'salePrice' 
               ? parseFloat(value) || 0 
               : value
     }));
   };
 
-  const handleSearch = (value: string) => {
+  const handleProductSearch = (value: string) => {
     setSearchTerm(value);
   };
 
@@ -82,21 +78,27 @@ const OrderNew = () => {
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: 1,
-        salePrice: selectedProduct.salePrice,
-        discount: 0
+        salePrice: selectedProduct.salePrice
       });
+      
+      // Automatically add product if this is the first selection
+      // Otherwise user will click "Add Product" button
+      if (items.length === 0 && !isProductSearchOpen) {
+        setTimeout(() => {
+          addItemToOrder();
+        }, 100);
+      }
     }
     setIsProductSearchOpen(false);
   };
   
   const handleClientSelect = (clientId: string) => {
     const selectedClient = clients.find(c => c.id === clientId);
-    if (selectedClient) {
-      setSelectedClient({
-        id: selectedClient.id,
-        name: selectedClient.name
-      });
-    }
+    setOrderDetails(prev => ({
+      ...prev,
+      clientId,
+      clientName: selectedClient?.name || ''
+    }));
     setIsClientSearchOpen(false);
   };
   
@@ -106,27 +108,29 @@ const OrderNew = () => {
       return;
     }
     
+    // Check if the product is already in the order
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
+      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice,
-        discount: currentItem.discount
+        salePrice: currentItem.salePrice // Update the price in case it changed
       };
       setItems(updatedItems);
     } else {
+      // Add new item
       setItems([...items, { ...currentItem }]);
     }
     
+    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
       quantity: 1,
-      salePrice: 0,
-      discount: 0
+      salePrice: 0
     });
     setSearchTerm('');
   };
@@ -147,40 +151,48 @@ const OrderNew = () => {
         client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
       )
     : clients;
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedClient || items.length === 0) {
+    // Validate form
+    if (!orderDetails.clientId || items.length === 0) {
       toast.error('Selecione um cliente e adicione pelo menos um produto');
       return;
     }
-
+    
+    // Get the client
+    const client = clients.find(c => c.id === orderDetails.clientId);
+    
+    if (!client) {
+      toast.error('Cliente não encontrado');
+      return;
+    }
+    
+    // Add the order
     addOrder({
-      clientId: selectedClient.id,
-      clientName: selectedClient.name,
+      clientId: orderDetails.clientId,
+      clientName: client.name,
       items: items,
       date: orderDetails.date,
-      notes: orderDetails.notes,
-      discount: parseFloat(orderDetails.discount.toString()) || 0
+      notes: orderDetails.notes
     });
     
-    navigate('/encomendas/historico');
+    navigate('/encomendas/consultar');
   };
-  
-  const subtotal = items.reduce((total, item) => 
+
+  // Calculate total value
+  const totalValue = items.reduce((total, item) => 
     total + (item.quantity * item.salePrice), 0);
-  const discountAmount = subtotal * (orderDetails.discount / 100);
-  const totalValue = subtotal - discountAmount;
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Nova Encomenda" 
-        description="Registar uma nova encomenda" 
+        description="Registar uma nova encomenda de cliente" 
         actions={
-          <Button variant="outline" onClick={() => navigate('/encomendas/historico')}>
-            Voltar ao Histórico
+          <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            Voltar à Lista
           </Button>
         }
       />
@@ -225,7 +237,7 @@ const OrderNew = () => {
                             <div className="flex items-center justify-between w-full">
                               <div>{client.name}</div>
                             </div>
-                            {selectedClient?.id === client.id && (
+                            {orderDetails.clientId === client.id && (
                               <Check className="ml-2 h-4 w-4" />
                             )}
                           </CommandItem>
@@ -235,34 +247,47 @@ const OrderNew = () => {
                   </Command>
                 </PopoverContent>
               </Popover>
-              {selectedClient && (
+              {orderDetails.clientId && (
                 <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
                   <div className="font-medium">
-                    {selectedClient.name}
+                    {clients.find(c => c.id === orderDetails.clientId)?.name || ""}
                   </div>
                 </div>
               )}
             </div>
             
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
-                  Data
-                </label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={orderDetails.date}
-                  onChange={handleOrderDetailsChange}
-                  required
-                />
-              </div>
+            <div className="space-y-2">
+              <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
+                Data
+              </label>
+              <Input
+                id="date"
+                name="date"
+                type="date"
+                value={orderDetails.date}
+                onChange={handleOrderDetailsChange}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+                Notas
+              </label>
+              <textarea
+                id="notes"
+                name="notes"
+                value={orderDetails.notes}
+                onChange={handleOrderDetailsChange}
+                placeholder="Observações sobre a encomenda..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+                rows={3}
+              />
             </div>
             
             <div className="border-t pt-4 mt-4">
               <h3 className="text-md font-medium mb-4 flex items-center">
-                <Package className="mr-2 h-5 w-5" />
+                <ShoppingCart className="mr-2 h-5 w-5" />
                 Adicionar Produtos
               </h3>
               
@@ -290,7 +315,7 @@ const OrderNew = () => {
                         <CommandInput 
                           placeholder="Pesquisar produto por nome ou código..." 
                           value={searchTerm}
-                          onValueChange={handleSearch}
+                          onValueChange={handleProductSearch}
                         />
                         <CommandList>
                           <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
@@ -307,8 +332,6 @@ const OrderNew = () => {
                                     <span className="mx-2">-</span>
                                     <span>{product.name}</span>
                                   </div>
-                                  <div className="text-sm text-gray-500">
-                                  </div>
                                 </div>
                                 {currentItem.productId === product.id && (
                                   <Check className="ml-2 h-4 w-4" />
@@ -323,9 +346,14 @@ const OrderNew = () => {
                 </div>
                 
                 {currentItem.productId && (
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                      <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
+                        Produto Selecionado
+                      </label>
+                      <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
+                        <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
@@ -360,23 +388,6 @@ const OrderNew = () => {
                         required
                       />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Desconto (%)
-                      </label>
-                      <Input
-                        id="discount"
-                        name="discount"
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={currentItem.discount}
-                        onChange={handleItemChange}
-                        placeholder="0.00"
-                      />
-                    </div>
                   </div>
                 )}
                 
@@ -386,6 +397,10 @@ const OrderNew = () => {
                       type="button" 
                       onClick={addItemToOrder}
                       className="flex items-center"
+                      disabled={
+                        !currentItem.productId || 
+                        currentItem.quantity <= 0
+                      }
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar Produto
@@ -404,7 +419,6 @@ const OrderNew = () => {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto (%)</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
@@ -415,10 +429,7 @@ const OrderNew = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.discount}%</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(item.quantity * item.salePrice * (1 - item.discount / 100)).toFixed(2)} €
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                           <Button 
                             variant="ghost" 
@@ -435,67 +446,27 @@ const OrderNew = () => {
                 </table>
               </div>
             )}
-            
-            <div className="space-y-2">
-              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-                Notas
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={orderDetails.notes}
-                onChange={handleOrderDetailsChange}
-                placeholder="Observações adicionais sobre a encomenda..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                rows={3}
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-                Desconto Total (%)
-              </label>
-              <Input
-                id="discount"
-                name="discount"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={orderDetails.discount}
-                onChange={handleOrderDetailsChange}
-                placeholder="0.00"
-              />
-            </div>
-            
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-              <dl className="grid md:grid-cols-3 gap-4">
-                <div>
-                  <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
-                  <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-blue-800">Desconto ({orderDetails.discount}%):</dt>
-                  <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-blue-800">Total:</dt>
-                  <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
-                </div>
-              </dl>
-            </div>
-            
-            <div className="flex justify-end space-x-4">
-              <Button variant="outline" type="button" onClick={() => navigate('/encomendas/historico')}>
-                Cancelar
-              </Button>
-              <Button 
-                type="submit"
-                disabled={items.length === 0 || !selectedClient}
-              >
-                Registar Encomenda
-              </Button>
-            </div>
+          </div>
+          
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
+            <p className="text-lg font-semibold text-blue-800">
+              Valor Total: {totalValue.toFixed(2)} €
+            </p>
+            <p className="text-sm text-blue-600 mt-1">
+              Total de itens: {items.length}
+            </p>
+          </div>
+          
+          <div className="flex justify-end space-x-4">
+            <Button variant="outline" type="button" onClick={() => navigate('/encomendas/consultar')}>
+              Cancelar
+            </Button>
+            <Button 
+              type="submit"
+              disabled={items.length === 0 || !orderDetails.clientId}
+            >
+              Registar Encomenda
+            </Button>
           </div>
         </form>
       </div>

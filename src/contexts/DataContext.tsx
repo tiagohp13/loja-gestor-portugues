@@ -1,53 +1,919 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Product, Category, Client, Supplier, Order, OrderItem, StockEntry, StockEntryItem, StockExit, StockExitItem } from '../types';
+import { toast } from 'sonner';
+import * as mockData from '../data/mockData';
 import { supabase } from '@/integrations/supabase/client';
+import { 
+  Product, Category, Client, Supplier, 
+  StockEntry, StockExit, Order, 
+  StockEntryItem, StockExitItem, OrderItem,
+  LegacyStockEntry, LegacyStockExit, LegacyOrder
+} from '../types';
 
 interface DataContextType {
   products: Product[];
   categories: Category[];
   clients: Client[];
   suppliers: Supplier[];
-  orders: Order[];
   stockEntries: StockEntry[];
   stockExits: StockExit[];
-  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Product>;
-  updateProduct: (id: string, updates: Partial<Product>) => void;
+  orders: Order[];
+  
+  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
   deleteProduct: (id: string) => void;
-  getProduct: (id: string) => Product | undefined;
-  getProductHistory: (id: string) => { entries: StockEntry[], exits: StockExit[] };
-  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Category>;
-  updateCategory: (id: string, updates: Partial<Category>) => void;
+  
+  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateCategory: (id: string, category: Partial<Category>) => void;
   deleteCategory: (id: string) => void;
-  getCategory: (id: string) => Category | undefined;
-  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Client>;
-  updateClient: (id: string, updates: Partial<Client>) => void;
+  
+  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateClient: (id: string, client: Partial<Client>) => void;
   deleteClient: (id: string) => void;
-  getClient: (id: string) => Client | undefined;
-  getClientHistory: (id: string) => { orders: Order[], stockExits: StockExit[] };
-  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Supplier>;
-  updateSupplier: (id: string, updates: Partial<Supplier>) => void;
+  
+  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateSupplier: (id: string, supplier: Partial<Supplier>) => void;
   deleteSupplier: (id: string) => void;
-  getSupplier: (id: string) => Supplier | undefined;
-  getSupplierHistory: (id: string) => { entries: StockEntry[] };
-  addOrder: (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber'>) => Promise<Order>;
-  updateOrder: (id: string, updates: Partial<Order>) => void;
-  deleteOrder: (id: string) => void;
-  findOrder: (id: string) => Order | undefined;
-  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>) => Promise<StockEntry>;
-  updateStockEntry: (id: string, updates: Partial<StockEntry>) => void;
+  
+  addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'number'>) => void;
+  updateStockEntry: (id: string, entry: Partial<StockEntry>) => void;
   deleteStockEntry: (id: string) => void;
-  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>) => Promise<StockExit>;
-  updateStockExit: (id: string, updates: Partial<StockExit>) => void;
+  
+  addStockExit: (exit: Omit<StockExit, 'id' | 'createdAt' | 'number'>) => void;
+  updateStockExit: (id: string, exit: Partial<StockExit>) => void;
   deleteStockExit: (id: string) => void;
-  updateProductStock: (productId: string, quantityChange: number) => void;
-  findProduct: (id: string) => Product | undefined;
-  findClient: (id: string) => Client | undefined;
+  
+  addOrder: (order: Omit<Order, 'id' | 'number'>) => void;
+  updateOrder: (id: string, order: Partial<Order>) => void;
+  deleteOrder: (id: string) => void;
   convertOrderToStockExit: (orderId: string) => void;
+  
+  findProduct: (id: string) => Product | undefined;
+  findCategory: (id: string) => Category | undefined;
+  findClient: (id: string) => Client | undefined;
+  findSupplier: (id: string) => Supplier | undefined;
+  findOrder: (id: string) => Order | undefined;
+  
+  getProduct: (id: string) => Product | undefined;
+  getProductHistory: (id: string) => any;
+  getCategory: (id: string) => Category | undefined;
+  getClient: (id: string) => Client | undefined;
+  getClientHistory: (id: string) => any;
+  getSupplier: (id: string) => Supplier | undefined;
+  getSupplierHistory: (id: string) => any;
+  
   getBusinessAnalytics: () => any;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
+
+const convertOldStockEntriesToNew = (oldEntries: any[]): StockEntry[] => {
+  return oldEntries.map((entry, index) => ({
+    id: entry.id,
+    number: `ENT${String(index + 1).padStart(6, '0')}`,
+    supplierId: entry.supplierId,
+    supplierName: entry.supplierName,
+    items: [{
+      productId: entry.productId,
+      productName: entry.productName,
+      quantity: entry.quantity,
+      purchasePrice: entry.purchasePrice
+    }],
+    invoiceNumber: entry.invoiceNumber,
+    notes: entry.notes,
+    date: entry.date,
+    createdAt: entry.createdAt
+  }));
+};
+
+const convertOldStockExitsToNew = (oldExits: any[], oldOrders: any[]): StockExit[] => {
+  return oldExits.map((exit, index) => {
+    const fromOrder = oldOrders?.find(order => order.id === exit.fromOrderId);
+    
+    return {
+      id: exit.id,
+      number: `SAI${String(index + 1).padStart(6, '0')}`,
+      clientId: exit.clientId,
+      clientName: exit.clientName,
+      items: [{
+        productId: exit.productId,
+        productName: exit.productName,
+        quantity: exit.quantity,
+        salePrice: exit.salePrice
+      }],
+      invoiceNumber: exit.invoiceNumber,
+      notes: exit.notes,
+      date: exit.date,
+      createdAt: exit.createdAt,
+      fromOrderId: exit.fromOrderId,
+      fromOrderNumber: fromOrder ? `ENC${String(oldOrders.indexOf(fromOrder) + 1).padStart(6, '0')}` : undefined
+    };
+  });
+};
+
+const convertOldOrdersToNew = (oldOrders: any[], oldExits: any[]): Order[] => {
+  return oldOrders.map((order, index) => {
+    const convertedToExit = oldExits?.find(exit => exit.fromOrderId === order.id);
+    
+    return {
+      id: order.id,
+      number: `2025/${String(index + 1).padStart(3, '0')}`,
+      clientId: order.clientId,
+      clientName: order.clientName,
+      items: [{
+        productId: order.productId,
+        productName: order.productName,
+        quantity: order.quantity,
+        salePrice: order.salePrice
+      }],
+      date: order.date,
+      notes: order.notes,
+      convertedToStockExitId: order.convertedToStockExitId,
+      convertedToStockExitNumber: convertedToExit ? `2025/${String(oldExits.indexOf(convertedToExit) + 1).padStart(3, '0')}` : undefined
+    };
+  });
+};
+
+export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [products, setProducts] = useState<Product[]>(mockData.products as Product[]);
+  const [categories, setCategories] = useState<Category[]>(mockData.categories as Category[]);
+  const [clients, setClients] = useState<Client[]>(mockData.clients as Client[]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(mockData.suppliers as Supplier[]);
+
+  const [stockEntries, setStockEntries] = useState<StockEntry[]>(() => 
+    convertOldStockEntriesToNew(mockData.stockEntries as any[])
+  );
+  
+  const [stockExits, setStockExits] = useState<StockExit[]>(() => 
+    convertOldStockExitsToNew(mockData.stockExits as any[], mockData.orders as any[] || [])
+  );
+  
+  const [orders, setOrders] = useState<Order[]>(() => 
+    convertOldOrdersToNew(mockData.orders || [], mockData.stockExits as any[])
+  );
+
+  useEffect(() => {
+    window.appData = { products, categories, clients, suppliers, stockEntries, stockExits, orders };
+  }, [products, categories, clients, suppliers, stockEntries, stockExits, orders]);
+
+  const getNextOrderNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_counter', {
+        counter_id: 'orders'
+      });
+      
+      if (error) {
+        console.error("Error getting order number:", error);
+        return `${new Date().getFullYear()}/${String(orders.length + 1).padStart(3, '0')}`;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in getNextOrderNumber:", error);
+      return `${new Date().getFullYear()}/${String(orders.length + 1).padStart(3, '0')}`;
+    }
+  };
+
+  const getNextEntryNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_counter', {
+        counter_id: 'stock_entries'
+      });
+      
+      if (error) {
+        console.error("Error getting stock entry number:", error);
+        return `${new Date().getFullYear()}/${String(stockEntries.length + 1).padStart(3, '0')}`;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in getNextEntryNumber:", error);
+      return `${new Date().getFullYear()}/${String(stockEntries.length + 1).padStart(3, '0')}`;
+    }
+  };
+
+  const getNextExitNumber = async () => {
+    try {
+      const { data, error } = await supabase.rpc('get_next_counter', {
+        counter_id: 'stock_exits'
+      });
+      
+      if (error) {
+        console.error("Error getting stock exit number:", error);
+        return `${new Date().getFullYear()}/${String(stockExits.length + 1).padStart(3, '0')}`;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in getNextExitNumber:", error);
+      return `${new Date().getFullYear()}/${String(stockExits.length + 1).padStart(3, '0')}`;
+    }
+  };
+
+  const addProduct = (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const codeExists = products.some(p => p.code.toLowerCase() === product.code.toLowerCase());
+    if (codeExists) {
+      toast.error(`O código de produto "${product.code}" já existe. Use um código único.`);
+      throw new Error(`Product code "${product.code}" already exists. Use a unique code.`);
+    }
+    
+    const now = new Date().toISOString();
+    const newProduct = { 
+      ...product, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
+    setProducts([...products, newProduct as Product]);
+    toast.success('Produto adicionado com sucesso!');
+  };
+
+  const updateProduct = (id: string, product: Partial<Product>) => {
+    if (product.code) {
+      const codeExists = products.some(p => p.code.toLowerCase() === product.code?.toLowerCase() && p.id !== id);
+      if (codeExists) {
+        toast.error(`O código de produto "${product.code}" já existe. Use um código único.`);
+        throw new Error(`Product code "${product.code}" already exists. Use a unique code.`);
+      }
+    }
+    
+    setProducts(products.map(p => p.id === id ? { 
+      ...p, 
+      ...product,
+      updatedAt: new Date().toISOString()
+    } : p));
+    toast.success('Produto atualizado com sucesso!');
+  };
+
+  const deleteProduct = (id: string) => {
+    const usedInEntry = stockEntries.some(entry => 
+      entry.items.some(item => item.productId === id)
+    );
+    
+    const usedInExit = stockExits.some(exit => 
+      exit.items.some(item => item.productId === id)
+    );
+    
+    const usedInOrder = orders.some(order => 
+      order.items.some(item => item.productId === id)
+    );
+    
+    if (usedInEntry || usedInExit || usedInOrder) {
+      toast.error('Não é possível excluir um produto que possui movimentações.');
+      return;
+    }
+    
+    setProducts(products.filter(p => p.id !== id));
+    toast.success('Produto excluído com sucesso!');
+  };
+
+  const addCategory = (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newCategory = { 
+      ...category, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
+    setCategories([...categories, newCategory as Category]);
+    toast.success('Categoria adicionada com sucesso!');
+  };
+
+  const updateCategory = (id: string, category: Partial<Category>) => {
+    setCategories(categories.map(c => c.id === id ? { 
+      ...c, 
+      ...category,
+      updatedAt: new Date().toISOString()
+    } : c));
+    toast.success('Categoria atualizada com sucesso!');
+  };
+
+  const deleteCategory = (id: string) => {
+    const usedInProducts = products.some(product => product.category === id);
+    
+    if (usedInProducts) {
+      toast.error('Não é possível excluir uma categoria que está em uso.');
+      return;
+    }
+    
+    setCategories(categories.filter(c => c.id !== id));
+    toast.success('Categoria excluída com sucesso!');
+  };
+
+  const addClient = (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newClient = { 
+      ...client, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
+    setClients([...clients, newClient as Client]);
+    toast.success('Cliente adicionado com sucesso!');
+  };
+
+  const updateClient = (id: string, client: Partial<Client>) => {
+    setClients(clients.map(c => c.id === id ? { 
+      ...c, 
+      ...client,
+      updatedAt: new Date().toISOString()
+    } : c));
+    toast.success('Cliente atualizado com sucesso!');
+  };
+
+  const deleteClient = (id: string) => {
+    const usedInExit = stockExits.some(exit => exit.clientId === id);
+    const usedInOrder = orders.some(order => order.clientId === id);
+    
+    if (usedInExit || usedInOrder) {
+      toast.error('Não é possível excluir um cliente que possui movimentações.');
+      return;
+    }
+    
+    setClients(clients.filter(c => c.id !== id));
+    toast.success('Cliente excluído com sucesso!');
+  };
+
+  const addSupplier = (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const now = new Date().toISOString();
+    const newSupplier = { 
+      ...supplier, 
+      id: uuidv4(),
+      createdAt: now,
+      updatedAt: now
+    };
+    setSuppliers([...suppliers, newSupplier as Supplier]);
+    toast.success('Fornecedor adicionado com sucesso!');
+  };
+
+  const updateSupplier = (id: string, supplier: Partial<Supplier>) => {
+    setSuppliers(suppliers.map(s => s.id === id ? { 
+      ...s, 
+      ...supplier,
+      updatedAt: new Date().toISOString()
+    } : s));
+    toast.success('Fornecedor atualizado com sucesso!');
+  };
+
+  const deleteSupplier = (id: string) => {
+    const usedInEntry = stockEntries.some(entry => entry.supplierId === id);
+    
+    if (usedInEntry) {
+      toast.error('Não é possível excluir um fornecedor que possui movimentações.');
+      return;
+    }
+    
+    setSuppliers(suppliers.filter(s => s.id !== id));
+    toast.success('Fornecedor excluído com sucesso!');
+  };
+
+  const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' | 'number'>) => {
+    const newEntryNumber = await getNextEntryNumber();
+    
+    const newEntry = { 
+      ...entry, 
+      id: uuidv4(),
+      number: newEntryNumber,
+      createdAt: new Date().toISOString() 
+    };
+    
+    entry.items.forEach(item => {
+      setProducts(products.map(product => 
+        product.id === item.productId 
+          ? { ...product, currentStock: product.currentStock + item.quantity }
+          : product
+      ));
+    });
+    
+    setStockEntries([...stockEntries, newEntry as StockEntry]);
+    toast.success('Entrada de stock registada com sucesso!');
+  };
+
+  const updateStockEntry = (id: string, entry: Partial<StockEntry>) => {
+    const oldEntry = stockEntries.find(e => e.id === id);
+    
+    if (!oldEntry) {
+      toast.error('Entrada não encontrada.');
+      return;
+    }
+    
+    if (entry.items) {
+      oldEntry.items.forEach(oldItem => {
+        setProducts(products.map(product => 
+          product.id === oldItem.productId 
+            ? { ...product, currentStock: product.currentStock + oldItem.quantity }
+            : product
+        ));
+      });
+      
+      entry.items.forEach(newItem => {
+        setProducts(products.map(product => 
+          product.id === newItem.productId 
+            ? { ...product, currentStock: product.currentStock + newItem.quantity }
+            : product
+        ));
+      });
+    }
+    
+    setStockEntries(stockEntries.map(e => e.id === id ? { ...e, ...entry } : e));
+    toast.success('Entrada de stock atualizada com sucesso!');
+  };
+
+  const deleteStockEntry = (id: string) => {
+    const entry = stockEntries.find(e => e.id === id);
+    
+    if (!entry) {
+      toast.error('Entrada não encontrada.');
+      return;
+    }
+    
+    let canDelete = true;
+    
+    entry.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (product && product.currentStock < item.quantity) {
+        canDelete = false;
+      }
+    });
+    
+    if (!canDelete) {
+      toast.error('Não é possível excluir esta entrada. O stock ficaria negativo.');
+      return;
+    }
+    
+    entry.items.forEach(item => {
+      setProducts(products.map(p => 
+        p.id === item.productId 
+          ? { ...p, currentStock: p.currentStock - item.quantity }
+          : p
+      ));
+    });
+    
+    setStockEntries(stockEntries.filter(e => e.id !== id));
+    toast.success('Entrada de stock excluída com sucesso!');
+  };
+
+  const addStockExit = async (exit: Omit<StockExit, 'id' | 'createdAt' | 'number'>) => {
+    let hasEnoughStock = true;
+    
+    exit.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product || product.currentStock < item.quantity) {
+        hasEnoughStock = false;
+        toast.error(`Stock insuficiente para ${item.productName}. Disponível: ${product?.currentStock || 0} unidades.`);
+      }
+    });
+    
+    if (!hasEnoughStock) return;
+    
+    const newExitNumber = await getNextExitNumber();
+    
+    const newExit = { 
+      ...exit, 
+      id: uuidv4(),
+      number: newExitNumber,
+      createdAt: new Date().toISOString() 
+    };
+    
+    exit.items.forEach(item => {
+      setProducts(products.map(product => 
+        product.id === item.productId 
+          ? { ...product, currentStock: product.currentStock - item.quantity }
+          : product
+      ));
+    });
+    
+    if (exit.fromOrderId) {
+      setOrders(orders.map(order => 
+        order.id === exit.fromOrderId 
+          ? { 
+              ...order, 
+              convertedToStockExitId: newExit.id,
+              convertedToStockExitNumber: newExitNumber 
+            }
+          : order
+      ));
+    }
+    
+    setStockExits([...stockExits, newExit as StockExit]);
+    toast.success('Saída de stock registada com sucesso!');
+  };
+
+  const updateStockExit = (id: string, exit: Partial<StockExit>) => {
+    const oldExit = stockExits.find(e => e.id === id);
+    
+    if (!oldExit) {
+      toast.error('Saída não encontrada.');
+      return;
+    }
+    
+    if (exit.items) {
+      oldExit.items.forEach(oldItem => {
+        setProducts(products.map(product => 
+          product.id === oldItem.productId 
+            ? { ...product, currentStock: product.currentStock + oldItem.quantity }
+            : product
+        ));
+      });
+      
+      let hasEnoughStock = true;
+      
+      exit.items.forEach(newItem => {
+        const product = products.find(p => p.id === newItem.productId);
+        const oldItemIndex = oldExit.items.findIndex(item => item.productId === newItem.productId);
+        const oldQuantity = oldItemIndex >= 0 ? oldExit.items[oldItemIndex].quantity : 0;
+        
+        const adjustedCurrentStock = product ? product.currentStock + oldQuantity : 0;
+        
+        if (!product || adjustedCurrentStock < newItem.quantity) {
+          hasEnoughStock = false;
+          toast.error(`Stock insuficiente para ${newItem.productName}. Disponível: ${adjustedCurrentStock} unidades.`);
+        }
+      });
+      
+      if (!hasEnoughStock) return;
+      
+      exit.items.forEach(newItem => {
+        setProducts(products.map(product => 
+          product.id === newItem.productId 
+            ? { ...product, currentStock: product.currentStock - newItem.quantity }
+            : product
+        ));
+      });
+    }
+    
+    setStockExits(stockExits.map(e => e.id === id ? { ...e, ...exit } : e));
+    toast.success('Saída de stock atualizada com sucesso!');
+  };
+
+  const deleteStockExit = (id: string) => {
+    const exit = stockExits.find(e => e.id === id);
+    
+    if (!exit) {
+      toast.error('Saída não encontrada.');
+      return;
+    }
+    
+    if (exit.fromOrderId) {
+      setOrders(orders.map(order => 
+        order.id === exit.fromOrderId 
+          ? { ...order, convertedToStockExitId: undefined }
+          : order
+      ));
+    }
+    
+    exit.items.forEach(item => {
+      setProducts(products.map(p => 
+        p.id === item.productId 
+          ? { ...p, currentStock: p.currentStock + item.quantity }
+          : p
+      ));
+    });
+    
+    setStockExits(stockExits.filter(e => e.id !== id));
+    toast.success('Saída de stock excluída com sucesso!');
+  };
+
+  const addOrder = async (order: Omit<Order, 'id' | 'number'>) => {
+    const newOrderNumber = await getNextOrderNumber();
+    
+    const newOrder = { 
+      ...order, 
+      id: uuidv4(),
+      number: newOrderNumber
+    };
+    setOrders([...orders, newOrder as Order]);
+    toast.success('Encomenda registada com sucesso!');
+  };
+
+  const updateOrder = (id: string, order: Partial<Order>) => {
+    const existingOrder = orders.find(o => o.id === id);
+    
+    if (!existingOrder) {
+      toast.error('Encomenda não encontrada.');
+      return;
+    }
+    
+    if (existingOrder.convertedToStockExitId) {
+      toast.error('Não é possível editar uma encomenda já convertida em saída de stock.');
+      return;
+    }
+    
+    setOrders(orders.map(o => o.id === id ? { ...o, ...order } : o));
+    toast.success('Encomenda atualizada com sucesso!');
+  };
+
+  const deleteOrder = (id: string) => {
+    const existingOrder = orders.find(o => o.id === id);
+    
+    if (!existingOrder) {
+      toast.error('Encomenda não encontrada.');
+      return;
+    }
+    
+    if (existingOrder.convertedToStockExitId) {
+      toast.error('Não é possível excluir uma encomenda já convertida em saída de stock.');
+      return;
+    }
+    
+    setOrders(orders.filter(o => o.id !== id));
+    toast.success('Encomenda excluída com sucesso!');
+  };
+
+  const convertOrderToStockExit = (orderId: string) => {
+    const order = orders.find(o => o.id === orderId);
+    
+    if (!order) {
+      toast.error('Encomenda não encontrada.');
+      throw new Error('Order not found');
+    }
+    
+    if (order.convertedToStockExitId) {
+      toast.error('Esta encomenda já foi convertida em saída de stock.');
+      throw new Error('Order already converted');
+    }
+    
+    let hasEnoughStock = true;
+    
+    order.items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product || product.currentStock < item.quantity) {
+        hasEnoughStock = false;
+        toast.error(`Stock insuficiente para ${item.productName}. Disponível: ${product?.currentStock || 0} unidades.`);
+      }
+    });
+    
+    if (!hasEnoughStock) {
+      throw new Error('Insufficient stock');
+    }
+    
+    const stockExit: Omit<StockExit, 'id' | 'createdAt' | 'number'> = {
+      clientId: order.clientId,
+      clientName: order.clientName || '',
+      items: order.items.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        salePrice: item.salePrice
+      })),
+      date: new Date().toISOString().split('T')[0],
+      fromOrderId: order.id,
+      fromOrderNumber: order.number
+    };
+    
+    addStockExit(stockExit);
+    
+    return 'success';
+  };
+
+  const findProduct = (id: string) => products.find(p => p.id === id);
+  const findCategory = (id: string) => categories.find(c => c.id === id);
+  const findClient = (id: string) => clients.find(c => c.id === id);
+  const findSupplier = (id: string) => suppliers.find(s => s.id === id);
+  const findOrder = (id: string) => orders.find(o => o.id === id);
+
+  const getProduct = (id: string) => products.find(p => p.id === id);
+  const getCategory = (id: string) => categories.find(c => c.id === id);
+  const getClient = (id: string) => clients.find(c => c.id === id);
+  const getSupplier = (id: string) => suppliers.find(s => s.id === id);
+
+  const getProductHistory = (id: string) => {
+    const product = products.find(p => p.id === id);
+    
+    const entries = stockEntries.filter(entry => 
+      entry.items.some(item => item.productId === id)
+    );
+    
+    const exits = stockExits.filter(exit => 
+      exit.items.some(item => item.productId === id)
+    );
+    
+    return { product, entries, exits };
+  };
+
+  const getClientHistory = (id: string) => {
+    const client = clients.find(c => c.id === id);
+    const exitItems = stockExits
+      .filter(exit => exit.clientId === id)
+      .flatMap(exit => exit.items.map(item => ({
+        ...item,
+        exitId: exit.id,
+        exitDate: exit.date,
+        exitCreatedAt: exit.createdAt
+      })));
+      
+    const clientOrders = orders.filter(order => order.clientId === id);
+    
+    return { client, exitItems, orders: clientOrders };
+  };
+
+  const getSupplierHistory = (id: string) => {
+    const supplier = suppliers.find(s => s.id === id);
+    const entryItems = stockEntries
+      .filter(entry => entry.supplierId === id)
+      .flatMap(entry => entry.items.map(item => ({
+        ...item,
+        entryId: entry.id,
+        entryDate: entry.date,
+        entryCreatedAt: entry.createdAt
+      })));
+      
+    return { supplier, entryItems };
+  };
+
+  const getBusinessAnalytics = () => {
+    let totalSales = 0;
+    let totalRevenue = 0;
+    let totalCost = 0;
+    let totalProfit = 0;
+    
+    const productSales: Record<string, {
+      productId: string,
+      name: string,
+      totalQuantity: number,
+      totalRevenue: number,
+      averagePrice: number
+    }> = {};
+    
+    const clientPurchases: Record<string, {
+      clientId: string,
+      name: string,
+      purchaseCount: number,
+      totalSpent: number,
+      lastPurchaseDate: string
+    }> = {};
+    
+    const currentStockValue = products.reduce((total, product) => {
+      return total + (product.purchasePrice * product.currentStock);
+    }, 0);
+    
+    stockExits.forEach(exit => {
+      exit.items.forEach(item => {
+        totalSales += item.quantity;
+        const saleRevenue = item.quantity * item.salePrice;
+        totalRevenue += saleRevenue;
+        
+        const product = products.find(p => p.id === item.productId);
+        if (product) {
+          const itemCost = item.quantity * product.purchasePrice;
+          totalCost += itemCost;
+          totalProfit += (saleRevenue - itemCost);
+        }
+        
+        if (!productSales[item.productId]) {
+          productSales[item.productId] = {
+            productId: item.productId,
+            name: item.productName,
+            totalQuantity: 0,
+            totalRevenue: 0,
+            averagePrice: 0
+          };
+        }
+        
+        productSales[item.productId].totalQuantity += item.quantity;
+        productSales[item.productId].totalRevenue += saleRevenue;
+      });
+      
+      if (!clientPurchases[exit.clientId]) {
+        const client = clients.find(c => c.id === exit.clientId);
+        clientPurchases[exit.clientId] = {
+          clientId: exit.clientId,
+          name: client?.name || exit.clientName,
+          purchaseCount: 0,
+          totalSpent: 0,
+          lastPurchaseDate: ''
+        };
+      }
+      
+      const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      clientPurchases[exit.clientId].purchaseCount++;
+      clientPurchases[exit.clientId].totalSpent += exitTotal;
+      
+      if (!clientPurchases[exit.clientId].lastPurchaseDate || 
+          new Date(exit.date) > new Date(clientPurchases[exit.clientId].lastPurchaseDate)) {
+        clientPurchases[exit.clientId].lastPurchaseDate = exit.date;
+      }
+    });
+    
+    Object.values(productSales).forEach(product => {
+      if (product.totalQuantity > 0) {
+        product.averagePrice = product.totalRevenue / product.totalQuantity;
+      }
+    });
+    
+    const topSellingProducts = Object.values(productSales)
+      .sort((a, b) => b.totalQuantity - a.totalQuantity)
+      .slice(0, 5);
+    
+    const mostProfitableProducts = Object.values(productSales)
+      .sort((a, b) => b.totalRevenue - a.totalRevenue)
+      .slice(0, 5);
+    
+    const topClients = Object.values(clientPurchases)
+      .sort((a, b) => b.totalSpent - a.totalSpent)
+      .slice(0, 5);
+    
+    const lowStockProducts = products
+      .filter(p => p.currentStock <= p.minStock)
+      .map(p => ({
+        id: p.id,
+        name: p.name,
+        code: p.code,
+        currentStock: p.currentStock,
+        minStock: p.minStock
+      }));
+    
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    const inactiveClients = clients.filter(client => {
+      const clientData = clientPurchases[client.id];
+      return !clientData || !clientData.lastPurchaseDate || 
+             new Date(clientData.lastPurchaseDate) < thirtyDaysAgo;
+    }).map(client => ({
+      id: client.id,
+      name: client.name,
+      lastPurchaseDate: clientPurchases[client.id]?.lastPurchaseDate || 'Nunca'
+    }));
+    
+    const overallProfitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+    
+    return {
+      summary: {
+        totalSales,
+        totalRevenue,
+        totalCost,
+        totalProfit,
+        profitMargin: overallProfitMargin,
+        currentStockValue
+      },
+      topSellingProducts,
+      mostProfitableProducts,
+      topClients,
+      lowStockProducts,
+      inactiveClients
+    };
+  };
+
+  return (
+    <DataContext.Provider value={{
+      products,
+      categories,
+      clients,
+      suppliers,
+      stockEntries,
+      stockExits,
+      orders,
+      
+      addProduct,
+      updateProduct,
+      deleteProduct,
+      
+      addCategory,
+      updateCategory,
+      deleteCategory,
+      
+      addClient,
+      updateClient,
+      deleteClient,
+      
+      addSupplier,
+      updateSupplier,
+      deleteSupplier,
+      
+      addStockEntry,
+      updateStockEntry,
+      deleteStockEntry,
+      
+      addStockExit,
+      updateStockExit,
+      deleteStockExit,
+      
+      addOrder,
+      updateOrder,
+      deleteOrder,
+      convertOrderToStockExit,
+      
+      findProduct,
+      findCategory,
+      findClient,
+      findSupplier,
+      findOrder,
+      
+      getProduct,
+      getProductHistory,
+      getCategory,
+      getClient,
+      getClientHistory,
+      getSupplier,
+      getSupplierHistory,
+      
+      getBusinessAnalytics
+    }}>
+      {children}
+    </DataContext.Provider>
+  );
+};
 
 export const useData = () => {
   const context = useContext(DataContext);
@@ -57,896 +923,16 @@ export const useData = () => {
   return context;
 };
 
-export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
-  const [stockExits, setStockExits] = useState<StockExit[]>([]);
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    try {
-      const productsData = localStorage.getItem('products');
-      if (productsData) {
-        setProducts(JSON.parse(productsData));
-      }
-      
-      const categoriesData = localStorage.getItem('categories');
-      if (categoriesData) {
-        setCategories(JSON.parse(categoriesData));
-      }
-      
-      const clientsData = localStorage.getItem('clients');
-      if (clientsData) {
-        setClients(JSON.parse(clientsData));
-      }
-      
-      const suppliersData = localStorage.getItem('suppliers');
-      if (suppliersData) {
-        setSuppliers(JSON.parse(suppliersData));
-      }
-      
-      const ordersData = localStorage.getItem('orders');
-      if (ordersData) {
-        setOrders(JSON.parse(ordersData));
-      }
-      
-      const stockEntriesData = localStorage.getItem('stockEntries');
-      if (stockEntriesData) {
-        setStockEntries(JSON.parse(stockEntriesData));
-      }
-      
-      const stockExitsData = localStorage.getItem('stockExits');
-      if (stockExitsData) {
-        setStockExits(JSON.parse(stockExitsData));
-      }
-    } catch (error) {
-      console.error('Error loading data from localStorage:', error);
-    }
-  };
-
-  const saveData = (key: string, data: any) => {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch (error) {
-      console.error(`Error saving ${key} to localStorage:`, error);
-    }
-  };
-
-  const generateOrderNumber = async (): Promise<string> => {
-    const prefix = 'ORD';
-    const randomNumber = Math.floor(Math.random() * 100000);
-    const orderNumber = `${prefix}-${randomNumber.toString().padStart(5, '0')}`;
-    return orderNumber;
-  };
-  
-  const generateStockEntryNumber = async (): Promise<string> => {
-    const prefix = 'ENT';
-    const randomNumber = Math.floor(Math.random() * 100000);
-    const entryNumber = `${prefix}-${randomNumber.toString().padStart(5, '0')}`;
-    return entryNumber;
-  };
-  
-  const generateStockExitNumber = async (): Promise<string> => {
-    const prefix = 'SAI';
-    const randomNumber = Math.floor(Math.random() * 100000);
-    const exitNumber = `${prefix}-${randomNumber.toString().padStart(5, '0')}`;
-    return exitNumber;
-  };
-
-  const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> => {
-    const newProduct: Product = {
-      id: uuidv4(),
-      ...product,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+declare global {
+  interface Window {
+    appData: {
+      products: Product[];
+      categories: Category[];
+      clients: Client[];
+      suppliers: Supplier[];
+      stockEntries: StockEntry[];
+      stockExits: StockExit[];
+      orders: Order[];
     };
-    
-    try {
-      console.log('Would save product to Supabase:', newProduct);
-      /*
-      const { error } = await supabase
-        .from('products')
-        .insert({
-          id: newProduct.id,
-          code: newProduct.code,
-          name: newProduct.name,
-          description: newProduct.description,
-          category: newProduct.category,
-          purchase_price: newProduct.purchasePrice,
-          sale_price: newProduct.salePrice,
-          current_stock: newProduct.currentStock,
-          min_stock: newProduct.minStock,
-          supplier_id: newProduct.supplierId,
-          supplier_name: newProduct.supplierName,
-          created_at: newProduct.createdAt,
-          updated_at: newProduct.updatedAt
-        });
-      
-      if (error) {
-        console.error('Error saving product to Supabase:', error);
-        throw error;
-      }
-      
-      console.log('Product saved successfully to Supabase');
-      */
-    } catch (error) {
-      console.error('Error saving product:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    setProducts(prev => [newProduct, ...prev]);
-    saveData('products', [...products, newProduct]);
-    return newProduct;
-  };
-
-  const updateProduct = (id: string, updates: Partial<Product>) => {
-    const updatedProducts = products.map(product =>
-      product.id === id ? { ...product, ...updates, updatedAt: new Date().toISOString() } : product
-    );
-    setProducts(updatedProducts);
-    saveData('products', updatedProducts);
-  };
-
-  const deleteProduct = (id: string) => {
-    const filteredProducts = products.filter(product => product.id !== id);
-    setProducts(filteredProducts);
-    saveData('products', filteredProducts);
-  };
-
-  const addCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> => {
-    const newCategory: Category = {
-      id: uuidv4(),
-      ...category,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    try {
-      console.log('Would save category to Supabase:', newCategory);
-      /*
-      const { error } = await supabase
-        .from('categories')
-        .insert({
-          id: newCategory.id,
-          name: newCategory.name,
-          description: newCategory.description,
-          created_at: newCategory.createdAt,
-          updated_at: newCategory.updatedAt
-        });
-      
-      if (error) {
-        console.error('Error saving category to Supabase:', error);
-        throw error;
-      }
-      
-      console.log('Category saved successfully to Supabase');
-      */
-    } catch (error) {
-      console.error('Error saving category:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    setCategories(prev => [newCategory, ...prev]);
-    saveData('categories', [...categories, newCategory]);
-    return newCategory;
-  };
-
-  const updateCategory = (id: string, updates: Partial<Category>) => {
-    const updatedCategories = categories.map(category =>
-      category.id === id ? { ...category, ...updates, updatedAt: new Date().toISOString() } : category
-    );
-    setCategories(updatedCategories);
-    saveData('categories', updatedCategories);
-  };
-
-  const deleteCategory = (id: string) => {
-    const filteredCategories = categories.filter(category => category.id !== id);
-    setCategories(filteredCategories);
-    saveData('categories', filteredCategories);
-  };
-
-  const addClient = async (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> => {
-    const newClient: Client = {
-      id: uuidv4(),
-      ...client,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    try {
-      const { error } = await supabase
-        .from('Clientes')
-        .insert({
-          id: newClient.id,
-          name: newClient.name,
-          email: newClient.email,
-          phone: newClient.phone,
-          address: newClient.address,
-          taxId: newClient.taxId,
-          notes: newClient.notes,
-          created_at: newClient.createdAt
-        });
-      
-      if (error) {
-        console.error('Error saving client to Supabase:', error);
-        throw error;
-      }
-      
-      console.log('Client saved successfully to Supabase');
-    } catch (error) {
-      console.error('Error saving client:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    setClients(prev => [newClient, ...prev]);
-    saveData('clients', [...clients, newClient]);
-    return newClient;
-  };
-
-  const updateClient = (id: string, updates: Partial<Client>) => {
-    const updatedClients = clients.map(client =>
-      client.id === id ? { ...client, ...updates, updatedAt: new Date().toISOString() } : client
-    );
-    setClients(updatedClients);
-    saveData('clients', updatedClients);
-  };
-
-  const deleteClient = (id: string) => {
-    const filteredClients = clients.filter(client => client.id !== id);
-    setClients(filteredClients);
-    saveData('clients', filteredClients);
-  };
-
-  const addSupplier = async (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<Supplier> => {
-    const newSupplier: Supplier = {
-      id: uuidv4(),
-      ...supplier,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    try {
-      console.log('Would save supplier to Supabase:', newSupplier);
-      /*
-      const { error } = await supabase
-        .from('suppliers')
-        .insert({
-          id: newSupplier.id,
-          name: newSupplier.name,
-          email: newSupplier.email,
-          phone: newSupplier.phone,
-          address: newSupplier.address,
-          tax_id: newSupplier.taxId,
-          notes: newSupplier.notes,
-          created_at: newSupplier.createdAt,
-          updated_at: newSupplier.updatedAt
-        });
-      
-      if (error) {
-        console.error('Error saving supplier to Supabase:', error);
-        throw error;
-      }
-      
-      console.log('Supplier saved successfully to Supabase');
-      */
-    } catch (error) {
-      console.error('Error saving supplier:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    setSuppliers(prev => [newSupplier, ...prev]);
-    saveData('suppliers', [...suppliers, newSupplier]);
-    return newSupplier;
-  };
-
-  const updateSupplier = (id: string, updates: Partial<Supplier>) => {
-    const updatedSuppliers = suppliers.map(supplier =>
-      supplier.id === id ? { ...supplier, ...updates, updatedAt: new Date().toISOString() } : supplier
-    );
-    setSuppliers(updatedSuppliers);
-    saveData('suppliers', updatedSuppliers);
-  };
-
-  const deleteSupplier = (id: string) => {
-    const filteredSuppliers = suppliers.filter(supplier => supplier.id !== id);
-    setSuppliers(filteredSuppliers);
-    saveData('suppliers', filteredSuppliers);
-  };
-
-  const addOrder = async (order: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'orderNumber'>): Promise<Order> => {
-    const orderNumber = await generateOrderNumber();
-    
-    const newOrder: Order = {
-      id: uuidv4(),
-      ...order,
-      orderNumber: orderNumber,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    try {
-      const { error } = await supabase
-        .from('Encomendas')
-        .insert({
-          id: newOrder.id,
-          ordernumber: newOrder.orderNumber,
-          clientid: newOrder.clientId,
-          clientname: newOrder.clientName,
-          date: newOrder.date,
-          notes: newOrder.notes,
-          status: newOrder.status,
-          discount: newOrder.discount,
-          createdat: newOrder.createdAt,
-          updatedat: newOrder.updatedAt
-        });
-      
-      if (error) {
-        console.error('Error saving order to Supabase:', error);
-        throw error;
-      }
-      
-      // Insert order items
-      if (newOrder.items && newOrder.items.length > 0) {
-        const orderItems = newOrder.items.map(item => ({
-          encomendaid: newOrder.id,
-          productid: item.productId,
-          productname: item.productName,
-          quantity: item.quantity,
-          saleprice: item.salePrice,
-          discount: item.discount || 0
-        }));
-        
-        const { error: itemsError } = await supabase
-          .from('EncomendasItems')
-          .insert(orderItems);
-        
-        if (itemsError) {
-          console.error('Error saving order items to Supabase:', itemsError);
-          // Continue even with errors to save other items
-        }
-      }
-      
-      console.log('Order saved successfully to Supabase');
-    } catch (error) {
-      console.error('Error saving order:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    setOrders(prev => [newOrder, ...prev]);
-    saveData('orders', [...orders, newOrder]);
-    return newOrder;
-  };
-
-  const updateOrder = (id: string, updates: Partial<Order>) => {
-    const updatedOrders = orders.map(order =>
-      order.id === id ? { ...order, ...updates, updatedAt: new Date().toISOString() } : order
-    );
-    setOrders(updatedOrders);
-    saveData('orders', updatedOrders);
-  };
-
-  const deleteOrder = (id: string) => {
-    const filteredOrders = orders.filter(order => order.id !== id);
-    setOrders(filteredOrders);
-    saveData('orders', filteredOrders);
-  };
-
-  const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>): Promise<StockEntry> => {
-    const entryNumber = await generateStockEntryNumber();
-    
-    const newEntry: StockEntry = {
-      id: uuidv4(),
-      ...entry,
-      entryNumber: entryNumber,
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    try {
-      const { error } = await supabase
-        .from('StockEntries')
-        .insert({
-          id: newEntry.id,
-          supplierid: newEntry.supplierId,
-          suppliername: newEntry.supplierName,
-          entrynumber: newEntry.entryNumber,
-          date: newEntry.date,
-          invoicenumber: newEntry.invoiceNumber,
-          notes: newEntry.notes,
-          status: newEntry.status,
-          discount: newEntry.discount,
-          createdat: newEntry.createdAt,
-          updatedat: newEntry.updatedAt
-        });
-      
-      if (error) {
-        console.error('Error saving entry to Supabase:', error);
-        throw error;
-      }
-      
-      // Insert entry items
-      if (newEntry.items && newEntry.items.length > 0) {
-        const entryItems = newEntry.items.map(item => ({
-          entryid: newEntry.id,
-          productid: item.productId,
-          productname: item.productName,
-          quantity: item.quantity,
-          purchaseprice: item.purchasePrice
-        }));
-        
-        const { error: itemsError } = await supabase
-          .from('StockEntriesItems')
-          .insert(entryItems);
-        
-        if (itemsError) {
-          console.error('Error saving entry items to Supabase:', itemsError);
-          // Continue even with errors to save other items
-        }
-      }
-      
-      console.log('Entry saved successfully to Supabase');
-    } catch (error) {
-      console.error('Error saving entry:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    // Update product stock quantities (positive for entries)
-    newEntry.items.forEach(item => {
-      updateProductStock(item.productId, item.quantity);
-    });
-    
-    // Save to local state
-    setStockEntries(prev => [newEntry, ...prev]);
-    saveData('stockEntries', [...stockEntries, newEntry]);
-    return newEntry;
-  };
-
-  const updateStockEntry = (id: string, updates: Partial<StockEntry>) => {
-    const updatedStockEntries = stockEntries.map(entry =>
-      entry.id === id ? { ...entry, ...updates, updatedAt: new Date().toISOString() } : entry
-    );
-    setStockEntries(updatedStockEntries);
-    saveData('stockEntries', updatedStockEntries);
-  };
-
-  const deleteStockEntry = (id: string) => {
-    const filteredStockEntries = stockEntries.filter(entry => entry.id !== id);
-    setStockEntries(filteredStockEntries);
-    saveData('stockEntries', filteredStockEntries);
-  };
-
-  const addStockExit = async (exitData: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>) => {
-    const exitNumber = await generateStockExitNumber();
-    
-    const newExit: StockExit = {
-      id: uuidv4(),
-      ...exitData,
-      exitNumber: exitNumber,
-      status: 'completed',
-      discount: exitData.discount || 0,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    
-    try {
-      console.log('Saving exit to Supabase:', newExit);
-      
-      // Insert basic exit data
-      const { error } = await supabase
-        .from('StockExits')
-        .insert({
-          id: newExit.id,
-          clientid: newExit.clientId,
-          clientname: newExit.clientName,
-          reason: newExit.reason,
-          exitnumber: newExit.exitNumber,
-          date: newExit.date,
-          invoicenumber: newExit.invoiceNumber,
-          notes: newExit.notes,
-          status: newExit.status,
-          discount: newExit.discount,
-          fromorderid: newExit.fromOrderId,
-          createdat: newExit.createdAt,
-          updatedat: newExit.updatedAt
-        });
-      
-      if (error) {
-        console.error('Error saving exit to Supabase:', error);
-        throw error;
-      }
-      
-      // Insert exit items
-      if (newExit.items && newExit.items.length > 0) {
-        const exitItems = newExit.items.map(item => ({
-          exitid: newExit.id,
-          productid: item.productId,
-          productname: item.productName,
-          quantity: item.quantity,
-          saleprice: item.salePrice,
-          discount: item.discount || 0
-        }));
-        
-        const { error: itemsError } = await supabase
-          .from('StockExitsItems')
-          .insert(exitItems);
-        
-        if (itemsError) {
-          console.error('Error saving exit items to Supabase:', itemsError);
-          // Continue even with errors to save other items
-        }
-      }
-      
-      console.log('Exit saved successfully to Supabase');
-    } catch (error) {
-      console.error('Error saving exit:', error);
-      console.warn('Only saving locally due to error with Supabase');
-    }
-    
-    // Update product stock quantities (negative for exits)
-    newExit.items.forEach(item => {
-      updateProductStock(item.productId, -item.quantity);
-    });
-    
-    // Save to local state
-    setStockExits(prev => [newExit, ...prev]);
-    saveData('stockExits', [...stockExits, newExit]);
-    return newExit;
-  };
-
-  const updateStockExit = (id: string, updates: Partial<StockExit>) => {
-    const updatedStockExits = stockExits.map(exit =>
-      exit.id === id ? { ...exit, ...updates, updatedAt: new Date().toISOString() } : exit
-    );
-    setStockExits(updatedStockExits);
-    saveData('stockExits', updatedStockExits);
-  };
-
-  const deleteStockExit = (id: string) => {
-    const filteredStockExits = stockExits.filter(exit => exit.id !== id);
-    setStockExits(filteredStockExits);
-    saveData('stockExits', filteredStockExits);
-  };
-
-  const updateProductStock = (productId: string, quantityChange: number) => {
-    const updatedProducts = products.map(product => {
-      if (product.id === productId) {
-        const newStock = product.currentStock + quantityChange;
-        return { ...product, currentStock: newStock >= 0 ? newStock : 0, updatedAt: new Date().toISOString() };
-      }
-      return product;
-    });
-    setProducts(updatedProducts);
-    saveData('products', updatedProducts);
-  };
-
-  const findProduct = (id: string): Product | undefined => {
-    return products.find(product => product.id === id);
-  };
-  
-  const getProduct = (id: string): Product | undefined => {
-    return products.find(product => product.id === id);
-  };
-  
-  const getProductHistory = (id: string): { entries: StockEntry[], exits: StockExit[] } => {
-    const entries = stockEntries.filter(entry => entry.items.some(item => item.productId === id));
-    const exits = stockExits.filter(exit => exit.items.some(item => item.productId === id));
-    return { entries, exits };
-  };
-
-  const findClient = (id: string): Client | undefined => {
-    return clients.find(client => client.id === id);
-  };
-  
-  const getClient = (id: string): Client | undefined => {
-    return clients.find(client => client.id === id);
-  };
-  
-  const getClientHistory = (id: string): { orders: Order[], stockExits: StockExit[] } => {
-    const clientOrders = orders.filter(order => order.clientId === id);
-    const clientExits = stockExits.filter(exit => exit.clientId === id);
-    return { orders: clientOrders, stockExits: clientExits };
-  };
-
-  const findSupplier = (id: string): Supplier | undefined => {
-    return suppliers.find(supplier => supplier.id === id);
-  };
-  
-  const getSupplier = (id: string): Supplier | undefined => {
-    return suppliers.find(supplier => supplier.id === id);
-  };
-  
-  const getSupplierHistory = (id: string): { entries: StockEntry[] } => {
-    const entries = stockEntries.filter(entry => entry.supplierId === id);
-    return { entries };
-  };
-
-  const findOrder = (id: string): Order | undefined => {
-    return orders.find(order => order.id === id);
-  };
-  
-  const findCategory = (id: string): Category | undefined => {
-    return categories.find(category => category.id === id);
-  };
-  
-  const getCategory = (id: string): Category | undefined => {
-    return categories.find(category => category.id === id);
-  };
-
-  const convertOrderToStockExit = (orderId: string) => {
-    const order = findOrder(orderId);
-    if (!order) return;
-    
-    const client = findClient(order.clientId);
-    
-    // Create a new stock exit from the order
-    const newExit: StockExit = {
-      id: uuidv4(),
-      clientId: order.clientId,
-      clientName: client?.name || order.clientName,
-      reason: `Encomenda ${order.orderNumber}`,
-      items: order.items.map(item => ({
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        salePrice: item.salePrice,
-        discount: item.discount || 0  // Make sure to include the discount
-      })),
-      date: new Date().toISOString(),
-      notes: order.notes,
-      status: 'completed',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      exitNumber: '',
-      discount: order.discount,
-      fromOrderId: order.id
-    };
-    
-    // Generate a number for the exit
-    generateStockExitNumber().then(async (exitNumber) => {
-      newExit.exitNumber = exitNumber;
-      
-      try {
-        // Insert converted exit data
-        const { error } = await supabase
-          .from('StockExits')
-          .insert({
-            id: newExit.id,
-            clientid: newExit.clientId,
-            clientname: newExit.clientName,
-            reason: newExit.reason,
-            exitnumber: newExit.exitNumber,
-            date: newExit.date,
-            invoicenumber: newExit.invoiceNumber,
-            notes: newExit.notes,
-            status: newExit.status,
-            discount: newExit.discount,
-            fromorderid: newExit.fromOrderId,
-            createdat: newExit.createdAt,
-            updatedat: newExit.updatedAt
-          });
-        
-        if (error) {
-          console.error('Error saving converted exit to Supabase:', error);
-          throw error;
-        }
-        
-        // Insert exit items
-        if (newExit.items && newExit.items.length > 0) {
-          const exitItems = newExit.items.map(item => ({
-            exitid: newExit.id,
-            productid: item.productId,
-            productname: item.productName,
-            quantity: item.quantity,
-            saleprice: item.salePrice,
-            discount: item.discount || 0
-          }));
-          
-          const { error: itemsError } = await supabase
-            .from('StockExitsItems')
-            .insert(exitItems);
-          
-          if (itemsError) {
-            console.error('Error saving converted exit items to Supabase:', itemsError);
-            // Continue even with errors to save other items
-          }
-        }
-        
-        // Update order status
-        const { error: updateError } = await supabase
-          .from('Encomendas')
-          .update({
-            status: 'completed',
-            convertedtostockexitid: newExit.id,
-            updatedat: new Date().toISOString()
-          })
-          .eq('id', order.id);
-        
-        if (updateError) {
-          console.error('Error updating order status in Supabase:', updateError);
-          throw updateError;
-        }
-        
-        console.log('Order to exit conversion registered successfully in Supabase');
-      } catch (error) {
-        console.error('Error registering conversion:', error);
-        // Continue local conversion even if Supabase fails
-        console.warn('Only local conversion due to error with Supabase');
-      }
-      
-      // Update product stock quantities (negative for exits)
-      newExit.items.forEach(item => {
-        updateProductStock(item.productId, -item.quantity);
-      });
-      
-      // Add the exit to the list
-      setStockExits(prev => [newExit, ...prev]);
-      saveData('stockExits', [...stockExits, newExit]);
-      
-      // Update the order to mark it as converted
-      updateOrder(order.id, { 
-        status: 'completed', 
-        convertedToStockExitId: newExit.id 
-      });
-    });
-  };
-
-  const getBusinessAnalytics = () => {
-    // Calculate total revenue
-    const totalRevenue = stockExits.reduce((sum, exit) => {
-      return sum + exit.items.reduce((itemSum, item) => itemSum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
-    }, 0);
-    
-    // Calculate total cost
-    const totalCost = stockEntries.reduce((sum, entry) => {
-      return sum + entry.items.reduce((itemSum, item) => itemSum + (item.quantity * item.purchasePrice), 0);
-    }, 0);
-    
-    // Calculate total profit
-    const totalProfit = totalRevenue - totalCost;
-    
-    // Calculate profit margin
-    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
-    
-    // Calculate current stock value
-    const currentStockValue = products.reduce((sum, product) => {
-      return sum + (product.currentStock * product.purchasePrice);
-    }, 0);
-    
-    // Find top selling products
-    const productSales = stockExits.flatMap(exit => exit.items).reduce((acc, item) => {
-      const { productId, quantity, salePrice } = item;
-      if (!acc[productId]) {
-        acc[productId] = {
-          name: item.productName,
-          totalQuantity: 0,
-          totalRevenue: 0
-        };
-      }
-      acc[productId].totalQuantity += quantity;
-      acc[productId].totalRevenue += quantity * salePrice;
-      return acc;
-    }, {} as Record<string, { name: string, totalQuantity: number, totalRevenue: number }>);
-    
-    const topSellingProducts = Object.entries(productSales)
-      .sort(([, a], [, b]) => b.totalQuantity - a.totalQuantity)
-      .slice(0, 5)
-      .map(([productId, data]) => ({
-        id: productId,
-        name: data.name,
-        totalQuantity: data.totalQuantity,
-        totalRevenue: data.totalRevenue
-      }));
-    
-    // Find most profitable products
-    const mostProfitableProducts = Object.entries(productSales)
-      .sort(([, a], [, b]) => b.totalRevenue - a.totalRevenue)
-      .slice(0, 5)
-      .map(([productId, data]) => ({
-        id: productId,
-        name: data.name,
-        totalQuantity: data.totalQuantity,
-        totalRevenue: data.totalRevenue
-      }));
-    
-    // Top clients
-    const clientSales = stockExits.reduce((acc, exit) => {
-      const { clientId, clientName, items } = exit;
-      if (clientId && !acc[clientId]) {
-        acc[clientId] = {
-          name: clientName || 'Unknown',
-          totalRevenue: 0,
-          orderCount: 0
-        };
-      }
-      
-      if (clientId) {
-        const saleTotal = items.reduce((sum, item) => 
-          sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
-        acc[clientId].totalRevenue += saleTotal;
-        acc[clientId].orderCount += 1;
-      }
-      
-      return acc;
-    }, {} as Record<string, { name: string, totalRevenue: number, orderCount: number }>);
-    
-    const topClients = Object.entries(clientSales)
-      .sort(([, a], [, b]) => b.totalRevenue - a.totalRevenue)
-      .slice(0, 5)
-      .map(([clientId, data]) => ({
-        id: clientId,
-        name: data.name,
-        totalRevenue: data.totalRevenue,
-        orderCount: data.orderCount
-      }));
-    
-    return {
-      totalRevenue,
-      totalCost,
-      totalProfit,
-      profitMargin,
-      currentStockValue,
-      topSellingProducts,
-      mostProfitableProducts,
-      topClients
-    };
-  };
-  
-  return (
-    <DataContext.Provider
-      value={{
-        products,
-        categories,
-        clients,
-        suppliers,
-        orders,
-        stockEntries,
-        stockExits,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        getProduct,
-        getProductHistory,
-        addCategory,
-        updateCategory,
-        deleteCategory,
-        getCategory,
-        addClient,
-        updateClient,
-        deleteClient,
-        getClient,
-        getClientHistory,
-        addSupplier,
-        updateSupplier,
-        deleteSupplier,
-        getSupplier,
-        getSupplierHistory,
-        addOrder,
-        updateOrder,
-        deleteOrder,
-        findOrder,
-        addStockEntry,
-        updateStockEntry,
-        deleteStockEntry,
-        addStockExit,
-        updateStockExit,
-        deleteStockExit,
-        updateProductStock,
-        findProduct,
-        findClient,
-        convertOrderToStockExit,
-        getBusinessAnalytics
-      }}
-    >
-      {children}
-    </DataContext.Provider>
-  );
-};
+  }
+}

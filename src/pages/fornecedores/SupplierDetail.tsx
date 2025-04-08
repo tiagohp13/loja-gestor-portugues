@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -29,7 +28,6 @@ const SupplierDetail = () => {
   }
   
   const supplierHistory = getSupplierHistory(supplier.id);
-  const entriesArray = supplierHistory.entries || [];
   
   const handleDelete = () => {
     deleteSupplier(supplier.id);
@@ -115,7 +113,7 @@ const SupplierDetail = () => {
           <CardTitle>Histórico de Entregas</CardTitle>
         </CardHeader>
         <CardContent>
-          {entriesArray.length > 0 ? (
+          {supplierHistory.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -128,26 +126,23 @@ const SupplierDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {entriesArray.map(entry => {
-                    // Handle items within entries
-                    return entry.items && entry.items.map((item, itemIndex) => {
-                      const product = products.find(p => p.id === item.productId);
-                      
-                      return (
-                        <tr key={`${entry.id}-${itemIndex}`} className="border-b hover:bg-gestorApp-gray-light">
-                          <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
-                          <td className="px-4 py-2">
-                            {product 
-                              ? `${product.code} - ${product.name}` 
-                              : item.productName || "Desconhecido"}
-                          </td>
-                          <td className="px-4 py-2">{item.quantity} unidades</td>
-                          <td className="px-4 py-2 text-right">{formatCurrency(item.purchasePrice)}</td>
-                          <td className="px-4 py-2 text-right">{formatCurrency(item.quantity * item.purchasePrice)}</td>
-                        </tr>
-                      );
-                    });
-                  }).flat().filter(Boolean)}
+                  {supplierHistory.map(entry => {
+                    const product = products.find(p => p.id === entry.productId);
+                    
+                    return (
+                      <tr key={entry.id} className="border-b hover:bg-gestorApp-gray-light">
+                        <td className="px-4 py-2">{formatDate(new Date(entry.createdAt))}</td>
+                        <td className="px-4 py-2">
+                          {product 
+                            ? `${product.code} - ${product.name}` 
+                            : entry.productName || "Desconhecido"}
+                        </td>
+                        <td className="px-4 py-2">{entry.quantity} unidades</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(entry.purchasePrice)}</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(entry.quantity * entry.purchasePrice)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

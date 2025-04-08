@@ -15,18 +15,18 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Search, Plus, Trash, Package } from 'lucide-react';
-import { StockExitItem, Client } from '@/types';
+import { Search, Check, Plus, Trash, LogOut } from 'lucide-react';
+import { StockExitItem } from '@/types';
 
 const StockExitNew = () => {
   const navigate = useNavigate();
   const { addStockExit, products, clients } = useData();
-  
   const [exitDetails, setExitDetails] = useState({
-    date: new Date().toISOString().split('T')[0],
-    notes: '',
     clientId: '',
-    clientName: ''
+    clientName: '',
+    date: new Date().toISOString().split('T')[0],
+    invoiceNumber: '',
+    notes: ''
   });
   
   const [items, setItems] = useState<StockExitItem[]>([]);
@@ -35,18 +35,18 @@ const StockExitNew = () => {
     productName: string;
     quantity: number;
     salePrice: number;
-    discount: number;
+    discountPercent: number;
   }>({
     productId: '',
     productName: '',
     quantity: 1,
     salePrice: 0,
-    discount: 0
+    discountPercent: 0
   });
   
-  const [productSearchTerm, setProductSearchTerm] = useState('');
-  const [clientSearchTerm, setClientSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
 
   const handleExitDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -61,14 +61,14 @@ const StockExitNew = () => {
     const { name, value } = e.target;
     setCurrentItem(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' || name === 'discount'
+      [name]: name === 'quantity' || name === 'salePrice' || name === 'discountPercent'
               ? parseFloat(value) || 0 
               : value
     }));
   };
 
-  const handleProductSearch = (value: string) => {
-    setProductSearchTerm(value);
+  const handleSearch = (value: string) => {
+    setSearchTerm(value);
   };
 
   const handleClientSearch = (value: string) => {
@@ -83,21 +83,26 @@ const StockExitNew = () => {
         productName: selectedProduct.name,
         quantity: 1,
         salePrice: selectedProduct.salePrice,
-        discount: 0
+        discountPercent: 0
       });
+      
+      // Automatically add product if this is the first selection
+      if (items.length === 0 && !isProductSearchOpen) {
+        setTimeout(() => {
+          addItemToExit();
+        }, 100);
+      }
     }
     setIsProductSearchOpen(false);
   };
-
+  
   const handleClientSelect = (clientId: string) => {
     const selectedClient = clients.find(c => c.id === clientId);
-    if (selectedClient) {
-      setExitDetails(prev => ({
-        ...prev,
-        clientId: selectedClient.id,
-        clientName: selectedClient.name
-      }));
-    }
+    setExitDetails(prev => ({
+      ...prev,
+      clientId,
+      clientName: selectedClient?.name || ''
+    }));
     setIsClientSearchOpen(false);
   };
   
@@ -107,79 +112,125 @@ const StockExitNew = () => {
       return;
     }
     
+    // Check if we have enough stock
+    const product = products.find(p => p.id === currentItem.productId);
+    if (!product) {
+      toast.error('Produto não encontrado');
+      return;
+    }
+    
+    // Check if the product is already in the exit list to calculate total needed quantity
+    const existingItem = items.find(item => item.productId === currentItem.productId);
+    const totalNeededQuantity = existingItem 
+      ? existingItem.quantity + currentItem.quantity 
+      : currentItem.quantity;
+    
+    if (product.currentStock < totalNeededQuantity) {
+      toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades`);
+      return;
+    }
+    
+    // Check if the product is already in the exit
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
+      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice,
-        discount: currentItem.discount
+        salePrice: currentItem.salePrice, // Update the price in case it changed
+        discountPercent: currentItem.discountPercent // Update the discount in case it changed
       };
       setItems(updatedItems);
     } else {
+      // Add new item
       setItems([...items, { ...currentItem }]);
     }
     
+    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
       quantity: 1,
       salePrice: 0,
-      discount: 0
+      discountPercent: 0
     });
-    setProductSearchTerm('');
+    setSearchTerm('');
   };
   
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
   };
 
-  const filteredProducts = productSearchTerm
+  const filteredProducts = searchTerm
     ? products.filter(product => 
-        product.name.toLowerCase().includes(productSearchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(productSearchTerm.toLowerCase())
+        (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.code.toLowerCase().includes(searchTerm.toLowerCase())) &&
+        product.currentStock > 0
       )
-    : products;
+    : products.filter(product => product.currentStock > 0);
 
   const filteredClients = clientSearchTerm
     ? clients.filter(client => 
-        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-        (client.taxId && client.taxId.toLowerCase().includes(clientSearchTerm.toLowerCase()))
+        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
       )
     : clients;
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (items.length === 0) {
-      toast.error('Adicione pelo menos um produto');
+    if (!exitDetails.clientId || items.length === 0) {
+      toast.error('Selecione um cliente e adicione pelo menos um produto');
       return;
     }
     
+    const client = clients.find(c => c.id === exitDetails.clientId);
+    
+    if (!client) {
+      toast.error('Cliente não encontrado');
+      return;
+    }
+    
+    // Check stock one more time before submission
+    let hasEnoughStock = true;
+    items.forEach(item => {
+      const product = products.find(p => p.id === item.productId);
+      if (!product || product.currentStock < item.quantity) {
+        hasEnoughStock = false;
+        toast.error(`Stock insuficiente para ${item.productName}. Disponível: ${product?.currentStock || 0} unidades`);
+      }
+    });
+    
+    if (!hasEnoughStock) return;
+    
     addStockExit({
       clientId: exitDetails.clientId,
-      clientName: exitDetails.clientName,
+      clientName: client.name,
       items: items,
       date: exitDetails.date,
-      notes: exitDetails.notes,
-      reason: "N/A", // We still need to provide this for type compatibility
-      discount: 0 // Add discount with default value of 0
+      invoiceNumber: exitDetails.invoiceNumber,
+      notes: exitDetails.notes
     });
     
     navigate('/saidas/historico');
   };
-  
-  const subtotal = items.reduce((total, item) => 
-    total + (item.quantity * item.salePrice * (1 - (item.discount / 100))), 0);
-  const totalValue = subtotal;
+
+  // Helper function to calculate item price after discount
+  const getDiscountedPrice = (price: number, discountPercent: number) => {
+    if (!discountPercent) return price;
+    return price * (1 - discountPercent / 100);
+  };
+
+  // Calculate total value with discounts
+  const totalValue = items.reduce((total, item) => 
+    total + (item.quantity * getDiscountedPrice(item.salePrice, item.discountPercent || 0)), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Nova Saída de Stock" 
-        description="Registar uma nova saída no inventário" 
+        description="Registar uma nova saída do inventário" 
         actions={
           <Button variant="outline" onClick={() => navigate('/saidas/historico')}>
             Voltar ao Histórico
@@ -192,7 +243,7 @@ const StockExitNew = () => {
           <div className="space-y-4">
             <div className="space-y-2">
               <label htmlFor="clientSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                Cliente
+                Pesquisar Cliente
               </label>
               <Popover open={isClientSearchOpen} onOpenChange={setIsClientSearchOpen}>
                 <PopoverTrigger asChild>
@@ -201,8 +252,8 @@ const StockExitNew = () => {
                     <Input
                       id="clientSearch"
                       className="pl-10"
-                      placeholder="Pesquisar cliente por nome ou NIF..."
-                      value={exitDetails.clientName || clientSearchTerm}
+                      placeholder="Pesquisar cliente por nome"
+                      value={clientSearchTerm}
                       onChange={(e) => setClientSearchTerm(e.target.value)}
                       onClick={() => setIsClientSearchOpen(true)}
                     />
@@ -211,7 +262,7 @@ const StockExitNew = () => {
                 <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
                   <Command>
                     <CommandInput 
-                      placeholder="Pesquisar cliente por nome ou NIF..." 
+                      placeholder="Pesquisar cliente..." 
                       value={clientSearchTerm}
                       onValueChange={handleClientSearch}
                     />
@@ -221,19 +272,11 @@ const StockExitNew = () => {
                         {filteredClients.map((client) => (
                           <CommandItem 
                             key={client.id} 
-                            value={`${client.name} ${client.taxId || ''}`}
+                            value={client.name}
                             onSelect={() => handleClientSelect(client.id)}
                           >
                             <div className="flex items-center justify-between w-full">
-                              <div>
-                                <span className="font-medium">{client.name}</span>
-                                {client.taxId && (
-                                  <>
-                                    <span className="mx-2">-</span>
-                                    <span className="text-sm text-gray-500">NIF: {client.taxId}</span>
-                                  </>
-                                )}
-                              </div>
+                              <div>{client.name}</div>
                             </div>
                             {exitDetails.clientId === client.id && (
                               <Check className="ml-2 h-4 w-4" />
@@ -245,6 +288,13 @@ const StockExitNew = () => {
                   </Command>
                 </PopoverContent>
               </Popover>
+              {exitDetails.clientId && (
+                <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
+                  <div className="font-medium">
+                    {clients.find(c => c.id === exitDetails.clientId)?.name || ""}
+                  </div>
+                </div>
+              )}
             </div>
             
             <div className="grid md:grid-cols-2 gap-4">
@@ -261,11 +311,24 @@ const StockExitNew = () => {
                   required
                 />
               </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="invoiceNumber" className="text-sm font-medium text-gestorApp-gray-dark">
+                  Número da Fatura
+                </label>
+                <Input
+                  id="invoiceNumber"
+                  name="invoiceNumber"
+                  value={exitDetails.invoiceNumber}
+                  onChange={handleExitDetailsChange}
+                  placeholder="FAT2023XXXX"
+                />
+              </div>
             </div>
             
             <div className="border-t pt-4 mt-4">
               <h3 className="text-md font-medium mb-4 flex items-center">
-                <Package className="mr-2 h-5 w-5" />
+                <LogOut className="mr-2 h-5 w-5" />
                 Adicionar Produtos
               </h3>
               
@@ -282,8 +345,8 @@ const StockExitNew = () => {
                           id="productSearch"
                           className="pl-10"
                           placeholder="Pesquisar por nome ou código"
-                          value={productSearchTerm}
-                          onChange={(e) => setProductSearchTerm(e.target.value)}
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
                           onClick={() => setIsProductSearchOpen(true)}
                         />
                       </div>
@@ -292,17 +355,19 @@ const StockExitNew = () => {
                       <Command>
                         <CommandInput 
                           placeholder="Pesquisar produto por nome ou código..." 
-                          value={productSearchTerm}
-                          onValueChange={handleProductSearch}
+                          value={searchTerm}
+                          onValueChange={handleSearch}
                         />
                         <CommandList>
-                          <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
+                          <CommandEmpty>Nenhum produto encontrado com stock disponível</CommandEmpty>
                           <CommandGroup heading="Produtos">
                             {filteredProducts.map((product) => (
                               <CommandItem 
                                 key={product.id} 
                                 value={`${product.code} - ${product.name}`}
                                 onSelect={() => handleProductSelect(product.id)}
+                                disabled={product.currentStock <= 0}
+                                className={product.currentStock <= 0 ? "opacity-50" : ""}
                               >
                                 <div className="flex items-center justify-between w-full">
                                   <div>
@@ -328,8 +393,16 @@ const StockExitNew = () => {
                 
                 {currentItem.productId && (
                   <div className="grid md:grid-cols-4 gap-4">
-                    <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                      <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
+                    <div className="space-y-2">
+                      <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
+                        Produto Selecionado
+                      </label>
+                      <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
+                        <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
+                        <div className="text-sm text-gestorApp-gray mt-1">
+                          Stock disponível: {products.find(p => p.id === currentItem.productId)?.currentStock || 0} unidades
+                        </div>
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
@@ -341,6 +414,7 @@ const StockExitNew = () => {
                         name="quantity"
                         type="number"
                         min="1"
+                        max={products.find(p => p.id === currentItem.productId)?.currentStock || 0}
                         value={currentItem.quantity}
                         onChange={handleItemChange}
                         placeholder="0"
@@ -366,19 +440,19 @@ const StockExitNew = () => {
                     </div>
                     
                     <div className="space-y-2">
-                      <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
+                      <label htmlFor="discountPercent" className="text-sm font-medium text-gestorApp-gray-dark">
                         Desconto (%)
                       </label>
                       <Input
-                        id="discount"
-                        name="discount"
+                        id="discountPercent"
+                        name="discountPercent"
                         type="number"
+                        step="1"
                         min="0"
                         max="100"
-                        step="0.01"
-                        value={currentItem.discount}
+                        value={currentItem.discountPercent}
                         onChange={handleItemChange}
-                        placeholder="0.00"
+                        placeholder="0"
                       />
                     </div>
                   </div>
@@ -390,6 +464,11 @@ const StockExitNew = () => {
                       type="button" 
                       onClick={addItemToExit}
                       className="flex items-center"
+                      disabled={
+                        !currentItem.productId || 
+                        currentItem.quantity <= 0 || 
+                        (products.find(p => p.id === currentItem.productId)?.currentStock || 0) < currentItem.quantity
+                      }
                     >
                       <Plus className="mr-2 h-4 w-4" />
                       Adicionar Produto
@@ -399,6 +478,7 @@ const StockExitNew = () => {
               </div>
             </div>
             
+            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -407,77 +487,80 @@ const StockExitNew = () => {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto (%)</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto</th>
+                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P. Final</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.discount}%</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(item.quantity * item.salePrice * (1 - item.discount / 100)).toFixed(2)} €
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeItem(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                    {items.map((item, index) => {
+                      const discountedPrice = getDiscountedPrice(item.salePrice, item.discountPercent || 0);
+                      return (
+                        <tr key={index}>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {item.discountPercent ? `${item.discountPercent}%` : '-'}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                            {discountedPrice.toFixed(2)} €
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * discountedPrice).toFixed(2)} €</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => removeItem(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
             )}
-            
-            <div className="space-y-2">
-              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-                Notas
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={exitDetails.notes}
-                onChange={handleExitDetailsChange}
-                placeholder="Observações adicionais sobre a saída..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                rows={3}
-              />
-            </div>
-            
-            <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-              <dl className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
-                  <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
-                </div>
-                <div>
-                  <dt className="text-sm font-medium text-blue-800">Total:</dt>
-                  <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
-                </div>
-              </dl>
-            </div>
-            
-            <div className="flex justify-end space-x-4">
-              <Button variant="outline" type="button" onClick={() => navigate('/saidas/historico')}>
-                Cancelar
-              </Button>
-              <Button 
-                type="submit"
-                disabled={items.length === 0}
-              >
-                Registar Saída
-              </Button>
-            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+              Notas
+            </label>
+            <textarea
+              id="notes"
+              name="notes"
+              value={exitDetails.notes}
+              onChange={handleExitDetailsChange}
+              placeholder="Observações adicionais sobre a saída..."
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+              rows={3}
+            />
+          </div>
+          
+          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
+            <p className="text-lg font-semibold text-blue-800">
+              Valor Total: {totalValue.toFixed(2)} €
+            </p>
+            <p className="text-sm text-blue-600 mt-1">
+              Total de itens: {items.length}
+            </p>
+          </div>
+          
+          <div className="flex justify-end space-x-4">
+            <Button variant="outline" type="button" onClick={() => navigate('/saidas/historico')}>
+              Cancelar
+            </Button>
+            <Button 
+              type="submit"
+              disabled={items.length === 0 || !exitDetails.clientId}
+            >
+              Registar Saída
+            </Button>
           </div>
         </form>
       </div>

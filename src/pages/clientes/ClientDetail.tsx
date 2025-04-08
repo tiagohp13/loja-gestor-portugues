@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -8,7 +7,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import { Trash2 } from 'lucide-react';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import { Order, StockExit } from '@/types';
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,11 +28,6 @@ const ClientDetail = () => {
   }
   
   const clientHistory = getClientHistory(client.id);
-  // Get all client related transactions
-  const allClientTransactions = [
-    ...clientHistory.orders,
-    ...clientHistory.stockExits
-  ];
   
   const handleDelete = () => {
     deleteClient(client.id);
@@ -120,7 +113,7 @@ const ClientDetail = () => {
           <CardTitle>Histórico de Compras</CardTitle>
         </CardHeader>
         <CardContent>
-          {allClientTransactions.length > 0 ? (
+          {clientHistory.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -133,30 +126,23 @@ const ClientDetail = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {allClientTransactions.map((transaction) => {
-                    // Check if it's an order or stock exit
-                    if ('items' in transaction) {
-                      // Handle items within orders or stock exits
-                      return transaction.items.map((item, itemIndex) => {
-                        const product = products.find(p => p.id === item.productId);
-                        
-                        return (
-                          <tr key={`${transaction.id}-${itemIndex}`} className="border-b hover:bg-gestorApp-gray-light">
-                            <td className="px-4 py-2">{formatDate(new Date(transaction.createdAt))}</td>
-                            <td className="px-4 py-2">
-                              {product 
-                                ? `${product.code} - ${product.name}` 
-                                : item.productName || "Desconhecido"}
-                            </td>
-                            <td className="px-4 py-2">{item.quantity} unidades</td>
-                            <td className="px-4 py-2 text-right">{formatCurrency(item.salePrice)}</td>
-                            <td className="px-4 py-2 text-right">{formatCurrency(item.quantity * item.salePrice)}</td>
-                          </tr>
-                        );
-                      });
-                    }
-                    return null;
-                  }).flat().filter(Boolean)}
+                  {clientHistory.map(exit => {
+                    const product = products.find(p => p.id === exit.productId);
+                    
+                    return (
+                      <tr key={exit.id} className="border-b hover:bg-gestorApp-gray-light">
+                        <td className="px-4 py-2">{formatDate(new Date(exit.createdAt))}</td>
+                        <td className="px-4 py-2">
+                          {product 
+                            ? `${product.code} - ${product.name}` 
+                            : exit.productName || "Desconhecido"}
+                        </td>
+                        <td className="px-4 py-2">{exit.quantity} unidades</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(exit.salePrice)}</td>
+                        <td className="px-4 py-2 text-right">{formatCurrency(exit.quantity * exit.salePrice)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

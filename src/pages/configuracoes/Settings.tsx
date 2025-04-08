@@ -7,50 +7,11 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, FileText, Settings as SettingsIcon, Database, Lock, Bell, HelpCircle } from 'lucide-react';
+import { Upload, Download, FileText } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ExportDataType } from '@/types';
 
-const SettingsSidebar = ({ activeSection, setActiveSection }) => {
-  const settingsSections = [
-    { id: 'export-import', name: 'Exportar / Importar', icon: <Database className="w-4 h-4 mr-2" /> },
-    { id: 'security', name: 'Segurança', icon: <Lock className="w-4 h-4 mr-2" />, disabled: true },
-    { id: 'notifications', name: 'Notificações', icon: <Bell className="w-4 h-4 mr-2" />, disabled: true },
-    { id: 'help', name: 'Ajuda', icon: <HelpCircle className="w-4 h-4 mr-2" />, disabled: true },
-  ];
-
-  return (
-    <div className="w-full md:w-64 mb-6 md:mb-0">
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Configurações</CardTitle>
-          <CardDescription>Gerencie as configurações do sistema</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <nav className="flex flex-col">
-            {settingsSections.map((section) => (
-              <Button
-                key={section.id}
-                variant={activeSection === section.id ? "secondary" : "ghost"}
-                className={`justify-start rounded-none text-left px-4 py-2 ${section.disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
-                onClick={() => !section.disabled && setActiveSection(section.id)}
-                disabled={section.disabled}
-              >
-                <div className="flex items-center">
-                  {section.icon}
-                  {section.name}
-                </div>
-                {section.disabled && <span className="ml-auto text-xs text-gray-500">Em breve</span>}
-              </Button>
-            ))}
-          </nav>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
-const ExportImportContent = () => {
+const Settings = () => {
   const { products, categories, clients, suppliers, orders, stockEntries, stockExits } = useData();
   const [exportTypes, setExportTypes] = useState<ExportDataType[]>([]);
   const [importType, setImportType] = useState<ExportDataType | null>(null);
@@ -194,213 +155,172 @@ const ExportImportContent = () => {
   };
 
   return (
-    <div>
-      <Tabs defaultValue="export">
-        <TabsList className="mb-4">
-          <TabsTrigger value="export">Exportar Dados</TabsTrigger>
-          <TabsTrigger value="import">Importar Dados</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="export">
-          <Card>
-            <CardHeader>
-              <CardTitle>Exportar Dados</CardTitle>
-              <CardDescription>
-                Selecione os tipos de dados que deseja exportar
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-products"
-                    checked={exportTypes.includes('products')}
-                    onCheckedChange={() => toggleExportType('products')}
-                  />
-                  <Label htmlFor="export-products">Produtos</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-categories"
-                    checked={exportTypes.includes('categories')}
-                    onCheckedChange={() => toggleExportType('categories')}
-                  />
-                  <Label htmlFor="export-categories">Categorias</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-clients"
-                    checked={exportTypes.includes('clients')}
-                    onCheckedChange={() => toggleExportType('clients')}
-                  />
-                  <Label htmlFor="export-clients">Clientes</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-suppliers"
-                    checked={exportTypes.includes('suppliers')}
-                    onCheckedChange={() => toggleExportType('suppliers')}
-                  />
-                  <Label htmlFor="export-suppliers">Fornecedores</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-orders"
-                    checked={exportTypes.includes('orders')}
-                    onCheckedChange={() => toggleExportType('orders')}
-                  />
-                  <Label htmlFor="export-orders">Encomendas</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-stockEntries"
-                    checked={exportTypes.includes('stockEntries')}
-                    onCheckedChange={() => toggleExportType('stockEntries')}
-                  />
-                  <Label htmlFor="export-stockEntries">Entradas de Stock</Label>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="export-stockExits"
-                    checked={exportTypes.includes('stockExits')}
-                    onCheckedChange={() => toggleExportType('stockExits')}
-                  />
-                  <Label htmlFor="export-stockExits">Saídas de Stock</Label>
-                </div>
-              </div>
-              
-              <Button onClick={handleExportData} className="w-full sm:w-auto">
-                <Download className="w-4 h-4 mr-2" />
-                Exportar Dados Selecionados
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="import">
-          <Card>
-            <CardHeader>
-              <CardTitle>Importar Dados</CardTitle>
-              <CardDescription>
-                Selecione o tipo de dados que deseja importar e baixe o modelo
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="import-products"
-                      checked={importType === 'products'}
-                      onCheckedChange={(checked) => setImportType(checked ? 'products' : null)}
-                    />
-                    <Label htmlFor="import-products">Produtos</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="import-categories"
-                      checked={importType === 'categories'}
-                      onCheckedChange={(checked) => setImportType(checked ? 'categories' : null)}
-                    />
-                    <Label htmlFor="import-categories">Categorias</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="import-clients"
-                      checked={importType === 'clients'}
-                      onCheckedChange={(checked) => setImportType(checked ? 'clients' : null)}
-                    />
-                    <Label htmlFor="import-clients">Clientes</Label>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Checkbox 
-                      id="import-suppliers"
-                      checked={importType === 'suppliers'}
-                      onCheckedChange={(checked) => setImportType(checked ? 'suppliers' : null)}
-                    />
-                    <Label htmlFor="import-suppliers">Fornecedores</Label>
-                  </div>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={handleDownloadImportTemplate} variant="outline" className="w-full sm:w-auto">
-                    <FileText className="w-4 h-4 mr-2" />
-                    Baixar Modelo CSV
-                  </Button>
-                  
-                  <Button className="w-full sm:w-auto" disabled>
-                    <Upload className="w-4 h-4 mr-2" />
-                    Importar Dados (Em breve)
-                  </Button>
-                </div>
-                
-                <div className="bg-blue-50 p-4 rounded-md mt-4">
-                  <p className="text-sm text-blue-800">
-                    <strong>Nota:</strong> A importação de dados requer um arquivo CSV no formato correto. 
-                    Baixe primeiro o modelo para se certificar de que está usando o formato adequado.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
-  );
-};
-
-const Settings = () => {
-  const [activeSection, setActiveSection] = useState('export-import');
-
-  return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Configurações" 
         description="Gerencie as configurações do sistema"
       />
       
-      <div className="mt-6 flex flex-col md:flex-row md:space-x-6">
-        <SettingsSidebar 
-          activeSection={activeSection} 
-          setActiveSection={setActiveSection} 
-        />
-        
-        <div className="flex-1">
-          {activeSection === 'export-import' && <ExportImportContent />}
-          {activeSection === 'security' && (
+      <div className="mt-6">
+        <Tabs defaultValue="export">
+          <TabsList className="mb-4">
+            <TabsTrigger value="export">Exportar Dados</TabsTrigger>
+            <TabsTrigger value="import">Importar Dados</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="export">
             <Card>
               <CardHeader>
-                <CardTitle>Segurança</CardTitle>
-                <CardDescription>Esta funcionalidade estará disponível em breve.</CardDescription>
+                <CardTitle>Exportar Dados</CardTitle>
+                <CardDescription>
+                  Selecione os tipos de dados que deseja exportar
+                </CardDescription>
               </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-products"
+                      checked={exportTypes.includes('products')}
+                      onCheckedChange={() => toggleExportType('products')}
+                    />
+                    <Label htmlFor="export-products">Produtos</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-categories"
+                      checked={exportTypes.includes('categories')}
+                      onCheckedChange={() => toggleExportType('categories')}
+                    />
+                    <Label htmlFor="export-categories">Categorias</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-clients"
+                      checked={exportTypes.includes('clients')}
+                      onCheckedChange={() => toggleExportType('clients')}
+                    />
+                    <Label htmlFor="export-clients">Clientes</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-suppliers"
+                      checked={exportTypes.includes('suppliers')}
+                      onCheckedChange={() => toggleExportType('suppliers')}
+                    />
+                    <Label htmlFor="export-suppliers">Fornecedores</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-orders"
+                      checked={exportTypes.includes('orders')}
+                      onCheckedChange={() => toggleExportType('orders')}
+                    />
+                    <Label htmlFor="export-orders">Encomendas</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-stockEntries"
+                      checked={exportTypes.includes('stockEntries')}
+                      onCheckedChange={() => toggleExportType('stockEntries')}
+                    />
+                    <Label htmlFor="export-stockEntries">Entradas de Stock</Label>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="export-stockExits"
+                      checked={exportTypes.includes('stockExits')}
+                      onCheckedChange={() => toggleExportType('stockExits')}
+                    />
+                    <Label htmlFor="export-stockExits">Saídas de Stock</Label>
+                  </div>
+                </div>
+                
+                <Button onClick={handleExportData} className="w-full sm:w-auto">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar Dados Selecionados
+                </Button>
+              </CardContent>
             </Card>
-          )}
-          {activeSection === 'notifications' && (
+          </TabsContent>
+          
+          <TabsContent value="import">
             <Card>
               <CardHeader>
-                <CardTitle>Notificações</CardTitle>
-                <CardDescription>Esta funcionalidade estará disponível em breve.</CardDescription>
+                <CardTitle>Importar Dados</CardTitle>
+                <CardDescription>
+                  Selecione o tipo de dados que deseja importar e baixe o modelo
+                </CardDescription>
               </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="import-products"
+                        checked={importType === 'products'}
+                        onCheckedChange={(checked) => setImportType(checked ? 'products' : null)}
+                      />
+                      <Label htmlFor="import-products">Produtos</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="import-categories"
+                        checked={importType === 'categories'}
+                        onCheckedChange={(checked) => setImportType(checked ? 'categories' : null)}
+                      />
+                      <Label htmlFor="import-categories">Categorias</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="import-clients"
+                        checked={importType === 'clients'}
+                        onCheckedChange={(checked) => setImportType(checked ? 'clients' : null)}
+                      />
+                      <Label htmlFor="import-clients">Clientes</Label>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Checkbox 
+                        id="import-suppliers"
+                        checked={importType === 'suppliers'}
+                        onCheckedChange={(checked) => setImportType(checked ? 'suppliers' : null)}
+                      />
+                      <Label htmlFor="import-suppliers">Fornecedores</Label>
+                    </div>
+                  </div>
+                  
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <Button onClick={handleDownloadImportTemplate} variant="outline" className="w-full sm:w-auto">
+                      <FileText className="w-4 h-4 mr-2" />
+                      Baixar Modelo CSV
+                    </Button>
+                    
+                    <Button className="w-full sm:w-auto" disabled>
+                      <Upload className="w-4 h-4 mr-2" />
+                      Importar Dados (Em breve)
+                    </Button>
+                  </div>
+                  
+                  <div className="bg-blue-50 p-4 rounded-md mt-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>Nota:</strong> A importação de dados requer um arquivo CSV no formato correto. 
+                      Baixe primeiro o modelo para se certificar de que está usando o formato adequado.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
             </Card>
-          )}
-          {activeSection === 'help' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Ajuda</CardTitle>
-                <CardDescription>Esta funcionalidade estará disponível em breve.</CardDescription>
-              </CardHeader>
-            </Card>
-          )}
-        </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

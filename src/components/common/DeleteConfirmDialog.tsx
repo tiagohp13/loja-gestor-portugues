@@ -15,11 +15,9 @@ import {
 interface DeleteConfirmDialogProps {
   title: string;
   description: string;
-  trigger?: React.ReactNode;
+  trigger: React.ReactNode;
   onDelete: () => void;
-  onConfirm?: () => Promise<void>;
   open?: boolean;
-  onOpenChange?: (open: boolean) => void;
   onClose?: () => void;
 }
 
@@ -27,33 +25,25 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   title,
   description,
   onDelete,
-  onConfirm,
   trigger,
   open,
-  onOpenChange,
   onClose,
 }) => {
   const [openState, setOpenState] = useState(false);
   
-  const isControlled = open !== undefined && (onClose !== undefined || onOpenChange !== undefined);
+  const isControlled = open !== undefined && onClose !== undefined;
   const isOpen = isControlled ? open : openState;
   
   const handleOpenChange = (newOpen: boolean) => {
     if (isControlled) {
-      onOpenChange?.(newOpen);
-      if (!newOpen) onClose?.();
+      onClose?.();
     } else {
       setOpenState(newOpen);
     }
   };
   
-  const handleDelete = async () => {
-    if (onConfirm) {
-      await onConfirm();
-    } else {
-      onDelete();
-    }
-    
+  const handleDelete = () => {
+    onDelete();
     if (!isControlled) {
       setOpenState(false);
     }
@@ -61,11 +51,9 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      {trigger && (
-        <AlertDialogTrigger asChild>
-          {trigger}
-        </AlertDialogTrigger>
-      )}
+      <AlertDialogTrigger asChild>
+        {trigger}
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

@@ -26,8 +26,7 @@ const StockEntryNew = () => {
     supplierName: '',
     date: new Date().toISOString().split('T')[0],
     invoiceNumber: '',
-    notes: '',
-    discount: 0
+    notes: ''
   });
   
   const [items, setItems] = useState<StockEntryItem[]>([]);
@@ -36,13 +35,11 @@ const StockEntryNew = () => {
     productName: string;
     quantity: number;
     purchasePrice: number;
-    discount: number;
   }>({
     productId: '',
     productName: '',
     quantity: 1,
-    purchasePrice: 0,
-    discount: 0
+    purchasePrice: 0
   });
   
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,7 +59,7 @@ const StockEntryNew = () => {
     const { name, value } = e.target;
     setCurrentItem(prev => ({
       ...prev,
-      [name]: name === 'quantity' || name === 'purchasePrice' || name === 'discount'
+      [name]: name === 'quantity' || name === 'purchasePrice' 
               ? parseFloat(value) || 0 
               : value
     }));
@@ -83,8 +80,7 @@ const StockEntryNew = () => {
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: 1,
-        purchasePrice: selectedProduct.purchasePrice,
-        discount: 0
+        purchasePrice: selectedProduct.purchasePrice
       });
     }
     setIsProductSearchOpen(false);
@@ -106,27 +102,29 @@ const StockEntryNew = () => {
       return;
     }
     
+    // Check if the product is already in the entry
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
+      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        purchasePrice: currentItem.purchasePrice,
-        discount: currentItem.discount
+        purchasePrice: currentItem.purchasePrice // Update the price in case it changed
       };
       setItems(updatedItems);
     } else {
+      // Add new item
       setItems([...items, { ...currentItem }]);
     }
     
+    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
       quantity: 1,
-      purchasePrice: 0,
-      discount: 0
+      purchasePrice: 0
     });
     setSearchTerm('');
   };
@@ -169,17 +167,14 @@ const StockEntryNew = () => {
       items: items,
       date: entryDetails.date,
       invoiceNumber: entryDetails.invoiceNumber,
-      notes: entryDetails.notes,
-      discount: parseFloat(entryDetails.discount.toString()) || 0
+      notes: entryDetails.notes
     });
     
     navigate('/entradas/historico');
   };
 
-  const subtotal = items.reduce((total, item) => 
+  const totalValue = items.reduce((total, item) => 
     total + (item.quantity * item.purchasePrice), 0);
-  const discountAmount = subtotal * (entryDetails.discount / 100);
-  const totalValue = subtotal - discountAmount;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -345,7 +340,7 @@ const StockEntryNew = () => {
                 </div>
                 
                 {currentItem.productId && (
-                  <div className="grid md:grid-cols-4 gap-4">
+                  <div className="grid md:grid-cols-3 gap-4">
                     <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
                       <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
                     </div>
@@ -382,23 +377,6 @@ const StockEntryNew = () => {
                         required
                       />
                     </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Desconto (%)
-                      </label>
-                      <Input
-                        id="discount"
-                        name="discount"
-                        type="number"
-                        min="0"
-                        max="100"
-                        step="0.01"
-                        value={currentItem.discount}
-                        onChange={handleItemChange}
-                        placeholder="0.00"
-                      />
-                    </div>
                   </div>
                 )}
                 
@@ -417,6 +395,7 @@ const StockEntryNew = () => {
               </div>
             </div>
             
+            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -425,7 +404,6 @@ const StockEntryNew = () => {
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto (%)</th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
                       <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
@@ -436,10 +414,7 @@ const StockEntryNew = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.purchasePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.discount}%</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">
-                          {(item.quantity * item.purchasePrice * (1 - item.discount / 100)).toFixed(2)} €
-                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.purchasePrice).toFixed(2)} €</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
                           <Button 
                             variant="ghost" 
@@ -473,38 +448,13 @@ const StockEntryNew = () => {
             />
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
-              Desconto Total (%)
-            </label>
-            <Input
-              id="discount"
-              name="discount"
-              type="number"
-              min="0"
-              max="100"
-              step="0.01"
-              value={entryDetails.discount}
-              onChange={handleEntryDetailsChange}
-              placeholder="0.00"
-            />
-          </div>
-          
           <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <dl className="grid md:grid-cols-3 gap-4">
-              <div>
-                <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
-                <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-blue-800">Desconto ({entryDetails.discount}%):</dt>
-                <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
-              </div>
-              <div>
-                <dt className="text-sm font-medium text-blue-800">Total:</dt>
-                <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
-              </div>
-            </dl>
+            <p className="text-lg font-semibold text-blue-800">
+              Valor Total: {totalValue.toFixed(2)} €
+            </p>
+            <p className="text-sm text-blue-600 mt-1">
+              Total de itens: {items.length}
+            </p>
           </div>
           
           <div className="flex justify-end space-x-4">

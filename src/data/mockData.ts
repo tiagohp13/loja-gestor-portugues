@@ -1,5 +1,5 @@
 
-import { User, Product, Client, Supplier, StockEntry, StockExit, Category, Order } from '../types';
+import { User, Product, Client, Supplier, StockEntry, StockExit, Category, Order, LegacyStockEntry, LegacyStockExit, LegacyOrder } from '../types';
 
 // Mock Users
 export const users: User[] = [
