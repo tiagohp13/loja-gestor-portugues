@@ -12,7 +12,6 @@ if (!rootElement) {
 
 const root = createRoot(rootElement);
 
-// Renderizar o app no modo StrictMode
 root.render(
   <StrictMode>
     <App />
