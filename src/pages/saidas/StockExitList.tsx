@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -32,7 +33,7 @@ const StockExitList = () => {
   const fetchExits = async () => {
     setLoading(true);
     try {
-      // Buscar dados diretamente da tabela
+      // Fetch data directly from the table
       const { data: exitsData, error: exitsError } = await supabase
         .from('StockExits')
         .select('*')
@@ -43,20 +44,20 @@ const StockExitList = () => {
       }
 
       if (!exitsData) {
-        throw new Error("Não foram encontradas saídas");
+        throw new Error("No exits found");
       }
 
-      // Transformar os dados retornados
+      // Transform the returned data
       const exitsWithItems = await Promise.all(
         exitsData.map(async (exit) => {
-          // Buscar itens para cada saída diretamente da tabela
+          // Fetch items for each exit directly from the table
           const { data: itemsData, error: itemsError } = await supabase
             .from('StockExitsItems')
             .select('*')
             .eq('exitid', exit.id);
 
           if (itemsError) {
-            console.error(`Erro ao buscar itens da saída ${exit.id}:`, itemsError);
+            console.error(`Error fetching items for exit ${exit.id}:`, itemsError);
             return {
               id: exit.id,
               clientId: exit.clientid,
@@ -75,7 +76,7 @@ const StockExitList = () => {
             } as StockExit;
           }
 
-          // Mapear items para o formato esperado em StockExitItem[]
+          // Map items to the expected format in StockExitItem[]
           const mappedItems = (itemsData || []).map(item => ({
             productId: item.productid,
             productName: item.productname,
@@ -84,7 +85,7 @@ const StockExitList = () => {
             discount: item.discount || 0  // Handle possible undefined discount
           }));
 
-          // Retornar a saída com seus itens mapeados
+          // Return the exit with its mapped items
           return {
             id: exit.id,
             clientId: exit.clientid,
@@ -106,8 +107,8 @@ const StockExitList = () => {
         
       setLocalExits(exitsWithItems);
     } catch (err) {
-      console.error('Erro ao buscar saídas:', err);
-      toast.error('Erro ao carregar as saídas');
+      console.error('Error fetching exits:', err);
+      toast.error('Error loading exits');
       // Fallback to local data
       setLocalExits(stockExits);
     } finally {

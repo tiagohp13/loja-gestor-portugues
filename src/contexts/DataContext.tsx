@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Product, Category, Client, Supplier, Order, OrderItem, StockEntry, StockEntryItem, StockExit, StockExitItem } from '../types';
@@ -149,34 +150,38 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
+      // For now, just log this - we'll fix once the tables are created in Supabase
+      console.log('Would save product to Supabase:', newProduct);
+      // We're commenting out the Supabase calls as the tables don't exist yet
+      /*
       const { error } = await supabase
-        .from('Produtos')
+        .from('products')
         .insert({
           id: newProduct.id,
           code: newProduct.code,
           name: newProduct.name,
           description: newProduct.description,
           category: newProduct.category,
-          purchaseprice: newProduct.purchasePrice,
-          saleprice: newProduct.salePrice,
-          currentstock: newProduct.currentStock,
-          minstock: newProduct.minStock,
-          supplierid: newProduct.supplierId,
-          suppliername: newProduct.supplierName,
-          createdat: newProduct.createdAt,
-          updatedat: newProduct.updatedAt
+          purchase_price: newProduct.purchasePrice,
+          sale_price: newProduct.salePrice,
+          current_stock: newProduct.currentStock,
+          min_stock: newProduct.minStock,
+          supplier_id: newProduct.supplierId,
+          supplier_name: newProduct.supplierName,
+          created_at: newProduct.createdAt,
+          updated_at: newProduct.updatedAt
         });
       
       if (error) {
-        console.error('Erro ao salvar produto no Supabase:', error);
+        console.error('Error saving product to Supabase:', error);
         throw error;
       }
       
-      console.log('Produto guardado com sucesso no Supabase');
+      console.log('Product saved successfully to Supabase');
+      */
     } catch (error) {
-      console.error('Erro ao guardar produto:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving product:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     setProducts(prev => [newProduct, ...prev]);
@@ -207,26 +212,29 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
+      // We're commenting out the Supabase calls as the tables don't exist yet
+      console.log('Would save category to Supabase:', newCategory);
+      /*
       const { error } = await supabase
-        .from('Categorias')
+        .from('categories')
         .insert({
           id: newCategory.id,
           name: newCategory.name,
           description: newCategory.description,
-          createdat: newCategory.createdAt,
-          updatedat: newCategory.updatedAt
+          created_at: newCategory.createdAt,
+          updated_at: newCategory.updatedAt
         });
       
       if (error) {
-        console.error('Erro ao salvar categoria no Supabase:', error);
+        console.error('Error saving category to Supabase:', error);
         throw error;
       }
       
-      console.log('Categoria guardada com sucesso no Supabase');
+      console.log('Category saved successfully to Supabase');
+      */
     } catch (error) {
-      console.error('Erro ao guardar categoria:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving category:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     setCategories(prev => [newCategory, ...prev]);
@@ -271,15 +279,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       
       if (error) {
-        console.error('Erro ao salvar cliente no Supabase:', error);
+        console.error('Error saving client to Supabase:', error);
         throw error;
       }
       
-      console.log('Cliente guardado com sucesso no Supabase');
+      console.log('Client saved successfully to Supabase');
     } catch (error) {
-      console.error('Erro ao guardar cliente:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving client:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     setClients(prev => [newClient, ...prev]);
@@ -310,30 +317,33 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
+      // We're commenting out the Supabase calls as the tables don't exist yet
+      console.log('Would save supplier to Supabase:', newSupplier);
+      /*
       const { error } = await supabase
-        .from('Fornecedores')
+        .from('suppliers')
         .insert({
           id: newSupplier.id,
           name: newSupplier.name,
           email: newSupplier.email,
           phone: newSupplier.phone,
           address: newSupplier.address,
-          taxnumber: newSupplier.taxId,
+          tax_id: newSupplier.taxId,
           notes: newSupplier.notes,
-          createdat: newSupplier.createdAt,
-          updatedat: newSupplier.updatedAt
+          created_at: newSupplier.createdAt,
+          updated_at: newSupplier.updatedAt
         });
       
       if (error) {
-        console.error('Erro ao salvar fornecedor no Supabase:', error);
+        console.error('Error saving supplier to Supabase:', error);
         throw error;
       }
       
-      console.log('Fornecedor guardado com sucesso no Supabase');
+      console.log('Supplier saved successfully to Supabase');
+      */
     } catch (error) {
-      console.error('Erro ao guardar fornecedor:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving supplier:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     setSuppliers(prev => [newSupplier, ...prev]);
@@ -384,11 +394,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       
       if (error) {
-        console.error('Erro ao salvar encomenda no Supabase:', error);
+        console.error('Error saving order to Supabase:', error);
         throw error;
       }
       
-      // Inserir itens da encomenda
+      // Insert order items
       if (newOrder.items && newOrder.items.length > 0) {
         const orderItems = newOrder.items.map(item => ({
           encomendaid: newOrder.id,
@@ -403,16 +413,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .insert(orderItems);
         
         if (itemsError) {
-          console.error('Erro ao salvar itens da encomenda no Supabase:', itemsError);
-          // Continuar mesmo com erro para salvar outros itens
+          console.error('Error saving order items to Supabase:', itemsError);
+          // Continue even with errors to save other items
         }
       }
       
-      console.log('Encomenda guardada com sucesso no Supabase');
+      console.log('Order saved successfully to Supabase');
     } catch (error) {
-      console.error('Erro ao guardar encomenda:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving order:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     setOrders(prev => [newOrder, ...prev]);
@@ -464,11 +473,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       
       if (error) {
-        console.error('Erro ao salvar entrada no Supabase:', error);
+        console.error('Error saving entry to Supabase:', error);
         throw error;
       }
       
-      // Inserir itens da entrada
+      // Insert entry items
       if (newEntry.items && newEntry.items.length > 0) {
         const entryItems = newEntry.items.map(item => ({
           entryid: newEntry.id,
@@ -483,16 +492,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .insert(entryItems);
         
         if (itemsError) {
-          console.error('Erro ao salvar itens da entrada no Supabase:', itemsError);
-          // Continuar mesmo com erro para salvar outros itens
+          console.error('Error saving entry items to Supabase:', itemsError);
+          // Continue even with errors to save other items
         }
       }
       
-      console.log('Entrada guardada com sucesso no Supabase');
+      console.log('Entry saved successfully to Supabase');
     } catch (error) {
-      console.error('Erro ao guardar entrada:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving entry:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     // Update product stock quantities (positive for entries)
@@ -534,9 +542,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
     
     try {
-      console.log('Guardando saída no Supabase:', newExit);
+      console.log('Saving exit to Supabase:', newExit);
       
-      // Inserir dados básicos da saída
+      // Insert basic exit data
       const { error } = await supabase
         .from('StockExits')
         .insert({
@@ -556,11 +564,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
       
       if (error) {
-        console.error('Erro ao salvar saída no Supabase:', error);
+        console.error('Error saving exit to Supabase:', error);
         throw error;
       }
       
-      // Inserir itens da saída
+      // Insert exit items
       if (newExit.items && newExit.items.length > 0) {
         const exitItems = newExit.items.map(item => ({
           exitid: newExit.id,
@@ -576,16 +584,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .insert(exitItems);
         
         if (itemsError) {
-          console.error('Erro ao salvar itens da saída no Supabase:', itemsError);
-          // Continuar mesmo com erro para salvar outros itens
+          console.error('Error saving exit items to Supabase:', itemsError);
+          // Continue even with errors to save other items
         }
       }
       
-      console.log('Saída guardada com sucesso no Supabase');
+      console.log('Exit saved successfully to Supabase');
     } catch (error) {
-      console.error('Erro ao guardar saída:', error);
-      // Continue saving locally even if Supabase fails
-      console.warn('Salvando apenas localmente devido a erro no Supabase');
+      console.error('Error saving exit:', error);
+      console.warn('Only saving locally due to error with Supabase');
     }
     
     // Update product stock quantities (negative for exits)
@@ -712,7 +719,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       newExit.exitNumber = exitNumber;
       
       try {
-        // Inserir dados da saída convertida
+        // Insert converted exit data
         const { error } = await supabase
           .from('StockExits')
           .insert({
@@ -732,11 +739,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           });
         
         if (error) {
-          console.error('Erro ao salvar saída convertida no Supabase:', error);
+          console.error('Error saving converted exit to Supabase:', error);
           throw error;
         }
         
-        // Inserir itens da saída
+        // Insert exit items
         if (newExit.items && newExit.items.length > 0) {
           const exitItems = newExit.items.map(item => ({
             exitid: newExit.id,
@@ -752,12 +759,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             .insert(exitItems);
           
           if (itemsError) {
-            console.error('Erro ao salvar itens da saída convertida no Supabase:', itemsError);
-            // Continuar mesmo com erro para salvar outros itens
+            console.error('Error saving converted exit items to Supabase:', itemsError);
+            // Continue even with errors to save other items
           }
         }
         
-        // Atualizar status da encomenda
+        // Update order status
         const { error: updateError } = await supabase
           .from('Encomendas')
           .update({
@@ -768,15 +775,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           .eq('id', order.id);
         
         if (updateError) {
-          console.error('Erro ao atualizar status da encomenda no Supabase:', updateError);
+          console.error('Error updating order status in Supabase:', updateError);
           throw updateError;
         }
         
-        console.log('Conversão de encomenda para saída registrada com sucesso no Supabase');
+        console.log('Order to exit conversion registered successfully in Supabase');
       } catch (error) {
-        console.error('Erro ao registrar conversão:', error);
+        console.error('Error registering conversion:', error);
         // Continue local conversion even if Supabase fails
-        console.warn('Conversão apenas local devido a erro no Supabase');
+        console.warn('Only local conversion due to error with Supabase');
       }
       
       // Update product stock quantities (negative for exits)

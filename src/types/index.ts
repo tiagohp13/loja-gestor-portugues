@@ -65,6 +65,9 @@ export interface Product {
   image?: string;
   createdAt: string;
   updatedAt: string;
+  // Add missing fields that are used in the code
+  supplierId?: string;
+  supplierName?: string;
 }
 
 export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';

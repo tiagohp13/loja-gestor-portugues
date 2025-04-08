@@ -11,34 +11,34 @@ export type Database = {
     Tables: {
       Clientes: {
         Row: {
+          address: string | null
           created_at: string | null
           email: string | null
           id: string
-          morada: string | null
-          nif: string | null
-          nome: string
-          notas: string | null
-          telefone: string | null
+          name: string
+          notes: string | null
+          phone: string | null
+          taxId: string | null
         }
         Insert: {
+          address?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
-          morada?: string | null
-          nif?: string | null
-          nome: string
-          notas?: string | null
-          telefone?: string | null
+          name: string
+          notes?: string | null
+          phone?: string | null
+          taxId?: string | null
         }
         Update: {
+          address?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
-          morada?: string | null
-          nif?: string | null
-          nome?: string
-          notas?: string | null
-          telefone?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string | null
+          taxId?: string | null
         }
         Relationships: []
       }
