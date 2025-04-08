@@ -1,115 +1,39 @@
 import { v4 as uuidv4 } from 'uuid';
-import { StockEntry, StockExit } from '../types';
+import { StockEntry, StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 // Generate a unique stock entry number
-export const generateStockEntryNumber = async (): Promise<string> => {
-  try {
-    // Try to get from Supabase function
-    const { data, error } = await supabase.rpc('get_next_counter', { counter_id: 'entries' });
-    
-    if (error) {
-      throw error;
-    }
-    
-    if (data) {
-      return `ENT-${data}`;
-    }
-  } catch (error) {
-    console.error('Error generating entry number from Supabase:', error);
-  }
-  
-  // Fallback to local generation
+export async function generateStockEntryNumber(): Promise<string> {
   const prefix = 'ENT';
   const randomNumber = Math.floor(Math.random() * 100000);
   const entryNumber = `${prefix}-${randomNumber.toString().padStart(5, '0')}`;
   return entryNumber;
-};
+}
 
 // Generate a unique stock exit number
-export const generateStockExitNumber = async (): Promise<string> => {
-  try {
-    // Try to get from Supabase function
-    const { data, error } = await supabase.rpc('get_next_counter', { counter_id: 'exits' });
-    
-    if (error) {
-      throw error;
-    }
-    
-    if (data) {
-      return `SAI-${data}`;
-    }
-  } catch (error) {
-    console.error('Error generating exit number from Supabase:', error);
-  }
-  
-  // Fallback to local generation
+export async function generateStockExitNumber(): Promise<string> {
   const prefix = 'SAI';
   const randomNumber = Math.floor(Math.random() * 100000);
   const exitNumber = `${prefix}-${randomNumber.toString().padStart(5, '0')}`;
   return exitNumber;
-};
+}
 
-// Load stock entries from localStorage or create an empty array
-const loadStockEntries = (): StockEntry[] => {
+// Fetch all stock entries
+export async function fetchStockEntries(): Promise<StockEntry[]> {
   try {
-    const entriesData = localStorage.getItem('stockEntries');
-    return entriesData ? JSON.parse(entriesData) : [];
-  } catch (error) {
-    console.error('Error loading stock entries from localStorage:', error);
-    return [];
-  }
-};
-
-// Save stock entries to localStorage
-const saveStockEntries = (entries: StockEntry[]): void => {
-  try {
-    localStorage.setItem('stockEntries', JSON.stringify(entries));
-  } catch (error) {
-    console.error('Error saving stock entries to localStorage:', error);
-  }
-};
-
-// Load stock exits from localStorage or create an empty array
-const loadStockExits = (): StockExit[] => {
-  try {
-    const exitsData = localStorage.getItem('stockExits');
-    return exitsData ? JSON.parse(exitsData) : [];
-  } catch (error) {
-    console.error('Error loading stock exits from localStorage:', error);
-    return [];
-  }
-};
-
-// Save stock exits to localStorage
-const saveStockExits = (exits: StockExit[]): void => {
-  try {
-    localStorage.setItem('stockExits', JSON.stringify(exits));
-  } catch (error) {
-    console.error('Error saving stock exits to localStorage:', error);
-  }
-};
-
-// Get all stock entries
-export const getStockEntries = async (): Promise<StockEntry[]> => {
-  // First, try to get from localStorage
-  const localEntries = loadStockEntries();
-  
-  try {
-    // Try to fetch from Supabase
     const { data: entriesData, error: entriesError } = await supabase
       .from('StockEntries')
       .select('*')
       .order('createdat', { ascending: false });
-    
+
     if (entriesError) {
       throw entriesError;
     }
-    
+
     if (!entriesData) {
-      return localEntries;
+      throw new Error("No stock entries found");
     }
-    
+
     // Transform the returned data
     const entriesWithItems = await Promise.all(
       entriesData.map(async (entry) => {
@@ -118,7 +42,7 @@ export const getStockEntries = async (): Promise<StockEntry[]> => {
           .from('StockEntriesItems')
           .select('*')
           .eq('entryid', entry.id);
-        
+
         if (itemsError) {
           console.error(`Error fetching items for entry ${entry.id}:`, itemsError);
           return {
@@ -136,7 +60,7 @@ export const getStockEntries = async (): Promise<StockEntry[]> => {
             items: []
           } as StockEntry;
         }
-        
+
         // Map items to the expected format
         const mappedItems = (itemsData || []).map(item => ({
           productId: item.productid,
@@ -145,7 +69,7 @@ export const getStockEntries = async (): Promise<StockEntry[]> => {
           purchasePrice: item.purchaseprice,
           discount: item.discount || 0
         }));
-        
+
         // Return the entry with its mapped items
         return {
           id: entry.id,
@@ -155,7 +79,7 @@ export const getStockEntries = async (): Promise<StockEntry[]> => {
           date: entry.date,
           invoiceNumber: entry.invoicenumber,
           notes: entry.notes,
-          status: (entry.status as "pending" | "completed" | "cancelled"),
+          status: entry.status as "pending" | "completed" | "cancelled",
           discount: entry.discount || 0,
           createdAt: entry.createdat,
           updatedAt: entry.updatedat,
@@ -163,122 +87,29 @@ export const getStockEntries = async (): Promise<StockEntry[]> => {
         } as StockEntry;
       })
     );
-    
-    // Save to localStorage for offline use
-    saveStockEntries(entriesWithItems);
-    
+      
     return entriesWithItems;
-  } catch (error) {
-    console.error('Error fetching stock entries from Supabase:', error);
-    // Return localStorage data as fallback
-    return localEntries;
+  } catch (err) {
+    console.error('Error fetching stock entries:', err);
+    return [];
   }
-};
+}
 
-// Get all stock exits
-export const getStockExits = async (): Promise<StockExit[]> => {
-  // First, try to get from localStorage
-  const localExits = loadStockExits();
-  
+// Create a new stock entry
+export async function createStockEntry(entryData: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>): Promise<StockEntry | null> {
   try {
-    // Try to fetch from Supabase
-    const { data: exitsData, error: exitsError } = await supabase
-      .from('StockExits')
-      .select('*')
-      .order('createdat', { ascending: false });
+    const entryNumber = await generateStockEntryNumber();
     
-    if (exitsError) {
-      throw exitsError;
-    }
+    const newEntry: StockEntry = {
+      id: uuidv4(),
+      ...entryData,
+      entryNumber,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
     
-    if (!exitsData) {
-      return localExits;
-    }
-    
-    // Transform the returned data
-    const exitsWithItems = await Promise.all(
-      exitsData.map(async (exit) => {
-        // Fetch items for each exit
-        const { data: itemsData, error: itemsError } = await supabase
-          .from('StockExitsItems')
-          .select('*')
-          .eq('exitid', exit.id);
-        
-        if (itemsError) {
-          console.error(`Error fetching items for exit ${exit.id}:`, itemsError);
-          return {
-            id: exit.id,
-            clientId: exit.clientid,
-            clientName: exit.clientname,
-            reason: exit.reason,
-            exitNumber: exit.exitnumber,
-            date: exit.date,
-            invoiceNumber: exit.invoicenumber,
-            notes: exit.notes,
-            status: (exit.status as "pending" | "completed" | "cancelled"),
-            discount: exit.discount || 0,
-            fromOrderId: exit.fromorderid,
-            createdAt: exit.createdat,
-            updatedAt: exit.updatedat,
-            items: []
-          } as StockExit;
-        }
-        
-        // Map items to the expected format
-        const mappedItems = (itemsData || []).map(item => ({
-          productId: item.productid,
-          productName: item.productname,
-          quantity: item.quantity,
-          salePrice: item.saleprice,
-          discount: item.discount || 0
-        }));
-        
-        // Return the exit with its mapped items
-        return {
-          id: exit.id,
-          clientId: exit.clientid,
-          clientName: exit.clientname,
-          reason: exit.reason,
-          exitNumber: exit.exitnumber,
-          date: exit.date,
-          invoiceNumber: exit.invoicenumber,
-          notes: exit.notes,
-          status: (exit.status as "pending" | "completed" | "cancelled"),
-          discount: exit.discount || 0,
-          fromOrderId: exit.fromorderid,
-          createdAt: exit.createdat,
-          updatedAt: exit.updatedat,
-          items: mappedItems
-        } as StockExit;
-      })
-    );
-    
-    // Save to localStorage for offline use
-    saveStockExits(exitsWithItems);
-    
-    return exitsWithItems;
-  } catch (error) {
-    console.error('Error fetching stock exits from Supabase:', error);
-    // Return localStorage data as fallback
-    return localExits;
-  }
-};
-
-// Add a new stock entry
-export const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'entryNumber'>): Promise<StockEntry> => {
-  const entryNumber = await generateStockEntryNumber();
-  
-  const newEntry: StockEntry = {
-    id: uuidv4(),
-    ...entry,
-    entryNumber: entryNumber,
-    status: 'completed',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
-  try {
-    // Save to Supabase
+    // Insert entry data
     const { error } = await supabase
       .from('StockEntries')
       .insert({
@@ -296,7 +127,7 @@ export const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' |
       });
     
     if (error) {
-      console.error('Error saving entry to Supabase:', error);
+      console.error('Error creating stock entry:', error);
       throw error;
     }
     
@@ -316,38 +147,113 @@ export const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'createdAt' |
         .insert(entryItems);
       
       if (itemsError) {
-        console.error('Error saving entry items to Supabase:', itemsError);
-        // Continue even with errors to save other items
+        console.error('Error creating stock entry items:', itemsError);
       }
     }
+    
+    return newEntry;
   } catch (error) {
-    console.error('Error adding stock entry:', error);
-    // Continue with local save even if Supabase fails
+    console.error('Error in createStockEntry:', error);
+    return null;
   }
-  
-  // Update localStorage
-  const entries = loadStockEntries();
-  saveStockEntries([newEntry, ...entries]);
-  
-  return newEntry;
-};
+}
 
-// Add a new stock exit
-export const addStockExit = async (exit: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>): Promise<StockExit> => {
-  const exitNumber = await generateStockExitNumber();
-  
-  const newExit: StockExit = {
-    id: uuidv4(),
-    ...exit,
-    exitNumber: exitNumber,
-    status: 'completed',
-    discount: exit.discount || 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
+// Fetch all stock exits
+export async function fetchStockExits(): Promise<StockExit[]> {
   try {
-    // Save to Supabase
+    const { data: exitsData, error: exitsError } = await supabase
+      .from('StockExits')
+      .select('*')
+      .order('createdat', { ascending: false });
+
+    if (exitsError) {
+      throw exitsError;
+    }
+
+    if (!exitsData) {
+      throw new Error("No stock exits found");
+    }
+
+    // Transform the returned data
+    const exitsWithItems = await Promise.all(
+      exitsData.map(async (exit) => {
+        // Fetch items for each exit
+        const { data: itemsData, error: itemsError } = await supabase
+          .from('StockExitsItems')
+          .select('*')
+          .eq('exitid', exit.id);
+
+        if (itemsError) {
+          console.error(`Error fetching items for exit ${exit.id}:`, itemsError);
+          return {
+            id: exit.id,
+            clientId: exit.clientid,
+            clientName: exit.clientname,
+            reason: exit.reason,
+            exitNumber: exit.exitnumber,
+            date: exit.date,
+            invoiceNumber: exit.invoicenumber,
+            notes: exit.notes,
+            status: exit.status as "pending" | "completed" | "cancelled",
+            discount: exit.discount || 0,
+            fromOrderId: exit.fromorderid,
+            createdAt: exit.createdat,
+            updatedAt: exit.updatedat,
+            items: []
+          } as StockExit;
+        }
+
+        // Map items to the expected format
+        const mappedItems = (itemsData || []).map(item => ({
+          productId: item.productid,
+          productName: item.productname,
+          quantity: item.quantity,
+          salePrice: item.saleprice,
+          discount: item.discount || 0
+        }));
+
+        // Return the exit with its mapped items
+        return {
+          id: exit.id,
+          clientId: exit.clientid,
+          clientName: exit.clientname,
+          reason: exit.reason,
+          exitNumber: exit.exitnumber,
+          date: exit.date,
+          invoiceNumber: exit.invoicenumber,
+          notes: exit.notes,
+          status: exit.status as "pending" | "completed" | "cancelled",
+          discount: exit.discount || 0,
+          fromOrderId: exit.fromorderid,
+          createdAt: exit.createdat,
+          updatedAt: exit.updatedat,
+          items: mappedItems
+        } as StockExit;
+      })
+    );
+      
+    return exitsWithItems;
+  } catch (err) {
+    console.error('Error fetching stock exits:', err);
+    return [];
+  }
+}
+
+// Create a new stock exit
+export async function createStockExit(exitData: Omit<StockExit, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'exitNumber'>): Promise<StockExit | null> {
+  try {
+    const exitNumber = await generateStockExitNumber();
+    
+    const newExit: StockExit = {
+      id: uuidv4(),
+      ...exitData,
+      exitNumber,
+      status: 'completed',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    // Insert exit data
     const { error } = await supabase
       .from('StockExits')
       .insert({
@@ -367,7 +273,7 @@ export const addStockExit = async (exit: Omit<StockExit, 'id' | 'createdAt' | 'u
       });
     
     if (error) {
-      console.error('Error saving exit to Supabase:', error);
+      console.error('Error creating stock exit:', error);
       throw error;
     }
     
@@ -387,247 +293,237 @@ export const addStockExit = async (exit: Omit<StockExit, 'id' | 'createdAt' | 'u
         .insert(exitItems);
       
       if (itemsError) {
-        console.error('Error saving exit items to Supabase:', itemsError);
-        // Continue even with errors to save other items
+        console.error('Error creating stock exit items:', itemsError);
       }
     }
+    
+    return newExit;
   } catch (error) {
-    console.error('Error adding stock exit:', error);
-    // Continue with local save even if Supabase fails
+    console.error('Error in createStockExit:', error);
+    return null;
   }
-  
-  // Update localStorage
-  const exits = loadStockExits();
-  saveStockExits([newExit, ...exits]);
-  
-  return newExit;
-};
+}
 
-// Update a stock entry
-export const updateStockEntry = async (id: string, updates: Partial<StockEntry>): Promise<StockEntry> => {
-  const entries = loadStockEntries();
-  const entryIndex = entries.findIndex(entry => entry.id === id);
-  
-  if (entryIndex === -1) {
-    throw new Error(`Stock entry with id ${id} not found`);
-  }
-  
-  const updatedEntry = {
-    ...entries[entryIndex],
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
-  
-  entries[entryIndex] = updatedEntry;
-  
+// Update an existing stock entry
+export async function updateStockEntry(id: string, updates: Partial<StockEntry>): Promise<StockEntry | null> {
   try {
-    // Update in Supabase
+    // Update entry data
     const { error } = await supabase
       .from('StockEntries')
       .update({
-        supplierid: updatedEntry.supplierId,
-        suppliername: updatedEntry.supplierName,
-        date: updatedEntry.date,
-        invoicenumber: updatedEntry.invoiceNumber,
-        notes: updatedEntry.notes,
-        status: updatedEntry.status,
-        discount: updatedEntry.discount,
-        updatedat: updatedEntry.updatedAt
+        supplierid: updates.supplierId,
+        suppliername: updates.supplierName,
+        date: updates.date,
+        invoicenumber: updates.invoiceNumber,
+        notes: updates.notes,
+        status: updates.status,
+        discount: updates.discount,
+        updatedat: new Date().toISOString()
       })
       .eq('id', id);
     
     if (error) {
-      console.error('Error updating entry in Supabase:', error);
+      console.error('Error updating stock entry:', error);
       throw error;
     }
     
-    // If items were updated, delete old items and insert new ones
-    if (updates.items) {
-      // First delete existing items
-      const { error: deleteError } = await supabase
-        .from('StockEntriesItems')
-        .delete()
-        .eq('entryid', id);
-      
-      if (deleteError) {
-        console.error('Error deleting entry items from Supabase:', deleteError);
-      }
-      
-      // Then insert new items
-      const entryItems = updatedEntry.items.map(item => ({
-        entryid: updatedEntry.id,
-        productid: item.productId,
-        productname: item.productName,
-        quantity: item.quantity,
-        purchaseprice: item.purchasePrice,
-        discount: item.discount || 0
-      }));
-      
-      const { error: insertError } = await supabase
-        .from('StockEntriesItems')
-        .insert(entryItems);
-      
-      if (insertError) {
-        console.error('Error inserting updated entry items to Supabase:', insertError);
-      }
+    // Fetch the updated entry
+    const { data: updatedEntryData, error: fetchError } = await supabase
+      .from('StockEntries')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching updated stock entry:', fetchError);
+      return null;
     }
+    
+    // Fetch items for the updated entry
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('StockEntriesItems')
+      .select('*')
+      .eq('entryid', id);
+    
+    if (itemsError) {
+      console.error(`Error fetching items for entry ${id}:`, itemsError);
+      return null;
+    }
+    
+    // Map items to the expected format
+    const mappedItems = (itemsData || []).map(item => ({
+      productId: item.productid,
+      productName: item.productname,
+      quantity: item.quantity,
+      purchasePrice: item.purchaseprice,
+      discount: item.discount || 0
+    }));
+    
+    // Return the updated entry with its mapped items
+    const updatedEntry: StockEntry = {
+      id: updatedEntryData.id,
+      supplierId: updatedEntryData.supplierid,
+      supplierName: updatedEntryData.suppliername,
+      entryNumber: updatedEntryData.entrynumber,
+      date: updatedEntryData.date,
+      invoiceNumber: updatedEntryData.invoicenumber,
+      notes: updatedEntryData.notes,
+      status: updatedEntryData.status as "pending" | "completed" | "cancelled",
+      discount: updatedEntryData.discount || 0,
+      createdAt: updatedEntryData.createdat,
+      updatedAt: updatedEntryData.updatedat,
+      items: mappedItems
+    };
+    
+    return updatedEntry;
   } catch (error) {
-    console.error('Error updating stock entry:', error);
-    // Continue with local update even if Supabase fails
+    console.error('Error in updateStockEntry:', error);
+    return null;
   }
-  
-  // Save to localStorage
-  saveStockEntries(entries);
-  
-  return updatedEntry;
-};
+}
 
-// Update a stock exit
-export const updateStockExit = async (id: string, updates: Partial<StockExit>): Promise<StockExit> => {
-  const exits = loadStockExits();
-  const exitIndex = exits.findIndex(exit => exit.id === id);
-  
-  if (exitIndex === -1) {
-    throw new Error(`Stock exit with id ${id} not found`);
-  }
-  
-  const updatedExit = {
-    ...exits[exitIndex],
-    ...updates,
-    updatedAt: new Date().toISOString()
-  };
-  
-  exits[exitIndex] = updatedExit;
-  
+// Update an existing stock exit
+export async function updateStockExit(id: string, updates: Partial<StockExit>): Promise<StockExit | null> {
   try {
-    // Update in Supabase
+    // Update exit data
     const { error } = await supabase
       .from('StockExits')
       .update({
-        clientid: updatedExit.clientId,
-        clientname: updatedExit.clientName,
-        reason: updatedExit.reason,
-        date: updatedExit.date,
-        invoicenumber: updatedExit.invoiceNumber,
-        notes: updatedExit.notes,
-        status: updatedExit.status,
-        discount: updatedExit.discount,
-        updatedat: updatedExit.updatedAt
+        clientid: updates.clientId,
+        clientname: updates.clientName,
+        reason: updates.reason,
+        date: updates.date,
+        invoicenumber: updates.invoiceNumber,
+        notes: updates.notes,
+        status: updates.status,
+        discount: updates.discount,
+        fromorderid: updates.fromOrderId,
+        updatedat: new Date().toISOString()
       })
       .eq('id', id);
     
     if (error) {
-      console.error('Error updating exit in Supabase:', error);
+      console.error('Error updating stock exit:', error);
       throw error;
     }
     
-    // If items were updated, delete old items and insert new ones
-    if (updates.items) {
-      // First delete existing items
-      const { error: deleteError } = await supabase
-        .from('StockExitsItems')
-        .delete()
-        .eq('exitid', id);
-      
-      if (deleteError) {
-        console.error('Error deleting exit items from Supabase:', deleteError);
-      }
-      
-      // Then insert new items
-      const exitItems = updatedExit.items.map(item => ({
-        exitid: updatedExit.id,
-        productid: item.productId,
-        productname: item.productName,
-        quantity: item.quantity,
-        saleprice: item.salePrice,
-        discount: item.discount || 0
-      }));
-      
-      const { error: insertError } = await supabase
-        .from('StockExitsItems')
-        .insert(exitItems);
-      
-      if (insertError) {
-        console.error('Error inserting updated exit items to Supabase:', insertError);
-      }
+    // Fetch the updated exit
+    const { data: updatedExitData, error: fetchError } = await supabase
+      .from('StockExits')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching updated stock exit:', fetchError);
+      return null;
     }
+    
+    // Fetch items for the updated exit
+    const { data: itemsData, error: itemsError } = await supabase
+      .from('StockExitsItems')
+      .select('*')
+      .eq('exitid', id);
+    
+    if (itemsError) {
+      console.error(`Error fetching items for exit ${id}:`, itemsError);
+      return null;
+    }
+    
+    // Map items to the expected format
+    const mappedItems = (itemsData || []).map(item => ({
+      productId: item.productid,
+      productName: item.productname,
+      quantity: item.quantity,
+      salePrice: item.saleprice,
+      discount: item.discount || 0
+    }));
+    
+    // Return the updated exit with its mapped items
+    const updatedExit: StockExit = {
+      id: updatedExitData.id,
+      clientId: updatedExitData.clientid,
+      clientName: updatedExitData.clientname,
+      reason: updatedExitData.reason,
+      exitNumber: updatedExitData.exitnumber,
+      date: updatedExitData.date,
+      invoiceNumber: updatedExitData.invoicenumber,
+      notes: updatedExitData.notes,
+      status: updatedExitData.status as "pending" | "completed" | "cancelled",
+      discount: updatedExitData.discount || 0,
+      fromOrderId: updatedExitData.fromorderid,
+      createdAt: updatedExitData.createdat,
+      updatedAt: updatedExitData.updatedat,
+      items: mappedItems
+    };
+    
+    return updatedExit;
   } catch (error) {
-    console.error('Error updating stock exit:', error);
-    // Continue with local update even if Supabase fails
+    console.error('Error in updateStockExit:', error);
+    return null;
   }
-  
-  // Save to localStorage
-  saveStockExits(exits);
-  
-  return updatedExit;
-};
+}
 
-// Delete a stock entry
-export const deleteStockEntry = async (id: string): Promise<void> => {
-  const entries = loadStockEntries();
-  const filteredEntries = entries.filter(entry => entry.id !== id);
-  
+// Delete an existing stock entry
+export async function deleteStockEntry(id: string): Promise<boolean> {
   try {
-    // Delete items first
+    // Delete entry items
     const { error: itemsError } = await supabase
       .from('StockEntriesItems')
       .delete()
       .eq('entryid', id);
     
     if (itemsError) {
-      console.error('Error deleting entry items from Supabase:', itemsError);
+      console.error('Error deleting stock entry items:', itemsError);
+      return false;
     }
     
-    // Then delete entry
+    // Delete entry
     const { error } = await supabase
       .from('StockEntries')
       .delete()
       .eq('id', id);
     
     if (error) {
-      console.error('Error deleting entry from Supabase:', error);
-      throw error;
+      console.error('Error deleting stock entry:', error);
+      return false;
     }
+    
+    return true;
   } catch (error) {
-    console.error('Error deleting stock entry:', error);
-    // Continue with local delete even if Supabase fails
+    console.error('Error in deleteStockEntry:', error);
+    return false;
   }
-  
-  // Save to localStorage
-  saveStockEntries(filteredEntries);
-};
+}
 
-// Delete a stock exit
-export const deleteStockExit = async (id: string): Promise<void> => {
-  const exits = loadStockExits();
-  const filteredExits = exits.filter(exit => exit.id !== id);
-  
+// Delete an existing stock exit
+export async function deleteStockExit(id: string): Promise<boolean> {
   try {
-    // Delete items first
+    // Delete exit items
     const { error: itemsError } = await supabase
       .from('StockExitsItems')
       .delete()
       .eq('exitid', id);
     
     if (itemsError) {
-      console.error('Error deleting exit items from Supabase:', itemsError);
+      console.error('Error deleting stock exit items:', itemsError);
+      return false;
     }
     
-    // Then delete exit
+    // Delete exit
     const { error } = await supabase
       .from('StockExits')
       .delete()
       .eq('id', id);
     
     if (error) {
-      console.error('Error deleting exit from Supabase:', error);
-      throw error;
+      console.error('Error deleting stock exit:', error);
+      return false;
     }
+    
+    return true;
   } catch (error) {
-    console.error('Error deleting stock exit:', error);
-    // Continue with local delete even if Supabase fails
+    console.error('Error in deleteStockExit:', error);
+    return false;
   }
-  
-  // Save to localStorage
-  saveStockExits(filteredExits);
-};
+}

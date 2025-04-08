@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -54,7 +55,13 @@ const ClientNew = () => {
     setIsSubmitting(true);
     const newClient: Client = {
       id: uuidv4(),
-      ...values,
+      name: values.name,
+      email: values.email,
+      phone: values.phone,
+      address: values.address,
+      taxId: values.taxId,
+      notes: values.notes || "",
+      status: 'active',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
