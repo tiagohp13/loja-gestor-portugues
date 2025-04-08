@@ -38,3 +38,12 @@ export const snakeToCamel = (obj: any) => {
     return result;
   }, {} as any);
 };
+
+// Add database functions for increment and decrement
+export const increment = (value: number) => {
+  return supabase.rpc('increment', { inc: value });
+};
+
+export const decrement = (value: number) => {
+  return supabase.rpc('decrement', { dec: value });
+};
