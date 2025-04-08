@@ -6,20 +6,21 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
-import { StockExitItem } from '@/types';
+import { StockExitItem, StockExit } from '@/types';
 
 const StockExitEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { stockExits, updateStockExit, products, clients } = useData();
   
-  const [exit, setExit] = useState({
+  const [exit, setExit] = useState<Partial<StockExit>>({
     clientId: '',
+    clientName: '',
     items: [] as StockExitItem[],
     date: '',
     invoiceNumber: '',
     notes: '',
-    fromOrderId: undefined as string | undefined
+    fromOrderId: undefined
   });
 
   useEffect(() => {
@@ -27,7 +28,8 @@ const StockExitEdit = () => {
       const foundExit = stockExits.find(exit => exit.id === id);
       if (foundExit) {
         setExit({
-          clientId: foundExit.clientId || '',
+          clientId: foundExit.clientId,
+          clientName: foundExit.clientName,
           items: foundExit.items || [],
           date: foundExit.date ? new Date(foundExit.date).toISOString().split('T')[0] : '',
           invoiceNumber: foundExit.invoiceNumber || '',

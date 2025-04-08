@@ -167,7 +167,7 @@ const OrderList = () => {
                         {order.orderNumber || "N/A"}
                       </td>
                       <td className="py-3 px-4">
-                        {formatDate(order.date)}
+                        {order.date ? formatDate(new Date(order.date)) : "N/A"}
                       </td>
                       <td className="py-3 px-4">
                         {order.clientName}

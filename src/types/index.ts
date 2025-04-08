@@ -1,3 +1,4 @@
+
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -100,6 +101,7 @@ export interface Order {
   updatedAt: string;
   orderNumber: string;
   discount: number;
+  convertedToStockExitId?: string;
 }
 
 export interface StockEntry {
@@ -119,13 +121,17 @@ export interface StockEntry {
 
 export interface StockExit {
   id: string;
+  clientId: string;
+  clientName: string;
   reason: string;
   items: StockExitItem[];
   date: string;
+  invoiceNumber?: string;
   notes: string;
   status: 'pending' | 'completed' | 'cancelled';
   createdAt: string;
   updatedAt: string;
   exitNumber: string;
   discount: number;
+  fromOrderId?: string;
 }
