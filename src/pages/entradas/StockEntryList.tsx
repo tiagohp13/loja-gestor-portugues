@@ -5,21 +5,28 @@ import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Pencil } from 'lucide-react';
-import { formatDate, formatCurrency } from '@/utils/formatting';
+import { Search, Plus, ChevronUp, ChevronDown, Eye, Pencil, Trash } from 'lucide-react';
+import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockEntry } from '@/types';
 import { toast } from 'sonner';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import { supabase } from '@/integrations/supabase/client';
+
+type SortField = 'entryNumber' | 'date' | 'supplierName' | 'total';
+type SortDirection = 'asc' | 'desc';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries } = useData();
+  const { stockEntries, deleteStockEntry } = useData();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
+  const [sortField, setSortField] = useState<SortField>('entryNumber');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchEntries();
@@ -28,7 +35,7 @@ const StockEntryList = () => {
   const fetchEntries = async () => {
     setLoading(true);
     try {
-      // Buscar dados diretamente da tabela em vez de usar RPC
+      // Fetch data directly from the table
       const { data: entriesData, error: entriesError } = await supabase
         .from('StockEntries')
         .select('*')
@@ -39,20 +46,20 @@ const StockEntryList = () => {
       }
 
       if (!entriesData) {
-        throw new Error("Não foram encontradas entradas");
+        throw new Error("No entries found");
       }
 
-      // Transformar os dados retornados
+      // Transform the returned data
       const entriesWithItems = await Promise.all(
         entriesData.map(async (entry) => {
-          // Buscar itens para cada entrada diretamente da tabela
+          // Fetch items for each entry directly from the table
           const { data: itemsData, error: itemsError } = await supabase
             .from('StockEntriesItems')
             .select('*')
             .eq('entryid', entry.id);
 
           if (itemsError) {
-            console.error(`Erro ao buscar itens da entrada ${entry.id}:`, itemsError);
+            console.error(`Error fetching items for entry ${entry.id}:`, itemsError);
             return {
               id: entry.id,
               supplierId: entry.supplierid,
@@ -62,22 +69,23 @@ const StockEntryList = () => {
               invoiceNumber: entry.invoicenumber,
               notes: entry.notes,
               status: (entry.status as "pending" | "completed" | "cancelled"),
-              discount: entry.discount,
+              discount: entry.discount || 0,
               createdAt: entry.createdat,
               updatedAt: entry.updatedat,
               items: []
             } as StockEntry;
           }
 
-          // Mapear items para o formato esperado em StockEntryItem[]
+          // Map items to the expected format in StockEntryItem[]
           const mappedItems = (itemsData || []).map(item => ({
             productId: item.productid,
             productName: item.productname,
             quantity: item.quantity,
-            purchasePrice: item.purchaseprice
+            purchasePrice: item.purchaseprice,
+            discount: item.discount || 0
           }));
 
-          // Retornar a entrada com seus itens mapeados
+          // Return the entry with its mapped items
           return {
             id: entry.id,
             supplierId: entry.supplierid,
@@ -87,7 +95,7 @@ const StockEntryList = () => {
             invoiceNumber: entry.invoicenumber,
             notes: entry.notes,
             status: (entry.status as "pending" | "completed" | "cancelled"),
-            discount: entry.discount,
+            discount: entry.discount || 0,
             createdAt: entry.createdat,
             updatedAt: entry.updatedat,
             items: mappedItems
@@ -97,13 +105,42 @@ const StockEntryList = () => {
         
       setLocalEntries(entriesWithItems);
     } catch (err) {
-      console.error('Erro ao buscar entradas:', err);
-      toast.error('Erro ao carregar as entradas');
+      console.error('Error fetching entries:', err);
+      toast.error('Error loading entries');
       // Fallback to local data
       setLocalEntries(stockEntries);
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  const renderSortIcon = (field: SortField) => {
+    if (field !== sortField) return null;
+    
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
+      : <ChevronDown className="inline w-4 h-4 ml-1" />;
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      await deleteStockEntry(id);
+      toast.success('Entrada eliminada com sucesso');
+      fetchEntries();
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast.error('Erro ao eliminar entrada');
+    }
+    setEntryToDelete(null);
   };
 
   useEffect(() => {
@@ -117,8 +154,36 @@ const StockEntryList = () => {
       );
     }
     
+    // Apply sorting
+    results.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'entryNumber':
+          comparison = (a.entryNumber || '').localeCompare(b.entryNumber || '');
+          break;
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'supplierName':
+          comparison = (a.supplierName || '').localeCompare(b.supplierName || '');
+          break;
+        case 'total':
+          const totalA = a.items && a.items.length > 0 
+            ? a.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 0)
+            : 0;
+          const totalB = b.items && b.items.length > 0 
+            ? b.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 0)
+            : 0;
+          comparison = totalA - totalB;
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
     setFilteredEntries(results);
-  }, [localEntries, searchTerm]);
+  }, [localEntries, searchTerm, sortField, sortDirection]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -157,23 +222,29 @@ const StockEntryList = () => {
             <table className="min-w-full bg-white">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Número
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('entryNumber')}
+                  >
+                    Número {renderSortIcon('entryNumber')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Data
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('date')}
+                  >
+                    Data {renderSortIcon('date')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Fornecedor
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('supplierName')}
+                  >
+                    Fornecedor {renderSortIcon('supplierName')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Fatura
-                  </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Preço Total
-                  </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Desconto
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('total')}
+                  >
+                    Valor {renderSortIcon('total')}
                   </th>
                   <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
                     Itens
@@ -185,19 +256,17 @@ const StockEntryList = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredEntries.map(entry => {
-                  // Calculate entry total with discount
-                  const subtotal = entry.items && entry.items.length > 0
+                  // Calculate entry total with item discounts
+                  const total = entry.items && entry.items.length > 0 
                     ? entry.items.reduce(
-                        (sum, item) => sum + (item.quantity * item.purchasePrice), 
+                        (sum, item) => sum + (item.quantity * item.purchasePrice * (1 - (item.discount || 0) / 100)), 
                         0
                       )
                     : 0;
-                  const discount = subtotal * ((entry.discount || 0) / 100);
-                  const total = subtotal - discount;
                   
                   return (
                     <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gestorApp-blue cursor-pointer" onClick={() => navigate(`/entradas/editar/${entry.id}`)}>
+                      <td className="py-3 px-4 font-medium text-gestorApp-blue">
                         {entry.entryNumber || "N/A"}
                       </td>
                       <td className="py-3 px-4">
@@ -207,25 +276,39 @@ const StockEntryList = () => {
                         {entry.supplierName}
                       </td>
                       <td className="py-3 px-4">
-                        {entry.invoiceNumber || "-"}
-                      </td>
-                      <td className="py-3 px-4">
-                        {formatCurrency(subtotal)}
-                      </td>
-                      <td className="py-3 px-4">
-                        {entry.discount ? `${entry.discount}%` : "-"}
+                        {formatCurrency(total)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {entry.items ? entry.items.length : 0}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => navigate(`/entradas/editar/${entry.id}`)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => navigate(`/entradas/${entry.id}`)}
+                            title="Ver Detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => navigate(`/entradas/editar/${entry.id}`)}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setEntryToDelete(entry.id)}
+                            title="Eliminar"
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -245,6 +328,15 @@ const StockEntryList = () => {
           />
         )}
       </div>
+
+      {/* Confirmation Dialog for Delete */}
+      <DeleteConfirmDialog
+        open={!!entryToDelete}
+        onOpenChange={() => setEntryToDelete(null)}
+        onConfirm={() => entryToDelete && handleDeleteEntry(entryToDelete)}
+        title="Eliminar Entrada"
+        description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };

@@ -48,6 +48,7 @@ const OrderEdit = () => {
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const [isProductSelected, setIsProductSelected] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -111,9 +112,10 @@ const OrderEdit = () => {
         discount: 0
       });
       
-      // Automatically add product if this is the first selection
-      // Otherwise user will click "Add Product" button
-      if (items.length === 0 && !isProductSearchOpen) {
+      setIsProductSelected(true);
+      
+      // Automatically add first product
+      if (items.length === 0) {
         setTimeout(() => {
           addItemToOrder();
         }, 100);
@@ -165,6 +167,7 @@ const OrderEdit = () => {
       discount: 0
     });
     setSearchTerm('');
+    setIsProductSelected(false);
   };
   
   const removeItem = (index: number) => {
@@ -377,7 +380,7 @@ const OrderEdit = () => {
                   </Popover>
                 </div>
                 
-                {currentItem.productId && (
+                {isProductSelected && (
                   <div className="grid md:grid-cols-4 gap-4">
                     <div className="space-y-2">
                       <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -440,7 +443,7 @@ const OrderEdit = () => {
                   </div>
                 )}
                 
-                {currentItem.productId && (
+                {isProductSelected && (
                   <div className="flex justify-end">
                     <Button 
                       type="button" 

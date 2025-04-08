@@ -6,27 +6,202 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, ChevronUp, ChevronDown, Filter, Eye, Pencil, ArrowRightLeft } from 'lucide-react';
+import { Search, Plus, ChevronUp, ChevronDown, Filter, Eye, Pencil, ArrowRightLeft, Ban, Trash } from 'lucide-react';
 import StatusBadge from '@/components/common/StatusBadge';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { Order } from '@/types';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 type SortField = 'orderNumber' | 'date' | 'clientName' | 'total' | 'status';
 type SortDirection = 'asc' | 'desc';
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const { orders } = useData();
+  const { orders, updateOrder, deleteOrder, convertOrderToStockExit } = useData();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [sortField, setSortField] = useState<SortField>('orderNumber');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [localOrders, setLocalOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [orderToDelete, setOrderToDelete] = useState<string | null>(null);
   
   useEffect(() => {
-    let results = [...orders];
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    setLoading(true);
+    try {
+      // Fetch data directly from the table
+      const { data: ordersData, error: ordersError } = await supabase
+        .from('Encomendas')
+        .select('*')
+        .order('createdat', { ascending: false });
+
+      if (ordersError) {
+        throw ordersError;
+      }
+
+      if (!ordersData) {
+        throw new Error("No orders found");
+      }
+
+      // Transform the returned data
+      const ordersWithItems = await Promise.all(
+        ordersData.map(async (order) => {
+          // Fetch items for each order directly from the table
+          const { data: itemsData, error: itemsError } = await supabase
+            .from('EncomendasItems')
+            .select('*')
+            .eq('encomendaid', order.id);
+
+          if (itemsError) {
+            console.error(`Error fetching items for order ${order.id}:`, itemsError);
+            return {
+              id: order.id,
+              clientId: order.clientid,
+              clientName: order.clientname,
+              orderNumber: order.ordernumber,
+              date: order.date,
+              notes: order.notes,
+              status: (order.status as "pending" | "completed" | "cancelled"),
+              discount: order.discount || 0,
+              convertedToStockExitId: order.convertedtostockexitid,
+              createdAt: order.createdat,
+              updatedAt: order.updatedat,
+              items: []
+            } as Order;
+          }
+
+          // Map items to the expected format in OrderItem[]
+          const mappedItems = (itemsData || []).map(item => ({
+            productId: item.productid,
+            productName: item.productname,
+            quantity: item.quantity,
+            salePrice: item.saleprice,
+            discount: item.discount || 0
+          }));
+
+          // Return the order with its mapped items
+          return {
+            id: order.id,
+            clientId: order.clientid,
+            clientName: order.clientname,
+            orderNumber: order.ordernumber,
+            date: order.date,
+            notes: order.notes,
+            status: (order.status as "pending" | "completed" | "cancelled"),
+            discount: order.discount || 0,
+            convertedToStockExitId: order.convertedtostockexitid,
+            createdAt: order.createdat,
+            updatedAt: order.updatedat,
+            items: mappedItems
+          } as Order;
+        })
+      );
+        
+      setLocalOrders(ordersWithItems);
+    } catch (err) {
+      console.error('Error fetching orders:', err);
+      toast.error('Error loading orders');
+      // Fallback to local data
+      setLocalOrders(orders);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelOrder = async (id: string) => {
+    try {
+      await updateOrder(id, { status: 'cancelled' });
+
+      // Update in Supabase
+      const { error } = await supabase
+        .from('Encomendas')
+        .update({ 
+          status: 'cancelled',
+          updatedat: new Date().toISOString()
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Encomenda cancelada com sucesso');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Erro ao cancelar encomenda');
+    }
+  };
+  
+  const handleDeleteOrder = async (id: string) => {
+    try {
+      await deleteOrder(id);
+      
+      // Delete from Supabase
+      // First delete items
+      const { error: itemsError } = await supabase
+        .from('EncomendasItems')
+        .delete()
+        .eq('encomendaid', id);
+      
+      if (itemsError) {
+        console.error('Error deleting order items:', itemsError);
+      }
+      
+      // Then delete order
+      const { error } = await supabase
+        .from('Encomendas')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      toast.success('Encomenda eliminada com sucesso');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Erro ao eliminar encomenda');
+    }
+    setOrderToDelete(null);
+  };
+  
+  const handleConvertOrder = async (id: string) => {
+    try {
+      await convertOrderToStockExit(id);
+      toast.success('Encomenda convertida em saída com sucesso');
+      fetchOrders();
+    } catch (error) {
+      console.error('Error converting order to exit:', error);
+      toast.error('Erro ao converter encomenda em saída');
+    }
+  };
+  
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  const renderSortIcon = (field: SortField) => {
+    if (field !== sortField) return null;
+    
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
+      : <ChevronDown className="inline w-4 h-4 ml-1" />;
+  };
+
+  useEffect(() => {
+    let results = [...localOrders];
     
     // Apply search filter
     if (searchTerm) {
@@ -70,24 +245,7 @@ const OrderList = () => {
     });
     
     setFilteredOrders(results);
-  }, [orders, searchTerm, sortField, sortDirection, statusFilter]);
-  
-  const handleSort = (field: SortField) => {
-    if (field === sortField) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-  
-  const renderSortIcon = (field: SortField) => {
-    if (field !== sortField) return null;
-    
-    return sortDirection === 'asc' 
-      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
-      : <ChevronDown className="inline w-4 h-4 ml-1" />;
-  };
+  }, [localOrders, searchTerm, sortField, sortDirection, statusFilter]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -131,9 +289,17 @@ const OrderList = () => {
               </SelectContent>
             </Select>
           </div>
+          
+          <Button variant="outline" onClick={fetchOrders}>
+            Atualizar
+          </Button>
         </div>
         
-        {filteredOrders.length > 0 ? (
+        {loading ? (
+          <div className="text-center py-8">
+            <p>Carregando encomendas...</p>
+          </div>
+        ) : filteredOrders.length > 0 ? (
           <div className="overflow-x-auto">
             <table className="min-w-full bg-white">
               <thead className="bg-gray-50">
@@ -211,35 +377,52 @@ const OrderList = () => {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/encomendas/${order.id}`);
-                            }}
+                            onClick={() => navigate(`/encomendas/${order.id}`)}
                             title="Ver Detalhes"
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
+                          
+                          {order.status !== 'cancelled' && !order.convertedToStockExitId && (
+                            <>
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => navigate(`/encomendas/editar/${order.id}`)}
+                                title="Editar"
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleConvertOrder(order.id)}
+                                title="Converter em Saída"
+                              >
+                                <ArrowRightLeft className="h-4 w-4" />
+                              </Button>
+                              
+                              <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                onClick={() => handleCancelOrder(order.id)}
+                                title="Cancelar Encomenda"
+                                className="text-red-500 hover:text-red-700"
+                              >
+                                <Ban className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                          
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/encomendas/editar/${order.id}`);
-                            }}
-                            title="Editar"
+                            onClick={() => setOrderToDelete(order.id)}
+                            title="Eliminar"
+                            className="text-red-500 hover:text-red-700"
                           >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/encomendas/converter/${order.id}`);
-                            }}
-                            title="Converter em Saída"
-                          >
-                            <ArrowRightLeft className="h-4 w-4" />
+                            <Trash className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
@@ -261,6 +444,15 @@ const OrderList = () => {
           />
         )}
       </div>
+      
+      {/* Confirmation Dialog for Delete */}
+      <DeleteConfirmDialog
+        open={!!orderToDelete}
+        onOpenChange={() => setOrderToDelete(null)}
+        onConfirm={() => orderToDelete && handleDeleteOrder(orderToDelete)}
+        title="Eliminar Encomenda"
+        description="Tem certeza que deseja eliminar esta encomenda? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };

@@ -1,38 +1,145 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { Loader2, ArrowLeft, Pencil } from 'lucide-react';
+import { Loader2, ArrowLeft, Pencil, Ban, ArrowRightLeft } from 'lucide-react';
 import StatusBadge from '@/components/common/StatusBadge';
 import { formatCurrency } from '@/utils/formatting';
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
 import { Order } from '@/types';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orders } = useData();
+  const { orders, updateOrder } = useData();
   
   const [order, setOrder] = useState<Order | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (id) {
+    fetchOrderDetails();
+  }, [id]);
+
+  const fetchOrderDetails = async () => {
+    if (!id) return;
+    
+    setLoading(true);
+    
+    try {
+      // First try to fetch from Supabase
+      const { data: orderData, error: orderError } = await supabase
+        .from('Encomendas')
+        .select('*')
+        .eq('id', id)
+        .single();
+      
+      if (orderError) {
+        throw orderError;
+      }
+      
+      if (!orderData) {
+        throw new Error('Encomenda não encontrada');
+      }
+      
+      // Fetch order items
+      const { data: itemsData, error: itemsError } = await supabase
+        .from('EncomendasItems')
+        .select('*')
+        .eq('encomendaid', id);
+      
+      if (itemsError) {
+        throw itemsError;
+      }
+      
+      // Map the data to our expected format
+      const mappedItems = (itemsData || []).map(item => ({
+        productId: item.productid,
+        productName: item.productname,
+        quantity: item.quantity,
+        salePrice: item.saleprice,
+        discount: item.discount || 0
+      }));
+      
+      const mappedOrder: Order = {
+        id: orderData.id,
+        clientId: orderData.clientid,
+        clientName: orderData.clientname,
+        orderNumber: orderData.ordernumber,
+        date: orderData.date,
+        notes: orderData.notes,
+        status: orderData.status as "pending" | "completed" | "cancelled",
+        discount: orderData.discount || 0,
+        convertedToStockExitId: orderData.convertedtostockexitid,
+        createdAt: orderData.createdat,
+        updatedAt: orderData.updatedat,
+        items: mappedItems
+      };
+      
+      setOrder(mappedOrder);
+    } catch (error) {
+      console.error('Error fetching order details:', error);
+      
+      // Fallback to local data
       const foundOrder = orders.find(o => o.id === id);
+      
       if (foundOrder) {
         setOrder(foundOrder);
       } else {
-        toast.error("Encomenda não encontrada");
-        navigate("/encomendas/consultar");
+        toast.error('Encomenda não encontrada');
+        navigate('/encomendas/consultar');
       }
+    } finally {
+      setLoading(false);
     }
-  }, [id, orders, navigate]);
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    
+    try {
+      await updateOrder(order.id, { status: 'cancelled' });
+      
+      // Update in Supabase
+      const { error } = await supabase
+        .from('Encomendas')
+        .update({ 
+          status: 'cancelled',
+          updatedat: new Date().toISOString()
+        })
+        .eq('id', order.id);
+      
+      if (error) throw error;
+      
+      toast.success('Encomenda cancelada com sucesso');
+      
+      // Update local state
+      setOrder(prev => prev ? { ...prev, status: 'cancelled' } : null);
+    } catch (error) {
+      console.error('Error cancelling order:', error);
+      toast.error('Erro ao cancelar encomenda');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   if (!order) {
     return <div className="flex justify-center items-center h-96">
-      <Loader2 className="h-8 w-8 animate-spin" />
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-4">Encomenda não encontrada</h2>
+        <Button onClick={() => navigate("/encomendas/consultar")}>
+          Voltar à Lista de Encomendas
+        </Button>
+      </div>
     </div>;
   }
 
@@ -52,10 +159,24 @@ const OrderDetail = () => {
         description={`Encomenda #${order.orderNumber || 'N/A'}`}
         actions={
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate(`/encomendas/editar/${order.id}`)}>
-              <Pencil className="w-4 h-4 mr-2" />
-              Editar
-            </Button>
+            {order.status !== 'cancelled' && !order.convertedToStockExitId && (
+              <>
+                <Button variant="outline" onClick={() => navigate(`/encomendas/editar/${order.id}`)}>
+                  <Pencil className="w-4 h-4 mr-2" />
+                  Editar
+                </Button>
+                {order.status !== 'completed' && (
+                  <Button variant="outline" onClick={() => navigate(`/encomendas/converter/${order.id}`)}>
+                    <ArrowRightLeft className="w-4 h-4 mr-2" />
+                    Transformar em Saída
+                  </Button>
+                )}
+                <Button variant="outline" onClick={handleCancelOrder} className="text-red-500 hover:bg-red-50">
+                  <Ban className="w-4 h-4 mr-2" />
+                  Cancelar
+                </Button>
+              </>
+            )}
             <Button variant="outline" onClick={() => navigate("/encomendas/consultar")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar à Lista
@@ -89,6 +210,19 @@ const OrderDetail = () => {
                   <StatusBadge status={order.status} />
                 </dd>
               </div>
+              {order.convertedToStockExitId && (
+                <div className="col-span-2">
+                  <dt className="font-medium text-gestorApp-gray-dark">Saída de Stock</dt>
+                  <dd className="mt-1">
+                    <Link 
+                      to={`/saidas/${order.convertedToStockExitId}`}
+                      className="text-blue-600 hover:text-blue-800 underline"
+                    >
+                      Ver saída
+                    </Link>
+                  </dd>
+                </div>
+              )}
               <div className="col-span-2">
                 <dt className="font-medium text-gestorApp-gray-dark">Notas</dt>
                 <dd className="mt-1">{order.notes || "Sem notas"}</dd>

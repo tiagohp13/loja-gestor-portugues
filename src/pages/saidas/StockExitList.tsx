@@ -5,19 +5,20 @@ import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, ChevronUp, ChevronDown, Eye, Pencil } from 'lucide-react';
+import { Search, Plus, ChevronUp, ChevronDown, Eye, Pencil, Trash } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockExit } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 
 type SortField = 'exitNumber' | 'date' | 'reason' | 'total';
 type SortDirection = 'asc' | 'desc';
 
 const StockExitList = () => {
   const navigate = useNavigate();
-  const { stockExits } = useData();
+  const { stockExits, deleteStockExit } = useData();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredExits, setFilteredExits] = useState<StockExit[]>([]);
@@ -25,6 +26,7 @@ const StockExitList = () => {
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
   const [sortField, setSortField] = useState<SortField>('exitNumber');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [exitToDelete, setExitToDelete] = useState<string | null>(null);
 
   useEffect(() => {
     fetchExits();
@@ -82,7 +84,7 @@ const StockExitList = () => {
             productName: item.productname,
             quantity: item.quantity,
             salePrice: item.saleprice,
-            discount: item.discount || 0  // Handle possible undefined discount
+            discount: item.discount || 0  // Add default value for discount
           }));
 
           // Return the exit with its mapped items
@@ -131,6 +133,18 @@ const StockExitList = () => {
     return sortDirection === 'asc' 
       ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
       : <ChevronDown className="inline w-4 h-4 ml-1" />;
+  };
+
+  const handleDeleteExit = async (id: string) => {
+    try {
+      await deleteStockExit(id);
+      toast.success('Saída eliminada com sucesso');
+      fetchExits();
+    } catch (error) {
+      console.error('Error deleting exit:', error);
+      toast.error('Erro ao eliminar saída');
+    }
+    setExitToDelete(null);
   };
 
   useEffect(() => {
@@ -290,6 +304,15 @@ const StockExitList = () => {
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => setExitToDelete(exit.id)}
+                            title="Eliminar"
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash className="h-4 w-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -310,6 +333,15 @@ const StockExitList = () => {
           />
         )}
       </div>
+
+      {/* Confirmation Dialog for Delete */}
+      <DeleteConfirmDialog
+        open={!!exitToDelete}
+        onOpenChange={() => setExitToDelete(null)}
+        onConfirm={() => exitToDelete && handleDeleteExit(exitToDelete)}
+        title="Eliminar Saída"
+        description="Tem certeza que deseja eliminar esta saída? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };

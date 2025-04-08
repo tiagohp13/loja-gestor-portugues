@@ -65,7 +65,7 @@ export interface Product {
   image?: string;
   createdAt: string;
   updatedAt: string;
-  // Add missing fields that are used in the code
+  // Additional fields
   supplierId?: string;
   supplierName?: string;
 }
