@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -26,7 +25,8 @@ const StockEntryNew = () => {
     supplierName: '',
     date: new Date().toISOString().split('T')[0],
     invoiceNumber: '',
-    notes: ''
+    notes: '',
+    discount: 0
   });
   
   const [items, setItems] = useState<StockEntryItem[]>([]);
@@ -102,24 +102,20 @@ const StockEntryNew = () => {
       return;
     }
     
-    // Check if the product is already in the entry
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        purchasePrice: currentItem.purchasePrice // Update the price in case it changed
+        purchasePrice: currentItem.purchasePrice
       };
       setItems(updatedItems);
     } else {
-      // Add new item
       setItems([...items, { ...currentItem }]);
     }
     
-    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
@@ -167,14 +163,17 @@ const StockEntryNew = () => {
       items: items,
       date: entryDetails.date,
       invoiceNumber: entryDetails.invoiceNumber,
-      notes: entryDetails.notes
+      notes: entryDetails.notes,
+      discount: parseFloat(entryDetails.discount.toString()) || 0
     });
     
     navigate('/entradas/historico');
   };
 
-  const totalValue = items.reduce((total, item) => 
+  const subtotal = items.reduce((total, item) => 
     total + (item.quantity * item.purchasePrice), 0);
+  const discountAmount = subtotal * (entryDetails.discount / 100);
+  const totalValue = subtotal - discountAmount;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -395,7 +394,6 @@ const StockEntryNew = () => {
               </div>
             </div>
             
-            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -448,13 +446,38 @@ const StockEntryNew = () => {
             />
           </div>
           
+          <div className="space-y-2">
+            <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
+              Desconto (%)
+            </label>
+            <Input
+              id="discount"
+              name="discount"
+              type="number"
+              min="0"
+              max="100"
+              step="0.01"
+              value={entryDetails.discount}
+              onChange={handleEntryDetailsChange}
+              placeholder="0.00"
+            />
+          </div>
+          
           <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <p className="text-lg font-semibold text-blue-800">
-              Valor Total: {totalValue.toFixed(2)} €
-            </p>
-            <p className="text-sm text-blue-600 mt-1">
-              Total de itens: {items.length}
-            </p>
+            <dl className="grid md:grid-cols-3 gap-4">
+              <div>
+                <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
+                <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-blue-800">Desconto ({entryDetails.discount}%):</dt>
+                <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-blue-800">Total:</dt>
+                <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
+              </div>
+            </dl>
           </div>
           
           <div className="flex justify-end space-x-4">

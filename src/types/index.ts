@@ -1,34 +1,24 @@
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
 }
 
-export interface Product {
+export interface User {
   id: string;
-  code: string;
-  name: string;
-  description: string;
-  category: string;
-  purchasePrice: number;
-  salePrice: number;
-  currentStock: number;
-  minStock: number;
-  createdAt: string;
-  updatedAt: string;
+  email: string;
+  name?: string;
+  role?: string;
+  created_at?: string;
+  nome?: string;
+  telefone?: string;
 }
 
 export interface Category {
   id: string;
   name: string;
   description: string;
+  productCount?: number;
+  status?: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
 }
@@ -41,6 +31,7 @@ export interface Client {
   address: string;
   taxId: string;
   notes: string;
+  status?: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
 }
@@ -52,65 +43,29 @@ export interface Supplier {
   phone: string;
   address: string;
   taxId: string;
-  paymentTerms: string;
   notes: string;
+  status?: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;
 }
 
-export interface StockEntryItem {
-  productId: string;
-  productName: string;
-  quantity: number;
+export interface Product {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: string;
   purchasePrice: number;
-  discountPercent?: number;
-}
-
-export interface StockExit {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName: string;
-  items: StockExitItem[];
-  date: string;
-  invoiceNumber?: string;
-  notes?: string;
-  fromOrderId?: string;
-  fromOrderNumber?: string;
-  createdAt: string;
-}
-
-export interface StockExitItem {
-  productId: string;
-  productName: string;
-  quantity: number;
   salePrice: number;
-  discountPercent?: number;
-}
-
-export interface StockEntry {
-  id: string;
-  number: string;
-  supplierId: string;
-  supplierName: string;
-  items: StockEntryItem[];
-  invoiceNumber?: string;
-  notes?: string;
-  date: string;
+  currentStock: number;
+  minStock: number;
+  status?: 'active' | 'inactive';
+  image?: string;
   createdAt: string;
+  updatedAt: string;
 }
 
-export interface Order {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName?: string;
-  items: OrderItem[];
-  date: string;
-  notes?: string;
-  convertedToStockExitId?: string;
-  convertedToStockExitNumber?: string;
-}
+export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
 export interface OrderItem {
   productId: string;
@@ -119,45 +74,58 @@ export interface OrderItem {
   salePrice: number;
 }
 
-// Legacy types for compatibility
-export interface LegacyStockEntry {
-  id: string;
+export interface StockEntryItem {
   productId: string;
   productName: string;
-  supplierId: string;
-  supplierName: string;
   quantity: number;
   purchasePrice: number;
-  invoiceNumber: string;
-  notes: string;
-  date: string;
-  createdAt: string;
 }
 
-export interface LegacyStockExit {
-  id: string;
+export interface StockExitItem {
   productId: string;
   productName: string;
-  clientId: string;
-  clientName: string;
   quantity: number;
   salePrice: number;
-  invoiceNumber: string;
-  notes: string;
-  date: string;
-  createdAt: string;
-  fromOrderId?: string;
 }
 
-export interface LegacyOrder {
+export interface Order {
   id: string;
-  productId: string;
-  productName: string;
   clientId: string;
   clientName: string;
-  quantity: number;
-  salePrice: number;
+  items: OrderItem[];
   date: string;
   notes: string;
-  convertedToStockExitId?: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  orderNumber: string;
+  discount: number;
+}
+
+export interface StockEntry {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  items: StockEntryItem[];
+  date: string;
+  invoiceNumber?: string;
+  notes: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  entryNumber: string;
+  discount: number;
+}
+
+export interface StockExit {
+  id: string;
+  reason: string;
+  items: StockExitItem[];
+  date: string;
+  notes: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+  exitNumber: string;
+  discount: number;
 }

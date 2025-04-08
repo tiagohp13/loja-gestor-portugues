@@ -35,8 +35,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Utilizador não encontrado');
       }
       
-      setState({ user, isAuthenticated: true });
-      localStorage.setItem('user', JSON.stringify(user));
+      // Ensure the user object has all required properties
+      const userWithDefaults: User = {
+        id: user.id,
+        email: user.email,
+        name: user.nome || user.email,
+        role: 'user',
+        ...user
+      };
+      
+      setState({ user: userWithDefaults, isAuthenticated: true });
+      localStorage.setItem('user', JSON.stringify(userWithDefaults));
       
       toast.success('Login efetuado com sucesso');
       return true;

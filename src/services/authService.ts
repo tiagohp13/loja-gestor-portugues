@@ -28,7 +28,7 @@ export async function loginUser(email: string, password: string) {
       throw new Error('Credenciais inválidas');
     }
     
-    return { user: data };
+    return { user: { ...data, name: data.nome || data.email, role: 'user' } };
   } catch (error) {
     console.error('Error during login:', error);
     throw error;

@@ -24,7 +24,8 @@ const OrderNew = () => {
     clientId: '',
     clientName: '',
     date: new Date().toISOString().split('T')[0],
-    notes: ''
+    notes: '',
+    discount: 0
   });
   
   const [items, setItems] = useState<OrderItem[]>([]);
@@ -81,9 +82,7 @@ const OrderNew = () => {
         salePrice: selectedProduct.salePrice
       });
       
-      // Automatically add product if this is the first selection
-      // Otherwise user will click "Add Product" button
-      if (items.length === 0 && !isProductSearchOpen) {
+      if (items.length === 0) {
         setTimeout(() => {
           addItemToOrder();
         }, 100);
@@ -108,24 +107,20 @@ const OrderNew = () => {
       return;
     }
     
-    // Check if the product is already in the order
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice // Update the price in case it changed
+        salePrice: currentItem.salePrice
       };
       setItems(updatedItems);
     } else {
-      // Add new item
       setItems([...items, { ...currentItem }]);
     }
     
-    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
@@ -155,13 +150,11 @@ const OrderNew = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     if (!orderDetails.clientId || items.length === 0) {
       toast.error('Selecione um cliente e adicione pelo menos um produto');
       return;
     }
     
-    // Get the client
     const client = clients.find(c => c.id === orderDetails.clientId);
     
     if (!client) {
@@ -169,21 +162,22 @@ const OrderNew = () => {
       return;
     }
     
-    // Add the order
     addOrder({
       clientId: orderDetails.clientId,
       clientName: client.name,
       items: items,
       date: orderDetails.date,
-      notes: orderDetails.notes
+      notes: orderDetails.notes,
+      discount: parseFloat(orderDetails.discount.toString()) || 0
     });
     
     navigate('/encomendas/consultar');
   };
 
-  // Calculate total value
-  const totalValue = items.reduce((total, item) => 
+  const subtotal = items.reduce((total, item) => 
     total + (item.quantity * item.salePrice), 0);
+  const discountAmount = subtotal * (orderDetails.discount / 100);
+  const totalValue = subtotal - discountAmount;
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -267,21 +261,6 @@ const OrderNew = () => {
                 value={orderDetails.date}
                 onChange={handleOrderDetailsChange}
                 required
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-                Notas
-              </label>
-              <textarea
-                id="notes"
-                name="notes"
-                value={orderDetails.notes}
-                onChange={handleOrderDetailsChange}
-                placeholder="Observações sobre a encomenda..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-                rows={3}
               />
             </div>
             
@@ -410,7 +389,6 @@ const OrderNew = () => {
               </div>
             </div>
             
-            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
@@ -446,15 +424,57 @@ const OrderNew = () => {
                 </table>
               </div>
             )}
+            
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
+                  Notas
+                </label>
+                <textarea
+                  id="notes"
+                  name="notes"
+                  value={orderDetails.notes}
+                  onChange={handleOrderDetailsChange}
+                  placeholder="Observações sobre a encomenda..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+                  rows={3}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="discount" className="text-sm font-medium text-gestorApp-gray-dark">
+                  Desconto (%)
+                </label>
+                <Input
+                  id="discount"
+                  name="discount"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={orderDetails.discount}
+                  onChange={handleOrderDetailsChange}
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
           </div>
           
           <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <p className="text-lg font-semibold text-blue-800">
-              Valor Total: {totalValue.toFixed(2)} €
-            </p>
-            <p className="text-sm text-blue-600 mt-1">
-              Total de itens: {items.length}
-            </p>
+            <dl className="grid md:grid-cols-3 gap-4">
+              <div>
+                <dt className="text-sm font-medium text-blue-800">Subtotal:</dt>
+                <dd className="text-lg font-semibold text-blue-800">{subtotal.toFixed(2)} €</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-blue-800">Desconto ({orderDetails.discount}%):</dt>
+                <dd className="text-lg font-semibold text-blue-800">{discountAmount.toFixed(2)} €</dd>
+              </div>
+              <div>
+                <dt className="text-sm font-medium text-blue-800">Total:</dt>
+                <dd className="text-lg font-semibold text-blue-800">{totalValue.toFixed(2)} €</dd>
+              </div>
+            </dl>
           </div>
           
           <div className="flex justify-end space-x-4">

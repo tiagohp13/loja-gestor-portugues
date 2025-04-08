@@ -1,167 +1,168 @@
-
-import React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { ClipboardList, ArrowLeft, Edit, LogOut } from 'lucide-react';
-import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
+import { Loader2, ArrowLeft, Pencil } from 'lucide-react';
+import StatusBadge from '@/components/common/StatusBadge';
 import { formatCurrency } from '@/utils/formatting';
+import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Order } from '@/types';
 
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { orders, findOrder, convertOrderToStockExit } = useData();
+  const { orders } = useData();
   
-  const order = findOrder(id || '');
-  
-  if (!order) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <PageHeader 
-          title="Encomenda não encontrada" 
-          description="A encomenda que procura não existe ou foi removida"
-          actions={
-            <Button onClick={() => navigate('/encomendas/consultar')}>
-              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar à Lista
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
-  
-  const handleConvertToStockExit = async () => {
-    try {
-      await convertOrderToStockExit(order.id);
-      navigate('/saidas/historico');
-    } catch (error) {
-      // Error is already handled in the context
+  const [order, setOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      const foundOrder = orders.find(o => o.id === id);
+      if (foundOrder) {
+        setOrder(foundOrder);
+      } else {
+        toast.error("Encomenda não encontrada");
+        navigate("/encomendas/consultar");
+      }
     }
-  };
+  }, [id, orders, navigate]);
+
+  if (!order) {
+    return <div className="flex justify-center items-center h-96">
+      <Loader2 className="h-8 w-8 animate-spin" />
+    </div>;
+  }
+
+  // Calculate order subtotal
+  const subtotal = order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
   
-  const handleEditOrder = () => {
-    navigate(`/encomendas/editar/${order.id}`);
-  };
+  // Calculate discount amount
+  const discountAmount = subtotal * (order.discount / 100);
   
-  const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalValue = order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+  // Calculate total with discount
+  const total = subtotal - discountAmount;
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title={`Encomenda ${order.number}`}
-        description="Detalhes da encomenda"
+        title="Detalhes da Encomenda" 
+        description={`Encomenda #${order.orderNumber || 'N/A'}`}
         actions={
-          <Button onClick={() => navigate('/encomendas/consultar')}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar à Lista
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => navigate(`/encomendas/editar/${order.id}`)}>
+              <Pencil className="w-4 h-4 mr-2" />
+              Editar
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/encomendas/consultar")}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar à Lista
+            </Button>
+          </div>
         }
       />
       
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <div className="mb-6">
-              <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Informações da Encomenda</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gestorApp-gray">Número</p>
-                  <p className="text-gestorApp-blue font-medium">{order.number}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gestorApp-gray">Data</p>
-                  <p>{format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm font-medium text-gestorApp-gray">Cliente</p>
-                  <p className="font-medium">{order.clientName}</p>
-                </div>
-                <div className="col-span-2">
-                  <p className="text-sm font-medium text-gestorApp-gray">Estado</p>
-                  <div className="mt-1">
-                    {order.convertedToStockExitId ? (
-                      <div className="flex items-center">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 mr-2">
-                          Convertida em Saída
-                        </span>
-                        <button 
-                          onClick={() => navigate(`/saidas/editar/${order.convertedToStockExitId}`)}
-                          className="text-gestorApp-blue hover:underline flex items-center text-sm"
-                        >
-                          <LogOut className="w-3 h-3 mr-1" />
-                          {order.convertedToStockExitNumber}
-                        </button>
-                      </div>
-                    ) : (
-                      <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                        Pendente
-                      </span>
-                    )}
-                  </div>
-                </div>
+      <div className="grid md:grid-cols-2 gap-6 mt-6">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Informações da Encomenda</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt className="font-medium text-gestorApp-gray-dark">Número</dt>
+                <dd>{order.orderNumber || "N/A"}</dd>
               </div>
-            </div>
-            
-            {order.notes && (
-              <div className="mb-6">
-                <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Notas</h3>
-                <p className="text-gestorApp-gray-dark p-3 border border-gray-200 rounded-md bg-gray-50">{order.notes}</p>
+              <div>
+                <dt className="font-medium text-gestorApp-gray-dark">Data</dt>
+                <dd>{order.date}</dd>
               </div>
-            )}
-          </div>
-          
-          <div>
-            <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Produtos</h3>
-            <div className="overflow-x-auto border rounded-md">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Produto</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Qtd.</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Preço</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Subtotal</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {order.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatCurrency(item.salePrice)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatCurrency(item.quantity * item.salePrice)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-gray-dark">
-                      Total: {totalItems} items
-                    </td>
-                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
-                      Valor total: {formatCurrency(totalValue)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-            
-            <div className="mt-6 flex justify-end gap-3">
-              {!order.convertedToStockExitId && (
-                <>
-                  <Button onClick={handleEditOrder}>
-                    <Edit className="mr-2 h-4 w-4" /> Editar Encomenda
-                  </Button>
-                  <Button onClick={handleConvertToStockExit}>
-                    <LogOut className="mr-2 h-4 w-4" /> Converter em Saída
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+              <div>
+                <dt className="font-medium text-gestorApp-gray-dark">Cliente</dt>
+                <dd>{order.clientName}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-gestorApp-gray-dark">Estado</dt>
+                <dd>
+                  <StatusBadge status={order.status} />
+                </dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="font-medium text-gestorApp-gray-dark">Notas</dt>
+                <dd className="mt-1">{order.notes || "Sem notas"}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg">Resumo Financeiro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <dt className="font-medium text-gestorApp-gray-dark">Subtotal</dt>
+                <dd>{formatCurrency(subtotal)}</dd>
+              </div>
+              <div>
+                <dt className="font-medium text-gestorApp-gray-dark">Desconto</dt>
+                <dd>{order.discount}% ({formatCurrency(discountAmount)})</dd>
+              </div>
+              <div className="col-span-2 border-t pt-2 mt-2">
+                <dt className="font-medium text-gestorApp-gray-dark">Total</dt>
+                <dd className="text-xl font-bold text-gestorApp-blue mt-1">
+                  {formatCurrency(total)}
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
       </div>
+      
+      <Card className="mt-6">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg">Produtos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b">
+                  <th className="text-left py-3 px-4 font-medium">Produto</th>
+                  <th className="text-right py-3 px-4 font-medium">Quantidade</th>
+                  <th className="text-right py-3 px-4 font-medium">Preço Unit.</th>
+                  <th className="text-right py-3 px-4 font-medium">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items.map((item, index) => (
+                  <tr key={index} className="border-b">
+                    <td className="py-3 px-4">{item.productName}</td>
+                    <td className="text-right py-3 px-4">{item.quantity}</td>
+                    <td className="text-right py-3 px-4">{formatCurrency(item.salePrice)}</td>
+                    <td className="text-right py-3 px-4">{formatCurrency(item.quantity * item.salePrice)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td colSpan={3} className="text-right py-3 px-4 font-medium">Subtotal</td>
+                  <td className="text-right py-3 px-4">{formatCurrency(subtotal)}</td>
+                </tr>
+                <tr>
+                  <td colSpan={3} className="text-right py-3 px-4 font-medium">Desconto ({order.discount}%)</td>
+                  <td className="text-right py-3 px-4">{formatCurrency(discountAmount)}</td>
+                </tr>
+                <tr>
+                  <td colSpan={3} className="text-right py-3 px-4 font-bold">Total</td>
+                  <td className="text-right py-3 px-4 font-bold">{formatCurrency(total)}</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };
