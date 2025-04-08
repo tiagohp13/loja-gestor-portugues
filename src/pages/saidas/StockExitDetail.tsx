@@ -61,7 +61,7 @@ const StockExitDetail = () => {
         productName: item.productname,
         quantity: item.quantity,
         salePrice: item.saleprice,
-        discount: item.discount || 0
+        discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
       }));
       
       const mappedExit: StockExit = {

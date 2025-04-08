@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -60,7 +61,7 @@ const OrderDetail = () => {
         productName: item.productname,
         quantity: item.quantity,
         salePrice: item.saleprice,
-        discount: item.discount || 0
+        discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
       }));
       
       const mappedOrder: Order = {

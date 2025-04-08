@@ -104,6 +104,7 @@ export type Database = {
       }
       EncomendasItems: {
         Row: {
+          discount: number | null
           encomendaid: string | null
           id: string
           productid: string
@@ -112,6 +113,7 @@ export type Database = {
           saleprice: number
         }
         Insert: {
+          discount?: number | null
           encomendaid?: string | null
           id?: string
           productid: string
@@ -120,6 +122,7 @@ export type Database = {
           saleprice: number
         }
         Update: {
+          discount?: number | null
           encomendaid?: string | null
           id?: string
           productid?: string
@@ -264,6 +267,7 @@ export type Database = {
       }
       StockExitsItems: {
         Row: {
+          discount: number | null
           exitid: string | null
           id: string
           productid: string
@@ -272,6 +276,7 @@ export type Database = {
           saleprice: number
         }
         Insert: {
+          discount?: number | null
           exitid?: string | null
           id?: string
           productid: string
@@ -280,6 +285,7 @@ export type Database = {
           saleprice: number
         }
         Update: {
+          discount?: number | null
           exitid?: string | null
           id?: string
           productid?: string

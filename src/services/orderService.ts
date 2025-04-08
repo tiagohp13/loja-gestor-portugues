@@ -1,4 +1,3 @@
-
 import { v4 as uuidv4 } from 'uuid';
 import { Order, OrderItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -60,7 +59,7 @@ export async function fetchOrders(): Promise<Order[]> {
           productName: item.productname,
           quantity: item.quantity,
           salePrice: item.saleprice,
-          discount: item.discount || 0 // Add fallback to 0 if discount is missing
+          discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
         }));
 
         // Return the order with its mapped items
@@ -279,7 +278,7 @@ export async function fetchOrderById(id: string): Promise<Order | null> {
       productName: item.productname,
       quantity: item.quantity,
       salePrice: item.saleprice,
-      discount: item.discount || 0 // Add fallback to 0 if discount is missing
+      discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
     }));
     
     const mappedOrder: Order = {

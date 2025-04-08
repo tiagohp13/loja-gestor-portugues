@@ -78,7 +78,7 @@ const StockEntryList = () => {
             productName: item.productname,
             quantity: item.quantity,
             purchasePrice: item.purchaseprice,
-            discount: item.discount || 0
+            discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
           }));
 
           return {

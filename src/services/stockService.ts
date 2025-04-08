@@ -68,7 +68,7 @@ export async function fetchStockEntries(): Promise<StockEntry[]> {
           productName: item.productname,
           quantity: item.quantity,
           purchasePrice: item.purchaseprice,
-          discount: item.discount || 0 // Add fallback to 0 if discount is missing
+          discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
         }));
 
         // Return the entry with its mapped items
@@ -211,7 +211,7 @@ export async function fetchStockExits(): Promise<StockExit[]> {
           productName: item.productname,
           quantity: item.quantity,
           salePrice: item.saleprice,
-          discount: item.discount || 0 // Add fallback to 0 if discount is missing
+          discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
         }));
 
         // Return the exit with its mapped items
@@ -359,7 +359,7 @@ export async function updateStockEntry(id: string, updates: Partial<StockEntry>)
       productName: item.productname,
       quantity: item.quantity,
       purchasePrice: item.purchaseprice,
-      discount: item.discount || 0 // Add fallback to 0 if discount is missing
+      discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
     }));
     
     // Return the updated entry with its mapped items
@@ -439,7 +439,7 @@ export async function updateStockExit(id: string, updates: Partial<StockExit>): 
       productName: item.productname,
       quantity: item.quantity,
       salePrice: item.saleprice,
-      discount: item.discount || 0 // Add fallback to 0 if discount is missing
+      discount: item.discount ?? 0 // Using nullish coalescing to set default to 0
     }));
     
     // Return the updated exit with its mapped items
