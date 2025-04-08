@@ -573,8 +573,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (newExit.items && newExit.items.length > 0) {
         const exitItems = newExit.items.map(item => ({
           exitid: newExit.id,
-          productid: item.productId,
-          productname: item.productName,
+          productid: newExit.productId,
+          productname: newExit.productName,
           quantity: item.quantity,
           saleprice: item.salePrice,
           discount: item.discount || 0
@@ -853,4 +853,4 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }));
     
     // Find most profitable products
-    const profitableProducts = stockExits.flatMap(exit => exit.items).
+    const profitableProducts = stockExits.flatMap(exit => exit.
