@@ -76,7 +76,7 @@ const Login: React.FC = () => {
       
       <div className="mt-6 text-sm text-center text-gestorApp-gray">
         <p className="text-muted-foreground">
-          Use <strong>tiagohp13@hotmail.com</strong> e <strong>*Silva*2020</strong> para login
+          Use <strong>tiagohp13@hotmail.com</strong> e <strong>Silva2020</strong> para login
         </p>
         <p className="text-muted-foreground mt-1">
           Ou <strong>teste@suporte.com</strong> e <strong>teste123</strong>

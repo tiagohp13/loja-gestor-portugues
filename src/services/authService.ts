@@ -16,9 +16,19 @@ export async function loginUser(email: string, password: string) {
       throw new Error('Credenciais inválidas');
     }
     
-    // This is a workaround since we don't have access to modify the database function
-    // In a real app, we would call the check_password function
-    const pwCheck = password === 'admin123'; // For testing purposes
+    // Check for the specific user credentials requested
+    if (email === 'tiagohp13@hotmail.com' && password === 'Silva2020') {
+      const userData = data as Tables<'users'>;
+      
+      return { user: { 
+        ...userData, 
+        name: userData.email,
+        role: 'admin'
+      }};
+    }
+    
+    // This is a fallback for testing purposes
+    const pwCheck = password === 'admin123'; 
     
     if (!pwCheck) {
       throw new Error('Credenciais inválidas');

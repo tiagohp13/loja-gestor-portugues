@@ -1,10 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, Plus, ChevronUp, ChevronDown, Filter, Eye, Pencil, ArrowRightLeft } from 'lucide-react';
 import StatusBadge from '@/components/common/StatusBadge';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
@@ -21,10 +23,12 @@ const OrderList = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [sortField, setSortField] = useState<SortField>('orderNumber');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   
   useEffect(() => {
     let results = [...orders];
     
+    // Apply search filter
     if (searchTerm) {
       results = results.filter(
         order => 
@@ -33,6 +37,12 @@ const OrderList = () => {
       );
     }
     
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      results = results.filter(order => order.status === statusFilter);
+    }
+    
+    // Apply sorting
     results.sort((a, b) => {
       let comparison = 0;
       
@@ -47,8 +57,8 @@ const OrderList = () => {
           comparison = a.clientName.localeCompare(b.clientName);
           break;
         case 'total':
-          const totalA = a.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
-          const totalB = b.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+          const totalA = a.items.reduce((sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
+          const totalB = b.items.reduce((sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0);
           comparison = totalA - totalB;
           break;
         case 'status':
@@ -60,7 +70,7 @@ const OrderList = () => {
     });
     
     setFilteredOrders(results);
-  }, [orders, searchTerm, sortField, sortDirection]);
+  }, [orders, searchTerm, sortField, sortDirection, statusFilter]);
   
   const handleSort = (field: SortField) => {
     if (field === sortField) {
@@ -102,6 +112,25 @@ const OrderList = () => {
               onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
+          
+          {/* Status filter */}
+          <div className="flex items-center space-x-2">
+            <Filter className="h-4 w-4 text-gestorApp-gray" />
+            <Select
+              value={statusFilter}
+              onValueChange={value => setStatusFilter(value)}
+            >
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="pending">Pendentes</SelectItem>
+                <SelectItem value="completed">Concluídas</SelectItem>
+                <SelectItem value="cancelled">Canceladas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
         
         {filteredOrders.length > 0 ? (
@@ -133,9 +162,6 @@ const OrderList = () => {
                   >
                     Valor {renderSortIcon('total')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Desconto
-                  </th>
                   <th 
                     className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer" 
                     onClick={() => handleSort('status')}
@@ -145,22 +171,22 @@ const OrderList = () => {
                   <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
                     Itens
                   </th>
+                  <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredOrders.map(order => {
-                  const subtotal = order.items.reduce(
-                    (sum, item) => sum + (item.quantity * item.salePrice), 
+                  const total = order.items.reduce(
+                    (sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 
                     0
                   );
-                  const discount = subtotal * (order.discount / 100);
-                  const total = subtotal - discount;
                   
                   return (
                     <tr 
                       key={order.id} 
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/encomendas/${order.id}`)}
+                      className="hover:bg-gray-50"
                     >
                       <td className="py-3 px-4 font-medium text-gestorApp-blue">
                         {order.orderNumber || "N/A"}
@@ -172,16 +198,50 @@ const OrderList = () => {
                         {order.clientName}
                       </td>
                       <td className="py-3 px-4">
-                        {formatCurrency(subtotal)}
-                      </td>
-                      <td className="py-3 px-4">
-                        {order.discount ? `${order.discount}%` : "-"}
+                        {formatCurrency(total)}
                       </td>
                       <td className="py-3 px-4">
                         <StatusBadge status={order.status} />
                       </td>
                       <td className="py-3 px-4 text-right">
                         {order.items.length}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <div className="flex justify-end space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/encomendas/${order.id}`);
+                            }}
+                            title="Ver Detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/encomendas/editar/${order.id}`);
+                            }}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/encomendas/converter/${order.id}`);
+                            }}
+                            title="Converter em Saída"
+                          >
+                            <ArrowRightLeft className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );

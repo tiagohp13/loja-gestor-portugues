@@ -5,12 +5,15 @@ import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { Search, Plus, Pencil } from 'lucide-react';
+import { Search, Plus, ChevronUp, ChevronDown, Eye, Pencil } from 'lucide-react';
 import { formatCurrency, formatDate } from '@/utils/formatting';
 import EmptyState from '@/components/common/EmptyState';
 import { StockExit } from '@/types';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+
+type SortField = 'exitNumber' | 'date' | 'reason' | 'total';
+type SortDirection = 'asc' | 'desc';
 
 const StockExitList = () => {
   const navigate = useNavigate();
@@ -20,6 +23,8 @@ const StockExitList = () => {
   const [filteredExits, setFilteredExits] = useState<StockExit[]>([]);
   const [loading, setLoading] = useState(true);
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
+  const [sortField, setSortField] = useState<SortField>('exitNumber');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
 
   useEffect(() => {
     fetchExits();
@@ -28,7 +33,7 @@ const StockExitList = () => {
   const fetchExits = async () => {
     setLoading(true);
     try {
-      // Buscar dados diretamente da tabela em vez de usar RPC
+      // Buscar dados diretamente da tabela
       const { data: exitsData, error: exitsError } = await supabase
         .from('StockExits')
         .select('*')
@@ -76,7 +81,8 @@ const StockExitList = () => {
             productId: item.productid,
             productName: item.productname,
             quantity: item.quantity,
-            salePrice: item.saleprice
+            salePrice: item.saleprice,
+            discount: item.discount || 0
           }));
 
           // Retornar a saída com seus itens mapeados
@@ -110,6 +116,23 @@ const StockExitList = () => {
     }
   };
 
+  const handleSort = (field: SortField) => {
+    if (field === sortField) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+  
+  const renderSortIcon = (field: SortField) => {
+    if (field !== sortField) return null;
+    
+    return sortDirection === 'asc' 
+      ? <ChevronUp className="inline w-4 h-4 ml-1" /> 
+      : <ChevronDown className="inline w-4 h-4 ml-1" />;
+  };
+
   useEffect(() => {
     let results = [...localExits];
     
@@ -117,12 +140,41 @@ const StockExitList = () => {
       results = results.filter(
         exit => 
           (exit.reason && exit.reason.toLowerCase().includes(searchTerm.toLowerCase())) ||
-          (exit.exitNumber && exit.exitNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+          (exit.exitNumber && exit.exitNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (exit.clientName && exit.clientName.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
     
+    // Apply sorting
+    results.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortField) {
+        case 'exitNumber':
+          comparison = (a.exitNumber || '').localeCompare(b.exitNumber || '');
+          break;
+        case 'date':
+          comparison = new Date(a.date).getTime() - new Date(b.date).getTime();
+          break;
+        case 'reason':
+          comparison = (a.reason || '').localeCompare(b.reason || '');
+          break;
+        case 'total':
+          const totalA = a.items && a.items.length > 0 
+            ? a.items.reduce((sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0)
+            : 0;
+          const totalB = b.items && b.items.length > 0 
+            ? b.items.reduce((sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 0)
+            : 0;
+          comparison = totalA - totalB;
+          break;
+      }
+      
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+    
     setFilteredExits(results);
-  }, [localExits, searchTerm]);
+  }, [localExits, searchTerm, sortField, sortDirection]);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -161,20 +213,29 @@ const StockExitList = () => {
             <table className="min-w-full bg-white">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Número
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('exitNumber')}
+                  >
+                    Número {renderSortIcon('exitNumber')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Data
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('date')}
+                  >
+                    Data {renderSortIcon('date')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Motivo
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('reason')}
+                  >
+                    Motivo {renderSortIcon('reason')}
                   </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Valor
-                  </th>
-                  <th className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark">
-                    Desconto
+                  <th 
+                    className="py-3 px-4 text-left font-medium text-gestorApp-gray-dark cursor-pointer"
+                    onClick={() => handleSort('total')}
+                  >
+                    Valor {renderSortIcon('total')}
                   </th>
                   <th className="py-3 px-4 text-right font-medium text-gestorApp-gray-dark">
                     Itens
@@ -186,19 +247,17 @@ const StockExitList = () => {
               </thead>
               <tbody className="divide-y divide-gray-200">
                 {filteredExits.map(exit => {
-                  // Calculate exit total with discount
-                  const subtotal = exit.items && exit.items.length > 0 
+                  // Calculate exit total with item discounts
+                  const total = exit.items && exit.items.length > 0 
                     ? exit.items.reduce(
-                        (sum, item) => sum + (item.quantity * item.salePrice), 
+                        (sum, item) => sum + (item.quantity * item.salePrice * (1 - (item.discount || 0) / 100)), 
                         0
                       )
                     : 0;
-                  const discount = subtotal * ((exit.discount || 0) / 100);
-                  const total = subtotal - discount;
                   
                   return (
                     <tr key={exit.id} className="hover:bg-gray-50">
-                      <td className="py-3 px-4 font-medium text-gestorApp-blue cursor-pointer" onClick={() => navigate(`/saidas/editar/${exit.id}`)}>
+                      <td className="py-3 px-4 font-medium text-gestorApp-blue">
                         {exit.exitNumber || "N/A"}
                       </td>
                       <td className="py-3 px-4">
@@ -208,22 +267,30 @@ const StockExitList = () => {
                         {exit.reason}
                       </td>
                       <td className="py-3 px-4">
-                        {formatCurrency(subtotal)}
-                      </td>
-                      <td className="py-3 px-4">
-                        {exit.discount ? `${exit.discount}%` : "-"}
+                        {formatCurrency(total)}
                       </td>
                       <td className="py-3 px-4 text-right">
                         {exit.items ? exit.items.length : 0}
                       </td>
                       <td className="py-3 px-4 text-right">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => navigate(`/saidas/editar/${exit.id}`)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
+                        <div className="flex justify-end space-x-1">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => navigate(`/saidas/${exit.id}`)}
+                            title="Ver Detalhes"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => navigate(`/saidas/editar/${exit.id}`)}
+                            title="Editar"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   );
