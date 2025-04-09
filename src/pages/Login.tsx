@@ -29,7 +29,7 @@ const Login: React.FC = () => {
       const success = await login(email, password);
       
       if (success) {
-        navigate('/');
+        navigate('/dashboard');
       }
     } finally {
       setIsLoading(false);

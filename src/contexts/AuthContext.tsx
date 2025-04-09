@@ -1,8 +1,15 @@
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
-import { AuthState, User } from '../types';
-import { loginUser, registerUser } from '../services/authService';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import { User, Session } from '@supabase/supabase-js';
+import { loginUser, registerUser, logoutUser, getCurrentUser } from '../services/authService';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+
+interface AuthState {
+  user: User | null;
+  session: Session | null;
+  isAuthenticated: boolean;
+}
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
@@ -12,40 +19,60 @@ interface AuthContextType extends AuthState {
 
 const initialState: AuthState = {
   user: null,
+  session: null,
   isAuthenticated: false,
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<AuthState>(() => {
-    const savedUser = localStorage.getItem('user');
-    return savedUser 
-      ? { user: JSON.parse(savedUser), isAuthenticated: true } 
-      : initialState;
-  });
+  const [state, setState] = useState<AuthState>(initialState);
+
+  // Initialize auth state and set up listener
+  useEffect(() => {
+    // First set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
+      setState({
+        user: session?.user || null,
+        session: session,
+        isAuthenticated: !!session
+      });
+    });
+
+    // Then check for existing session
+    getCurrentUser().then((data) => {
+      if (data) {
+        setState({
+          user: data.user,
+          session: data.session,
+          isAuthenticated: true
+        });
+      }
+    });
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      const { user: userData } = await loginUser(email, password);
+      const { user, session } = await loginUser(email, password);
       
-      if (!userData) {
+      if (!user) {
         throw new Error('Utilizador não encontrado');
       }
       
-      // Map database user to our User type
-      const user: User = {
-        id: userData.id,
-        name: userData.email.split('@')[0], // Use email username as name since name might not exist
-        email: userData.email,
-        role: 'admin' // Default role
-      };
-      
-      setState({ user, isAuthenticated: true });
-      localStorage.setItem('user', JSON.stringify(user));
+      setState({ 
+        user, 
+        session,
+        isAuthenticated: true 
+      });
       
       toast.success('Login efetuado com sucesso');
       return true;
@@ -62,7 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const register = async (email: string, password: string, name: string): Promise<boolean> => {
     try {
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 300));
       
       await registerUser(email, password, name);
       
@@ -79,9 +106,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const logout = () => {
-    setState(initialState);
-    localStorage.removeItem('user');
-    toast.info('Sessão terminada');
+    logoutUser()
+      .then(() => {
+        setState(initialState);
+        toast.info('Sessão terminada');
+      })
+      .catch((error) => {
+        console.error('Error during logout:', error);
+        toast.error('Erro ao terminar sessão');
+      });
   };
 
   return (

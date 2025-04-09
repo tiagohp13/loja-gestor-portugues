@@ -3,26 +3,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 export async function loginUser(email: string, password: string) {
   try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
     
     if (error) throw error;
     
-    if (!data) {
-      throw new Error('Credenciais inválidas');
-    }
-    
-    // Since we're having issues with the check_password function,
-    // let's implement a simplified version for testing purposes
-    // In a real application, this should be done securely on the server side
-    if (data.password !== password) {
-      throw new Error('Credenciais inválidas');
-    }
-    
-    return { user: data };
+    return { 
+      user: data.user,
+      session: data.session 
+    };
   } catch (error) {
     console.error('Error during login:', error);
     throw error;
@@ -31,39 +22,56 @@ export async function loginUser(email: string, password: string) {
 
 export async function registerUser(email: string, password: string, name: string) {
   try {
-    // Check if user already exists
-    const { data: existingUser, error: checkError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('email', email)
-      .single();
-    
-    if (checkError && checkError.code !== 'PGRST116') {
-      // Error code PGRST116 means "No rows returned", which is what we want
-      throw checkError;
-    }
+    // Check if user already exists before trying to register
+    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
     
     if (existingUser) {
       throw new Error('Este email já está registado');
     }
     
-    // Insert new user
-    const { data, error } = await supabase
-      .from('users')
-      .insert([
-        { 
-          email, 
-          password: password, // In a real application, this should be hashed
-          // Do not include name field since it doesn't exist in the database schema
+    // Create new user with Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: {
+          name: name || email.split('@')[0],
         }
-      ])
-      .select();
+      }
+    });
     
     if (error) throw error;
     
-    return { user: data[0] };
+    return { 
+      user: data.user,
+      session: data.session 
+    };
   } catch (error) {
     console.error('Error during registration:', error);
     throw error;
+  }
+}
+
+export async function logoutUser() {
+  try {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error during logout:', error);
+    throw error;
+  }
+}
+
+export async function getCurrentUser() {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data.session ? { 
+      user: data.session.user,
+      session: data.session 
+    } : null;
+  } catch (error) {
+    console.error('Error getting current user:', error);
+    return null;
   }
 }
