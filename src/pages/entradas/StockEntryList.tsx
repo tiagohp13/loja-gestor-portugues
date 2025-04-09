@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -78,6 +79,7 @@ const StockEntryList = () => {
         
         setLocalEntries(filteredEntries);
         setStockEntries(filteredEntries);
+        console.log("Updated local entries:", filteredEntries.length);
       }
     } catch (error) {
       console.error("Error in fetchEntries:", error);
@@ -87,13 +89,18 @@ const StockEntryList = () => {
     }
   };
 
+  // Fetch data when component mounts
   useEffect(() => {
     setIsLoading(true);
     fetchAllEntries();
   }, [setStockEntries]);
 
+  // Setup realtime subscriptions
   useEffect(() => {
-    const channel = supabase.channel('stock_entries_changes')
+    console.log("Setting up realtime subscriptions for stock entries");
+    
+    // Create a dedicated channel for entries
+    const entriesChannel = supabase.channel('stock_entries_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_entries' }, 
         (payload) => {
@@ -101,6 +108,7 @@ const StockEntryList = () => {
           
           if (payload.eventType === 'DELETE' && payload.old) {
             const deletedId = payload.old.id;
+            console.log('Handling delete for entry:', deletedId);
             addToDeletedCache('stock_entries', deletedId);
             
             setLocalEntries(prev => prev.filter(entry => entry.id !== deletedId));
@@ -108,25 +116,34 @@ const StockEntryList = () => {
             return;
           }
           
+          // For inserts and updates, refresh the entire list
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            console.log('Handling insert/update, refreshing entries list');
             fetchAllEntries();
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Stock entries subscription status:', status);
+      });
       
-    const itemsChannel = supabase.channel('stock_entry_items_changes')
+    // Create a dedicated channel for entry items
+    const itemsChannel = supabase.channel('stock_entry_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_entry_items' }, 
         (payload) => {
           console.log('Stock entry item change detected:', payload);
+          console.log('Refreshing entries list due to item changes');
           fetchAllEntries();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Stock entry items subscription status:', status);
+      });
     
     return () => {
-      supabase.removeChannel(channel);
+      console.log("Cleaning up realtime subscriptions");
+      supabase.removeChannel(entriesChannel);
       supabase.removeChannel(itemsChannel);
     };
   }, [setStockEntries]);

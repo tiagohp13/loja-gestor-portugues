@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -82,6 +83,7 @@ const StockExitList = () => {
         
         setLocalExits(filteredExits);
         setStockExits(filteredExits);
+        console.log("Updated local exits:", filteredExits.length);
       }
     } catch (error) {
       console.error("Error in fetchExits:", error);
@@ -91,13 +93,18 @@ const StockExitList = () => {
     }
   };
 
+  // Fetch data when component mounts
   useEffect(() => {
     setIsLoading(true);
     fetchAllExits();
   }, [setStockExits]);
 
+  // Setup realtime subscriptions
   useEffect(() => {
-    const channel = supabase.channel('stock_exits_changes')
+    console.log("Setting up realtime subscriptions for stock exits");
+    
+    // Create a dedicated channel for exits
+    const exitsChannel = supabase.channel('stock_exits_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exits' }, 
         (payload) => {
@@ -105,6 +112,7 @@ const StockExitList = () => {
           
           if (payload.eventType === 'DELETE' && payload.old) {
             const deletedId = payload.old.id;
+            console.log('Handling delete for exit:', deletedId);
             addToDeletedCache('stock_exits', deletedId);
             
             setLocalExits(prev => prev.filter(exit => exit.id !== deletedId));
@@ -112,25 +120,34 @@ const StockExitList = () => {
             return;
           }
           
+          // For inserts and updates, refresh the entire list
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            console.log('Handling insert/update, refreshing exits list');
             fetchAllExits();
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Stock exits subscription status:', status);
+      });
       
-    const itemsChannel = supabase.channel('stock_exit_items_changes')
+    // Create a dedicated channel for exit items  
+    const itemsChannel = supabase.channel('stock_exit_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exit_items' }, 
         (payload) => {
           console.log('Stock exit item change detected:', payload);
+          console.log('Refreshing exits list due to item changes');
           fetchAllExits();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Stock exit items subscription status:', status);
+      });
     
     return () => {
-      supabase.removeChannel(channel);
+      console.log("Cleaning up realtime subscriptions");
+      supabase.removeChannel(exitsChannel);
       supabase.removeChannel(itemsChannel);
     };
   }, [setStockExits]);
