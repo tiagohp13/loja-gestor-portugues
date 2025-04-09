@@ -2,6 +2,7 @@
 import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { LucideIcon } from 'lucide-react';
 
 type StatusVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -10,9 +11,16 @@ interface StatusBadgeProps {
   children?: React.ReactNode;
   className?: string;
   status?: string;
+  icon?: LucideIcon;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ variant, children, className, status }) => {
+const StatusBadge: React.FC<StatusBadgeProps> = ({ 
+  variant, 
+  children, 
+  className, 
+  status,
+  icon: Icon 
+}) => {
   // Handle status prop if provided
   if (status && !variant && !children) {
     let statusVariant: StatusVariant = 'neutral';
@@ -50,8 +58,9 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ variant, children, className,
   return (
     <Badge 
       variant={mapVariantToUiBadge(variant || 'neutral')} 
-      className={className}
+      className={cn("flex items-center gap-1", className)}
     >
+      {Icon && <Icon className="h-3 w-3" />}
       {children}
     </Badge>
   );

@@ -13,6 +13,7 @@ import { formatCurrency } from '@/utils/formatting';
 import { StockExit } from '@/types';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import StatusBadge from '@/components/common/StatusBadge';
 
 const StockExitList = () => {
   const navigate = useNavigate();

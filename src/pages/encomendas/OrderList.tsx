@@ -35,7 +35,6 @@ const OrderList = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
   
-  // Function to fetch all orders - reused for initial load and real-time updates
   const fetchAllOrders = async () => {
     try {
       console.log("Fetching orders...");
@@ -90,13 +89,11 @@ const OrderList = () => {
     }
   };
 
-  // Initial data load
   useEffect(() => {
     setIsLoading(true);
     fetchAllOrders();
   }, [setOrders]);
 
-  // Subscribe to real-time updates
   useEffect(() => {
     const channel = supabase.channel('orders_changes')
       .on('postgres_changes', 
@@ -113,7 +110,6 @@ const OrderList = () => {
             return;
           }
           
-          // For inserts and updates, refresh the entire list
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             fetchAllOrders();
           }
@@ -126,7 +122,6 @@ const OrderList = () => {
         { event: '*', schema: 'public', table: 'order_items' }, 
         (payload) => {
           console.log('Order item change detected:', payload);
-          // When items change, refresh all orders
           fetchAllOrders();
         }
       )
@@ -270,11 +265,11 @@ const OrderList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                       {order.convertedToStockExitId ? (
-                        <StatusBadge type="success" icon={ShoppingCart}>
+                        <StatusBadge variant="success" icon={ShoppingCart}>
                           Convertida em Saída
                         </StatusBadge>
                       ) : (
-                        <StatusBadge type="default">
+                        <StatusBadge variant="warning">
                           Pendente
                         </StatusBadge>
                       )}
