@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -208,8 +209,55 @@ const Settings = () => {
         const { success, data, errors } = parseCSVData(csvContent, importType);
 
         if (success && data) {
-          updateData(importType, data);
-          toast.success(`${data.length} registros importados com sucesso!`);
+          // Get the current data for the import type
+          let currentData: any[] = [];
+          switch (importType) {
+            case 'products':
+              currentData = [...products];
+              break;
+            case 'categories':
+              currentData = [...categories];
+              break;
+            case 'clients':
+              currentData = [...clients];
+              break;
+            case 'suppliers':
+              currentData = [...suppliers];
+              break;
+            default:
+              currentData = [];
+          }
+
+          // Check for items with existing IDs and update them
+          const newItems: any[] = [];
+          const updatedItems: any[] = [];
+
+          data.forEach(item => {
+            if (item.id) {
+              // This item has an ID, check if it exists in the current data
+              const existingIndex = currentData.findIndex(existing => existing.id === item.id);
+              if (existingIndex >= 0) {
+                // Update existing item
+                currentData[existingIndex] = { ...currentData[existingIndex], ...item };
+                updatedItems.push(item);
+              } else {
+                // ID doesn't exist in current data, add as new
+                newItems.push(item);
+              }
+            } else {
+              // New item without ID
+              item.id = crypto.randomUUID();
+              newItems.push(item);
+            }
+          });
+
+          // Combine existing data with new items
+          const mergedData = [...currentData, ...newItems];
+          
+          // Update the data context
+          updateData(importType, mergedData);
+          
+          toast.success(`${newItems.length} registros novos e ${updatedItems.length} registros atualizados com sucesso!`);
         } else {
           toast.error(`Erro ao importar: ${errors.join(', ')}`);
         }
@@ -257,6 +305,19 @@ const Settings = () => {
 
       if (!item.id) {
         item.id = crypto.randomUUID();
+      }
+
+      // For client and product types, ensure they have all required properties
+      if (type === 'clients') {
+        item.createdAt = item.createdAt || new Date().toISOString();
+        item.updatedAt = new Date().toISOString();
+      } else if (type === 'products') {
+        item.createdAt = item.createdAt || new Date().toISOString();
+        item.updatedAt = new Date().toISOString();
+        item.currentStock = item.currentStock || 0;
+        item.minStock = item.minStock || 0;
+        item.purchasePrice = item.purchasePrice || 0;
+        item.salePrice = item.salePrice || 0;
       }
 
       results.push(item);
