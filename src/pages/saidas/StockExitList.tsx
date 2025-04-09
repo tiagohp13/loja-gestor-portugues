@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -35,69 +34,67 @@ const StockExitList = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
   
-  // Initial data load
-  useEffect(() => {
-    const fetchExits = async () => {
-      try {
-        setIsLoading(true);
-        console.log("Fetching stock exits directly in StockExitList component...");
-        
-        const { data, error } = await supabase
-          .from('stock_exits')
-          .select(`
-            *,
-            stock_exit_items(*)
-          `)
-          .order('date', { ascending: false });
+  const fetchAllExits = async () => {
+    try {
+      console.log("Fetching stock exits...");
+      
+      const { data, error } = await supabase
+        .from('stock_exits')
+        .select(`
+          *,
+          stock_exit_items(*)
+        `)
+        .order('date', { ascending: false });
 
-        if (error) {
-          console.error("Error fetching stock exits:", error);
-          toast.error("Erro ao carregar saídas de stock");
-          return;
-        }
-
-        if (data) {
-          console.log("Stock exits data received:", data);
-          
-          const mappedExits = data.map(exit => ({
-            id: exit.id,
-            clientId: exit.client_id,
-            clientName: exit.client_name,
-            number: exit.number,
-            invoiceNumber: exit.invoice_number,
-            notes: exit.notes,
-            date: exit.date,
-            createdAt: exit.created_at,
-            fromOrderId: exit.from_order_id,
-            fromOrderNumber: exit.from_order_number,
-            discount: exit.discount,
-            items: exit.stock_exit_items.map((item: any) => ({
-              id: item.id,
-              productId: item.product_id,
-              productName: item.product_name,
-              quantity: item.quantity,
-              salePrice: item.sale_price,
-              discountPercent: item.discount_percent
-            }))
-          }));
-          
-          const filteredExits = filterDeletedItems('stock_exits', mappedExits);
-          
-          setLocalExits(filteredExits);
-          setStockExits(filteredExits);
-        }
-      } catch (error) {
-        console.error("Error in fetchExits:", error);
+      if (error) {
+        console.error("Error fetching stock exits:", error);
         toast.error("Erro ao carregar saídas de stock");
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
 
-    fetchExits();
+      if (data) {
+        console.log("Stock exits data received:", data);
+        
+        const mappedExits = data.map(exit => ({
+          id: exit.id,
+          clientId: exit.client_id,
+          clientName: exit.client_name,
+          number: exit.number,
+          invoiceNumber: exit.invoice_number,
+          notes: exit.notes,
+          date: exit.date,
+          createdAt: exit.created_at,
+          fromOrderId: exit.from_order_id,
+          fromOrderNumber: exit.from_order_number,
+          discount: exit.discount,
+          items: exit.stock_exit_items.map((item: any) => ({
+            id: item.id,
+            productId: item.product_id,
+            productName: item.product_name,
+            quantity: item.quantity,
+            salePrice: item.sale_price,
+            discountPercent: item.discount_percent
+          }))
+        }));
+        
+        const filteredExits = filterDeletedItems('stock_exits', mappedExits);
+        
+        setLocalExits(filteredExits);
+        setStockExits(filteredExits);
+      }
+    } catch (error) {
+      console.error("Error in fetchExits:", error);
+      toast.error("Erro ao carregar saídas de stock");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchAllExits();
   }, [setStockExits]);
 
-  // Subscribe to real-time updates
   useEffect(() => {
     const channel = supabase.channel('stock_exits_changes')
       .on('postgres_changes', 
@@ -115,54 +112,7 @@ const StockExitList = () => {
           }
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setIsLoading(true);
-            
-            supabase
-              .from('stock_exits')
-              .select(`
-                *,
-                stock_exit_items(*)
-              `)
-              .order('date', { ascending: false })
-              .then(({ data, error }) => {
-                setIsLoading(false);
-                
-                if (error) {
-                  console.error("Error fetching stock exits after change:", error);
-                  return;
-                }
-                
-                if (data) {
-                  console.log("Updated stock exits received:", data);
-                  
-                  const mappedExits = data.map(exit => ({
-                    id: exit.id,
-                    clientId: exit.client_id,
-                    clientName: exit.client_name,
-                    number: exit.number,
-                    invoiceNumber: exit.invoice_number,
-                    notes: exit.notes,
-                    date: exit.date,
-                    createdAt: exit.created_at,
-                    fromOrderId: exit.from_order_id,
-                    fromOrderNumber: exit.from_order_number,
-                    discount: exit.discount,
-                    items: exit.stock_exit_items.map((item: any) => ({
-                      id: item.id,
-                      productId: item.product_id,
-                      productName: item.product_name,
-                      quantity: item.quantity,
-                      salePrice: item.sale_price,
-                      discountPercent: item.discount_percent
-                    }))
-                  }));
-                  
-                  const filteredExits = filterDeletedItems('stock_exits', mappedExits);
-                  
-                  setLocalExits(filteredExits);
-                  setStockExits(filteredExits);
-                }
-              });
+            fetchAllExits();
           }
         }
       )
@@ -173,51 +123,7 @@ const StockExitList = () => {
         { event: '*', schema: 'public', table: 'stock_exit_items' }, 
         (payload) => {
           console.log('Stock exit item change detected:', payload);
-          
-          supabase
-            .from('stock_exits')
-            .select(`
-              *,
-              stock_exit_items(*)
-            `)
-            .order('date', { ascending: false })
-            .then(({ data, error }) => {
-              if (error) {
-                console.error("Error fetching stock exits after item change:", error);
-                return;
-              }
-              
-              if (data) {
-                console.log("Updated stock exits after item change:", data);
-                
-                const mappedExits = data.map(exit => ({
-                  id: exit.id,
-                  clientId: exit.client_id,
-                  clientName: exit.client_name,
-                  number: exit.number,
-                  invoiceNumber: exit.invoice_number,
-                  notes: exit.notes,
-                  date: exit.date,
-                  createdAt: exit.created_at,
-                  fromOrderId: exit.from_order_id,
-                  fromOrderNumber: exit.from_order_number,
-                  discount: exit.discount,
-                  items: exit.stock_exit_items.map((item: any) => ({
-                    id: item.id,
-                    productId: item.product_id,
-                    productName: item.product_name,
-                    quantity: item.quantity,
-                    salePrice: item.sale_price,
-                    discountPercent: item.discount_percent
-                  }))
-                }));
-                
-                const filteredExits = filterDeletedItems('stock_exits', mappedExits);
-                
-                setLocalExits(filteredExits);
-                setStockExits(filteredExits);
-              }
-            });
+          fetchAllExits();
         }
       )
       .subscribe();

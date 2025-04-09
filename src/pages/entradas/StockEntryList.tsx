@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -35,66 +34,64 @@ const StockEntryList = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
   
-  // Initial data load
-  useEffect(() => {
-    const fetchEntries = async () => {
-      try {
-        setIsLoading(true);
-        console.log("Fetching stock entries directly in StockEntryList component...");
-        
-        const { data, error } = await supabase
-          .from('stock_entries')
-          .select(`
-            *,
-            stock_entry_items(*)
-          `)
-          .order('date', { ascending: false });
+  const fetchAllEntries = async () => {
+    try {
+      console.log("Fetching stock entries...");
+      
+      const { data, error } = await supabase
+        .from('stock_entries')
+        .select(`
+          *,
+          stock_entry_items(*)
+        `)
+        .order('date', { ascending: false });
 
-        if (error) {
-          console.error("Error fetching stock entries:", error);
-          toast.error("Erro ao carregar entradas de stock");
-          return;
-        }
-
-        if (data) {
-          console.log("Stock entries data received:", data);
-          
-          const mappedEntries = data.map(entry => ({
-            id: entry.id,
-            supplierId: entry.supplier_id,
-            supplierName: entry.supplier_name,
-            number: entry.number,
-            invoiceNumber: entry.invoice_number,
-            notes: entry.notes,
-            date: entry.date,
-            createdAt: entry.created_at,
-            items: entry.stock_entry_items.map((item: any) => ({
-              id: item.id,
-              productId: item.product_id,
-              productName: item.product_name,
-              quantity: item.quantity,
-              purchasePrice: item.purchase_price,
-              discountPercent: item.discount_percent
-            }))
-          }));
-          
-          const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
-          
-          setLocalEntries(filteredEntries);
-          setStockEntries(filteredEntries);
-        }
-      } catch (error) {
-        console.error("Error in fetchEntries:", error);
+      if (error) {
+        console.error("Error fetching stock entries:", error);
         toast.error("Erro ao carregar entradas de stock");
-      } finally {
-        setIsLoading(false);
+        return;
       }
-    };
 
-    fetchEntries();
+      if (data) {
+        console.log("Stock entries data received:", data);
+        
+        const mappedEntries = data.map(entry => ({
+          id: entry.id,
+          supplierId: entry.supplier_id,
+          supplierName: entry.supplier_name,
+          number: entry.number,
+          invoiceNumber: entry.invoice_number,
+          notes: entry.notes,
+          date: entry.date,
+          createdAt: entry.created_at,
+          items: entry.stock_entry_items.map((item: any) => ({
+            id: item.id,
+            productId: item.product_id,
+            productName: item.product_name,
+            quantity: item.quantity,
+            purchasePrice: item.purchase_price,
+            discountPercent: item.discount_percent
+          }))
+        }));
+        
+        const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
+        
+        setLocalEntries(filteredEntries);
+        setStockEntries(filteredEntries);
+      }
+    } catch (error) {
+      console.error("Error in fetchEntries:", error);
+      toast.error("Erro ao carregar entradas de stock");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    setIsLoading(true);
+    fetchAllEntries();
   }, [setStockEntries]);
 
-  // Subscribe to real-time updates
   useEffect(() => {
     const channel = supabase.channel('stock_entries_changes')
       .on('postgres_changes', 
@@ -112,51 +109,7 @@ const StockEntryList = () => {
           }
           
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setIsLoading(true);
-            
-            supabase
-              .from('stock_entries')
-              .select(`
-                *,
-                stock_entry_items(*)
-              `)
-              .order('date', { ascending: false })
-              .then(({ data, error }) => {
-                setIsLoading(false);
-                
-                if (error) {
-                  console.error("Error fetching stock entries after change:", error);
-                  return;
-                }
-                
-                if (data) {
-                  console.log("Updated stock entries received:", data);
-                  
-                  const mappedEntries = data.map(entry => ({
-                    id: entry.id,
-                    supplierId: entry.supplier_id,
-                    supplierName: entry.supplier_name,
-                    number: entry.number,
-                    invoiceNumber: entry.invoice_number,
-                    notes: entry.notes,
-                    date: entry.date,
-                    createdAt: entry.created_at,
-                    items: entry.stock_entry_items.map((item: any) => ({
-                      id: item.id,
-                      productId: item.product_id,
-                      productName: item.product_name,
-                      quantity: item.quantity,
-                      purchasePrice: item.purchase_price,
-                      discountPercent: item.discount_percent
-                    }))
-                  }));
-                  
-                  const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
-                  
-                  setLocalEntries(filteredEntries);
-                  setStockEntries(filteredEntries);
-                }
-              });
+            fetchAllEntries();
           }
         }
       )
@@ -167,48 +120,7 @@ const StockEntryList = () => {
         { event: '*', schema: 'public', table: 'stock_entry_items' }, 
         (payload) => {
           console.log('Stock entry item change detected:', payload);
-          
-          supabase
-            .from('stock_entries')
-            .select(`
-              *,
-              stock_entry_items(*)
-            `)
-            .order('date', { ascending: false })
-            .then(({ data, error }) => {
-              if (error) {
-                console.error("Error fetching stock entries after item change:", error);
-                return;
-              }
-              
-              if (data) {
-                console.log("Updated stock entries after item change:", data);
-                
-                const mappedEntries = data.map(entry => ({
-                  id: entry.id,
-                  supplierId: entry.supplier_id,
-                  supplierName: entry.supplier_name,
-                  number: entry.number,
-                  invoiceNumber: entry.invoice_number,
-                  notes: entry.notes,
-                  date: entry.date,
-                  createdAt: entry.created_at,
-                  items: entry.stock_entry_items.map((item: any) => ({
-                    id: item.id,
-                    productId: item.product_id,
-                    productName: item.product_name,
-                    quantity: item.quantity,
-                    purchasePrice: item.purchase_price,
-                    discountPercent: item.discount_percent
-                  }))
-                }));
-                
-                const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
-                
-                setLocalEntries(filteredEntries);
-                setStockEntries(filteredEntries);
-              }
-            });
+          fetchAllEntries();
         }
       )
       .subscribe();

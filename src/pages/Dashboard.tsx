@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
@@ -109,10 +110,10 @@ const DashboardPage: React.FC = () => {
     })))
   ];
   
-  // Sort by date (most recent first)
+  // Sort by date (most recent first) and limit to 5 transactions
   const recentTransactions = allTransactions
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-    .slice(0, 10);
+    .slice(0, 5);
   
   // Calculate most sold product - Update to use items array
   const productSales = stockExits.flatMap(exit => exit.items).reduce((acc, item) => {

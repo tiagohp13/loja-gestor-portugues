@@ -1,118 +1,99 @@
-
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
+import { Search, Edit, Trash2, Plus, ArrowDownUp, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { toast } from 'sonner';
+import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
-import { ClipboardList, Search, Plus, LogOut, ChevronUp, ChevronDown, Edit, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import { TableRow } from '@/components/ui/table';
-import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
+import { formatCurrency } from '@/utils/formatting';
 import { Order } from '@/types';
-
-type SortField = 'number' | 'date' | 'clientName' | 'totalValue';
-type SortDirection = 'asc' | 'desc';
+import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import StatusBadge from '@/components/common/StatusBadge';
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { orders, deleteOrder, setOrders } = useData();
+  
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('number');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
   const [localOrders, setLocalOrders] = useState<Order[]>([]);
   
   const filteredOrders = localOrders.filter(order => 
     order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     order.number.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
+  
   const sortedOrders = [...filteredOrders].sort((a, b) => {
-    if (sortField === 'number') {
-      return sortDirection === 'asc' 
-        ? a.number.localeCompare(b.number)
-        : b.number.localeCompare(a.number);
-    } else if (sortField === 'date') {
-      return sortDirection === 'asc' 
-        ? new Date(a.date).getTime() - new Date(b.date).getTime()
-        : new Date(b.date).getTime() - new Date(a.date).getTime();
-    } else if (sortField === 'clientName') {
-      return sortDirection === 'asc' 
-        ? (a.clientName || '').localeCompare(b.clientName || '')
-        : (b.clientName || '').localeCompare(a.clientName || '');
-    } else if (sortField === 'totalValue') {
-      const aTotal = a.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
-      const bTotal = b.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
-      return sortDirection === 'asc' ? aTotal - bTotal : bTotal - aTotal;
-    }
-    return 0;
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
+  
+  // Function to fetch all orders - reused for initial load and real-time updates
+  const fetchAllOrders = async () => {
+    try {
+      console.log("Fetching orders...");
+      
+      const { data, error } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(*)
+        `)
+        .order('date', { ascending: false });
+
+      if (error) {
+        console.error("Error fetching orders:", error);
+        toast.error("Erro ao carregar encomendas");
+        return;
+      }
+
+      if (data) {
+        console.log("Orders data received:", data);
+        
+        const mappedOrders = data.map(order => ({
+          id: order.id,
+          clientId: order.client_id,
+          clientName: order.client_name,
+          number: order.number,
+          date: order.date,
+          notes: order.notes,
+          createdAt: order.created_at,
+          convertedToStockExitId: order.converted_to_stock_exit_id,
+          discount: order.discount,
+          items: order.order_items.map((item: any) => ({
+            id: item.id,
+            productId: item.product_id,
+            productName: item.product_name,
+            quantity: item.quantity,
+            salePrice: item.sale_price,
+            discountPercent: item.discount_percent
+          }))
+        }));
+        
+        const filteredOrders = filterDeletedItems('orders', mappedOrders);
+        
+        setLocalOrders(filteredOrders);
+        setOrders(filteredOrders);
+      }
+    } catch (error) {
+      console.error("Error in fetchOrders:", error);
+      toast.error("Erro ao carregar encomendas");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Initial data load
   useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setIsLoading(true);
-        console.log("Fetching orders directly in OrderList component...");
-        
-        const { data, error } = await supabase
-          .from('orders')
-          .select(`
-            *,
-            order_items(*)
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error("Error fetching orders:", error);
-          toast.error("Erro ao carregar encomendas");
-          return;
-        }
-
-        if (data) {
-          console.log("Orders data received:", data);
-          
-          const mappedOrders = data.map(order => ({
-            id: order.id,
-            clientId: order.client_id,
-            clientName: order.client_name,
-            number: order.number,
-            notes: order.notes,
-            date: order.date,
-            createdAt: order.created_at,
-            discount: order.discount || 0,
-            convertedToStockExitId: order.converted_to_stock_exit_id,
-            convertedToStockExitNumber: order.converted_to_stock_exit_number,
-            items: order.order_items.map((item: any) => ({
-              id: item.id,
-              productId: item.product_id,
-              productName: item.product_name,
-              quantity: item.quantity,
-              salePrice: item.sale_price,
-              discountPercent: item.discount_percent
-            }))
-          }));
-          
-          const filteredOrders = filterDeletedItems('orders', mappedOrders);
-          
-          setLocalOrders(filteredOrders);
-          setOrders(filteredOrders);
-        }
-      } catch (error) {
-        console.error("Error in fetchOrders:", error);
-        toast.error("Erro ao carregar encomendas");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchOrders();
+    setIsLoading(true);
+    fetchAllOrders();
   }, [setOrders]);
 
   // Subscribe to real-time updates
@@ -132,54 +113,9 @@ const OrderList = () => {
             return;
           }
           
+          // For inserts and updates, refresh the entire list
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            setIsLoading(true);
-            
-            supabase
-              .from('orders')
-              .select(`
-                *,
-                order_items(*)
-              `)
-              .order('created_at', { ascending: false })
-              .then(({ data, error }) => {
-                setIsLoading(false);
-                
-                if (error) {
-                  console.error("Error fetching orders after change:", error);
-                  return;
-                }
-                
-                if (data) {
-                  console.log("Updated orders received:", data);
-                  
-                  const mappedOrders = data.map(order => ({
-                    id: order.id,
-                    clientId: order.client_id,
-                    clientName: order.client_name,
-                    number: order.number,
-                    notes: order.notes,
-                    date: order.date,
-                    createdAt: order.created_at,
-                    discount: order.discount || 0,
-                    convertedToStockExitId: order.converted_to_stock_exit_id,
-                    convertedToStockExitNumber: order.converted_to_stock_exit_number,
-                    items: order.order_items.map((item: any) => ({
-                      id: item.id,
-                      productId: item.product_id,
-                      productName: item.product_name,
-                      quantity: item.quantity,
-                      salePrice: item.sale_price,
-                      discountPercent: item.discount_percent
-                    }))
-                  }));
-                  
-                  const filteredOrders = filterDeletedItems('orders', mappedOrders);
-                  
-                  setLocalOrders(filteredOrders);
-                  setOrders(filteredOrders);
-                }
-              });
+            fetchAllOrders();
           }
         }
       )
@@ -190,50 +126,8 @@ const OrderList = () => {
         { event: '*', schema: 'public', table: 'order_items' }, 
         (payload) => {
           console.log('Order item change detected:', payload);
-          
-          supabase
-            .from('orders')
-            .select(`
-              *,
-              order_items(*)
-            `)
-            .order('created_at', { ascending: false })
-            .then(({ data, error }) => {
-              if (error) {
-                console.error("Error fetching orders after item change:", error);
-                return;
-              }
-              
-              if (data) {
-                console.log("Updated orders after item change:", data);
-                
-                const mappedOrders = data.map(order => ({
-                  id: order.id,
-                  clientId: order.client_id,
-                  clientName: order.client_name,
-                  number: order.number,
-                  notes: order.notes,
-                  date: order.date,
-                  createdAt: order.created_at,
-                  discount: order.discount || 0,
-                  convertedToStockExitId: order.converted_to_stock_exit_id,
-                  convertedToStockExitNumber: order.converted_to_stock_exit_number,
-                  items: order.order_items.map((item: any) => ({
-                    id: item.id,
-                    productId: item.product_id,
-                    productName: item.product_name,
-                    quantity: item.quantity,
-                    salePrice: item.sale_price,
-                    discountPercent: item.discount_percent
-                  }))
-                }));
-                
-                const filteredOrders = filterDeletedItems('orders', mappedOrders);
-                
-                setLocalOrders(filteredOrders);
-                setOrders(filteredOrders);
-              }
-            });
+          // When items change, refresh all orders
+          fetchAllOrders();
         }
       )
       .subscribe();
@@ -244,18 +138,19 @@ const OrderList = () => {
     };
   }, [setOrders]);
 
+  const toggleSortOrder = () => {
+    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+  };
+  
   const handleViewOrder = (id: string) => {
     navigate(`/encomendas/${id}`);
   };
-
-  const handleEditOrder = (id: string) => {
+  
+  const handleEditOrder = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
     navigate(`/encomendas/editar/${id}`);
   };
-
-  const handleCreateStockExit = (orderId: string) => {
-    navigate(`/encomendas/converter/${orderId}`);
-  };
-
+  
   const handleDeleteOrder = async (id: string) => {
     try {
       addToDeletedCache('orders', id);
@@ -263,36 +158,23 @@ const OrderList = () => {
       setLocalOrders(prev => prev.filter(order => order.id !== id));
       
       await deleteOrder(id);
+      
       toast.success("Encomenda eliminada com sucesso");
     } catch (error) {
       console.error("Error deleting order:", error);
       toast.error("Erro ao eliminar encomenda");
     }
   };
-
-  const toggleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? (
-      <ChevronUp className="ml-1 h-4 w-4 inline" />
-    ) : (
-      <ChevronDown className="ml-1 h-4 w-4 inline" />
-    );
+  
+  const calculateOrderTotal = (order: Order) => {
+    return order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
   };
 
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
         <PageHeader 
-          title="Encomendas" 
+          title="Consultar Encomendas" 
           description="A carregar dados..." 
         />
         <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
@@ -305,8 +187,8 @@ const OrderList = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Encomendas" 
-        description="Veja e gerencie as encomendas pendentes"
+        title="Consultar Encomendas" 
+        description="Consulte e gerencie as suas encomendas"
         actions={
           <Button onClick={() => navigate('/encomendas/nova')}>
             <Plus className="mr-2 h-4 w-4" /> Nova Encomenda
@@ -315,21 +197,25 @@ const OrderList = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <div className="mb-6">
-          <div className="relative">
+        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
+          <div className="relative w-full md:w-2/3">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
             <Input
-              placeholder="Pesquisar por cliente, produto ou número..."
               className="pl-10"
+              placeholder="Pesquisar por cliente ou número da encomenda..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
+          
+          <Button variant="outline" onClick={toggleSortOrder} className="ml-auto flex items-center">
+            <ArrowDownUp className="mr-2 h-4 w-4" />
+            {sortOrder === 'asc' ? 'Mais antigo primeiro' : 'Mais recente primeiro'}
+          </Button>
         </div>
         
         {sortedOrders.length === 0 ? (
           <EmptyState 
-            icon={<ClipboardList className="w-12 h-12 text-gestorApp-gray" />}
             title="Nenhuma encomenda encontrada"
             description="Não existem encomendas registadas ou que correspondam à pesquisa."
             action={
@@ -343,43 +229,17 @@ const OrderList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
-                    onClick={() => toggleSort('number')}
-                  >
-                    <span className="flex items-center">
-                      Número {getSortIcon('number')}
-                    </span>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
-                    onClick={() => toggleSort('date')}
-                  >
-                    <span className="flex items-center">
-                      Data {getSortIcon('date')}
-                    </span>
-                  </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
-                    onClick={() => toggleSort('clientName')}
-                  >
-                    <span className="flex items-center">
-                      Cliente {getSortIcon('clientName')}
-                    </span>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                    Nº Encomenda
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Produtos
+                    Data
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Qtd. Total
+                    Cliente
                   </th>
-                  <th 
-                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
-                    onClick={() => toggleSort('totalValue')}
-                  >
-                    <span className="flex items-center">
-                      Valor Total {getSortIcon('totalValue')}
-                    </span>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                    Valor
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Estado
@@ -390,113 +250,59 @@ const OrderList = () => {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sortedOrders.map((order) => {
-                  const totalItems = order.items.reduce((sum, item) => sum + item.quantity, 0);
-                  const totalValue = order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
-                  
-                  return (
-                    <TableRow 
-                      key={order.id}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => handleViewOrder(order.id)}
-                    >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
-                        {order.number}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {order.clientName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {order.items.length > 1 
-                          ? `${order.items[0].productName} e mais ${order.items.length - 1}` 
-                          : order.items[0]?.productName || 'N/A'}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {totalItems}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {totalValue.toFixed(2)} €
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        {order.convertedToStockExitId ? (
-                          <div className="flex items-center">
-                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 mr-2">
-                              Convertida
-                            </span>
-                            <Link 
-                              to={`/saidas/${order.convertedToStockExitId}`}
-                              className="text-gestorApp-blue hover:underline flex items-center"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <LogOut className="w-3 h-3 mr-1" />
-                              {order.convertedToStockExitNumber}
-                            </Link>
-                          </div>
-                        ) : (
-                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
-                            Pendente
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                {sortedOrders.map((order) => (
+                  <tr 
+                    key={order.id} 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleViewOrder(order.id)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
+                      {order.number}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {order.clientName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {formatCurrency(calculateOrderTotal(order))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {order.convertedToStockExitId ? (
+                        <StatusBadge type="success" icon={ShoppingCart}>
+                          Convertida em Saída
+                        </StatusBadge>
+                      ) : (
+                        <StatusBadge type="default">
+                          Pendente
+                        </StatusBadge>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div onClick={(e) => e.stopPropagation()} className="flex justify-end space-x-2">
                         <Button 
-                          variant="ghost" 
+                          variant="outline" 
                           size="sm" 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewOrder(order.id);
-                          }}
-                          className="mr-2"
+                          onClick={(e) => handleEditOrder(e, order.id)}
+                          disabled={order.convertedToStockExitId !== null}
                         >
-                          Ver
+                          <Edit className="h-4 w-4" />
                         </Button>
-                        {!order.convertedToStockExitId && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditOrder(order.id);
-                              }}
-                              className="mr-2"
-                            >
-                              <Edit className="h-4 w-4" />
+                        <DeleteConfirmDialog
+                          title="Eliminar Encomenda"
+                          description="Tem a certeza que deseja eliminar esta encomenda?"
+                          onDelete={() => handleDeleteOrder(order.id)}
+                          trigger={
+                            <Button variant="outline" size="sm">
+                              <Trash2 className="h-4 w-4" />
                             </Button>
-                            <Button 
-                              size="sm" 
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleCreateStockExit(order.id);
-                              }}
-                              className="mr-2"
-                            >
-                              Converter em Saída
-                            </Button>
-                            <DeleteConfirmDialog
-                              title="Eliminar Encomenda"
-                              description="Tem a certeza que deseja eliminar esta encomenda? Esta ação é irreversível."
-                              onDelete={() => handleDeleteOrder(order.id)}
-                              trigger={
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="text-red-500 hover:text-red-700"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              }
-                            />
-                          </>
-                        )}
-                      </td>
-                    </TableRow>
-                  );
-                })}
+                          }
+                        />
+                      </div>
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
