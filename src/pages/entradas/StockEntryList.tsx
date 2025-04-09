@@ -48,7 +48,7 @@ const StockEntryList = () => {
             *,
             stock_entry_items(*)
           `)
-          .order('created_at', { ascending: false });
+          .order('date', { ascending: false });
 
         if (error) {
           console.error("Error fetching stock entries:", error);
@@ -120,7 +120,7 @@ const StockEntryList = () => {
                 *,
                 stock_entry_items(*)
               `)
-              .order('created_at', { ascending: false })
+              .order('date', { ascending: false })
               .then(({ data, error }) => {
                 setIsLoading(false);
                 
@@ -174,7 +174,7 @@ const StockEntryList = () => {
               *,
               stock_entry_items(*)
             `)
-            .order('created_at', { ascending: false })
+            .order('date', { ascending: false })
             .then(({ data, error }) => {
               if (error) {
                 console.error("Error fetching stock entries after item change:", error);
