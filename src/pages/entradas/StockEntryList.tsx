@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -39,7 +38,7 @@ import { StockEntry } from '@/types';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries, products, suppliers, deleteStockEntry, setStockEntries } = useData();
+  const { stockEntries, products, suppliers, deleteStockEntry, setStockEntries, addStockEntry } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedEntry, setSelectedEntry] = useState<string | null>(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -86,14 +85,15 @@ const StockEntryList = () => {
               productId: item.product_id,
               productName: item.product_name,
               quantity: item.quantity,
-              purchasePrice: item.purchase_price,
-              discountPercent: item.discount_percent
+              purchasePrice: Number(item.purchase_price),
+              discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined
             }))
           }));
           
           // Update both the local state and the context state
           setLocalEntries(mappedEntries);
           setStockEntries(mappedEntries);
+          console.log("Updated entries state with:", mappedEntries.length, "entries");
         }
       } catch (error) {
         console.error("Error in fetchEntries:", error);
@@ -135,12 +135,20 @@ const StockEntryList = () => {
     };
   }, [setStockEntries]);
 
-  // Use the entries from the context or local state
+  // Use the entries from the context or local state, ensuring we have the freshest data
   const displayEntries = localEntries.length > 0 ? localEntries : stockEntries;
   
   const sortedEntries = [...displayEntries].sort((a, b) => 
     new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
   );
+
+  // Watch the main context stockEntries for updates
+  useEffect(() => {
+    if (stockEntries.length > 0) {
+      console.log("stockEntries in context updated, length:", stockEntries.length);
+      setLocalEntries(stockEntries);
+    }
+  }, [stockEntries]);
 
   const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,21 +178,11 @@ const StockEntryList = () => {
 
   const handleDeleteEntry = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('stock_entries')
-        .delete()
-        .eq('id', id);
+      await deleteStockEntry(id);
       
-      if (error) {
-        console.error("Error deleting stock entry:", error);
-        toast.error("Erro ao eliminar entrada de stock");
-        return;
-      }
-
-      // Remove from local state immediately for optimistic UI update
+      // Update local state immediately for optimistic UI update
       setLocalEntries(prev => prev.filter(entry => entry.id !== id));
-      // Also update context
-      deleteStockEntry(id);
+      
       toast.success("Entrada eliminada com sucesso");
       
       if (detailsOpen) {
@@ -239,11 +237,6 @@ const StockEntryList = () => {
         </div>
       </div>
     );
-  }
-
-  if (filteredEntries.length === 0 && !searchTerm) {
-    console.log("No entries found, but we have in context:", stockEntries.length);
-    console.log("Local entries:", localEntries.length);
   }
 
   return (

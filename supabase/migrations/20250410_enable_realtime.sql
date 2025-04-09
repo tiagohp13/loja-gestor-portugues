@@ -38,3 +38,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.clients;
 -- Enable realtime for suppliers
 ALTER TABLE public.suppliers REPLICA IDENTITY FULL;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.suppliers;
+
+-- Enable realtime for counters
+ALTER TABLE public.counters REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.counters;
