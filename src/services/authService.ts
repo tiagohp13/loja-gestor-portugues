@@ -22,11 +22,22 @@ export async function loginUser(email: string, password: string) {
 
 export async function registerUser(email: string, password: string, name: string) {
   try {
-    // Check if user already exists before trying to register
-    const { data: existingUser } = await supabase.auth.admin.getUserByEmail(email);
-    
-    if (existingUser) {
-      throw new Error('Este email já está registado');
+    // Check if user already exists - we can't use getUserByEmail since it's not available
+    // Use signInWithPassword with a try/catch to check if the user exists
+    try {
+      const { data } = await supabase.auth.signInWithPassword({
+        email,
+        password: password + "_check_existence_only", // Use an invalid password to ensure it fails but checks email
+      });
+      
+      if (data.user) {
+        throw new Error('Este email já está registado');
+      }
+    } catch (error: any) {
+      // If the error is not about invalid credentials, then the email doesn't exist
+      if (!error.message.includes('Invalid login credentials')) {
+        throw error;
+      }
     }
     
     // Create new user with Supabase Auth

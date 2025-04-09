@@ -86,6 +86,17 @@ const AppSidebar: React.FC = () => {
     navigate('/login');
   };
 
+  // Extract user display name from metadata or use email
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    
+    // Try to get name from user metadata
+    const userName = user.user_metadata?.name;
+    
+    // If name exists in metadata, use it, otherwise use email
+    return userName || user.email?.split('@')[0] || '';
+  };
+
   return (
     <Sidebar variant="sidebar" collapsible="none">
       <SidebarHeader className="p-4 flex items-center justify-center border-b">
@@ -124,7 +135,7 @@ const AppSidebar: React.FC = () => {
           {user && (
             <div className="flex items-center space-x-2 text-sm">
               <UserIcon className="w-5 h-5 text-gestorApp-gray" />
-              <span className="text-gestorApp-gray-dark">{user.name}</span>
+              <span className="text-gestorApp-gray-dark">{getUserDisplayName()}</span>
             </div>
           )}
           <button
