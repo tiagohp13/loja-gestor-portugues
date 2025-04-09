@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
@@ -7,17 +6,17 @@ import { toast } from 'sonner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Upload, Download, FileText, FileDown } from 'lucide-react';
+import { Upload, Download, FileText, FileDown, FileUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Define the ExportDataType type since it's missing from @/types
 type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
 const Settings = () => {
-  const { products, categories, clients, suppliers, orders, stockEntries, stockExits } = useData();
+  const { products, categories, clients, suppliers, orders, stockEntries, stockExits, updateData } = useData();
   const [exportTypes, setExportTypes] = useState<ExportDataType[]>([]);
   const [importType, setImportType] = useState<ExportDataType | null>(null);
   const [activeTab, setActiveTab] = useState("general");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleExportData = () => {
     if (exportTypes.length === 0) {
@@ -35,18 +34,14 @@ const Settings = () => {
     if (exportTypes.includes('stockEntries')) dataToExport.stockEntries = stockEntries;
     if (exportTypes.includes('stockExits')) dataToExport.stockExits = stockExits;
     
-    // Export as CSV instead of JSON
     let csvContent = '';
     
-    // Process each data type and create CSV content
     for (const type in dataToExport) {
       if (dataToExport[type].length > 0) {
-        // Get headers from the first item
         const headers = Object.keys(dataToExport[type][0]);
         csvContent += `# ${type}\n`;
         csvContent += headers.join(',') + '\n';
         
-        // Add data rows
         dataToExport[type].forEach((item: any) => {
           const row = headers.map(header => {
             const value = item[header];
@@ -57,7 +52,7 @@ const Settings = () => {
           csvContent += row.join(',') + '\n';
         });
         
-        csvContent += '\n'; // Add spacing between different data types
+        csvContent += '\n';
       }
     }
     
@@ -180,6 +175,115 @@ const Settings = () => {
         ? prev.filter(t => t !== type)
         : [...prev, type]
     );
+  };
+
+  const handleImportButtonClick = () => {
+    if (!importType) {
+      toast.error("Selecione um tipo de dados para importar");
+      return;
+    }
+    
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (file.type !== 'text/csv' && !file.name.endsWith('.csv')) {
+      toast.error("O arquivo deve estar no formato CSV");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const csvContent = e.target?.result as string;
+        if (!csvContent) {
+          throw new Error("Não foi possível ler o arquivo");
+        }
+
+        const { success, data, errors } = parseCSVData(csvContent, importType);
+
+        if (success && data) {
+          switch (importType) {
+            case 'products':
+              updateData('products', data);
+              break;
+            case 'categories':
+              updateData('categories', data);
+              break;
+            case 'clients':
+              updateData('clients', data);
+              break;
+            case 'suppliers':
+              updateData('suppliers', data);
+              break;
+            default:
+              toast.error("Tipo de importação não suportado");
+              return;
+          }
+          
+          toast.success(`${data.length} registros importados com sucesso!`);
+        } else {
+          toast.error(`Erro ao importar: ${errors.join(', ')}`);
+        }
+      } catch (error) {
+        console.error("Import error:", error);
+        toast.error("Erro ao processar o arquivo. Verifique se o formato está correto.");
+      }
+      
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    };
+
+    reader.onerror = () => {
+      toast.error("Erro ao ler o arquivo");
+    };
+
+    reader.readAsText(file);
+  };
+
+  const parseCSVData = (csvContent: string, type: ExportDataType | null) => {
+    const lines = csvContent.split('\n').filter(line => line.trim());
+    const headers = lines[0].split(',').map(header => header.trim());
+    const results: any[] = [];
+    const errors: string[] = [];
+
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i];
+      const values = line.split(',').map(value => value.trim());
+      
+      if (values.length !== headers.length) {
+        errors.push(`Linha ${i + 1} tem número incorreto de colunas`);
+        continue;
+      }
+
+      const item: Record<string, any> = {};
+      
+      headers.forEach((header, index) => {
+        if (['purchasePrice', 'salePrice', 'currentStock', 'minStock'].includes(header)) {
+          item[header] = parseFloat(values[index]) || 0;
+        } else {
+          item[header] = values[index];
+        }
+      });
+
+      if (!item.id) {
+        item.id = crypto.randomUUID();
+      }
+
+      results.push(item);
+    }
+
+    return { 
+      success: errors.length === 0, 
+      data: results,
+      errors 
+    };
   };
 
   return (
@@ -349,15 +453,26 @@ const Settings = () => {
                         </div>
                       </div>
                       
+                      <input 
+                        type="file" 
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept=".csv" 
+                        onChange={handleFileUpload}
+                      />
+                      
                       <div className="flex flex-col sm:flex-row gap-2">
                         <Button onClick={handleDownloadImportTemplate} variant="outline" className="w-full sm:w-auto">
                           <FileText className="w-4 h-4 mr-2" />
                           Baixar Modelo CSV
                         </Button>
                         
-                        <Button className="w-full sm:w-auto" disabled>
-                          <Upload className="w-4 h-4 mr-2" />
-                          Importar Dados (Em breve)
+                        <Button 
+                          className="w-full sm:w-auto" 
+                          onClick={handleImportButtonClick}
+                        >
+                          <FileUp className="w-4 h-4 mr-2" />
+                          Importar Dados
                         </Button>
                       </div>
                       
