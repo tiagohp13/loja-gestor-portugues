@@ -81,13 +81,6 @@ const Login: React.FC = () => {
             Registar
           </Link>
         </p>
-        
-        <p className="text-muted-foreground">
-          Use <strong>tiagohp13@hotmail.com</strong> e <strong>*Silva*2020</strong> para login
-        </p>
-        <p className="text-muted-foreground mt-1">
-          Ou <strong>teste@suporte.com</strong> e <strong>teste123</strong>
-        </p>
       </div>
     </AuthLayout>
   );

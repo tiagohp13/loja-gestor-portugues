@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const navigationItems = [
     { 
@@ -79,6 +81,11 @@ const AppSidebar: React.FC = () => {
     }
   ];
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   return (
     <Sidebar variant="sidebar" collapsible="none">
       <SidebarHeader className="p-4 flex items-center justify-center border-b">
@@ -121,7 +128,7 @@ const AppSidebar: React.FC = () => {
             </div>
           )}
           <button
-            onClick={logout}
+            onClick={handleLogout}
             className="flex items-center space-x-2 text-gestorApp-gray hover:text-gestorApp-blue transition-colors"
           >
             <ShoppingCart className="w-5 h-5" />
