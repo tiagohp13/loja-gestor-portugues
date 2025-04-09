@@ -48,6 +48,23 @@ export const snakeToCamel = (obj: any) => {
   }, {} as any);
 };
 
+// Convert camelCase to snake_case for Supabase
+export const camelToSnake = (obj: any) => {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj;
+  }
+
+  if (Array.isArray(obj)) {
+    return obj.map(camelToSnake);
+  }
+
+  return Object.keys(obj).reduce((result, key) => {
+    const snakeKey = key.replace(/([A-Z])/g, "_$1").toLowerCase();
+    result[snakeKey] = camelToSnake(obj[key]);
+    return result;
+  }, {} as any);
+};
+
 // Add database functions for increment and decrement
 export const increment = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
   // Use raw query instead of RPC function due to type issues
@@ -112,23 +129,103 @@ export const decrement = async (table: 'products' | 'categories' | 'counters', c
   return updateData[column];
 };
 
+// Type for tables that can be inserted/updated
+export type TableName = 'products' | 'categories' | 'clients' | 'suppliers';
+
 // Add a type-safe function to insert data into Supabase tables
-export const insertIntoTable = async (table: 'products' | 'categories' | 'clients' | 'suppliers', data: any) => {
-  const { error } = await supabase
+export const insertIntoTable = async (table: TableName, data: any) => {
+  // Convert any camelCase properties to snake_case for Supabase
+  const formattedData = formatItemForDatabase(table, data);
+  console.log(`Inserting into ${table}:`, formattedData);
+  
+  const { data: result, error } = await supabase
     .from(table)
-    .insert(data);
+    .insert(formattedData)
+    .select();
     
-  return { error };
+  if (error) {
+    console.error(`Error inserting into ${table}:`, error);
+  } else {
+    console.log(`Successfully inserted into ${table}:`, result);
+  }
+  
+  return { data: result, error };
 };
 
 // Add a type-safe function to update data in Supabase tables
-export const updateTable = async (table: 'products' | 'categories' | 'clients' | 'suppliers', id: string, data: any) => {
-  const { error } = await supabase
+export const updateTable = async (table: TableName, id: string, data: any) => {
+  // Convert any camelCase properties to snake_case for Supabase
+  const formattedData = formatItemForDatabase(table, data);
+  console.log(`Updating ${table} with ID ${id}:`, formattedData);
+  
+  const { data: result, error } = await supabase
     .from(table)
-    .update(data)
-    .eq('id', id);
+    .update(formattedData)
+    .eq('id', id)
+    .select();
     
-  return { error };
+  if (error) {
+    console.error(`Error updating ${table}:`, error);
+  } else {
+    console.log(`Successfully updated ${table}:`, result);
+  }
+  
+  return { data: result, error };
+};
+
+// Format item data for database based on table type
+const formatItemForDatabase = (table: TableName, item: any) => {
+  // Remove fields that shouldn't be sent to Supabase
+  const { createdAt, updatedAt, ...cleanedItem } = item;
+  
+  switch (table) {
+    case 'products':
+      return {
+        id: cleanedItem.id,
+        code: cleanedItem.code,
+        name: cleanedItem.name,
+        description: cleanedItem.description,
+        category: cleanedItem.category,
+        purchase_price: cleanedItem.purchasePrice,
+        sale_price: cleanedItem.salePrice,
+        current_stock: cleanedItem.currentStock,
+        min_stock: cleanedItem.minStock,
+        status: cleanedItem.status,
+        image: cleanedItem.image
+      };
+    case 'clients':
+      return {
+        id: cleanedItem.id,
+        name: cleanedItem.name,
+        email: cleanedItem.email,
+        phone: cleanedItem.phone,
+        address: cleanedItem.address,
+        tax_id: cleanedItem.taxId,
+        notes: cleanedItem.notes,
+        status: cleanedItem.status
+      };
+    case 'categories':
+      return {
+        id: cleanedItem.id,
+        name: cleanedItem.name,
+        description: cleanedItem.description,
+        status: cleanedItem.status
+      };
+    case 'suppliers':
+      return {
+        id: cleanedItem.id,
+        name: cleanedItem.name,
+        email: cleanedItem.email,
+        phone: cleanedItem.phone,
+        address: cleanedItem.address,
+        tax_id: cleanedItem.taxId,
+        payment_terms: cleanedItem.paymentTerms,
+        notes: cleanedItem.notes,
+        status: cleanedItem.status
+      };
+    default:
+      return cleanedItem;
+  }
 };
 
 // Store deleted IDs temporarily to prevent reappearance through real-time updates
@@ -167,4 +264,39 @@ export const filterDeletedItems = <T extends { id: string }>(table: string, item
     return items;
   }
   return items.filter(item => !deletedItemsCache[table].has(item.id));
+};
+
+// Batch insert or update multiple items with enhanced error handling
+export const batchSaveToTable = async (table: TableName, items: any[]): Promise<{success: boolean, errors: string[]}> => {
+  const errors: string[] = [];
+  let successCount = 0;
+  
+  console.log(`Batch saving ${items.length} items to ${table}`);
+  
+  for (const item of items) {
+    try {
+      if (!item.id) {
+        item.id = crypto.randomUUID();
+      }
+      
+      const { error } = await insertIntoTable(table, item);
+      
+      if (error) {
+        errors.push(`Failed to save item: ${error.message}`);
+        console.error(`Error saving to ${table}:`, error);
+      } else {
+        successCount++;
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      errors.push(`Exception saving item: ${errorMessage}`);
+      console.error(`Exception saving to ${table}:`, err);
+    }
+  }
+  
+  console.log(`Batch save complete: ${successCount}/${items.length} successful`);
+  return {
+    success: errors.length === 0,
+    errors
+  };
 };
