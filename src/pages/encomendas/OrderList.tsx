@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -269,10 +268,7 @@ const OrderList = () => {
                             <DeleteConfirmDialog
                               title="Eliminar Encomenda"
                               description="Tem a certeza que deseja eliminar esta encomenda? Esta ação é irreversível."
-                              onDelete={(e) => {
-                                e?.stopPropagation();
-                                handleDeleteOrder(order.id);
-                              }}
+                              onDelete={() => handleDeleteOrder(order.id)}
                               trigger={
                                 <Button 
                                   variant="ghost" 

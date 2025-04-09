@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -45,6 +46,26 @@ const StockExitList = () => {
   const [searchOpen, setSearchOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
+
+  // Add filteredProducts variable
+  const filteredProducts = products.filter(product => 
+    product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Add filteredExits variable
+  const filteredExits = localExits.filter(exit => 
+    exit.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exit.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    exit.items.some(item => {
+      const product = products.find(p => p.id === item.productId);
+      return product && (
+        product.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.productName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    })
+  );
 
   useEffect(() => {
     const fetchExits = async () => {
@@ -275,7 +296,7 @@ const StockExitList = () => {
     setSearchOpen(false);
   };
 
-  const selectedExitData = selectedExit ? displayExits.find(exit => exit.id === selectedExit) : null;
+  const selectedExitData = selectedExit ? filteredExits.find(exit => exit.id === selectedExit) : null;
   const selectedClient = selectedExitData ? clients.find(c => c.id === selectedExitData.clientId) : null;
 
   const calculateExitTotal = (exit: StockExit) => {
