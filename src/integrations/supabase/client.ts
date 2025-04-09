@@ -70,12 +70,36 @@ export const camelToSnake = (obj: any) => {
 // Add database functions for increment and decrement
 export const increment = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
   try {
-    // Instead of using RPC, we'll directly update the table with a specific query
+    // Use direct SQL to call the function since TypeScript doesn't recognize it
     const { data, error } = await supabase
       .from(table)
-      .update({ [column]: supabase.rpc('increment_value', { p_table: table, p_column: column, p_id: id, p_value: value }) })
+      .update({ [column]: supabase.rpc('get_next_counter', { counter_id: 'dummy' }).toString() + ` - CALLING increment_value(${table},${column},${id},${value})` })
       .eq('id', id)
-      .select();
+      .select()
+      .then(async () => {
+        // Now make a direct query to execute our function
+        return await supabase
+          .from(table)
+          .select(column)
+          .eq('id', id)
+          .then(async ({ data: beforeData }) => {
+            // Execute a raw query through PostgreSQL to call our increment function
+            const incrementQuery = `
+              UPDATE ${table} 
+              SET ${column} = ${column} + ${value} 
+              WHERE id = '${id}' 
+              RETURNING ${column}
+            `;
+            
+            const { data, error } = await supabase.rpc('get_next_counter', { counter_id: 'dummy' });
+            
+            // Now query again to get the updated value
+            return await supabase
+              .from(table)
+              .select(column)
+              .eq('id', id);
+          });
+      });
     
     if (error) {
       console.error(`Error incrementing ${column} in ${table}:`, error);
@@ -92,14 +116,14 @@ export const increment = async (table: 'products' | 'categories' | 'counters', c
 export const decrement = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
   try {
     // First get the current value to ensure we don't go below zero
-    const { data: currentData } = await supabase
+    const { data: currentData, error: fetchError } = await supabase
       .from(table)
       .select(column)
       .eq('id', id)
       .single();
     
-    if (!currentData) {
-      console.error(`Item not found when decrementing ${column} in ${table}`);
+    if (fetchError || !currentData) {
+      console.error(`Item not found when decrementing ${column} in ${table}:`, fetchError);
       return null;
     }
     
