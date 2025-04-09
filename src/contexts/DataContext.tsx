@@ -72,6 +72,7 @@ interface DataContextType {
   // Export/Import
   exportData: (type: ExportDataType) => void;
   importData: (type: ExportDataType, data: string) => Promise<void>;
+  updateData: <T extends keyof DataState>(type: T, data: DataState[T]) => void;
   
   // Business Analytics
   getBusinessAnalytics: () => { 
@@ -99,6 +100,16 @@ interface DataContextType {
   // Loading state
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+interface DataState {
+  products: Product[];
+  categories: Category[];
+  clients: Client[];
+  suppliers: Supplier[];
+  orders: Order[];
+  stockEntries: StockEntry[];
+  stockExits: StockExit[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -1538,6 +1549,41 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const importData = async (type: ExportDataType, data: string) => {
   };
   
+  const updateData = <T extends keyof DataState>(type: T, data: DataState[T]) => {
+    switch (type) {
+      case 'products':
+        setProducts(data as Product[]);
+        toast.success('Produtos atualizados com sucesso');
+        break;
+      case 'categories':
+        setCategories(data as Category[]);
+        toast.success('Categorias atualizadas com sucesso');
+        break;
+      case 'clients':
+        setClients(data as Client[]);
+        toast.success('Clientes atualizados com sucesso');
+        break;
+      case 'suppliers':
+        setSuppliers(data as Supplier[]);
+        toast.success('Fornecedores atualizados com sucesso');
+        break;
+      case 'orders':
+        setOrders(data as Order[]);
+        toast.success('Encomendas atualizadas com sucesso');
+        break;
+      case 'stockEntries':
+        setStockEntries(data as StockEntry[]);
+        toast.success('Entradas de stock atualizadas com sucesso');
+        break;
+      case 'stockExits':
+        setStockExits(data as StockExit[]);
+        toast.success('Saídas de stock atualizadas com sucesso');
+        break;
+      default:
+        toast.error('Tipo de dados inválido');
+    }
+  };
+  
   const contextValue: DataContextType = {
     products,
     setProducts,
@@ -1587,6 +1633,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     deleteStockExit,
     exportData,
     importData,
+    updateData,
     getBusinessAnalytics,
     isLoading,
     setIsLoading

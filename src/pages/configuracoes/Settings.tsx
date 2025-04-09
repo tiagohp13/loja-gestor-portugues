@@ -208,24 +208,7 @@ const Settings = () => {
         const { success, data, errors } = parseCSVData(csvContent, importType);
 
         if (success && data) {
-          switch (importType) {
-            case 'products':
-              updateData('products', data);
-              break;
-            case 'categories':
-              updateData('categories', data);
-              break;
-            case 'clients':
-              updateData('clients', data);
-              break;
-            case 'suppliers':
-              updateData('suppliers', data);
-              break;
-            default:
-              toast.error("Tipo de importação não suportado");
-              return;
-          }
-          
+          updateData(importType, data);
           toast.success(`${data.length} registros importados com sucesso!`);
         } else {
           toast.error(`Erro ao importar: ${errors.join(', ')}`);
