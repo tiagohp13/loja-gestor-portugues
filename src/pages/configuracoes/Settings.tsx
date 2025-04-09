@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Upload, Download, FileText, FileDown, FileUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from '@/integrations/supabase/client';
 
 type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
@@ -187,7 +187,7 @@ const Settings = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
       return;
@@ -199,7 +199,7 @@ const Settings = () => {
     }
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.onload = async (e) => {
       try {
         const csvContent = e.target?.result as string;
         if (!csvContent) {
@@ -257,6 +257,9 @@ const Settings = () => {
           // Update the data context
           updateData(importType, mergedData);
           
+          // Persist data to Supabase based on the import type
+          await saveImportedDataToSupabase(importType, newItems, updatedItems);
+          
           toast.success(`${newItems.length} registros novos e ${updatedItems.length} registros atualizados com sucesso!`);
         } else {
           toast.error(`Erro ao importar: ${errors.join(', ')}`);
@@ -278,6 +281,120 @@ const Settings = () => {
     reader.readAsText(file);
   };
 
+  const saveImportedDataToSupabase = async (type: ExportDataType | null, newItems: any[], updatedItems: any[]) => {
+    try {
+      if (!type) return;
+      
+      let tableName = '';
+      
+      switch (type) {
+        case 'products':
+          tableName = 'products';
+          break;
+        case 'categories':
+          tableName = 'categories';
+          break;
+        case 'clients':
+          tableName = 'clients';
+          break;
+        case 'suppliers':
+          tableName = 'suppliers';
+          break;
+        default:
+          return;
+      }
+      
+      // Insert new items
+      if (newItems.length > 0) {
+        // Format items according to database schema
+        const formattedNewItems = formatItemsForDatabase(type, newItems);
+        
+        const { error: insertError } = await supabase
+          .from(tableName)
+          .insert(formattedNewItems);
+          
+        if (insertError) {
+          console.error(`Error inserting new ${type}:`, insertError);
+          toast.error(`Erro ao salvar novos ${type} na base de dados`);
+        }
+      }
+      
+      // Update existing items
+      for (const item of updatedItems) {
+        // Format item according to database schema
+        const formattedItem = formatItemForDatabase(type, item);
+        
+        const { error: updateError } = await supabase
+          .from(tableName)
+          .update(formattedItem)
+          .eq('id', item.id);
+          
+        if (updateError) {
+          console.error(`Error updating ${type}:`, updateError);
+          toast.error(`Erro ao atualizar ${type} na base de dados`);
+        }
+      }
+    } catch (error) {
+      console.error('Error saving data to Supabase:', error);
+      toast.error('Erro ao salvar dados na base de dados. Os dados estão apenas na memória.');
+    }
+  };
+  
+  const formatItemsForDatabase = (type: ExportDataType, items: any[]) => {
+    return items.map(item => formatItemForDatabase(type, item));
+  };
+  
+  const formatItemForDatabase = (type: ExportDataType, item: any) => {
+    switch (type) {
+      case 'products':
+        return {
+          id: item.id,
+          code: item.code,
+          name: item.name,
+          description: item.description,
+          category: item.category,
+          purchase_price: item.purchasePrice,
+          sale_price: item.salePrice,
+          current_stock: item.currentStock,
+          min_stock: item.minStock,
+          status: item.status,
+          image: item.image
+        };
+      case 'clients':
+        return {
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          address: item.address,
+          tax_id: item.taxId,
+          notes: item.notes,
+          status: item.status
+        };
+      case 'categories':
+        return {
+          id: item.id,
+          name: item.name,
+          description: item.description,
+          status: item.status
+        };
+      case 'suppliers':
+        return {
+          id: item.id,
+          name: item.name,
+          email: item.email,
+          phone: item.phone,
+          address: item.address,
+          tax_id: item.taxId,
+          payment_terms: item.paymentTerms,
+          notes: item.notes,
+          status: item.status
+        };
+      default:
+        return item;
+    }
+  };
+
   const parseCSVData = (csvContent: string, type: ExportDataType | null) => {
     const lines = csvContent.split('\n').filter(line => line.trim());
     const headers = lines[0].split(',').map(header => header.trim());
@@ -296,10 +413,22 @@ const Settings = () => {
       const item: Record<string, any> = {};
       
       headers.forEach((header, index) => {
-        if (['purchasePrice', 'salePrice', 'currentStock', 'minStock'].includes(header)) {
-          item[header] = parseFloat(values[index]) || 0;
+        // Try to parse quoted JSON values
+        let value = values[index];
+        try {
+          if (value.startsWith('"') && value.endsWith('"')) {
+            value = JSON.parse(value);
+          }
+        } catch (e) {
+          // Keep as string if parsing fails
+        }
+        
+        if (['purchasePrice', 'salePrice'].includes(header)) {
+          item[header] = parseFloat(value) || 0;
+        } else if (['currentStock', 'minStock'].includes(header)) {
+          item[header] = parseInt(value) || 0;
         } else {
-          item[header] = values[index];
+          item[header] = value;
         }
       });
 
@@ -307,10 +436,11 @@ const Settings = () => {
         item.id = crypto.randomUUID();
       }
 
-      // For client and product types, ensure they have all required properties
+      // Add required properties for each type
       if (type === 'clients') {
         item.createdAt = item.createdAt || new Date().toISOString();
         item.updatedAt = new Date().toISOString();
+        item.status = item.status || 'active';
       } else if (type === 'products') {
         item.createdAt = item.createdAt || new Date().toISOString();
         item.updatedAt = new Date().toISOString();
@@ -318,6 +448,15 @@ const Settings = () => {
         item.minStock = item.minStock || 0;
         item.purchasePrice = item.purchasePrice || 0;
         item.salePrice = item.salePrice || 0;
+        item.status = item.status || 'active';
+      } else if (type === 'categories') {
+        item.createdAt = item.createdAt || new Date().toISOString();
+        item.updatedAt = new Date().toISOString();
+        item.status = item.status || 'active';
+      } else if (type === 'suppliers') {
+        item.createdAt = item.createdAt || new Date().toISOString();
+        item.updatedAt = new Date().toISOString();
+        item.status = item.status || 'active';
       }
 
       results.push(item);
@@ -464,7 +603,13 @@ const Settings = () => {
                           <Checkbox 
                             id="import-products"
                             checked={importType === 'products'}
-                            onCheckedChange={(checked) => setImportType(checked ? 'products' : null)}
+                            onCheckedChange={(checked) => {
+                              if (importType === 'products') {
+                                setImportType(null);
+                              } else if (checked) {
+                                setImportType('products');
+                              }
+                            }}
                           />
                           <Label htmlFor="import-products">Produtos</Label>
                         </div>
@@ -473,7 +618,13 @@ const Settings = () => {
                           <Checkbox 
                             id="import-categories"
                             checked={importType === 'categories'}
-                            onCheckedChange={(checked) => setImportType(checked ? 'categories' : null)}
+                            onCheckedChange={(checked) => {
+                              if (importType === 'categories') {
+                                setImportType(null);
+                              } else if (checked) {
+                                setImportType('categories');
+                              }
+                            }}
                           />
                           <Label htmlFor="import-categories">Categorias</Label>
                         </div>
@@ -482,7 +633,13 @@ const Settings = () => {
                           <Checkbox 
                             id="import-clients"
                             checked={importType === 'clients'}
-                            onCheckedChange={(checked) => setImportType(checked ? 'clients' : null)}
+                            onCheckedChange={(checked) => {
+                              if (importType === 'clients') {
+                                setImportType(null);
+                              } else if (checked) {
+                                setImportType('clients');
+                              }
+                            }}
                           />
                           <Label htmlFor="import-clients">Clientes</Label>
                         </div>
@@ -491,7 +648,13 @@ const Settings = () => {
                           <Checkbox 
                             id="import-suppliers"
                             checked={importType === 'suppliers'}
-                            onCheckedChange={(checked) => setImportType(checked ? 'suppliers' : null)}
+                            onCheckedChange={(checked) => {
+                              if (importType === 'suppliers') {
+                                setImportType(null);
+                              } else if (checked) {
+                                setImportType('suppliers');
+                              }
+                            }}
                           />
                           <Label htmlFor="import-suppliers">Fornecedores</Label>
                         </div>
