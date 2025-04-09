@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -14,7 +15,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Check, Plus, Trash, LogOut } from 'lucide-react';
+import { Search, Check, Plus, Trash, LogOut, ArrowLeft } from 'lucide-react';
 import { StockExitItem } from '@/types';
 
 const StockExitNew = () => {
@@ -172,7 +173,7 @@ const StockExitNew = () => {
       )
     : clients;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!exitDetails.clientId || items.length === 0) {
@@ -198,16 +199,26 @@ const StockExitNew = () => {
     
     if (!hasEnoughStock) return;
     
-    addStockExit({
-      clientId: exitDetails.clientId,
-      clientName: client.name,
-      items: items,
-      date: exitDetails.date,
-      invoiceNumber: exitDetails.invoiceNumber,
-      notes: exitDetails.notes
-    });
+    const loadingToast = toast.loading('Registando saída...');
     
-    navigate('/saidas/historico');
+    try {
+      await addStockExit({
+        clientId: exitDetails.clientId,
+        clientName: client.name,
+        items: items,
+        date: exitDetails.date,
+        invoiceNumber: exitDetails.invoiceNumber,
+        notes: exitDetails.notes
+      });
+      
+      toast.dismiss(loadingToast);
+      toast.success('Saída registada com sucesso');
+      navigate('/saidas/historico');
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error("Erro ao registar saída:", error);
+      toast.error('Erro ao registar saída');
+    }
   };
 
   const getDiscountedPrice = (price: number, discountPercent: number) => {
@@ -220,14 +231,20 @@ const StockExitNew = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          className="flex items-center text-gestorApp-gray-dark hover:text-gestorApp-blue"
+          onClick={() => navigate('/saidas/historico')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar ao Histórico
+        </Button>
+      </div>
+      
       <PageHeader 
         title="Nova Saída de Stock" 
         description="Registar uma nova saída do inventário" 
-        actions={
-          <Button variant="outline" onClick={() => navigate('/saidas/historico')}>
-            Voltar ao Histórico
-          </Button>
-        }
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">

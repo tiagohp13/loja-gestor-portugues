@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -14,7 +15,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Check, Search, Plus, Trash, Package } from 'lucide-react';
+import { Search, Check, Plus, Trash, Package, ArrowLeft } from 'lucide-react';
 import { StockEntryItem } from '@/types';
 
 const StockEntryNew = () => {
@@ -144,7 +145,7 @@ const StockEntryNew = () => {
       )
     : suppliers;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!entryDetails.supplierId || items.length === 0) {
@@ -159,16 +160,26 @@ const StockEntryNew = () => {
       return;
     }
     
-    addStockEntry({
-      supplierId: entryDetails.supplierId,
-      supplierName: supplier.name,
-      items: items,
-      date: entryDetails.date,
-      invoiceNumber: entryDetails.invoiceNumber,
-      notes: entryDetails.notes
-    });
+    const loadingToast = toast.loading('Registando entrada...');
     
-    navigate('/entradas/historico');
+    try {
+      await addStockEntry({
+        supplierId: entryDetails.supplierId,
+        supplierName: supplier.name,
+        items: items,
+        date: entryDetails.date,
+        invoiceNumber: entryDetails.invoiceNumber,
+        notes: entryDetails.notes
+      });
+      
+      toast.dismiss(loadingToast);
+      toast.success('Entrada registada com sucesso');
+      navigate('/entradas/historico');
+    } catch (error) {
+      toast.dismiss(loadingToast);
+      console.error("Erro ao registar entrada:", error);
+      toast.error('Erro ao registar entrada');
+    }
   };
 
   const totalValue = items.reduce((total, item) => 
@@ -176,14 +187,20 @@ const StockEntryNew = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
+      <div className="mb-6">
+        <Button 
+          variant="ghost" 
+          className="flex items-center text-gestorApp-gray-dark hover:text-gestorApp-blue"
+          onClick={() => navigate('/entradas/historico')}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar ao Histórico
+        </Button>
+      </div>
+      
       <PageHeader 
         title="Nova Entrada de Stock" 
         description="Registar uma nova entrada no inventário" 
-        actions={
-          <Button variant="outline" onClick={() => navigate('/entradas/historico')}>
-            Voltar ao Histórico
-          </Button>
-        }
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
