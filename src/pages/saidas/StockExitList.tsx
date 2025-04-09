@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -33,7 +32,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { StockExit } from '@/types';
 
@@ -47,7 +46,6 @@ const StockExitList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
 
-  // Force fetch on component mount and whenever we return to this page
   useEffect(() => {
     const fetchExits = async () => {
       try {
@@ -71,7 +69,6 @@ const StockExitList = () => {
         if (data) {
           console.log("Stock exits data received:", data);
           
-          // Map the database fields to match our StockExit type
           const mappedExits = data.map(exit => ({
             id: exit.id,
             clientId: exit.client_id,
@@ -94,9 +91,10 @@ const StockExitList = () => {
             }))
           }));
           
-          // Update both the local state and the context state
-          setLocalExits(mappedExits);
-          setStockExits(mappedExits);
+          const filteredExits = filterDeletedItems('stock_exits', mappedExits);
+          
+          setLocalExits(filteredExits);
+          setStockExits(filteredExits);
         }
       } catch (error) {
         console.error("Error in fetchExits:", error);
@@ -109,16 +107,22 @@ const StockExitList = () => {
     fetchExits();
   }, [setStockExits]);
 
-  // Listen for real-time updates using Supabase's realtime functionality
   useEffect(() => {
-    // Listen for changes to stock_exits table
     const channel = supabase.channel('stock_exits_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exits' }, 
         (payload) => {
           console.log('Stock exit change detected:', payload);
           
-          // If it's an INSERT or UPDATE, fetch all exits again to update the list
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const deletedId = payload.old.id;
+            addToDeletedCache('stock_exits', deletedId);
+            
+            setLocalExits(prev => prev.filter(exit => exit.id !== deletedId));
+            setStockExits(prev => prev.filter(exit => exit.id !== deletedId));
+            return;
+          }
+          
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             setIsLoading(true);
             
@@ -162,30 +166,23 @@ const StockExitList = () => {
                     }))
                   }));
                   
-                  setLocalExits(mappedExits);
-                  setStockExits(mappedExits);
+                  const filteredExits = filterDeletedItems('stock_exits', mappedExits);
+                  
+                  setLocalExits(filteredExits);
+                  setStockExits(filteredExits);
                 }
               });
-          }
-          
-          // If it's a DELETE, we could remove the item from the local state directly
-          if (payload.eventType === 'DELETE' && payload.old) {
-            const deletedId = payload.old.id;
-            setLocalExits(prev => prev.filter(exit => exit.id !== deletedId));
-            // Don't update context here, as deleteStockExit already handles that
           }
         }
       )
       .subscribe();
       
-    // Also listen for changes to stock_exit_items table
     const itemsChannel = supabase.channel('stock_exit_items_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exit_items' }, 
         (payload) => {
           console.log('Stock exit item change detected:', payload);
           
-          // When items change, we need to fetch the exits again to get the updated data
           supabase
             .from('stock_exits')
             .select(`
@@ -224,56 +221,28 @@ const StockExitList = () => {
                   }))
                 }));
                 
-                setLocalExits(mappedExits);
-                setStockExits(mappedExits);
+                const filteredExits = filterDeletedItems('stock_exits', mappedExits);
+                
+                setLocalExits(filteredExits);
+                setStockExits(filteredExits);
               }
             });
         }
       )
       .subscribe();
     
-    // Clean up the subscription when the component unmounts
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(itemsChannel);
     };
   }, [setStockExits]);
 
-  // Use the exits from the context or local state
-  const displayExits = localExits.length > 0 ? localExits : stockExits;
-  
-  // Sort exits by date (most recent first)
-  const sortedExits = [...displayExits].sort((a, b) => 
-    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
-
-  const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.code.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const filteredExits = searchTerm 
-    ? sortedExits.filter(exit => {
-        // Check if any item in the exit matches the search term
-        const hasMatchingProduct = exit.items.some(item => {
-          const product = products.find(p => p.id === item.productId);
-          return (product && 
-            (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-             product.code.toLowerCase().includes(searchTerm.toLowerCase())));
-        });
-        
-        const client = clients.find(c => c.id === exit.clientId);
-        
-        return (
-          hasMatchingProduct ||
-          exit.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          (client && client.name.toLowerCase().includes(searchTerm.toLowerCase()))
-        );
-      })
-    : sortedExits;
-
   const handleDeleteExit = async (id: string) => {
     try {
+      addToDeletedCache('stock_exits', id);
+      
+      setLocalExits(prev => prev.filter(exit => exit.id !== id));
+      
       await deleteStockExit(id);
       
       if (detailsOpen) {
@@ -309,7 +278,6 @@ const StockExitList = () => {
   const selectedExitData = selectedExit ? displayExits.find(exit => exit.id === selectedExit) : null;
   const selectedClient = selectedExitData ? clients.find(c => c.id === selectedExitData.clientId) : null;
 
-  // Helper function to calculate total for an exit
   const calculateExitTotal = (exit: StockExit) => {
     return exit.items.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
   };
@@ -411,7 +379,6 @@ const StockExitList = () => {
                   const totalItems = exit.items.reduce((sum, item) => sum + item.quantity, 0);
                   const totalValue = calculateExitTotal(exit);
                   
-                  // Get the first product to display
                   const firstItem = exit.items[0];
                   const firstProduct = firstItem ? products.find(p => p.id === firstItem.productId) : null;
                   const productDisplay = firstProduct 
@@ -489,7 +456,6 @@ const StockExitList = () => {
         </div>
       </div>
 
-      {/* Exit Details Dialog */}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>

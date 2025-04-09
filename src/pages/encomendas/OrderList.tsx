@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -11,6 +10,7 @@ import { ClipboardList, Search, Plus, LogOut, ChevronUp, ChevronDown, Edit, Tras
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { addToDeletedCache } from '@/integrations/supabase/client';
 
 type SortField = 'number' | 'date' | 'clientName' | 'totalValue';
 type SortDirection = 'asc' | 'desc';
@@ -63,6 +63,8 @@ const OrderList = () => {
 
   const handleDeleteOrder = async (id: string) => {
     try {
+      addToDeletedCache('orders', id);
+      
       await deleteOrder(id);
       toast.success("Encomenda eliminada com sucesso");
     } catch (error) {
@@ -182,7 +184,11 @@ const OrderList = () => {
                   const totalValue = order.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
                   
                   return (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <TableRow 
+                      key={order.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => handleViewOrder(order.id)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
                         {order.number}
                       </td>
@@ -227,7 +233,10 @@ const OrderList = () => {
                         <Button 
                           variant="ghost" 
                           size="sm" 
-                          onClick={() => handleViewOrder(order.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewOrder(order.id);
+                          }}
                           className="mr-2"
                         >
                           Ver
@@ -237,14 +246,20 @@ const OrderList = () => {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              onClick={() => handleEditOrder(order.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditOrder(order.id);
+                              }}
                               className="mr-2"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
                               size="sm" 
-                              onClick={() => handleCreateStockExit(order.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCreateStockExit(order.id);
+                              }}
                               className="mr-2"
                             >
                               Converter em Saída
@@ -252,9 +267,17 @@ const OrderList = () => {
                             <DeleteConfirmDialog
                               title="Eliminar Encomenda"
                               description="Tem a certeza que deseja eliminar esta encomenda? Esta ação é irreversível."
-                              onDelete={() => handleDeleteOrder(order.id)}
+                              onDelete={(e) => {
+                                e?.stopPropagation();
+                                handleDeleteOrder(order.id);
+                              }}
                               trigger={
-                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-700">
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm" 
+                                  className="text-red-500 hover:text-red-700"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               }

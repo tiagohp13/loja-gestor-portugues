@@ -42,3 +42,6 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.suppliers;
 -- Enable realtime for counters
 ALTER TABLE public.counters REPLICA IDENTITY FULL;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.counters;
+
+-- This ensures the DELETE operations are properly tracked for real-time updates
+ALTER PUBLICATION supabase_realtime SET (publish = 'insert, update, delete');
