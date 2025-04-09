@@ -34,3 +34,38 @@ export async function loginUser(email: string, password: string) {
     throw error;
   }
 }
+
+export async function registerUser(email: string, password: string, name: string) {
+  try {
+    // Check if user already exists
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (existingUser) {
+      throw new Error('Este email já está registado');
+    }
+    
+    // Insert new user
+    const { data, error } = await supabase
+      .from('users')
+      .insert([
+        { 
+          email, 
+          password: password, // The password will be hashed by the database trigger 
+          name: name 
+        }
+      ])
+      .select()
+      .single();
+    
+    if (error) throw error;
+    
+    return { user: data };
+  } catch (error) {
+    console.error('Error during registration:', error);
+    throw error;
+  }
+}

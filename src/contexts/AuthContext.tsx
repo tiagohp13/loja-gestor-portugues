@@ -1,11 +1,12 @@
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
 import { AuthState, User } from '../types';
-import { loginUser } from '../services/authService';
+import { loginUser, registerUser } from '../services/authService';
 import { toast } from 'sonner';
 
 interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<boolean>;
+  register: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
 }
 
@@ -38,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Map database user to our User type
       const user: User = {
         id: userData.id,
-        name: userData.email.split('@')[0], // Use email username as name
+        name: userData.name || userData.email.split('@')[0], // Use name if available, otherwise fallback to email username
         email: userData.email,
         role: 'admin' // Default role
       };
@@ -58,6 +59,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const register = async (email: string, password: string, name: string): Promise<boolean> => {
+    try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      await registerUser(email, password, name);
+      
+      toast.success('Registo efetuado com sucesso. Pode fazer login.');
+      return true;
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      } else {
+        toast.error('Erro ao efetuar registo');
+      }
+      return false;
+    }
+  };
+
   const logout = () => {
     setState(initialState);
     localStorage.removeItem('user');
@@ -65,7 +85,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );

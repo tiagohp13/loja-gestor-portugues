@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AuthLayout from '../components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,14 @@ const Login: React.FC = () => {
         </Button>
       </form>
       
-      <div className="mt-6 text-sm text-center text-gestorApp-gray">
+      <div className="mt-6 text-sm text-center">
+        <p className="text-gestorApp-gray mb-4">
+          Não tem uma conta?{' '}
+          <Link to="/register" className="text-gestorApp-blue hover:underline font-medium">
+            Registar
+          </Link>
+        </p>
+        
         <p className="text-muted-foreground">
           Use <strong>tiagohp13@hotmail.com</strong> e <strong>*Silva*2020</strong> para login
         </p>

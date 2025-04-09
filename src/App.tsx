@@ -8,6 +8,7 @@ import LoadingSpinner from './components/ui/LoadingSpinner';
 
 // Authentication
 import LoginPage from './pages/Login';
+import RegisterPage from './pages/Register';
 
 // Dashboard
 import DashboardPage from './pages/Dashboard';
@@ -65,6 +66,15 @@ import NotFound from './pages/NotFound';
 // Layout
 import AppLayout from './components/navigation/AppSidebar';
 
+// Auth Route Guard
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const isAuthenticated = localStorage.getItem('user') !== null;
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  return <>{children}</>;
+};
+
 function App() {
   return (
     <BrowserRouter>
@@ -73,8 +83,13 @@ function App() {
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
               
-              <Route element={<AppLayout />}>
+              <Route element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }>
                 <Route path="/" element={<Navigate to="/dashboard" />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 
