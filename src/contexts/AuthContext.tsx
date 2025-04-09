@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { loginUser, registerUser, logoutUser, getCurrentUser } from '../services/authService';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 interface AuthState {
   user: User | null;
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
+  const navigate = useNavigate();
 
   // Initialize auth state and set up listener
   useEffect(() => {
@@ -37,13 +39,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // First set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event);
-      setState(prevState => ({
-        ...prevState,
-        user: session?.user || null,
-        session: session,
-        isAuthenticated: !!session,
-        isInitialized: true // Mark as initialized when auth state changes
-      }));
+      
+      // Handle auth state changes
+      if (event === 'SIGNED_OUT') {
+        setState({
+          user: null,
+          session: null,
+          isAuthenticated: false,
+          isInitialized: true
+        });
+        
+        // Redirect to login page on sign out
+        navigate('/login');
+      } else {
+        setState(prevState => ({
+          ...prevState,
+          user: session?.user || null,
+          session: session,
+          isAuthenticated: !!session,
+          isInitialized: true
+        }));
+      }
     });
 
     // Then check for existing session
@@ -68,7 +84,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, [navigate]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -122,8 +138,14 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = () => {
     logoutUser()
       .then(() => {
-        setState(initialState);
+        setState({
+          ...initialState,
+          isInitialized: true
+        });
         toast.info('Sessão terminada');
+        
+        // Redirect to login page
+        navigate('/login');
       })
       .catch((error) => {
         console.error('Error during logout:', error);
