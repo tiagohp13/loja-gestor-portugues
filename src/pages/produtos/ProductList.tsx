@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -26,6 +27,25 @@ import {
 
 type SortField = 'name' | 'code' | 'category' | 'currentStock' | 'salePrice';
 type SortDirection = 'asc' | 'desc';
+
+// Function to naturally sort strings containing numbers
+const naturalSort = (a: string, b: string, direction: SortDirection = 'asc') => {
+  // Function to convert a string part to number if possible
+  const chunk = (s: string) => {
+    return s.replace(/(\d+)/g, (match) => {
+      // Pad numbers with leading zeros to ensure proper sorting
+      // We pad to 10 digits which should be enough for most scenarios
+      return match.padStart(10, '0');
+    });
+  };
+  
+  // Apply the direction to the comparison
+  if (direction === 'asc') {
+    return chunk(a).localeCompare(chunk(b), undefined, { numeric: true });
+  } else {
+    return chunk(b).localeCompare(chunk(a), undefined, { numeric: true });
+  }
+};
 
 const ProductList = () => {
   const navigate = useNavigate();
@@ -59,9 +79,8 @@ const ProductList = () => {
           ? a.name.localeCompare(b.name) 
           : b.name.localeCompare(a.name);
       } else if (sortField === 'code') {
-        return sortDirection === 'asc' 
-          ? a.code.localeCompare(b.code) 
-          : b.code.localeCompare(a.code);
+        // Use natural sort for code field
+        return naturalSort(a.code, b.code, sortDirection);
       } else if (sortField === 'category') {
         return sortDirection === 'asc' 
           ? a.category.localeCompare(b.category) 
