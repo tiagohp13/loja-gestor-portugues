@@ -112,6 +112,25 @@ export const decrement = async (table: 'products' | 'categories' | 'counters', c
   return updateData[column];
 };
 
+// Add a type-safe function to insert data into Supabase tables
+export const insertIntoTable = async (table: 'products' | 'categories' | 'clients' | 'suppliers', data: any) => {
+  const { error } = await supabase
+    .from(table)
+    .insert(data);
+    
+  return { error };
+};
+
+// Add a type-safe function to update data in Supabase tables
+export const updateTable = async (table: 'products' | 'categories' | 'clients' | 'suppliers', id: string, data: any) => {
+  const { error } = await supabase
+    .from(table)
+    .update(data)
+    .eq('id', id);
+    
+  return { error };
+};
+
 // Store deleted IDs temporarily to prevent reappearance through real-time updates
 const deletedItemsCache: { [table: string]: Set<string> } = {
   stock_entries: new Set<string>(),

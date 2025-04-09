@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Upload, Download, FileText, FileDown, FileUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, insertIntoTable, updateTable } from '@/integrations/supabase/client';
 
 type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
@@ -209,7 +209,6 @@ const Settings = () => {
         const { success, data, errors } = parseCSVData(csvContent, importType);
 
         if (success && data) {
-          // Get the current data for the import type
           let currentData: any[] = [];
           switch (importType) {
             case 'products':
@@ -228,36 +227,29 @@ const Settings = () => {
               currentData = [];
           }
 
-          // Check for items with existing IDs and update them
           const newItems: any[] = [];
           const updatedItems: any[] = [];
 
           data.forEach(item => {
             if (item.id) {
-              // This item has an ID, check if it exists in the current data
               const existingIndex = currentData.findIndex(existing => existing.id === item.id);
               if (existingIndex >= 0) {
-                // Update existing item
                 currentData[existingIndex] = { ...currentData[existingIndex], ...item };
                 updatedItems.push(item);
               } else {
-                // ID doesn't exist in current data, add as new
+                item.id = crypto.randomUUID();
                 newItems.push(item);
               }
             } else {
-              // New item without ID
               item.id = crypto.randomUUID();
               newItems.push(item);
             }
           });
 
-          // Combine existing data with new items
           const mergedData = [...currentData, ...newItems];
           
-          // Update the data context
           updateData(importType, mergedData);
           
-          // Persist data to Supabase based on the import type
           await saveImportedDataToSupabase(importType, newItems, updatedItems);
           
           toast.success(`${newItems.length} registros novos e ${updatedItems.length} registros atualizados com sucesso!`);
@@ -304,34 +296,31 @@ const Settings = () => {
           return;
       }
       
-      // Insert new items
       if (newItems.length > 0) {
-        // Format items according to database schema
         const formattedNewItems = formatItemsForDatabase(type, newItems);
         
-        const { error: insertError } = await supabase
-          .from(tableName)
-          .insert(formattedNewItems);
-          
-        if (insertError) {
-          console.error(`Error inserting new ${type}:`, insertError);
-          toast.error(`Erro ao salvar novos ${type} na base de dados`);
+        for (const item of formattedNewItems) {
+          if (type === 'products' || type === 'categories' || type === 'clients' || type === 'suppliers') {
+            const { error: insertError } = await insertIntoTable(type, item);
+            
+            if (insertError) {
+              console.error(`Error inserting new ${type}:`, insertError);
+              toast.error(`Erro ao salvar novos ${type} na base de dados`);
+            }
+          }
         }
       }
       
-      // Update existing items
       for (const item of updatedItems) {
-        // Format item according to database schema
         const formattedItem = formatItemForDatabase(type, item);
         
-        const { error: updateError } = await supabase
-          .from(tableName)
-          .update(formattedItem)
-          .eq('id', item.id);
+        if (type === 'products' || type === 'categories' || type === 'clients' || type === 'suppliers') {
+          const { error: updateError } = await updateTable(type, item.id, formattedItem);
           
-        if (updateError) {
-          console.error(`Error updating ${type}:`, updateError);
-          toast.error(`Erro ao atualizar ${type} na base de dados`);
+          if (updateError) {
+            console.error(`Error updating ${type}:`, updateError);
+            toast.error(`Erro ao atualizar ${type} na base de dados`);
+          }
         }
       }
     } catch (error) {
@@ -413,14 +402,12 @@ const Settings = () => {
       const item: Record<string, any> = {};
       
       headers.forEach((header, index) => {
-        // Try to parse quoted JSON values
         let value = values[index];
         try {
           if (value.startsWith('"') && value.endsWith('"')) {
             value = JSON.parse(value);
           }
         } catch (e) {
-          // Keep as string if parsing fails
         }
         
         if (['purchasePrice', 'salePrice'].includes(header)) {
@@ -436,7 +423,6 @@ const Settings = () => {
         item.id = crypto.randomUUID();
       }
 
-      // Add required properties for each type
       if (type === 'clients') {
         item.createdAt = item.createdAt || new Date().toISOString();
         item.updatedAt = new Date().toISOString();
