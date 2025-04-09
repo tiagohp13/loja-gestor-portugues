@@ -83,6 +83,7 @@ const StockExitList = () => {
             createdAt: exit.created_at,
             fromOrderId: exit.from_order_id,
             fromOrderNumber: exit.from_order_number,
+            discount: exit.discount || 0,
             items: exit.stock_exit_items.map((item: any) => ({
               id: item.id,
               productId: item.product_id,
@@ -106,33 +107,134 @@ const StockExitList = () => {
     };
 
     fetchExits();
-    
-    // Set up a realtime listener for stock exits
-    const exitsChannel = supabase
-      .channel('stock_exits_changes')
+  }, [setStockExits]);
+
+  // Listen for real-time updates using Supabase's realtime functionality
+  useEffect(() => {
+    // Listen for changes to stock_exits table
+    const channel = supabase.channel('stock_exits_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exits' }, 
         (payload) => {
           console.log('Stock exit change detected:', payload);
-          fetchExits(); // Refresh the data when changes occur
+          
+          // If it's an INSERT or UPDATE, fetch all exits again to update the list
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setIsLoading(true);
+            
+            supabase
+              .from('stock_exits')
+              .select(`
+                *,
+                stock_exit_items(*)
+              `)
+              .order('created_at', { ascending: false })
+              .then(({ data, error }) => {
+                setIsLoading(false);
+                
+                if (error) {
+                  console.error("Error fetching stock exits after change:", error);
+                  return;
+                }
+                
+                if (data) {
+                  console.log("Updated stock exits received:", data);
+                  
+                  const mappedExits = data.map(exit => ({
+                    id: exit.id,
+                    clientId: exit.client_id,
+                    clientName: exit.client_name,
+                    number: exit.number,
+                    invoiceNumber: exit.invoice_number,
+                    notes: exit.notes,
+                    date: exit.date,
+                    createdAt: exit.created_at,
+                    fromOrderId: exit.from_order_id,
+                    fromOrderNumber: exit.from_order_number,
+                    discount: exit.discount || 0,
+                    items: exit.stock_exit_items.map((item: any) => ({
+                      id: item.id,
+                      productId: item.product_id,
+                      productName: item.product_name,
+                      quantity: item.quantity,
+                      salePrice: item.sale_price,
+                      discountPercent: item.discount_percent
+                    }))
+                  }));
+                  
+                  setLocalExits(mappedExits);
+                  setStockExits(mappedExits);
+                }
+              });
+          }
+          
+          // If it's a DELETE, we could remove the item from the local state directly
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const deletedId = payload.old.id;
+            setLocalExits(prev => prev.filter(exit => exit.id !== deletedId));
+            // Don't update context here, as deleteStockExit already handles that
+          }
         }
       )
       .subscribe();
       
-    const itemsChannel = supabase
-      .channel('stock_exit_items_changes')
+    // Also listen for changes to stock_exit_items table
+    const itemsChannel = supabase.channel('stock_exit_items_changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exit_items' }, 
         (payload) => {
           console.log('Stock exit item change detected:', payload);
-          fetchExits(); // Refresh the data when changes occur
+          
+          // When items change, we need to fetch the exits again to get the updated data
+          supabase
+            .from('stock_exits')
+            .select(`
+              *,
+              stock_exit_items(*)
+            `)
+            .order('created_at', { ascending: false })
+            .then(({ data, error }) => {
+              if (error) {
+                console.error("Error fetching stock exits after item change:", error);
+                return;
+              }
+              
+              if (data) {
+                console.log("Updated stock exits after item change:", data);
+                
+                const mappedExits = data.map(exit => ({
+                  id: exit.id,
+                  clientId: exit.client_id,
+                  clientName: exit.client_name,
+                  number: exit.number,
+                  invoiceNumber: exit.invoice_number,
+                  notes: exit.notes,
+                  date: exit.date,
+                  createdAt: exit.created_at,
+                  fromOrderId: exit.from_order_id,
+                  fromOrderNumber: exit.from_order_number,
+                  discount: exit.discount || 0,
+                  items: exit.stock_exit_items.map((item: any) => ({
+                    id: item.id,
+                    productId: item.product_id,
+                    productName: item.product_name,
+                    quantity: item.quantity,
+                    salePrice: item.sale_price,
+                    discountPercent: item.discount_percent
+                  }))
+                }));
+                
+                setLocalExits(mappedExits);
+                setStockExits(mappedExits);
+              }
+            });
         }
       )
       .subscribe();
-      
-    // Cleanup the subscription when the component unmounts
+    
+    // Clean up the subscription when the component unmounts
     return () => {
-      supabase.removeChannel(exitsChannel);
+      supabase.removeChannel(channel);
       supabase.removeChannel(itemsChannel);
     };
   }, [setStockExits]);
@@ -172,22 +274,7 @@ const StockExitList = () => {
 
   const handleDeleteExit = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('stock_exits')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error("Error deleting stock exit:", error);
-        toast.error("Erro ao eliminar saída de stock");
-        return;
-      }
-
-      // Remove from local state immediately for optimistic UI update
-      setLocalExits(prev => prev.filter(exit => exit.id !== id));
-      // Also update context
-      deleteStockExit(id);
-      toast.success("Saída eliminada com sucesso");
+      await deleteStockExit(id);
       
       if (detailsOpen) {
         setDetailsOpen(false);

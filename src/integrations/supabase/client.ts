@@ -31,59 +31,6 @@ export const supabase = createClient<Database>(
   }
 );
 
-// Set up generic real-time channel rather than individual ones
-// This will help ensure we don't miss any updates
-const realtimeChannel = supabase.channel('public:all_tables')
-  // Stock Entries
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'stock_entries' }, 
-    payload => {
-      console.log('Stock entry change received!', payload);
-    })
-  // Stock Entry Items
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'stock_entry_items' }, 
-    payload => {
-      console.log('Stock entry item change received!', payload);
-    })
-  // Stock Exits
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'stock_exits' }, 
-    payload => {
-      console.log('Stock exit change received!', payload);
-    })
-  // Stock Exit Items
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'stock_exit_items' }, 
-    payload => {
-      console.log('Stock exit item change received!', payload);
-    })
-  // Orders
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'orders' }, 
-    payload => {
-      console.log('Order change received!', payload);
-    })
-  // Order Items
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'order_items' }, 
-    payload => {
-      console.log('Order item change received!', payload);
-    })
-  // Products
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'products' }, 
-    payload => {
-      console.log('Product change received!', payload);
-    })
-  // Categories
-  .on('postgres_changes', 
-    { event: '*', schema: 'public', table: 'categories' }, 
-    payload => {
-      console.log('Category change received!', payload);
-    })
-  .subscribe();
-
 // Utility function to convert Supabase snake_case to camelCase
 export const snakeToCamel = (obj: any) => {
   if (typeof obj !== 'object' || obj === null) {
