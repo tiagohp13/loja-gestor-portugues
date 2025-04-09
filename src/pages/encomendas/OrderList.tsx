@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -11,6 +12,7 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import { addToDeletedCache } from '@/integrations/supabase/client';
+import { TableRow } from '@/components/ui/table';
 
 type SortField = 'number' | 'date' | 'clientName' | 'totalValue';
 type SortDirection = 'asc' | 'desc';
@@ -285,7 +287,7 @@ const OrderList = () => {
                           </>
                         )}
                       </td>
-                    </tr>
+                    </TableRow>
                   );
                 })}
               </tbody>
