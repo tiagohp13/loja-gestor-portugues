@@ -34,7 +34,7 @@ const SupplierDetail = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold">Fornecedor não encontrado</h1>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/fornecedores')}>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/fornecedores/consultar')}>
           Voltar à Lista
         </Button>
       </div>
@@ -48,7 +48,7 @@ const SupplierDetail = () => {
         description="Detalhes do fornecedor"
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/fornecedores')}>
+            <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
               Voltar à Lista
             </Button>
             <Button onClick={() => navigate(`/fornecedores/editar/${id}`)}>

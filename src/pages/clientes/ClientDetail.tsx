@@ -35,7 +35,7 @@ const ClientDetail = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold">Cliente não encontrado</h1>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/clientes')}>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/clientes/consultar')}>
           Voltar à Lista
         </Button>
       </div>
@@ -49,7 +49,7 @@ const ClientDetail = () => {
         description="Detalhes do cliente"
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/clientes')}>
+            <Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
               Voltar à Lista
             </Button>
             <Button onClick={() => navigate(`/clientes/editar/${id}`)}>

@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -35,7 +36,7 @@ const ProductDetail = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold">Produto não encontrado</h1>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/produtos')}>
+        <Button variant="outline" className="mt-4" onClick={() => navigate('/produtos/consultar')}>
           Voltar ao Catálogo
         </Button>
       </div>
@@ -80,7 +81,7 @@ const ProductDetail = () => {
         description={`Código: ${product.code}`}
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/produtos')}>
+            <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
               Voltar ao Catálogo
             </Button>
             <Button onClick={() => navigate(`/produtos/editar/${id}`)}>
