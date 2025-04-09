@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase, snakeToCamel } from '@/integrations/supabase/client';
+import { supabase, snakeToCamel, increment, decrement } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 import { toast } from 'sonner';
 import { 
@@ -157,7 +157,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
   
   useEffect(() => {
-    // Set up real-time listeners for stock_entries and stock_exits
     const stockEntriesChannel = supabase
       .channel('public:stock_entries')
       .on('postgres_changes', 
@@ -238,7 +237,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const getBusinessAnalytics = () => {
-    // Basic analytics data
     const basicAnalytics = {
       totalProducts: products.length,
       totalCategories: categories.length,
@@ -250,7 +248,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       lowStockProducts: products.filter(p => p.currentStock <= p.minStock)
     };
     
-    // Calculate revenue, cost and profit
     const totalRevenue = stockExits.reduce((sum, exit) => {
       const exitTotal = exit.items.reduce((itemSum, item) => {
         const itemPrice = item.salePrice * item.quantity;
@@ -271,12 +268,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const totalProfit = totalRevenue - totalCost;
     const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
     
-    // Calculate current stock value
     const currentStockValue = products.reduce((sum, product) => {
       return sum + (product.purchasePrice * product.currentStock);
     }, 0);
     
-    // Get top selling products
     const productSales = products.map(product => {
       const totalQuantity = stockExits.reduce((sum, exit) => {
         const productItems = exit.items.filter(item => item.productId === product.id);
@@ -302,7 +297,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     .filter(p => p.totalQuantity > 0)
     .sort((a, b) => b.totalQuantity - a.totalQuantity);
     
-    // Get clients with most purchases
     const clientPurchases = clients.map(client => {
       const clientExits = stockExits.filter(exit => exit.clientId === client.id);
       const purchaseCount = clientExits.length;
@@ -318,10 +312,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return sum + (exitTotal * (1 - orderDiscount / 100));
       }, 0);
       
-      // Get date of last purchase
       let lastPurchaseDate = 'Nunca';
       if (clientExits.length > 0) {
-        // Sort by date (newest first) and take the first one
         const sortedExits = [...clientExits].sort((a, b) => 
           new Date(b.date).getTime() - new Date(a.date).getTime()
         );
@@ -338,7 +330,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     })
     .sort((a, b) => b.totalSpent - a.totalSpent);
     
-    // Get inactive clients (no purchases in the last 30 days)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
@@ -387,7 +378,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fromOrderNumber: order.number,
       discount: order.discount,
       items: order.items.map(item => ({
-        id: crypto.randomUUID(), // Add id property to each item
+        id: crypto.randomUUID(),
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
@@ -592,7 +583,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           notes: entry.notes || '',
           createdAt: entry.created_at,
           items: entry.stock_entry_items?.map((item: any) => ({
-            id: item.id, // Include the id
+            id: item.id,
             productId: item.product_id || '',
             productName: item.product_name,
             quantity: item.quantity,
@@ -635,7 +626,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           createdAt: exit.created_at,
           discount: Number(exit.discount || 0),
           items: exit.stock_exit_items?.map((item: any) => ({
-            id: item.id, // Include the id
+            id: item.id,
             productId: item.product_id || '',
             productName: item.product_name,
             quantity: item.quantity,
@@ -1162,10 +1153,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const entryNumber = entryNumberData || `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
-      // Create a temporary ID for optimistic update
       const tempId = crypto.randomUUID();
       
-      // Make sure all items have IDs
       const itemsWithIds = entry.items.map(item => {
         if (!item.id) {
           return { ...item, id: crypto.randomUUID() };
@@ -1173,7 +1162,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return item;
       });
       
-      // Create optimistic entry for immediate UI update
       const optimisticEntry: StockEntry = {
         id: tempId,
         number: entryNumber,
@@ -1186,10 +1174,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         items: itemsWithIds
       };
       
-      // Update UI immediately (optimistic update)
       setStockEntries(prev => [optimisticEntry, ...prev]);
       
-      // Then perform the actual database operation
       const { data, error } = await supabase
         .from('stock_entries')
         .insert({
@@ -1222,24 +1208,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (itemsError) throw itemsError;
       
-      // Update product stock quantities
       for (const item of itemsWithIds) {
-        const product = products.find(p => p.id === item.productId);
-        if (product) {
-          const { error: updateError } = await supabase
-            .from('products')
-            .update({
-              current_stock: product.currentStock + item.quantity
-            })
-            .eq('id', item.productId);
-          
-          if (updateError) {
-            console.error('Error updating product stock:', updateError);
-          }
+        try {
+          console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
+          await increment('products', 'current_stock', item.productId, item.quantity);
+        } catch (error) {
+          console.error('Error updating product stock:', error);
         }
       }
       
-      // Remove optimistic entry and add real entry with correct ID
       const newEntry: StockEntry = {
         id: data.id,
         number: data.number,
@@ -1251,7 +1228,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         createdAt: data.created_at,
         items: itemsWithIds.map(item => ({
           ...item,
-          id: item.id || crypto.randomUUID() // Ensure all items have IDs
+          id: item.id || crypto.randomUUID()
         }))
       };
       
@@ -1260,7 +1237,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         newEntry
       ]);
       
-      // Also refresh products to get updated stock values
       await fetchProducts();
       
       toast.success('Entrada registada com sucesso');
@@ -1268,7 +1244,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     } catch (error) {
       console.error('Error adding stock entry:', error);
       toast.error('Erro ao adicionar entrada de stock');
-      // Remove the optimistic entry if there was an error
       setStockEntries(prev => prev.filter(e => e.id !== crypto.randomUUID()));
       throw error;
     }
@@ -1305,18 +1280,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const entry = stockEntries.find(e => e.id === id);
       if (entry && entry.items) {
         for (const item of entry.items) {
-          const product = products.find(p => p.id === item.productId);
-          if (product) {
-            const { error: updateError } = await supabase
-              .from('products')
-              .update({
-                current_stock: product.currentStock + item.quantity
-              })
-              .eq('id', item.productId);
-            
-            if (updateError) {
-              console.error('Error updating product stock:', updateError);
-            }
+          try {
+            console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
+            await decrement('products', 'current_stock', item.productId, item.quantity);
+          } catch (error) {
+            console.error('Error updating product stock:', error);
           }
         }
       }
@@ -1354,7 +1322,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const exitNumber = exitNumberData || `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
-      // Make sure all items have IDs
       const itemsWithIds = exit.items.map(item => {
         if (!item.id) {
           return { ...item, id: crypto.randomUUID() };
@@ -1398,18 +1365,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (itemsError) throw itemsError;
       
       for (const item of itemsWithIds) {
-        const product = products.find(p => p.id === item.productId);
-        if (product) {
-          const { error: updateError } = await supabase
-            .from('products')
-            .update({
-              current_stock: product.currentStock - item.quantity
-            })
-            .eq('id', item.productId);
-          
-          if (updateError) {
-            console.error('Error updating product stock:', updateError);
-          }
+        try {
+          console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
+          await decrement('products', 'current_stock', item.productId, item.quantity);
+        } catch (error) {
+          console.error('Error updating product stock:', error);
         }
       }
       
@@ -1487,18 +1447,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (exit) {
         if (exit.items) {
           for (const item of exit.items) {
-            const product = products.find(p => p.id === item.productId);
-            if (product) {
-              const { error: updateError } = await supabase
-                .from('products')
-                .update({
-                  current_stock: product.currentStock + item.quantity
-                })
-                .eq('id', item.productId);
-              
-              if (updateError) {
-                console.error('Error updating product stock:', updateError);
-              }
+            try {
+              console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
+              await increment('products', 'current_stock', item.productId, item.quantity);
+            } catch (error) {
+              console.error('Error updating product stock:', error);
             }
           }
         }
