@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -64,6 +65,7 @@ export interface Supplier {
 }
 
 export interface StockEntryItem {
+  id: string; // Added id property
   productId: string;
   productName: string;
   quantity: number;
@@ -87,6 +89,7 @@ export interface StockExit {
 }
 
 export interface StockExitItem {
+  id: string; // Added id property
   productId: string;
   productName: string;
   quantity: number;

@@ -73,6 +73,12 @@ const channels = {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'products' }, payload => {
       console.log('Product change received!', payload);
     })
+    .subscribe(),
+    
+  categories: supabase.channel('public:categories')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, payload => {
+      console.log('Category change received!', payload);
+    })
     .subscribe()
 };
 
@@ -156,4 +162,3 @@ export const decrement = async (table: 'products' | 'categories' | 'counters', c
   
   return updateData[column];
 };
-
