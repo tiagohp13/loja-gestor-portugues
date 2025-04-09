@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Map database user to our User type
       const user: User = {
         id: userData.id,
-        name: userData.name || userData.email.split('@')[0], // Use name if available, otherwise fallback to email username
+        name: userData.email.split('@')[0], // Use email username as name since name might not exist
         email: userData.email,
         role: 'admin' // Default role
       };
