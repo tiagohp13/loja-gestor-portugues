@@ -9,6 +9,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   isAuthenticated: boolean;
+  isInitialized: boolean; // Add this to track initialization state
 }
 
 interface AuthContextType extends AuthState {
@@ -21,36 +22,46 @@ const initialState: AuthState = {
   user: null,
   session: null,
   isAuthenticated: false,
+  isInitialized: false, // Add initialization state
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize auth state and set up listener
   useEffect(() => {
+    console.log('Setting up auth listener...');
+    
     // First set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       console.log('Auth state changed:', event);
-      setState({
+      setState(prevState => ({
+        ...prevState,
         user: session?.user || null,
         session: session,
-        isAuthenticated: !!session
-      });
+        isAuthenticated: !!session,
+        isInitialized: true // Mark as initialized when auth state changes
+      }));
     });
 
     // Then check for existing session
     getCurrentUser().then((data) => {
       if (data) {
-        setState({
+        setState(prevState => ({
+          ...prevState,
           user: data.user,
           session: data.session,
-          isAuthenticated: true
-        });
+          isAuthenticated: true,
+          isInitialized: true
+        }));
+      } else {
+        setState(prevState => ({
+          ...prevState,
+          isInitialized: true // Mark as initialized even if no session found
+        }));
       }
-      setIsInitialized(true);
     });
 
     // Cleanup subscription on unmount
@@ -70,11 +81,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         throw new Error('Utilizador não encontrado');
       }
       
-      setState({ 
+      setState(prevState => ({ 
+        ...prevState,
         user, 
         session,
         isAuthenticated: true 
-      });
+      }));
       
       toast.success('Login efetuado com sucesso');
       return true;

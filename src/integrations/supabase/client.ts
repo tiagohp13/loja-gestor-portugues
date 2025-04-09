@@ -15,7 +15,9 @@ export const supabase = createClient<Database>(
   {
     auth: {
       persistSession: true,
-      autoRefreshToken: true
+      autoRefreshToken: true,
+      detectSessionInUrl: false, // Disable automatic URL detection
+      storage: localStorage // Explicitly use localStorage for auth storage
     },
     global: {
       fetch: fetch

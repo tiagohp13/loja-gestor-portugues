@@ -1,6 +1,6 @@
 
 import React, { Suspense } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { Toaster } from 'sonner';
@@ -71,10 +71,17 @@ import AppLayout from './components/navigation/AppSidebar';
 
 // Auth Route Guard
 const ProtectedRoute = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isInitialized } = useAuth();
+  const location = useLocation();
+  
+  // Show loading while checking authentication
+  if (!isInitialized) {
+    return <LoadingSpinner />;
+  }
   
   if (isAuthenticated === false) {
-    return <Navigate to="/login" replace />;
+    // Save the attempted URL for redirecting after login
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
   return <Outlet />;
