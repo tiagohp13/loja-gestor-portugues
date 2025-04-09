@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -103,41 +102,25 @@ const StockExitList = () => {
   useEffect(() => {
     console.log("Setting up realtime subscriptions for stock exits");
     
-    // Create a dedicated channel for exits
-    const exitsChannel = supabase.channel('stock_exits_realtime')
+    // Create a dedicated channel for stock_exits changes
+    const channel = supabase.channel('stock_exits_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exits' }, 
         (payload) => {
           console.log('Stock exit change detected:', payload);
-          
-          if (payload.eventType === 'DELETE' && payload.old) {
-            const deletedId = payload.old.id;
-            console.log('Handling delete for exit:', deletedId);
-            addToDeletedCache('stock_exits', deletedId);
-            
-            setLocalExits(prev => prev.filter(exit => exit.id !== deletedId));
-            setStockExits(prev => prev.filter(exit => exit.id !== deletedId));
-            return;
-          }
-          
-          // For inserts and updates, refresh the entire list
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            console.log('Handling insert/update, refreshing exits list');
-            fetchAllExits();
-          }
+          fetchAllExits();
         }
       )
       .subscribe((status) => {
         console.log('Stock exits subscription status:', status);
       });
       
-    // Create a dedicated channel for exit items  
+    // Create a dedicated channel for stock_exit_items changes  
     const itemsChannel = supabase.channel('stock_exit_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exit_items' }, 
         (payload) => {
           console.log('Stock exit item change detected:', payload);
-          console.log('Refreshing exits list due to item changes');
           fetchAllExits();
         }
       )
@@ -147,10 +130,10 @@ const StockExitList = () => {
     
     return () => {
       console.log("Cleaning up realtime subscriptions");
-      supabase.removeChannel(exitsChannel);
+      supabase.removeChannel(channel);
       supabase.removeChannel(itemsChannel);
     };
-  }, [setStockExits]);
+  }, []);
 
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');

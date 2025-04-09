@@ -95,29 +95,23 @@ const OrderList = () => {
   }, [setOrders]);
 
   useEffect(() => {
-    const channel = supabase.channel('orders_changes')
+    console.log("Setting up realtime subscriptions for orders");
+    
+    // Create a dedicated channel for orders changes
+    const channel = supabase.channel('orders_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'orders' }, 
         (payload) => {
           console.log('Order change detected:', payload);
-          
-          if (payload.eventType === 'DELETE' && payload.old) {
-            const deletedId = payload.old.id;
-            addToDeletedCache('orders', deletedId);
-            
-            setLocalOrders(prev => prev.filter(order => order.id !== deletedId));
-            setOrders(prev => prev.filter(order => order.id !== deletedId));
-            return;
-          }
-          
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            fetchAllOrders();
-          }
+          fetchAllOrders();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Orders subscription status:', status);
+      });
       
-    const itemsChannel = supabase.channel('order_items_changes')
+    // Create a dedicated channel for order items changes
+    const itemsChannel = supabase.channel('order_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'order_items' }, 
         (payload) => {
@@ -125,13 +119,16 @@ const OrderList = () => {
           fetchAllOrders();
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Order items subscription status:', status);
+      });
     
     return () => {
+      console.log("Cleaning up realtime subscriptions");
       supabase.removeChannel(channel);
       supabase.removeChannel(itemsChannel);
     };
-  }, [setOrders]);
+  }, []);
 
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
