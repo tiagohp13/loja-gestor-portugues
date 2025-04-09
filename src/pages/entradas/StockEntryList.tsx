@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Search, Edit, Trash2, Plus, ArrowUpDown } from 'lucide-react';
@@ -12,14 +12,18 @@ import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
 import { StockEntry } from '@/types';
+import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
-  const { stockEntries, deleteStockEntry } = useData();
+  const { stockEntries, deleteStockEntry, setStockEntries } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [isLoading, setIsLoading] = useState(true);
+  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
   
-  const filteredEntries = stockEntries.filter(entry => 
+  const filteredEntries = localEntries.filter(entry => 
     entry.supplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     entry.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
@@ -31,6 +35,190 @@ const StockEntryList = () => {
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
   });
   
+  // Initial data load
+  useEffect(() => {
+    const fetchEntries = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching stock entries directly in StockEntryList component...");
+        
+        const { data, error } = await supabase
+          .from('stock_entries')
+          .select(`
+            *,
+            stock_entry_items(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching stock entries:", error);
+          toast.error("Erro ao carregar entradas de stock");
+          return;
+        }
+
+        if (data) {
+          console.log("Stock entries data received:", data);
+          
+          const mappedEntries = data.map(entry => ({
+            id: entry.id,
+            supplierId: entry.supplier_id,
+            supplierName: entry.supplier_name,
+            number: entry.number,
+            invoiceNumber: entry.invoice_number,
+            notes: entry.notes,
+            date: entry.date,
+            createdAt: entry.created_at,
+            items: entry.stock_entry_items.map((item: any) => ({
+              id: item.id,
+              productId: item.product_id,
+              productName: item.product_name,
+              quantity: item.quantity,
+              purchasePrice: item.purchase_price,
+              discountPercent: item.discount_percent
+            }))
+          }));
+          
+          const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
+          
+          setLocalEntries(filteredEntries);
+          setStockEntries(filteredEntries);
+        }
+      } catch (error) {
+        console.error("Error in fetchEntries:", error);
+        toast.error("Erro ao carregar entradas de stock");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchEntries();
+  }, [setStockEntries]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase.channel('stock_entries_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_entries' }, 
+        (payload) => {
+          console.log('Stock entry change detected:', payload);
+          
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const deletedId = payload.old.id;
+            addToDeletedCache('stock_entries', deletedId);
+            
+            setLocalEntries(prev => prev.filter(entry => entry.id !== deletedId));
+            setStockEntries(prev => prev.filter(entry => entry.id !== deletedId));
+            return;
+          }
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setIsLoading(true);
+            
+            supabase
+              .from('stock_entries')
+              .select(`
+                *,
+                stock_entry_items(*)
+              `)
+              .order('created_at', { ascending: false })
+              .then(({ data, error }) => {
+                setIsLoading(false);
+                
+                if (error) {
+                  console.error("Error fetching stock entries after change:", error);
+                  return;
+                }
+                
+                if (data) {
+                  console.log("Updated stock entries received:", data);
+                  
+                  const mappedEntries = data.map(entry => ({
+                    id: entry.id,
+                    supplierId: entry.supplier_id,
+                    supplierName: entry.supplier_name,
+                    number: entry.number,
+                    invoiceNumber: entry.invoice_number,
+                    notes: entry.notes,
+                    date: entry.date,
+                    createdAt: entry.created_at,
+                    items: entry.stock_entry_items.map((item: any) => ({
+                      id: item.id,
+                      productId: item.product_id,
+                      productName: item.product_name,
+                      quantity: item.quantity,
+                      purchasePrice: item.purchase_price,
+                      discountPercent: item.discount_percent
+                    }))
+                  }));
+                  
+                  const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
+                  
+                  setLocalEntries(filteredEntries);
+                  setStockEntries(filteredEntries);
+                }
+              });
+          }
+        }
+      )
+      .subscribe();
+      
+    const itemsChannel = supabase.channel('stock_entry_items_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_entry_items' }, 
+        (payload) => {
+          console.log('Stock entry item change detected:', payload);
+          
+          supabase
+            .from('stock_entries')
+            .select(`
+              *,
+              stock_entry_items(*)
+            `)
+            .order('created_at', { ascending: false })
+            .then(({ data, error }) => {
+              if (error) {
+                console.error("Error fetching stock entries after item change:", error);
+                return;
+              }
+              
+              if (data) {
+                console.log("Updated stock entries after item change:", data);
+                
+                const mappedEntries = data.map(entry => ({
+                  id: entry.id,
+                  supplierId: entry.supplier_id,
+                  supplierName: entry.supplier_name,
+                  number: entry.number,
+                  invoiceNumber: entry.invoice_number,
+                  notes: entry.notes,
+                  date: entry.date,
+                  createdAt: entry.created_at,
+                  items: entry.stock_entry_items.map((item: any) => ({
+                    id: item.id,
+                    productId: item.product_id,
+                    productName: item.product_name,
+                    quantity: item.quantity,
+                    purchasePrice: item.purchase_price,
+                    discountPercent: item.discount_percent
+                  }))
+                }));
+                
+                const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
+                
+                setLocalEntries(filteredEntries);
+                setStockEntries(filteredEntries);
+              }
+            });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(itemsChannel);
+    };
+  }, [setStockEntries]);
+
   const toggleSortOrder = () => {
     setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
   };
@@ -44,13 +232,38 @@ const StockEntryList = () => {
     navigate(`/entradas/editar/${id}`);
   };
   
-  const handleDeleteEntry = (id: string) => {
-    deleteStockEntry(id);
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      addToDeletedCache('stock_entries', id);
+      
+      setLocalEntries(prev => prev.filter(entry => entry.id !== id));
+      
+      await deleteStockEntry(id);
+      
+      toast.success("Entrada eliminada com sucesso");
+    } catch (error) {
+      console.error("Error deleting entry:", error);
+      toast.error("Erro ao eliminar entrada");
+    }
   };
   
   const calculateEntryTotal = (entry: StockEntry) => {
     return entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Histórico de Entradas" 
+          description="A carregar dados..." 
+        />
+        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
+          Carregando entradas de stock...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

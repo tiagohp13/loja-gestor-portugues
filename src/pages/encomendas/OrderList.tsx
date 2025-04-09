@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -10,20 +11,23 @@ import { ClipboardList, Search, Plus, LogOut, ChevronUp, ChevronDown, Edit, Tras
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import { addToDeletedCache } from '@/integrations/supabase/client';
 import { TableRow } from '@/components/ui/table';
+import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
+import { Order } from '@/types';
 
 type SortField = 'number' | 'date' | 'clientName' | 'totalValue';
 type SortDirection = 'asc' | 'desc';
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const { orders, deleteOrder } = useData();
+  const { orders, deleteOrder, setOrders } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('number');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [isLoading, setIsLoading] = useState(true);
+  const [localOrders, setLocalOrders] = useState<Order[]>([]);
   
-  const filteredOrders = orders.filter(order => 
+  const filteredOrders = localOrders.filter(order => 
     order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     order.items.some(item => item.productName.toLowerCase().includes(searchTerm.toLowerCase())) ||
     order.number.toLowerCase().includes(searchTerm.toLowerCase())
@@ -50,6 +54,196 @@ const OrderList = () => {
     return 0;
   });
 
+  // Initial data load
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        setIsLoading(true);
+        console.log("Fetching orders directly in OrderList component...");
+        
+        const { data, error } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            order_items(*)
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error("Error fetching orders:", error);
+          toast.error("Erro ao carregar encomendas");
+          return;
+        }
+
+        if (data) {
+          console.log("Orders data received:", data);
+          
+          const mappedOrders = data.map(order => ({
+            id: order.id,
+            clientId: order.client_id,
+            clientName: order.client_name,
+            number: order.number,
+            notes: order.notes,
+            date: order.date,
+            createdAt: order.created_at,
+            discount: order.discount || 0,
+            convertedToStockExitId: order.converted_to_stock_exit_id,
+            convertedToStockExitNumber: order.converted_to_stock_exit_number,
+            items: order.order_items.map((item: any) => ({
+              id: item.id,
+              productId: item.product_id,
+              productName: item.product_name,
+              quantity: item.quantity,
+              salePrice: item.sale_price,
+              discountPercent: item.discount_percent
+            }))
+          }));
+          
+          const filteredOrders = filterDeletedItems('orders', mappedOrders);
+          
+          setLocalOrders(filteredOrders);
+          setOrders(filteredOrders);
+        }
+      } catch (error) {
+        console.error("Error in fetchOrders:", error);
+        toast.error("Erro ao carregar encomendas");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, [setOrders]);
+
+  // Subscribe to real-time updates
+  useEffect(() => {
+    const channel = supabase.channel('orders_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' }, 
+        (payload) => {
+          console.log('Order change detected:', payload);
+          
+          if (payload.eventType === 'DELETE' && payload.old) {
+            const deletedId = payload.old.id;
+            addToDeletedCache('orders', deletedId);
+            
+            setLocalOrders(prev => prev.filter(order => order.id !== deletedId));
+            setOrders(prev => prev.filter(order => order.id !== deletedId));
+            return;
+          }
+          
+          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
+            setIsLoading(true);
+            
+            supabase
+              .from('orders')
+              .select(`
+                *,
+                order_items(*)
+              `)
+              .order('created_at', { ascending: false })
+              .then(({ data, error }) => {
+                setIsLoading(false);
+                
+                if (error) {
+                  console.error("Error fetching orders after change:", error);
+                  return;
+                }
+                
+                if (data) {
+                  console.log("Updated orders received:", data);
+                  
+                  const mappedOrders = data.map(order => ({
+                    id: order.id,
+                    clientId: order.client_id,
+                    clientName: order.client_name,
+                    number: order.number,
+                    notes: order.notes,
+                    date: order.date,
+                    createdAt: order.created_at,
+                    discount: order.discount || 0,
+                    convertedToStockExitId: order.converted_to_stock_exit_id,
+                    convertedToStockExitNumber: order.converted_to_stock_exit_number,
+                    items: order.order_items.map((item: any) => ({
+                      id: item.id,
+                      productId: item.product_id,
+                      productName: item.product_name,
+                      quantity: item.quantity,
+                      salePrice: item.sale_price,
+                      discountPercent: item.discount_percent
+                    }))
+                  }));
+                  
+                  const filteredOrders = filterDeletedItems('orders', mappedOrders);
+                  
+                  setLocalOrders(filteredOrders);
+                  setOrders(filteredOrders);
+                }
+              });
+          }
+        }
+      )
+      .subscribe();
+      
+    const itemsChannel = supabase.channel('order_items_changes')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'order_items' }, 
+        (payload) => {
+          console.log('Order item change detected:', payload);
+          
+          supabase
+            .from('orders')
+            .select(`
+              *,
+              order_items(*)
+            `)
+            .order('created_at', { ascending: false })
+            .then(({ data, error }) => {
+              if (error) {
+                console.error("Error fetching orders after item change:", error);
+                return;
+              }
+              
+              if (data) {
+                console.log("Updated orders after item change:", data);
+                
+                const mappedOrders = data.map(order => ({
+                  id: order.id,
+                  clientId: order.client_id,
+                  clientName: order.client_name,
+                  number: order.number,
+                  notes: order.notes,
+                  date: order.date,
+                  createdAt: order.created_at,
+                  discount: order.discount || 0,
+                  convertedToStockExitId: order.converted_to_stock_exit_id,
+                  convertedToStockExitNumber: order.converted_to_stock_exit_number,
+                  items: order.order_items.map((item: any) => ({
+                    id: item.id,
+                    productId: item.product_id,
+                    productName: item.product_name,
+                    quantity: item.quantity,
+                    salePrice: item.sale_price,
+                    discountPercent: item.discount_percent
+                  }))
+                }));
+                
+                const filteredOrders = filterDeletedItems('orders', mappedOrders);
+                
+                setLocalOrders(filteredOrders);
+                setOrders(filteredOrders);
+              }
+            });
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+      supabase.removeChannel(itemsChannel);
+    };
+  }, [setOrders]);
+
   const handleViewOrder = (id: string) => {
     navigate(`/encomendas/${id}`);
   };
@@ -65,6 +259,8 @@ const OrderList = () => {
   const handleDeleteOrder = async (id: string) => {
     try {
       addToDeletedCache('orders', id);
+      
+      setLocalOrders(prev => prev.filter(order => order.id !== id));
       
       await deleteOrder(id);
       toast.success("Encomenda eliminada com sucesso");
@@ -91,6 +287,20 @@ const OrderList = () => {
       <ChevronDown className="ml-1 h-4 w-4 inline" />
     );
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Encomendas" 
+          description="A carregar dados..." 
+        />
+        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
+          Carregando encomendas...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -217,8 +427,9 @@ const OrderList = () => {
                               Convertida
                             </span>
                             <Link 
-                              to={`/saidas/editar/${order.convertedToStockExitId}`}
+                              to={`/saidas/${order.convertedToStockExitId}`}
                               className="text-gestorApp-blue hover:underline flex items-center"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <LogOut className="w-3 h-3 mr-1" />
                               {order.convertedToStockExitNumber}
