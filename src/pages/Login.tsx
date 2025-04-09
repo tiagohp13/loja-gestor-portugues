@@ -17,7 +17,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     // If already authenticated, redirect to dashboard
     if (isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -29,7 +29,7 @@ const Login: React.FC = () => {
       const success = await login(email, password);
       
       if (success) {
-        navigate('/dashboard');
+        navigate('/dashboard', { replace: true });
       }
     } finally {
       setIsLoading(false);

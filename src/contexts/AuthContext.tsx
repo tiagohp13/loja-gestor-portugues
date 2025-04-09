@@ -27,6 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Initialize auth state and set up listener
   useEffect(() => {
@@ -49,6 +50,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           isAuthenticated: true
         });
       }
+      setIsInitialized(true);
     });
 
     // Cleanup subscription on unmount
