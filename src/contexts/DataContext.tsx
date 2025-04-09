@@ -375,7 +375,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fromOrderId: order.id,
       fromOrderNumber: order.number,
       discount: order.discount,
-      items: order.items
+      items: order.items.map(item => ({
+        id: crypto.randomUUID(), // Add id property to each item
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        salePrice: item.salePrice,
+        discountPercent: item.discountPercent
+      }))
     };
     
     return await addStockExit(stockExit);
@@ -574,6 +581,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           notes: entry.notes || '',
           createdAt: entry.created_at,
           items: entry.stock_entry_items?.map((item: any) => ({
+            id: item.id, // Include the id
             productId: item.product_id || '',
             productName: item.product_name,
             quantity: item.quantity,
@@ -616,6 +624,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           createdAt: exit.created_at,
           discount: Number(exit.discount || 0),
           items: exit.stock_exit_items?.map((item: any) => ({
+            id: item.id, // Include the id
             productId: item.product_id || '',
             productName: item.product_name,
             quantity: item.quantity,
@@ -1145,6 +1154,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       // Create a temporary ID for optimistic update
       const tempId = crypto.randomUUID();
       
+      // Make sure all items have IDs
+      const itemsWithIds = entry.items.map(item => {
+        if (!item.id) {
+          return { ...item, id: crypto.randomUUID() };
+        }
+        return item;
+      });
+      
       // Create optimistic entry for immediate UI update
       const optimisticEntry: StockEntry = {
         id: tempId,
@@ -1155,7 +1172,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         invoiceNumber: entry.invoiceNumber || '',
         notes: entry.notes || '',
         createdAt: new Date().toISOString(),
-        items: entry.items
+        items: itemsWithIds
       };
       
       // Update UI immediately (optimistic update)
@@ -1179,7 +1196,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (!data) throw new Error('Failed to add stock entry');
       
-      const entryItems = entry.items.map(item => ({
+      const entryItems = itemsWithIds.map(item => ({
         entry_id: data.id,
         product_id: item.productId,
         product_name: item.productName,
@@ -1195,7 +1212,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (itemsError) throw itemsError;
       
       // Update product stock quantities
-      for (const item of entry.items) {
+      for (const item of itemsWithIds) {
         const product = products.find(p => p.id === item.productId);
         if (product) {
           const { error: updateError } = await supabase
@@ -1221,7 +1238,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         invoiceNumber: data.invoice_number || '',
         notes: data.notes || '',
         createdAt: data.created_at,
-        items: entry.items
+        items: itemsWithIds.map(item => ({
+          ...item,
+          id: item.id || crypto.randomUUID() // Ensure all items have IDs
+        }))
       };
       
       setStockEntries(prev => [
@@ -1323,6 +1343,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const exitNumber = exitNumberData || `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
+      // Make sure all items have IDs
+      const itemsWithIds = exit.items.map(item => {
+        if (!item.id) {
+          return { ...item, id: crypto.randomUUID() };
+        }
+        return item;
+      });
+      
       const { data, error } = await supabase
         .from('stock_exits')
         .insert({
@@ -1343,7 +1371,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (!data) throw new Error('Failed to add stock exit');
       
-      const exitItems = exit.items.map(item => ({
+      const exitItems = itemsWithIds.map(item => ({
         exit_id: data.id,
         product_id: item.productId,
         product_name: item.productName,
@@ -1358,7 +1386,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (itemsError) throw itemsError;
       
-      for (const item of exit.items) {
+      for (const item of itemsWithIds) {
         const product = products.find(p => p.id === item.productId);
         if (product) {
           const { error: updateError } = await supabase
@@ -1400,7 +1428,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fromOrderNumber: data.from_order_number,
         createdAt: data.created_at,
         discount: Number(data.discount || 0),
-        items: exit.items
+        items: itemsWithIds
       };
       
       await fetchProducts();

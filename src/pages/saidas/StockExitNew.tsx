@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -86,7 +85,6 @@ const StockExitNew = () => {
         discountPercent: 0
       });
       
-      // Automatically add product if this is the first selection
       if (items.length === 0 && !isProductSearchOpen) {
         setTimeout(() => {
           addItemToExit();
@@ -112,14 +110,12 @@ const StockExitNew = () => {
       return;
     }
     
-    // Check if we have enough stock
     const product = products.find(p => p.id === currentItem.productId);
     if (!product) {
       toast.error('Produto não encontrado');
       return;
     }
     
-    // Check if the product is already in the exit list to calculate total needed quantity
     const existingItem = items.find(item => item.productId === currentItem.productId);
     const totalNeededQuantity = existingItem 
       ? existingItem.quantity + currentItem.quantity 
@@ -130,25 +126,24 @@ const StockExitNew = () => {
       return;
     }
     
-    // Check if the product is already in the exit
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice, // Update the price in case it changed
-        discountPercent: currentItem.discountPercent // Update the discount in case it changed
+        salePrice: currentItem.salePrice,
+        discountPercent: currentItem.discountPercent
       };
       setItems(updatedItems);
     } else {
-      // Add new item
-      setItems([...items, { ...currentItem }]);
+      setItems([...items, { 
+        id: crypto.randomUUID(),
+        ...currentItem 
+      }]);
     }
     
-    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
@@ -192,7 +187,6 @@ const StockExitNew = () => {
       return;
     }
     
-    // Check stock one more time before submission
     let hasEnoughStock = true;
     items.forEach(item => {
       const product = products.find(p => p.id === item.productId);
@@ -216,13 +210,11 @@ const StockExitNew = () => {
     navigate('/saidas/historico');
   };
 
-  // Helper function to calculate item price after discount
   const getDiscountedPrice = (price: number, discountPercent: number) => {
     if (!discountPercent) return price;
     return price * (1 - discountPercent / 100);
   };
 
-  // Calculate total value with discounts
   const totalValue = items.reduce((total, item) => 
     total + (item.quantity * getDiscountedPrice(item.salePrice, item.discountPercent || 0)), 0);
 
@@ -478,7 +470,6 @@ const StockExitNew = () => {
               </div>
             </div>
             
-            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">

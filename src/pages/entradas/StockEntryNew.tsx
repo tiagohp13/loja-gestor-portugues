@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -102,24 +101,23 @@ const StockEntryNew = () => {
       return;
     }
     
-    // Check if the product is already in the entry
     const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
     
     if (existingItemIndex >= 0) {
-      // Update existing item
       const updatedItems = [...items];
       updatedItems[existingItemIndex] = {
         ...updatedItems[existingItemIndex],
         quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        purchasePrice: currentItem.purchasePrice // Update the price in case it changed
+        purchasePrice: currentItem.purchasePrice
       };
       setItems(updatedItems);
     } else {
-      // Add new item
-      setItems([...items, { ...currentItem }]);
+      setItems([...items, { 
+        id: crypto.randomUUID(),
+        ...currentItem 
+      }]);
     }
     
-    // Reset current item
     setCurrentItem({
       productId: '',
       productName: '',
@@ -395,7 +393,6 @@ const StockEntryNew = () => {
               </div>
             </div>
             
-            {/* Products list */}
             {items.length > 0 && (
               <div className="border rounded-md mt-4">
                 <table className="min-w-full divide-y divide-gray-200">
