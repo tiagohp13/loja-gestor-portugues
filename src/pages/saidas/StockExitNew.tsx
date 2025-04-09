@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import PageHeader from '@/components/ui/PageHeader';
+import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import {
   Command,
@@ -15,8 +15,11 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Check, Plus, Trash, LogOut, ArrowLeft } from 'lucide-react';
+import { Search, Check, Plus, Trash, ArrowLeft, Save, Calendar } from 'lucide-react';
 import { StockExitItem } from '@/types';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 const StockExitNew = () => {
   const navigate = useNavigate();
@@ -48,6 +51,8 @@ const StockExitNew = () => {
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  const [exitDate, setExitDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const handleExitDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -85,12 +90,6 @@ const StockExitNew = () => {
         salePrice: selectedProduct.salePrice,
         discountPercent: 0
       });
-      
-      if (items.length === 0 && !isProductSearchOpen) {
-        setTimeout(() => {
-          addItemToExit();
-        }, 100);
-      }
     }
     setIsProductSearchOpen(false);
   };
@@ -206,7 +205,7 @@ const StockExitNew = () => {
         clientId: exitDetails.clientId,
         clientName: client.name,
         items: items,
-        date: exitDetails.date,
+        date: exitDate.toISOString(),
         invoiceNumber: exitDetails.invoiceNumber,
         notes: exitDetails.notes
       });
@@ -232,43 +231,50 @@ const StockExitNew = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
+        <div className="flex flex-col space-y-1">
+          <h1 className="text-2xl font-bold">Nova Saída</h1>
+          <p className="text-gray-500">Registar uma nova saída de stock</p>
+        </div>
+      </div>
+
+      <div className="flex justify-between mb-6">
         <Button 
-          variant="ghost" 
-          className="flex items-center text-gestorApp-gray-dark hover:text-gestorApp-blue"
+          variant="outline" 
           onClick={() => navigate('/saidas/historico')}
+          className="flex items-center gap-2"
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Voltar ao Histórico
+          <ArrowLeft className="h-4 w-4" />
+          Cancelar
+        </Button>
+        <Button 
+          onClick={handleSubmit}
+          disabled={items.length === 0 || !exitDetails.clientId}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          Guardar Saída
         </Button>
       </div>
       
-      <PageHeader 
-        title="Nova Saída de Stock" 
-        description="Registar uma nova saída do inventário" 
-      />
-      
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="grid gap-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="clientSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                Pesquisar Cliente
-              </label>
+      <div className="bg-white rounded-lg shadow p-6">
+        <form className="space-y-6">
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium mb-1">Cliente</label>
               <Popover open={isClientSearchOpen} onOpenChange={setIsClientSearchOpen}>
                 <PopoverTrigger asChild>
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
                     <Input
-                      id="clientSearch"
-                      className="pl-10"
-                      placeholder="Pesquisar cliente por nome"
+                      placeholder="Pesquisar cliente por nome ou NIF"
                       value={clientSearchTerm}
                       onChange={(e) => setClientSearchTerm(e.target.value)}
+                      className="pl-10"
                       onClick={() => setIsClientSearchOpen(true)}
                     />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                   </div>
                 </PopoverTrigger>
-                <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
+                <PopoverContent className="p-0 w-[calc(100vw-2rem)] md:w-[500px]" align="start">
                   <Command>
                     <CommandInput 
                       placeholder="Pesquisar cliente..." 
@@ -284,12 +290,7 @@ const StockExitNew = () => {
                             value={client.name}
                             onSelect={() => handleClientSelect(client.id)}
                           >
-                            <div className="flex items-center justify-between w-full">
-                              <div>{client.name}</div>
-                            </div>
-                            {exitDetails.clientId === client.id && (
-                              <Check className="ml-2 h-4 w-4" />
-                            )}
+                            {client.name}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -305,218 +306,167 @@ const StockExitNew = () => {
                 </div>
               )}
             </div>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
-                  Data
-                </label>
-                <Input
-                  id="date"
-                  name="date"
-                  type="date"
-                  value={exitDetails.date}
-                  onChange={handleExitDetailsChange}
-                  required
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <label htmlFor="invoiceNumber" className="text-sm font-medium text-gestorApp-gray-dark">
-                  Número da Fatura
-                </label>
-                <Input
-                  id="invoiceNumber"
-                  name="invoiceNumber"
-                  value={exitDetails.invoiceNumber}
-                  onChange={handleExitDetailsChange}
-                  placeholder="FAT2023XXXX"
-                />
-              </div>
-            </div>
-            
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-md font-medium mb-4 flex items-center">
-                <LogOut className="mr-2 h-5 w-5" />
-                Adicionar Produtos
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                    Pesquisar Produto
-                  </label>
-                  <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-                        <Input
-                          id="productSearch"
-                          className="pl-10"
-                          placeholder="Pesquisar por nome ou código"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onClick={() => setIsProductSearchOpen(true)}
-                        />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Pesquisar produto por nome ou código..." 
-                          value={searchTerm}
-                          onValueChange={handleSearch}
-                        />
-                        <CommandList>
-                          <CommandEmpty>Nenhum produto encontrado com stock disponível</CommandEmpty>
-                          <CommandGroup heading="Produtos">
-                            {filteredProducts.map((product) => (
-                              <CommandItem 
-                                key={product.id} 
-                                value={`${product.code} - ${product.name}`}
-                                onSelect={() => handleProductSelect(product.id)}
-                                disabled={product.currentStock <= 0}
-                                className={product.currentStock <= 0 ? "opacity-50" : ""}
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <div>
-                                    <span className="font-medium">{product.code}</span>
-                                    <span className="mx-2">-</span>
-                                    <span>{product.name}</span>
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    Stock: {product.currentStock}
-                                  </div>
-                                </div>
-                                {currentItem.productId === product.id && (
-                                  <Check className="ml-2 h-4 w-4" />
-                                )}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                {currentItem.productId && (
-                  <div className="grid md:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Produto Selecionado
-                      </label>
-                      <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                        <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
-                        <div className="text-sm text-gestorApp-gray mt-1">
-                          Stock disponível: {products.find(p => p.id === currentItem.productId)?.currentStock || 0} unidades
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="quantity" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Quantidade
-                      </label>
-                      <Input
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        min="1"
-                        max={products.find(p => p.id === currentItem.productId)?.currentStock || 0}
-                        value={currentItem.quantity}
-                        onChange={handleItemChange}
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Preço Unitário (€)
-                      </label>
-                      <Input
-                        id="salePrice"
-                        name="salePrice"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={currentItem.salePrice}
-                        onChange={handleItemChange}
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="discountPercent" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Desconto (%)
-                      </label>
-                      <Input
-                        id="discountPercent"
-                        name="discountPercent"
-                        type="number"
-                        step="1"
-                        min="0"
-                        max="100"
-                        value={currentItem.discountPercent}
-                        onChange={handleItemChange}
-                        placeholder="0"
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {currentItem.productId && (
-                  <div className="flex justify-end">
-                    <Button 
-                      type="button" 
-                      onClick={addItemToExit}
-                      className="flex items-center"
-                      disabled={
-                        !currentItem.productId || 
-                        currentItem.quantity <= 0 || 
-                        (products.find(p => p.id === currentItem.productId)?.currentStock || 0) < currentItem.quantity
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Data da Saída</label>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {format(exitDate, "dd 'de' MMMM 'de' yyyy", { locale: pt })}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <CalendarComponent
+                    mode="single"
+                    selected={exitDate}
+                    onSelect={(date) => {
+                      if (date) {
+                        setExitDate(date);
+                        setCalendarOpen(false);
                       }
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Adicionar Produto
-                    </Button>
-                  </div>
-                )}
+                    }}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          <div className="border-t border-gray-200 pt-6">
+            <h2 className="text-lg font-medium mb-4">Produtos</h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+              <div className="md:col-span-1">
+                <label className="block text-sm font-medium mb-1">Produto</label>
+                <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <div className="relative">
+                      <Input
+                        placeholder="Pesquisar produto por nome ou código"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10"
+                        onClick={() => setIsProductSearchOpen(true)}
+                      />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="p-0 w-[calc(100vw-2rem)] md:w-[500px]" align="start">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Pesquisar produto..." 
+                        value={searchTerm}
+                        onValueChange={handleSearch}
+                      />
+                      <CommandList>
+                        <CommandEmpty>Nenhum produto encontrado com stock disponível</CommandEmpty>
+                        <CommandGroup heading="Produtos">
+                          {filteredProducts.map((product) => (
+                            <CommandItem 
+                              key={product.id} 
+                              value={`${product.code} - ${product.name}`}
+                              onSelect={() => handleProductSelect(product.id)}
+                              disabled={product.currentStock <= 0}
+                              className={product.currentStock <= 0 ? "opacity-50" : ""}
+                            >
+                              <div className="flex flex-col">
+                                <span className="font-medium">{product.code} - {product.name}</span>
+                                <span className="text-xs text-gray-500">Stock disponível: {product.currentStock}</span>
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Quantidade</label>
+                <Input
+                  type="number"
+                  min="1"
+                  max={products.find(p => p.id === currentItem.productId)?.currentStock || 0}
+                  value={currentItem.quantity}
+                  onChange={(e) => setCurrentItem(prev => ({...prev, quantity: parseInt(e.target.value) || 1}))}
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-1">Preço Venda (€)</label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={currentItem.salePrice}
+                  onChange={(e) => setCurrentItem(prev => ({...prev, salePrice: parseFloat(e.target.value) || 0}))}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-1">Desconto (%)</label>
+                <Input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value={currentItem.discountPercent}
+                  onChange={(e) => setCurrentItem(prev => ({...prev, discountPercent: parseFloat(e.target.value) || 0}))}
+                />
               </div>
             </div>
             
-            {items.length > 0 && (
-              <div className="border rounded-md mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+            <div className="flex justify-center mb-6">
+              <Button 
+                onClick={addItemToExit}
+                disabled={
+                  !currentItem.productId || 
+                  currentItem.quantity <= 0 || 
+                  (products.find(p => p.id === currentItem.productId)?.currentStock || 0) < currentItem.quantity
+                }
+                className="bg-blue-500 hover:bg-blue-600 text-white w-full md:w-auto"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+            
+            <div className="border rounded-md overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {items.length === 0 ? (
                     <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Desconto</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">P. Final</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                      <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                        Nenhum produto adicionado
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item, index) => {
+                  ) : (
+                    items.map((item, index) => {
                       const discountedPrice = getDiscountedPrice(item.salePrice, item.discountPercent || 0);
                       return (
                         <tr key={index}>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.productName}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.salePrice.toFixed(2)} €</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {item.discountPercent ? `${item.discountPercent}%` : '-'}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">
-                            {discountedPrice.toFixed(2)} €
-                          </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * discountedPrice).toFixed(2)} €</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{(item.quantity * discountedPrice).toFixed(2)} €</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                             <Button 
                               variant="ghost" 
                               size="sm" 
@@ -528,47 +478,31 @@ const StockExitNew = () => {
                           </td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    })
+                  )}
+                </tbody>
+                <tfoot className="bg-gray-50">
+                  <tr>
+                    <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      Total
+                    </td>
+                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                      {totalValue.toFixed(2)} €
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
           
-          <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-              Notas
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
+          <div>
+            <label className="block text-sm font-medium mb-1">Notas</label>
+            <Textarea
+              placeholder="Observações ou notas adicionais sobre esta saída..."
               value={exitDetails.notes}
-              onChange={handleExitDetailsChange}
-              placeholder="Observações adicionais sobre a saída..."
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-              rows={3}
+              onChange={(e) => setExitDetails(prev => ({...prev, notes: e.target.value}))}
+              className="h-24"
             />
-          </div>
-          
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <p className="text-lg font-semibold text-blue-800">
-              Valor Total: {totalValue.toFixed(2)} €
-            </p>
-            <p className="text-sm text-blue-600 mt-1">
-              Total de itens: {items.length}
-            </p>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/saidas/historico')}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={items.length === 0 || !exitDetails.clientId}
-            >
-              Registar Saída
-            </Button>
           </div>
         </form>
       </div>
