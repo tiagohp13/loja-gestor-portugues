@@ -187,6 +187,7 @@ const StockExitNew = () => {
       return;
     }
     
+    // Verify stock again before submission
     let hasEnoughStock = true;
     items.forEach(item => {
       const product = products.find(p => p.id === item.productId);

@@ -70,13 +70,12 @@ export const camelToSnake = (obj: any) => {
 // Add database functions for increment and decrement
 export const increment = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
   try {
-    // Use stored function instead of raw query
-    const { data, error } = await supabase.rpc('increment_value', {
-      p_table: table,
-      p_column: column,
-      p_id: id,
-      p_value: value
-    });
+    // Instead of using RPC, we'll directly update the table with a specific query
+    const { data, error } = await supabase
+      .from(table)
+      .update({ [column]: supabase.rpc('increment_value', { p_table: table, p_column: column, p_id: id, p_value: value }) })
+      .eq('id', id)
+      .select();
     
     if (error) {
       console.error(`Error incrementing ${column} in ${table}:`, error);
@@ -92,13 +91,29 @@ export const increment = async (table: 'products' | 'categories' | 'counters', c
 
 export const decrement = async (table: 'products' | 'categories' | 'counters', column: string, id: string, value: number) => {
   try {
-    // Use stored function instead of raw query
-    const { data, error } = await supabase.rpc('decrement_value', {
-      p_table: table,
-      p_column: column,
-      p_id: id,
-      p_value: value
-    });
+    // First get the current value to ensure we don't go below zero
+    const { data: currentData } = await supabase
+      .from(table)
+      .select(column)
+      .eq('id', id)
+      .single();
+    
+    if (!currentData) {
+      console.error(`Item not found when decrementing ${column} in ${table}`);
+      return null;
+    }
+    
+    const currentValue = currentData[column];
+    
+    // Ensure we don't go below zero
+    const newValue = Math.max(0, currentValue - value);
+    
+    // Update with the new value
+    const { data, error } = await supabase
+      .from(table)
+      .update({ [column]: newValue })
+      .eq('id', id)
+      .select();
     
     if (error) {
       console.error(`Error decrementing ${column} in ${table}:`, error);

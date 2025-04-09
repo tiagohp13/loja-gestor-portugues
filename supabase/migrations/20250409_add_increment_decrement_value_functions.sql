@@ -8,6 +8,7 @@ CREATE OR REPLACE FUNCTION public.increment_value(
 )
 RETURNS integer
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
   result INTEGER;
@@ -38,6 +39,7 @@ CREATE OR REPLACE FUNCTION public.decrement_value(
 )
 RETURNS integer
 LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
   result INTEGER;
