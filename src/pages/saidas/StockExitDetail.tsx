@@ -79,7 +79,7 @@ const StockExitDetail = () => {
                     <p>{exit.invoiceNumber}</p>
                   </div>
                 )}
-                {exit.from_order_id && (
+                {exit.fromOrderId && (
                   <div className="col-span-2">
                     <p className="text-sm font-medium text-gestorApp-gray">Origem</p>
                     <div className="flex items-center">
@@ -87,9 +87,9 @@ const StockExitDetail = () => {
                       <Button 
                         variant="link" 
                         className="p-0 h-auto font-normal text-gestorApp-blue" 
-                        onClick={() => navigate(`/encomendas/${exit.from_order_id}`)}
+                        onClick={() => navigate(`/encomendas/${exit.fromOrderId}`)}
                       >
-                        Encomenda {exit.from_order_number}
+                        Encomenda {exit.fromOrderNumber}
                       </Button>
                     </div>
                   </div>
