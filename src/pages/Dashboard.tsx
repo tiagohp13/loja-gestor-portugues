@@ -3,21 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
 import PageHeader from '../components/ui/PageHeader';
-import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle, ExternalLink, ChevronDown } from 'lucide-react';
+import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle, ExternalLink } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatting';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { products, suppliers, clients, stockEntries, stockExits, orders } = useData();
   const dashboardData = getDashboardData();
-  
-  const [chartType, setChartType] = useState<string>('financial-summary');
-  
+    
   const ensureDate = (dateInput: string | Date): Date => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
@@ -209,218 +206,6 @@ const DashboardPage: React.FC = () => {
     navigate(`/fornecedores/${id}`);
   };
 
-  const getChartData = () => {
-    switch(chartType) {
-      case 'sales-only':
-        return chartData.map(item => ({ name: item.name, vendas: item.vendas }));
-      case 'purchases-only':
-        return chartData.map(item => ({ name: item.name, compras: item.compras }));
-      case 'profit-only':
-        return chartData.map(item => ({ 
-          name: item.name, 
-          lucro: Number(item.vendas || 0) - Number(item.compras || 0) 
-        }));
-      case 'orders':
-        const ordersByMonth = new Map();
-        orders.forEach(order => {
-          const date = ensureDate(order.date);
-          const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-          if (monthlyData.has(monthKey)) {
-            ordersByMonth.set(monthKey, (ordersByMonth.get(monthKey) || 0) + 1);
-          }
-        });
-        return Array.from(monthlyData.keys()).map(key => ({
-          name: monthlyData.get(key).name,
-          encomendas: ordersByMonth.get(key) || 0
-        }));
-      case 'stock-entries':
-        const entriesByMonth = new Map();
-        stockEntries.forEach(entry => {
-          const date = ensureDate(entry.date);
-          const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-          if (monthlyData.has(monthKey)) {
-            entriesByMonth.set(monthKey, (entriesByMonth.get(monthKey) || 0) + 1);
-          }
-        });
-        return Array.from(monthlyData.keys()).map(key => ({
-          name: monthlyData.get(key).name,
-          entradas: entriesByMonth.get(key) || 0
-        }));
-      case 'stock-exits':
-        const exitsByMonth = new Map();
-        stockExits.forEach(exit => {
-          const date = ensureDate(exit.date);
-          const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
-          if (monthlyData.has(monthKey)) {
-            exitsByMonth.set(monthKey, (exitsByMonth.get(monthKey) || 0) + 1);
-          }
-        });
-        return Array.from(monthlyData.keys()).map(key => ({
-          name: monthlyData.get(key).name,
-          saidas: exitsByMonth.get(key) || 0
-        }));
-      case 'most-moving-products':
-        const productMovements = {};
-        
-        stockEntries.forEach(entry => 
-          entry.items.forEach(item => {
-            if (!productMovements[item.productName]) {
-              productMovements[item.productName] = 0;
-            }
-            productMovements[item.productName] += Number(item.quantity || 0);
-          })
-        );
-        
-        stockExits.forEach(exit => 
-          exit.items.forEach(item => {
-            if (!productMovements[item.productName]) {
-              productMovements[item.productName] = 0;
-            }
-            productMovements[item.productName] += Number(item.quantity || 0);
-          })
-        );
-        
-        return Object.entries(productMovements)
-          .sort((a, b) => Number(b[1]) - Number(a[1]))
-          .slice(0, 5)
-          .map(([name, quantity]) => ({ name, movimentos: quantity }));
-      case 'low-stock-products':
-        return lowStockProducts
-          .slice(0, 5)
-          .map(product => ({ 
-            name: product.name, 
-            stock: product.currentStock,
-            minimo: product.minStock 
-          }));
-      case 'top-clients':
-        const clientPurchaseTotals = {};
-        
-        stockExits.forEach(exit => {
-          if (!clientPurchaseTotals[exit.clientName]) {
-            clientPurchaseTotals[exit.clientName] = 0;
-          }
-          
-          const exitTotal = exit.items.reduce((sum, item) => 
-            sum + (Number(item.quantity || 0) * Number(item.salePrice || 0)), 0);
-          
-          clientPurchaseTotals[exit.clientName] += exitTotal;
-        });
-        
-        return Object.entries(clientPurchaseTotals)
-          .sort((a, b) => Number(b[1]) - Number(a[1]))
-          .slice(0, 5)
-          .map(([name, value]) => ({ name, valor: value }));
-      case 'top-suppliers':
-        const supplierUsage = {};
-        
-        stockEntries.forEach(entry => {
-          if (!supplierUsage[entry.supplierName]) {
-            supplierUsage[entry.supplierName] = 0;
-          }
-          
-          const entryTotal = entry.items.reduce((sum, item) => 
-            sum + (Number(item.quantity || 0) * Number(item.purchasePrice || 0)), 0);
-          
-          supplierUsage[entry.supplierName] += entryTotal;
-        });
-        
-        return Object.entries(supplierUsage)
-          .sort((a, b) => Number(b[1]) - Number(a[1]))
-          .slice(0, 5)
-          .map(([name, value]) => ({ name, valor: value }));
-      case 'financial-summary':
-      default:
-        return chartData.map(item => ({
-          name: item.name,
-          vendas: item.vendas,
-          compras: item.compras,
-          lucro: Number(item.vendas || 0) - Number(item.compras || 0)
-        }));
-    }
-  };
-
-  const getChartTitle = () => {
-    switch(chartType) {
-      case 'sales-only':
-        return 'Vendas (últimos 6 meses)';
-      case 'purchases-only':
-        return 'Compras (últimos 6 meses)';
-      case 'profit-only':
-        return 'Lucro (últimos 6 meses)';
-      case 'orders':
-        return 'Encomendas (últimos 6 meses)';
-      case 'stock-entries':
-        return 'Compras (últimos 6 meses)';
-      case 'stock-exits':
-        return 'Vendas (últimos 6 meses)';
-      case 'most-moving-products':
-        return 'Produtos com Mais Movimento';
-      case 'low-stock-products':
-        return 'Produtos com Menos Stock';
-      case 'top-clients':
-        return 'Clientes com Mais Compras';
-      case 'top-suppliers':
-        return 'Fornecedores Mais Usados';
-      case 'financial-summary':
-      default:
-        return 'Resumo Financeiro';
-    }
-  };
-
-  const renderChart = () => {
-    const data = getChartData();
-    
-    const tooltipFormatter = (value, name) => {
-      if (['top-clients', 'top-suppliers'].includes(chartType)) {
-        return [formatCurrency(value), name];
-      }
-      if (['low-stock-products'].includes(chartType)) {
-        return [`${value} unidades`, name];
-      }
-      if (['most-moving-products'].includes(chartType)) {
-        return [`${value} movimentos`, name];
-      }
-      if (['sales-only', 'purchases-only', 'profit-only', 'financial-summary'].includes(chartType)) {
-        return [formatCurrency(value), name];
-      }
-      return [value, name];
-    };
-
-    return (
-      <ResponsiveContainer width="100%" height={300}>
-        <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="name" />
-          <YAxis />
-          <Tooltip formatter={tooltipFormatter} />
-          <Legend />
-          {chartType === 'financial-summary' && (
-            <>
-              <Bar dataKey="vendas" name="Vendas" fill="#1a56db" />
-              <Bar dataKey="compras" name="Compras" fill="#9333ea" />
-              <Bar dataKey="lucro" name="Lucro" fill="#10b981" />
-            </>
-          )}
-          {chartType === 'sales-only' && <Bar dataKey="vendas" name="Vendas" fill="#1a56db" />}
-          {chartType === 'purchases-only' && <Bar dataKey="compras" name="Compras" fill="#9333ea" />}
-          {chartType === 'profit-only' && <Bar dataKey="lucro" name="Lucro" fill="#10b981" />}
-          {chartType === 'orders' && <Bar dataKey="encomendas" name="Encomendas" fill="#f59e0b" />}
-          {chartType === 'stock-entries' && <Bar dataKey="entradas" name="Entradas" fill="#9333ea" />}
-          {chartType === 'stock-exits' && <Bar dataKey="saidas" name="Saídas" fill="#1a56db" />}
-          {chartType === 'most-moving-products' && <Bar dataKey="movimentos" name="Movimentos" fill="#1a56db" />}
-          {chartType === 'low-stock-products' && (
-            <>
-              <Bar dataKey="stock" name="Stock Atual" fill="#ef4444" />
-              <Bar dataKey="minimo" name="Stock Mínimo" fill="#9333ea" />
-            </>
-          )}
-          {chartType === 'top-clients' && <Bar dataKey="valor" name="Valor" fill="#1a56db" />}
-          {chartType === 'top-suppliers' && <Bar dataKey="valor" name="Valor" fill="#9333ea" />}
-        </BarChart>
-      </ResponsiveContainer>
-    );
-  };
-
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -474,53 +259,21 @@ const DashboardPage: React.FC = () => {
       
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
         <Card className="xl:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="p-0 h-auto hover:bg-transparent flex items-center">
-                  <CardTitle>{getChartTitle()}</CardTitle>
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-56 bg-white">
-                <DropdownMenuItem onClick={() => setChartType('financial-summary')}>
-                  Resumo Financeiro (Vendas, Gastos, Lucro)
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('sales-only')}>
-                  Apenas Vendas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('purchases-only')}>
-                  Apenas Gastos
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('profit-only')}>
-                  Apenas Lucro
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('orders')}>
-                  Encomendas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('stock-entries')}>
-                  Compras
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('stock-exits')}>
-                  Vendas
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('most-moving-products')}>
-                  Produtos com mais movimento
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('low-stock-products')}>
-                  Produtos com menos stock
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('top-clients')}>
-                  Clientes com mais compras
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setChartType('top-suppliers')}>
-                  Fornecedores mais usados
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          <CardHeader>
+            <CardTitle>Vendas e Compras (últimos 6 meses)</CardTitle>
           </CardHeader>
           <CardContent>
-            {renderChart()}
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Legend />
+                <Bar dataKey="vendas" name="Vendas" fill="#1a56db" />
+                <Bar dataKey="compras" name="Compras" fill="#9333ea" />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
         
