@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AuthLayout from '../components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
@@ -78,15 +78,6 @@ const Login: React.FC = () => {
           {isLoading ? 'A processar...' : 'Entrar'}
         </Button>
       </form>
-      
-      <div className="mt-6 text-sm text-center">
-        <p className="text-gestorApp-gray mb-4">
-          Não tem uma conta?{' '}
-          <Link to="/register" className="text-gestorApp-blue hover:underline font-medium">
-            Registar
-          </Link>
-        </p>
-      </div>
     </AuthLayout>
   );
 };

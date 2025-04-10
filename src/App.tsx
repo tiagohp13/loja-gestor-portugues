@@ -9,7 +9,6 @@ import { useAuth } from './contexts/AuthContext';
 
 // Authentication
 import LoginPage from './pages/Login';
-import RegisterPage from './pages/Register';
 
 // Dashboard
 import DashboardPage from './pages/Dashboard';
@@ -95,7 +94,6 @@ function App() {
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
               
               <Route element={<ProtectedRoute />}>
                 <Route element={<AppLayout />}>

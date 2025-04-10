@@ -46,7 +46,7 @@ const CategoryNew = () => {
 
       await addCategory(category);
       toast.success('Categoria adicionada com sucesso!');
-      navigate('/categorias');
+      navigate('/categorias/consultar');
     } catch (error) {
       console.error('Error adding category:', error);
       toast.error('Erro ao adicionar categoria');
@@ -59,7 +59,7 @@ const CategoryNew = () => {
         title="Nova Categoria" 
         description="Adicione uma nova categoria ao sistema"
         actions={
-          <Button variant="outline" onClick={() => navigate('/categorias')}>
+          <Button variant="outline" onClick={() => navigate('/categorias/consultar')}>
             Voltar à Lista
           </Button>
         }
@@ -108,7 +108,7 @@ const CategoryNew = () => {
           </div>
           
           <div className="flex justify-end space-x-4 pt-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/categorias')}>
+            <Button variant="outline" type="button" onClick={() => navigate('/categorias/consultar')}>
               Cancelar
             </Button>
             <Button type="submit">Guardar Categoria</Button>
