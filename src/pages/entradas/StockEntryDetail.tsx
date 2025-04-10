@@ -1,218 +1,134 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { SupplierWithAddress } from '@/types';
+import { Separator } from '@/components/ui/separator';
+import { ArrowLeft, Edit, FileText, Calendar, User, CreditCard } from 'lucide-react';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
-import { Table } from '@/components/ui/table';
-import { toast } from 'sonner';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import StatusBadge from '@/components/common/StatusBadge';
-import ClickableProductItem from '@/components/common/ClickableProductItem';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const StockEntryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockEntries, deleteStockEntry, suppliers } = useData();
-  const [stockEntry, setStockEntry] = useState<any | null>(null);
-  const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (id) {
-      const entry = stockEntries.find(entry => entry.id === id);
-      if (entry) {
-        setStockEntry(entry);
-        // Check if the entry has a supplierId and fetch the corresponding supplier
-        if (entry.supplierId) {
-          const foundSupplier = suppliers.find(s => s.id === entry.supplierId);
-          if (foundSupplier) {
-            // Create a SupplierWithAddress object from the supplier data
-            const supplierWithAddress: SupplierWithAddress = {
-              ...foundSupplier,
-              address: foundSupplier.address ? {
-                street: foundSupplier.address,
-                postalCode: '',
-                city: ''
-              } : undefined
-            };
-            setSupplier(supplierWithAddress);
+  const { stockEntries, isLoading } = useData();
+  
+  if (isLoading) return <LoadingSpinner />;
+  
+  const entry = stockEntries.find(entry => entry.id === id);
+  
+  if (!entry) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Entrada não encontrada" 
+          description="A entrada que procura não existe ou foi removida"
+          actions={
+            <Button onClick={() => navigate('/entradas/historico')}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Histórico
+            </Button>
           }
-        }
-      } else {
-        toast.error('Entrada não encontrada');
-        navigate('/entradas/historico');
-      }
-    }
-  }, [id, stockEntries, navigate, suppliers]);
-
-  const handleDelete = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (id) {
-      deleteStockEntry(id);
-      toast.success('Entrada eliminada com sucesso');
-      navigate('/entradas/historico');
-    }
-  };
-
-  if (!stockEntry) {
-    return <div>Carregando...</div>;
+        />
+      </div>
+    );
   }
+  
+  const totalItems = entry.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalValue = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader
-        title={`Entrada: ${stockEntry?.number || ''}`}
+      <PageHeader 
+        title={`Entrada ${entry.number}`}
         description="Detalhes da entrada de stock"
         actions={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/entradas/historico')}
-            >
-              Voltar à Lista
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={() => navigate('/entradas/historico')}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Histórico
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-            >
-              Eliminar
+            <Button onClick={() => navigate(`/entradas/editar/${entry.id}`)}>
+              <Edit className="mr-2 h-4 w-4" /> Editar Entrada
             </Button>
-            <Button
-              onClick={() => navigate(`/entradas/editar/${id}`)}
-            >
-              Editar
-            </Button>
-          </>
+          </div>
         }
       />
-
-      <Tabs defaultValue="details" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="details">Detalhes da Entrada</TabsTrigger>
-          <TabsTrigger value="items">Produtos</TabsTrigger>
-          {supplier && <TabsTrigger value="supplier">Fornecedor</TabsTrigger>}
-        </TabsList>
-        
-        <TabsContent value="details" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações da Entrada</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium mb-1">Referência</p>
-                <p>{stockEntry.number}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Data</p>
-                <p>{formatDateString(stockEntry.date)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Total</p>
-                <p>{formatCurrency(stockEntry.total)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Estado</p>
-                <StatusBadge status={stockEntry.status} />
-              </div>
-              {stockEntry.notes && (
-                <div className="col-span-1 md:col-span-2">
-                  <p className="text-sm font-medium mb-1">Notas</p>
-                  <p className="whitespace-pre-wrap">{stockEntry.notes}</p>
+      
+      <div className="bg-white rounded-lg shadow p-6 mt-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Informações da Entrada</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gestorApp-gray">Número</p>
+                  <p className="text-gestorApp-blue font-medium">{entry.number}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="items" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Produtos Recebidos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <thead>
+                <div>
+                  <p className="text-sm font-medium text-gestorApp-gray">Data</p>
+                  <p>{formatDateString(entry.date)}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-gestorApp-gray">Fornecedor</p>
+                  <p className="font-medium">{entry.supplierName}</p>
+                </div>
+                {entry.invoiceNumber && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gestorApp-gray">Nº Fatura</p>
+                    <p>{entry.invoiceNumber}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {entry.notes && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Notas</h3>
+                <p className="text-gestorApp-gray-dark p-3 border border-gray-200 rounded-md bg-gray-50">{entry.notes}</p>
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Produtos</h3>
+            <div className="overflow-x-auto border rounded-md">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th>Produto</th>
-                    <th className="text-center">Quantidade</th>
-                    <th className="text-right">Preço Unit.</th>
-                    <th className="text-right">Total</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Produto</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Qtd.</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Preço</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {stockEntry.items && stockEntry.items.map((item: any) => (
-                    <ClickableProductItem
-                      key={item.id}
-                      id={item.id}
-                      productId={item.productId}
-                      name={item.productName}
-                      quantity={item.quantity}
-                      price={item.purchasePrice}
-                      total={item.quantity * item.purchasePrice}
-                    />
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {entry.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatCurrency(item.purchasePrice)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatCurrency(item.quantity * item.purchasePrice)}</td>
+                    </tr>
                   ))}
                 </tbody>
-                <tfoot>
+                <tfoot className="bg-gray-50">
                   <tr>
-                    <td colSpan={3} className="text-right font-semibold">Total:</td>
-                    <td className="text-right font-semibold">{formatCurrency(stockEntry.total)}</td>
+                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-gray-dark">
+                      Total: {totalItems} items
+                    </td>
+                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
+                      Valor total: {formatCurrency(totalValue)}
+                    </td>
                   </tr>
                 </tfoot>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {supplier && (
-          <TabsContent value="supplier" className="space-y-4 mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações do Fornecedor</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium mb-1">Nome</p>
-                  <p>{supplier.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">Email</p>
-                  <p>{supplier.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">Telefone</p>
-                  <p>{supplier.phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">NIF</p>
-                  <p>{supplier.taxId || 'N/A'}</p>
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <p className="text-sm font-medium mb-1">Morada</p>
-                  <p>{supplier.address ? supplier.address.street : 'N/A'}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-      </Tabs>
-
-      <DeleteConfirmDialog
-        open={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onDelete={confirmDelete}
-        title="Eliminar Entrada"
-        description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
-        trigger={<></>}
-      />
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

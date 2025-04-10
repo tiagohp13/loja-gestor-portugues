@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -23,7 +24,7 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
   image?: string;
-  status?: string;
+  status?: string; // Add status field that is optional
 }
 
 export interface Category {
@@ -49,23 +50,6 @@ export interface Client {
   status?: string;
 }
 
-export interface ClientWithAddress {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  taxId: string;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
-  address?: {
-    street: string;
-    postalCode: string;
-    city: string;
-  };
-}
-
 export interface Supplier {
   id: string;
   name: string;
@@ -80,26 +64,8 @@ export interface Supplier {
   status?: string;
 }
 
-export interface SupplierWithAddress {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  taxId: string;
-  paymentTerms: string;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-  status?: string;
-  address?: {
-    street: string;
-    postalCode: string;
-    city: string;
-  };
-}
-
 export interface StockEntryItem {
-  id: string;
+  id: string; // Added id property
   productId: string;
   productName: string;
   quantity: number;
@@ -123,7 +89,7 @@ export interface StockExit {
 }
 
 export interface StockExitItem {
-  id: string;
+  id: string; // Added id property
   productId: string;
   productName: string;
   quantity: number;
@@ -141,6 +107,7 @@ export interface StockEntry {
   notes?: string;
   date: string;
   createdAt: string;
+  // Use number instead of entryNumber to maintain consistency with other interfaces
 }
 
 export interface Order {
@@ -153,19 +120,21 @@ export interface Order {
   notes?: string;
   convertedToStockExitId?: string;
   convertedToStockExitNumber?: string;
-  discount?: number;
+  discount?: number; // Add discount field that is optional
 }
 
 export interface OrderItem {
   productId: string;
   productName: string;
   quantity: number;
-  salePrice: number;
-  discountPercent?: number;
+  salePrice: number; // This field already exists, which is good
+  discountPercent?: number; // Add discount percent field that is optional
 }
 
+// Define the ExportDataType type
 export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
 
+// Legacy types for compatibility
 export interface LegacyStockEntry {
   id: string;
   productId: string;

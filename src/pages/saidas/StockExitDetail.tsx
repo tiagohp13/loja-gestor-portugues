@@ -1,218 +1,147 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ClientWithAddress } from '@/types';
+import { ArrowLeft, Edit, ClipboardList } from 'lucide-react';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
-import { Table } from '@/components/ui/table';
-import { toast } from 'sonner';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import StatusBadge from '@/components/common/StatusBadge';
-import ClickableProductItem from '@/components/common/ClickableProductItem';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const StockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockExits, deleteStockExit, clients } = useData();
-  const [stockExit, setStockExit] = useState<any | null>(null);
-  const [client, setClient] = useState<ClientWithAddress | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  useEffect(() => {
-    if (id) {
-      const exit = stockExits.find(exit => exit.id === id);
-      if (exit) {
-        setStockExit(exit);
-        // Check if the exit has a clientId and fetch the corresponding client
-        if (exit.clientId) {
-          const foundClient = clients.find(c => c.id === exit.clientId);
-          if (foundClient) {
-            // Create a ClientWithAddress object from the client data
-            const clientWithAddress: ClientWithAddress = {
-              ...foundClient,
-              address: foundClient.address ? {
-                street: foundClient.address,
-                postalCode: '',
-                city: ''
-              } : undefined
-            };
-            setClient(clientWithAddress);
+  const { stockExits, isLoading } = useData();
+  
+  if (isLoading) return <LoadingSpinner />;
+  
+  const exit = stockExits.find(exit => exit.id === id);
+  
+  if (!exit) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Saída não encontrada" 
+          description="A saída que procura não existe ou foi removida"
+          actions={
+            <Button onClick={() => navigate('/saidas/historico')}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Histórico
+            </Button>
           }
-        }
-      } else {
-        toast.error('Saída não encontrada');
-        navigate('/saidas/historico');
-      }
-    }
-  }, [id, stockExits, navigate, clients]);
-
-  const handleDelete = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (id) {
-      deleteStockExit(id);
-      toast.success('Saída eliminada com sucesso');
-      navigate('/saidas/historico');
-    }
-  };
-
-  if (!stockExit) {
-    return <div>Carregando...</div>;
+        />
+      </div>
+    );
   }
+  
+  const totalItems = exit.items.reduce((sum, item) => sum + item.quantity, 0);
+  const totalValue = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader
-        title={`Saída: ${stockExit?.number || ''}`}
+      <PageHeader 
+        title={`Saída ${exit.number}`}
         description="Detalhes da saída de stock"
         actions={
-          <>
-            <Button
-              variant="outline"
-              onClick={() => navigate('/saidas/historico')}
-            >
-              Voltar à Lista
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={() => navigate('/saidas/historico')}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Histórico
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-            >
-              Eliminar
+            <Button onClick={() => navigate(`/saidas/editar/${exit.id}`)}>
+              <Edit className="mr-2 h-4 w-4" /> Editar Saída
             </Button>
-            <Button
-              onClick={() => navigate(`/saidas/editar/${id}`)}
-            >
-              Editar
-            </Button>
-          </>
+          </div>
         }
       />
-
-      <Tabs defaultValue="details" className="mt-6">
-        <TabsList>
-          <TabsTrigger value="details">Detalhes da Saída</TabsTrigger>
-          <TabsTrigger value="items">Produtos</TabsTrigger>
-          {client && <TabsTrigger value="client">Cliente</TabsTrigger>}
-        </TabsList>
-        
-        <TabsContent value="details" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Informações da Saída</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium mb-1">Referência</p>
-                <p>{stockExit.number}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Data</p>
-                <p>{formatDateString(stockExit.date)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Total</p>
-                <p>{formatCurrency(stockExit.total)}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Estado</p>
-                <StatusBadge status={stockExit.status} />
-              </div>
-              {stockExit.notes && (
-                <div className="col-span-1 md:col-span-2">
-                  <p className="text-sm font-medium mb-1">Notas</p>
-                  <p className="whitespace-pre-wrap">{stockExit.notes}</p>
+      
+      <div className="bg-white rounded-lg shadow p-6 mt-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <div>
+            <div className="mb-6">
+              <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Informações da Saída</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gestorApp-gray">Número</p>
+                  <p className="text-gestorApp-blue font-medium">{exit.number}</p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="items" className="space-y-4 mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Produtos Vendidos</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <thead>
+                <div>
+                  <p className="text-sm font-medium text-gestorApp-gray">Data</p>
+                  <p>{formatDateString(exit.date)}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-sm font-medium text-gestorApp-gray">Cliente</p>
+                  <p className="font-medium">{exit.clientName}</p>
+                </div>
+                {exit.invoiceNumber && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gestorApp-gray">Nº Fatura</p>
+                    <p>{exit.invoiceNumber}</p>
+                  </div>
+                )}
+                {exit.fromOrderId && (
+                  <div className="col-span-2">
+                    <p className="text-sm font-medium text-gestorApp-gray">Origem</p>
+                    <div className="flex items-center">
+                      <ClipboardList className="h-4 w-4 mr-1" />
+                      <Button 
+                        variant="link" 
+                        className="p-0 h-auto font-normal text-gestorApp-blue" 
+                        onClick={() => navigate(`/encomendas/${exit.fromOrderId}`)}
+                      >
+                        Encomenda {exit.fromOrderNumber}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            {exit.notes && (
+              <div className="mb-6">
+                <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Notas</h3>
+                <p className="text-gestorApp-gray-dark p-3 border border-gray-200 rounded-md bg-gray-50">{exit.notes}</p>
+              </div>
+            )}
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-medium text-gestorApp-gray-dark mb-2">Produtos</h3>
+            <div className="overflow-x-auto border rounded-md">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th>Produto</th>
-                    <th className="text-center">Quantidade</th>
-                    <th className="text-right">Preço Unit.</th>
-                    <th className="text-right">Total</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Produto</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Qtd.</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Preço</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">Subtotal</th>
                   </tr>
                 </thead>
-                <tbody>
-                  {stockExit.items && stockExit.items.map((item: any) => (
-                    <ClickableProductItem
-                      key={item.id}
-                      id={item.id}
-                      productId={item.productId}
-                      name={item.productName}
-                      quantity={item.quantity}
-                      price={item.salePrice}
-                      total={item.quantity * item.salePrice}
-                    />
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {exit.items.map((item, index) => (
+                    <tr key={index}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatCurrency(item.salePrice)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">{formatCurrency(item.quantity * item.salePrice)}</td>
+                    </tr>
                   ))}
                 </tbody>
-                <tfoot>
+                <tfoot className="bg-gray-50">
                   <tr>
-                    <td colSpan={3} className="text-right font-semibold">Total:</td>
-                    <td className="text-right font-semibold">{formatCurrency(stockExit.total)}</td>
+                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-gray-dark">
+                      Total: {totalItems} items
+                    </td>
+                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
+                      Valor total: {formatCurrency(totalValue)}
+                    </td>
                   </tr>
                 </tfoot>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        {client && (
-          <TabsContent value="client" className="space-y-4 mt-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informações do Cliente</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium mb-1">Nome</p>
-                  <p>{client.name}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">Email</p>
-                  <p>{client.email || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">Telefone</p>
-                  <p>{client.phone || 'N/A'}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium mb-1">NIF</p>
-                  <p>{client.taxId || 'N/A'}</p>
-                </div>
-                <div className="col-span-1 md:col-span-2">
-                  <p className="text-sm font-medium mb-1">Morada</p>
-                  <p>{client.address ? client.address.street : 'N/A'}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        )}
-      </Tabs>
-
-      <DeleteConfirmDialog
-        open={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onDelete={confirmDelete}
-        title="Eliminar Saída"
-        description="Tem certeza que deseja eliminar esta saída? Esta ação não pode ser desfeita."
-        trigger={<></>}
-      />
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

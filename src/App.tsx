@@ -45,13 +45,13 @@ import OrderNew from './pages/encomendas/OrderNew';
 import OrderEdit from './pages/encomendas/OrderEdit';
 import OrderConverting from './pages/encomendas/OrderConverting';
 
-// Purchases (Previously Stock Entries)
+// Stock Entries
 import StockEntryList from './pages/entradas/StockEntryList';
 import StockEntryDetail from './pages/entradas/StockEntryDetail';
 import StockEntryNew from './pages/entradas/StockEntryNew';
 import StockEntryEdit from './pages/entradas/StockEntryEdit';
 
-// Sales (Previously Stock Exits)
+// Stock Exits
 import StockExitList from './pages/saidas/StockExitList';
 import StockExitDetail from './pages/saidas/StockExitDetail';
 import StockExitNew from './pages/saidas/StockExitNew';
@@ -60,7 +60,7 @@ import StockExitEdit from './pages/saidas/StockExitEdit';
 // Settings
 import Settings from './pages/configuracoes/Settings';
 
-// Statistics (Previously Support)
+// Support
 import Support from './pages/Suporte';
 
 // Error pages
@@ -133,13 +133,13 @@ function App() {
                   <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
                   <Route path="/encomendas/converter/:id" element={<OrderConverting />} />
                   
-                  {/* Purchases (Previously Stock Entries) */}
+                  {/* Stock Entries */}
                   <Route path="/entradas/historico" element={<StockEntryList />} />
                   <Route path="/entradas/nova" element={<StockEntryNew />} />
                   <Route path="/entradas/:id" element={<StockEntryDetail />} />
                   <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
                   
-                  {/* Sales (Previously Stock Exits) */}
+                  {/* Stock Exits */}
                   <Route path="/saidas/historico" element={<StockExitList />} />
                   <Route path="/saidas/nova" element={<StockExitNew />} />
                   <Route path="/saidas/:id" element={<StockExitDetail />} />
@@ -148,7 +148,7 @@ function App() {
                   {/* Settings */}
                   <Route path="/configuracoes" element={<Settings />} />
                   
-                  {/* Statistics (Previously Support) */}
+                  {/* Support */}
                   <Route path="/suporte" element={<Support />} />
                 </Route>
               </Route>
