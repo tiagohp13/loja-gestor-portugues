@@ -178,11 +178,11 @@ const Suporte = () => {
       
     const { data: exitItems } = await supabase
       .from('stock_exit_items')
-      .select('stock_exit_id, quantity, sale_price, discount_percent');
+      .select('exit_id, quantity, sale_price, discount_percent');
       
     const { data: entryItems } = await supabase
       .from('stock_entry_items')
-      .select('stock_entry_id, quantity, purchase_price, discount_percent');
+      .select('entry_id, quantity, purchase_price, discount_percent');
     
     // Get data for the last 6 months
     for (let i = 5; i >= 0; i--) {
@@ -200,7 +200,7 @@ const Suporte = () => {
         });
         
         monthExits.forEach(exit => {
-          const exitItemsForExit = exitItems.filter(item => item.stock_exit_id === exit.id);
+          const exitItemsForExit = exitItems.filter(item => item.exit_id === exit.id);
           exitItemsForExit.forEach(item => {
             const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
             salesValue += (item.quantity * item.sale_price * discountMultiplier);
@@ -215,7 +215,7 @@ const Suporte = () => {
         });
         
         monthEntries.forEach(entry => {
-          const entryItemsForEntry = entryItems.filter(item => item.stock_entry_id === entry.id);
+          const entryItemsForEntry = entryItems.filter(item => item.entry_id === entry.id);
           entryItemsForEntry.forEach(item => {
             const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
             purchasesValue += (item.quantity * item.purchase_price * discountMultiplier);
