@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
@@ -7,12 +6,11 @@ import { formatCurrency } from '@/utils/formatting';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { CircleOff, DollarSign, PackageCheck, PackageMinus, Users, TrendingUp, ShoppingCart, Truck, ChevronDown } from 'lucide-react';
+import { CircleOff, DollarSign, PackageCheck, PackageMinus, Users, TrendingUp, ShoppingCart, Truck, ChevronDown, Tag } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
-type ChartType = 'resumo' | 'vendas' | 'compras' | 'lucro' | 'encomendas' | 'produtos' | 'stockMinimo' | 'clientes' | 'fornecedores';
+import ChartDropdown from '@/components/statistics/ChartDropdown';
+import { ChartType } from '@/components/statistics/ChartDropdown';
 
 const Suporte = () => {
   const navigate = useNavigate();
@@ -71,12 +69,19 @@ const Suporte = () => {
         const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
         
         // Top products
-        const { data: topProducts, error: productsError } = await supabase
+        const { data: topProductsData, error: productsError } = await supabase
           .from('stock_exit_items')
           .select('product_name, product_id, quantity')
           .order('quantity', { ascending: false })
           .limit(5);
         
+        // Map the database product fields to the expected stats format
+        const topProducts = topProductsData?.map((product) => ({
+          name: product.product_name,
+          quantity: product.quantity,
+          productId: product.product_id
+        })) || [];
+
         // Top clients
         const { data: clients, error: clientsError } = await supabase
           .from('stock_exits')
@@ -173,7 +178,7 @@ const Suporte = () => {
           totalSpent,
           profit,
           profitMargin,
-          topProducts: topProducts || [],
+          topProducts,
           topClients,
           topSuppliers,
           lowStockProducts,
@@ -293,22 +298,11 @@ const Suporte = () => {
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-                    Resumo Financeiro <ChevronDown className="ml-1 h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white z-50">
-                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Resumo Financeiro" 
+                  onSelect={setChartType} 
+                />
               </CardTitle>
               <CardDescription>Comparação entre vendas, gastos e lucro</CardDescription>
             </CardHeader>
@@ -348,22 +342,11 @@ const Suporte = () => {
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-                    {chartTitle} <ChevronDown className="ml-1 h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white z-50">
-                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title={chartTitle} 
+                  onSelect={setChartType} 
+                />
               </CardTitle>
               <CardDescription>{chartDescription}</CardDescription>
             </CardHeader>
@@ -388,22 +371,11 @@ const Suporte = () => {
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-                    Produtos com mais movimento <ChevronDown className="ml-1 h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white z-50">
-                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Produtos com mais movimento" 
+                  onSelect={setChartType} 
+                />
               </CardTitle>
               <CardDescription>Top 5 produtos mais vendidos</CardDescription>
             </CardHeader>
@@ -411,14 +383,14 @@ const Suporte = () => {
               {stats.topProducts.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart 
-                    data={stats.topProducts.map(p => ({ name: p.product_name, value: p.quantity }))}
+                    data={stats.topProducts}
                     layout="vertical"
                   >
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis type="number" />
                     <YAxis type="category" dataKey="name" width={150} />
                     <Tooltip />
-                    <Bar dataKey="value" fill="#8884d8" />
+                    <Bar dataKey="quantity" fill="#8884d8" />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -436,22 +408,11 @@ const Suporte = () => {
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-                    Produtos com Stock Mínimo <ChevronDown className="ml-1 h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white z-50">
-                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Produtos com Stock Mínimo" 
+                  onSelect={setChartType} 
+                />
               </CardTitle>
               <CardDescription>Produtos que estão abaixo do stock mínimo definido</CardDescription>
             </CardHeader>
@@ -492,22 +453,11 @@ const Suporte = () => {
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-                    Clientes com mais compras <ChevronDown className="ml-1 h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white z-50">
-                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Clientes com mais compras" 
+                  onSelect={setChartType} 
+                />
               </CardTitle>
               <CardDescription>Top 5 clientes por número de compras</CardDescription>
             </CardHeader>
@@ -540,22 +490,11 @@ const Suporte = () => {
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-                    Fornecedores mais usados <ChevronDown className="ml-1 h-4 w-4" />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="bg-white z-50">
-                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Fornecedores mais usados" 
+                  onSelect={setChartType} 
+                />
               </CardTitle>
               <CardDescription>Top 5 fornecedores por número de entradas</CardDescription>
             </CardHeader>
@@ -688,11 +627,11 @@ const Suporte = () => {
                   <span className="text-blue-600 cursor-pointer hover:underline" 
                     onClick={() => {
                       const product = stats.topProducts[0];
-                      if (product.product_id) {
-                        navigate(`/produtos/${product.product_id}`);
+                      if (product.productId) {
+                        navigate(`/produtos/${product.productId}`);
                       }
                     }}>
-                    {stats.topProducts[0].product_name}
+                    {stats.topProducts[0].name}
                   </span>
                   <span className="ml-2 text-sm text-gray-500">({stats.topProducts[0].quantity} vendidos)</span>
                 </div>
