@@ -21,13 +21,30 @@ interface ChartDropdownProps {
 }
 
 const ChartDropdown: React.FC<ChartDropdownProps> = ({ currentType, title, onSelect }) => {
+  // Map chart types to display titles
+  const getChartTitle = (type: ChartType): string => {
+    const titles = {
+      resumo: 'Resumo Financeiro (6 meses)',
+      vendas: 'Vendas Mensais',
+      compras: 'Compras Mensais',
+      lucro: 'Lucro Mensal',
+      encomendas: 'Encomendas Mensais',
+      produtos: 'Produtos com mais movimento',
+      stockMinimo: 'Produtos Stock Mínimo',
+      clientes: 'Clientes com mais compras',
+      fornecedores: 'Fornecedores mais usados'
+    };
+    
+    return titles[type] || title;
+  };
+  
   return (
     <DropdownMenu>
       <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
-        {title} <ChevronDown className="ml-1 h-4 w-4" />
+        {getChartTitle(currentType)} <ChevronDown className="ml-1 h-4 w-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-white z-50">
-        <DropdownMenuItem onSelect={() => onSelect('resumo')}>Resumo Financeiro</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('resumo')}>Resumo Financeiro (6 meses)</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('vendas')}>Vendas</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('compras')}>Compras</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('lucro')}>Lucro</DropdownMenuItem>

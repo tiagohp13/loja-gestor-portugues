@@ -191,6 +191,14 @@ const Suporte = () => {
     fetchStats();
   }, []);
   
+  const getCategoriesCount = async () => {
+    const { count } = await supabase
+      .from('categories')
+      .select('*', { count: 'exact', head: true });
+    
+    return count || 0;
+  };
+  
   const fetchMonthlyData = async () => {
     const today = new Date();
     const months = [];
@@ -287,24 +295,23 @@ const Suporte = () => {
               <CardTitle className="flex items-center justify-between">
                 <ChartDropdown 
                   currentType={chartType} 
-                  title="Resumo Financeiro" 
+                  title="Resumo Financeiro (6 meses)" 
                   onSelect={setChartType} 
                 />
               </CardTitle>
-              <CardDescription>Comparação entre vendas, gastos e lucro</CardDescription>
+              <CardDescription>Comparação entre vendas, gastos e lucro dos últimos 6 meses</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={[
-                  { name: 'Vendas', value: stats.totalSales },
-                  { name: 'Gastos', value: stats.totalSpent },
-                  { name: 'Lucro', value: stats.profit }
-                ]}>
+                <BarChart data={stats.monthlyData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Bar dataKey="value" fill="#8884d8" />
+                  <Legend />
+                  <Bar name="Vendas" dataKey="vendas" fill="#8884d8" />
+                  <Bar name="Compras" dataKey="compras" fill="#82ca9d" />
+                  <Bar name="Lucro" dataKey="lucro" fill="#ffc658" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>

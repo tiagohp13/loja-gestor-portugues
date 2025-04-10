@@ -12,6 +12,7 @@ import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
 import { StockEntryItem, StockExitItem } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { Image } from 'lucide-react';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -92,7 +93,23 @@ const ProductDetail = () => {
       />
       
       <div className="grid md:grid-cols-3 gap-6 mt-6">
-        <Card className="md:col-span-2">
+        {/* Product Image Card */}
+        {product.image && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Imagem do Produto</CardTitle>
+            </CardHeader>
+            <CardContent className="flex justify-center">
+              <img 
+                src={product.image} 
+                alt={product.name} 
+                className="max-h-48 object-contain rounded-md"
+              />
+            </CardContent>
+          </Card>
+        )}
+        
+        <Card className={`${product.image ? 'md:col-span-2' : 'md:col-span-2'}`}>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <span>Detalhes do Produto</span>
@@ -135,7 +152,7 @@ const ProductDetail = () => {
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className={product.image ? 'md:col-span-3' : ''}>
           <CardHeader>
             <CardTitle>Stock</CardTitle>
           </CardHeader>
