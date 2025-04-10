@@ -17,7 +17,7 @@ import ClickableProductItem from '@/components/common/ClickableProductItem';
 const StockEntryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockEntries, deleteStockEntry } = useData();
+  const { stockEntries, deleteStockEntry, suppliers } = useData();
   const [stockEntry, setStockEntry] = useState<any | null>(null);
   const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -27,15 +27,28 @@ const StockEntryDetail = () => {
       const entry = stockEntries.find(entry => entry.id === id);
       if (entry) {
         setStockEntry(entry);
-        if (entry.supplier) {
-          setSupplier(entry.supplier);
+        // Check if the entry has a supplierId and fetch the corresponding supplier
+        if (entry.supplierId) {
+          const foundSupplier = suppliers.find(s => s.id === entry.supplierId);
+          if (foundSupplier) {
+            // Create a SupplierWithAddress object from the supplier data
+            const supplierWithAddress: SupplierWithAddress = {
+              ...foundSupplier,
+              address: foundSupplier.address ? {
+                street: foundSupplier.address,
+                postalCode: '',
+                city: ''
+              } : undefined
+            };
+            setSupplier(supplierWithAddress);
+          }
         }
       } else {
         toast.error('Entrada não encontrada');
         navigate('/entradas/historico');
       }
     }
-  }, [id, stockEntries, navigate]);
+  }, [id, stockEntries, navigate, suppliers]);
 
   const handleDelete = () => {
     setIsDeleteDialogOpen(true);
@@ -184,7 +197,7 @@ const StockEntryDetail = () => {
                 </div>
                 <div className="col-span-1 md:col-span-2">
                   <p className="text-sm font-medium mb-1">Morada</p>
-                  <p>{supplier.address?.street}, {supplier.address?.postalCode} {supplier.address?.city}</p>
+                  <p>{supplier.address ? supplier.address.street : 'N/A'}</p>
                 </div>
               </CardContent>
             </Card>

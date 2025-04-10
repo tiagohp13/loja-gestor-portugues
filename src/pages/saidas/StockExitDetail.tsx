@@ -17,7 +17,7 @@ import ClickableProductItem from '@/components/common/ClickableProductItem';
 const StockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockExits, deleteStockExit } = useData();
+  const { stockExits, deleteStockExit, clients } = useData();
   const [stockExit, setStockExit] = useState<any | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -27,15 +27,28 @@ const StockExitDetail = () => {
       const exit = stockExits.find(exit => exit.id === id);
       if (exit) {
         setStockExit(exit);
-        if (exit.client) {
-          setClient(exit.client);
+        // Check if the exit has a clientId and fetch the corresponding client
+        if (exit.clientId) {
+          const foundClient = clients.find(c => c.id === exit.clientId);
+          if (foundClient) {
+            // Create a ClientWithAddress object from the client data
+            const clientWithAddress: ClientWithAddress = {
+              ...foundClient,
+              address: foundClient.address ? {
+                street: foundClient.address,
+                postalCode: '',
+                city: ''
+              } : undefined
+            };
+            setClient(clientWithAddress);
+          }
         }
       } else {
         toast.error('Saída não encontrada');
         navigate('/saidas/historico');
       }
     }
-  }, [id, stockExits, navigate]);
+  }, [id, stockExits, navigate, clients]);
 
   const handleDelete = () => {
     setIsDeleteDialogOpen(true);
@@ -184,7 +197,7 @@ const StockExitDetail = () => {
                 </div>
                 <div className="col-span-1 md:col-span-2">
                   <p className="text-sm font-medium mb-1">Morada</p>
-                  <p>{client.address?.street}, {client.address?.postalCode} {client.address?.city}</p>
+                  <p>{client.address ? client.address.street : 'N/A'}</p>
                 </div>
               </CardContent>
             </Card>
