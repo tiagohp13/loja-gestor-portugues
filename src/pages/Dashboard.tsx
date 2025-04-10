@@ -234,7 +234,11 @@ const DashboardPage: React.FC = () => {
       case 'purchases-only':
         return chartData.map(item => ({ name: item.name, compras: item.compras }));
       case 'profit-only':
-        return chartData.map(item => ({ name: item.name, lucro: item.vendas - item.compras }));
+        // Fix: Ensure vendas and compras are numbers by using Number()
+        return chartData.map(item => ({ 
+          name: item.name, 
+          lucro: Number(item.vendas) - Number(item.compras) 
+        }));
       case 'orders':
         // Group orders by month
         const ordersByMonth = new Map();
@@ -353,7 +357,13 @@ const DashboardPage: React.FC = () => {
           .map(([name, value]) => ({ name, valor: value }));
       case 'financial-summary':
       default:
-        return chartData;
+        // Fix: Add lucro field to the chart data with proper number conversion
+        return chartData.map(item => ({
+          name: item.name,
+          vendas: item.vendas,
+          compras: item.compras,
+          lucro: Number(item.vendas) - Number(item.compras)
+        }));
     }
   };
 
