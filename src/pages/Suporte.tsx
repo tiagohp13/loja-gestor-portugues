@@ -1,11 +1,10 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/formatting';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { CircleOff, DollarSign, PackageCheck, Users, TrendingUp, ShoppingCart, Truck, Tag, ChevronDown } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -37,7 +36,6 @@ const Suporte = () => {
     const fetchStats = async () => {
       setIsLoading(true);
       try {
-        // Fetch total sales from stock exits
         const { data: exitItems, error: exitError } = await supabase
           .from('stock_exit_items')
           .select('quantity, sale_price, discount_percent');
@@ -50,7 +48,6 @@ const Suporte = () => {
           }, 0);
         }
         
-        // Fetch total spent on stock entries
         const { data: entryItems, error: entryError } = await supabase
           .from('stock_entry_items')
           .select('quantity, purchase_price, discount_percent');
@@ -63,18 +60,15 @@ const Suporte = () => {
           }, 0);
         }
         
-        // Calculate profit and margin
         const profit = totalSales - totalSpent;
         const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
         
-        // Top product
         const { data: products, error: productsError } = await supabase
           .from('stock_exit_items')
           .select('product_name, quantity')
           .order('quantity', { ascending: false })
           .limit(1);
         
-        // Top client
         const { data: clients, error: clientsError } = await supabase
           .from('stock_exits')
           .select('client_name, id')
@@ -90,7 +84,6 @@ const Suporte = () => {
           { name: '', orders: 0 }
         );
         
-        // Top supplier
         const { data: suppliers, error: suppliersError } = await supabase
           .from('stock_entries')
           .select('supplier_name, id')
@@ -106,34 +99,27 @@ const Suporte = () => {
           { name: '', entries: 0 }
         );
         
-        // Low stock products
         const lowStockProducts = await getLowStockProducts();
         
-        // Pending orders count
         const pendingOrders = await countPendingOrders();
         
-        // Completed orders count
         const { count: completedCount } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .not('converted_to_stock_exit_id', 'is', null);
         
-        // Clients count
         const { count: clientsCount } = await supabase
           .from('clients')
           .select('*', { count: 'exact', head: true });
           
-        // Suppliers count
         const { count: suppliersCount } = await supabase
           .from('suppliers')
           .select('*', { count: 'exact', head: true });
           
-        // Categories count and data
         const { data: categories, count: categoriesCount } = await supabase
           .from('categories')
           .select('*', { count: 'exact' });
           
-        // Generate monthly data for charts
         const monthlyData = await generateMonthlyData();
         
         setStats({
@@ -167,7 +153,6 @@ const Suporte = () => {
     const monthlyData = [];
     const today = new Date();
     
-    // Fetch monthly sales data
     const { data: exitsByMonth, error: exitError } = await supabase
       .from('stock_exits')
       .select('date, id');
@@ -184,12 +169,10 @@ const Suporte = () => {
       .from('stock_entry_items')
       .select('entry_id, quantity, purchase_price, discount_percent');
     
-    // Get data for the last 6 months
     for (let i = 5; i >= 0; i--) {
       const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
       
-      // Calculate sales for the month
       let salesValue = 0;
       let purchasesValue = 0;
       
@@ -238,14 +221,12 @@ const Suporte = () => {
     return <LoadingSpinner />;
   }
   
-  // Prepare data for charts
   const salesData = [
     { name: 'Vendas', value: stats.totalSales },
     { name: 'Gastos', value: stats.totalSpent },
     { name: 'Lucro', value: stats.profit }
   ];
   
-  // Get chart data based on selected type
   const getChartData = () => {
     switch(chartType) {
       case 'sales-only':
@@ -260,16 +241,15 @@ const Suporte = () => {
       case 'orders':
         return stats.monthlyData.map((item, index) => ({
           name: item.name,
-          encomendas: Math.round(Math.random() * 10) + 5 // Placeholder data
+          encomendas: Math.round(Math.random() * 10) + 5
         }));
       case 'most-moving-products':
-        // Placeholder data for most moving products
         return [
-          { name: 'Produto A', movimentos: 45 },
-          { name: 'Produto B', movimentos: 38 },
-          { name: 'Produto C', movimentos: 31 },
-          { name: 'Produto D', movimentos: 28 },
-          { name: 'Produto E', movimentos: 22 }
+          { name: 'Produto A', produto: 'Produto A', movimentos: 45 },
+          { name: 'Produto B', produto: 'Produto B', movimentos: 38 },
+          { name: 'Produto C', produto: 'Produto C', movimentos: 31 },
+          { name: 'Produto D', produto: 'Produto D', movimentos: 28 },
+          { name: 'Produto E', produto: 'Produto E', movimentos: 22 }
         ];
       case 'low-stock-products':
         return stats.lowStockProducts
@@ -280,7 +260,6 @@ const Suporte = () => {
             minimo: product.min_stock 
           }));
       case 'top-clients':
-        // Placeholder data for top clients
         return [
           { name: 'Cliente A', valor: 12500 },
           { name: 'Cliente B', valor: 9800 },
@@ -289,7 +268,6 @@ const Suporte = () => {
           { name: 'Cliente E', valor: 5200 }
         ];
       case 'top-suppliers':
-        // Placeholder data for top suppliers
         return [
           { name: 'Fornecedor A', valor: 18500 },
           { name: 'Fornecedor B', valor: 15200 },
@@ -330,6 +308,53 @@ const Suporte = () => {
       default:
         return 'Resumo Financeiro';
     }
+  };
+
+  const renderChart = () => {
+    const data = getChartData();
+    
+    if (chartType === 'sales-only' || chartType === 'purchases-only' || 
+        chartType === 'profit-only' || chartType === 'financial-summary') {
+      return (
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+          <Legend />
+          {(chartType === 'financial-summary' || chartType === 'sales-only') && 
+            <Line type="monotone" dataKey="vendas" name="Vendas" stroke="#1a56db" activeDot={{ r: 8 }} />}
+          {(chartType === 'financial-summary' || chartType === 'purchases-only') && 
+            <Line type="monotone" dataKey="compras" name="Compras" stroke="#9333ea" />}
+          {(chartType === 'financial-summary' || chartType === 'profit-only') && 
+            <Line type="monotone" dataKey="lucro" name="Lucro" stroke="#10b981" />}
+        </LineChart>
+      );
+    }
+    
+    return (
+      <BarChart data={data}>
+        <CartesianGrid strokeDasharray="3 3" />
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip formatter={(value) => {
+          if (chartType === 'most-moving-products') {
+            return value;
+          }
+          return formatCurrency(Number(value));
+        }} />
+        {chartType === 'orders' && <Bar dataKey="encomendas" name="Encomendas" fill="#f59e0b" />}
+        {chartType === 'most-moving-products' && <Bar dataKey="movimentos" name="Movimentos" fill="#1a56db" />}
+        {chartType === 'low-stock-products' && (
+          <>
+            <Bar dataKey="stock" name="Stock Atual" fill="#ef4444" />
+            <Bar dataKey="minimo" name="Stock Mínimo" fill="#9333ea" />
+          </>
+        )}
+        {chartType === 'top-clients' && <Bar dataKey="valor" name="Valor" fill="#1a56db" />}
+        {chartType === 'top-suppliers' && <Bar dataKey="valor" name="Valor" fill="#9333ea" />}
+      </BarChart>
+    );
   };
   
   return (
@@ -433,32 +458,7 @@ const Suporte = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={getChartData()}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                {chartType === 'financial-summary' && (
-                  <>
-                    <Bar dataKey="vendas" name="Vendas" fill="#1a56db" />
-                    <Bar dataKey="compras" name="Compras" fill="#9333ea" />
-                    <Bar dataKey="lucro" name="Lucro" fill="#10b981" />
-                  </>
-                )}
-                {chartType === 'sales-only' && <Bar dataKey="vendas" name="Vendas" fill="#1a56db" />}
-                {chartType === 'purchases-only' && <Bar dataKey="compras" name="Compras" fill="#9333ea" />}
-                {chartType === 'profit-only' && <Bar dataKey="lucro" name="Lucro" fill="#10b981" />}
-                {chartType === 'orders' && <Bar dataKey="encomendas" name="Encomendas" fill="#f59e0b" />}
-                {chartType === 'most-moving-products' && <Bar dataKey="movimentos" name="Movimentos" fill="#1a56db" />}
-                {chartType === 'low-stock-products' && (
-                  <>
-                    <Bar dataKey="stock" name="Stock Atual" fill="#ef4444" />
-                    <Bar dataKey="minimo" name="Stock Mínimo" fill="#9333ea" />
-                  </>
-                )}
-                {chartType === 'top-clients' && <Bar dataKey="valor" name="Valor" fill="#1a56db" />}
-                {chartType === 'top-suppliers' && <Bar dataKey="valor" name="Valor" fill="#9333ea" />}
-              </BarChart>
+              {renderChart()}
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -512,7 +512,6 @@ const Suporte = () => {
                 <div className="text-md font-medium">
                   <span className="text-blue-600 cursor-pointer hover:underline" 
                     onClick={() => {
-                      // Navegar para o produto, precisaríamos do ID
                       const productId = stats.lowStockProducts.find(p => p.name === stats.topProduct.name)?.id;
                       if (productId) {
                         navigate(`/produtos/${productId}`);
@@ -540,7 +539,6 @@ const Suporte = () => {
                 <div className="text-md font-medium">
                   <span className="text-blue-600 cursor-pointer hover:underline"
                     onClick={() => {
-                      // Idealmente procuraríamos o ID do cliente para navegar
                       navigate(`/clientes`);
                     }}>
                     {stats.topClient.name}
@@ -565,7 +563,6 @@ const Suporte = () => {
                 <div className="text-md font-medium">
                   <span className="text-blue-600 cursor-pointer hover:underline"
                     onClick={() => {
-                      // Idealmente procuraríamos o ID do fornecedor para navegar
                       navigate(`/fornecedores`);
                     }}>
                     {stats.topSupplier.name}
