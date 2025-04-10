@@ -5,28 +5,35 @@ import PageHeader from '@/components/ui/PageHeader';
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/formatting';
 import { useNavigate } from 'react-router-dom';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { CircleOff, DollarSign, PackageCheck, PackageMinus, Users, TrendingUp, ShoppingCart, Truck } from 'lucide-react';
+import { CircleOff, DollarSign, PackageCheck, PackageMinus, Users, TrendingUp, ShoppingCart, Truck, ChevronDown } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+
+type ChartType = 'resumo' | 'vendas' | 'compras' | 'lucro' | 'encomendas' | 'produtos' | 'stockMinimo' | 'clientes' | 'fornecedores';
 
 const Suporte = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
+  const [chartType, setChartType] = useState<ChartType>('resumo');
   const [stats, setStats] = useState({
     totalSales: 0,
     totalSpent: 0,
     profit: 0,
     profitMargin: 0,
-    topProduct: { name: '', quantity: 0 },
-    topClient: { name: '', orders: 0 },
-    topSupplier: { name: '', entries: 0 },
+    topProducts: [] as { name: string, quantity: number }[],
+    topClients: [] as { name: string, orders: number, spending: number }[],
+    topSuppliers: [] as { name: string, entries: number }[],
     lowStockProducts: [] as any[],
     pendingOrders: 0,
     completedOrders: 0,
     clientsCount: 0,
     suppliersCount: 0,
-    totalClientSpending: 0
+    categoriesCount: 0,
+    monthlySales: [] as any[],
+    monthlyData: [] as any[]
   });
 
   useEffect(() => {
@@ -63,30 +70,59 @@ const Suporte = () => {
         const profit = totalSales - totalSpent;
         const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
         
-        // Top product
-        const { data: products, error: productsError } = await supabase
+        // Top products
+        const { data: topProducts, error: productsError } = await supabase
           .from('stock_exit_items')
-          .select('product_name, quantity')
+          .select('product_name, product_id, quantity')
           .order('quantity', { ascending: false })
-          .limit(1);
+          .limit(5);
         
-        // Top client
+        // Top clients
         const { data: clients, error: clientsError } = await supabase
           .from('stock_exits')
           .select('client_name, id')
           .order('client_name');
         
-        const clientCounts = clients?.reduce((acc: Record<string, number>, current) => {
-          acc[current.client_name] = (acc[current.client_name] || 0) + 1;
+        const clientCounts = clients?.reduce((acc: Record<string, {orders: number, ids: string[]}>, current) => {
+          if (!acc[current.client_name]) {
+            acc[current.client_name] = { orders: 0, ids: [] };
+          }
+          acc[current.client_name].orders += 1;
+          acc[current.client_name].ids.push(current.id);
           return acc;
         }, {}) || {};
         
-        const topClient = Object.entries(clientCounts).reduce(
-          (top, [name, count]) => count > top.orders ? { name, orders: count } : top,
-          { name: '', orders: 0 }
-        );
+        // Calculate client spending
+        const clientSpending: Record<string, number> = {};
         
-        // Top supplier
+        for (const clientName of Object.keys(clientCounts)) {
+          const exitIds = clientCounts[clientName].ids;
+          let totalSpent = 0;
+          
+          for (const exitId of exitIds) {
+            const { data: items } = await supabase
+              .from('stock_exit_items')
+              .select('quantity, sale_price, discount_percent')
+              .eq('exit_id', exitId);
+              
+            if (items) {
+              totalSpent += items.reduce((sum, item) => {
+                const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+                return sum + (item.quantity * item.sale_price * discountMultiplier);
+              }, 0);
+            }
+          }
+          
+          clientSpending[clientName] = totalSpent;
+        }
+        
+        const topClients = Object.entries(clientCounts).map(([name, data]) => ({
+          name,
+          orders: data.orders,
+          spending: clientSpending[name] || 0
+        })).sort((a, b) => b.orders - a.orders).slice(0, 5);
+        
+        // Top suppliers
         const { data: suppliers, error: suppliersError } = await supabase
           .from('stock_entries')
           .select('supplier_name, id')
@@ -97,10 +133,10 @@ const Suporte = () => {
           return acc;
         }, {}) || {};
         
-        const topSupplier = Object.entries(supplierCounts).reduce(
-          (top, [name, count]) => count > top.entries ? { name, entries: count } : top,
-          { name: '', entries: 0 }
-        );
+        const topSuppliers = Object.entries(supplierCounts)
+          .map(([name, entries]) => ({ name, entries }))
+          .sort((a, b) => b.entries - a.entries)
+          .slice(0, 5);
         
         // Low stock products
         const lowStockProducts = await getLowStockProducts();
@@ -123,39 +159,31 @@ const Suporte = () => {
         const { count: suppliersCount } = await supabase
           .from('suppliers')
           .select('*', { count: 'exact', head: true });
-          
-        // Total client spending
-        const { data: totalClientSpending } = await supabase
-          .from('stock_exits')
-          .select(`
-            id,
-            stock_exit_items!inner(quantity, sale_price, discount_percent)
-          `);
-          
-        let totalClientSpend = 0;
-        if (totalClientSpending) {
-          totalClientSpending.forEach(exit => {
-            exit.stock_exit_items.forEach((item: any) => {
-              const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-              totalClientSpend += item.quantity * item.sale_price * discountMultiplier;
-            });
-          });
-        }
+        
+        // Categories count
+        const { count: categoriesCount } = await supabase
+          .from('categories')
+          .select('*', { count: 'exact', head: true });
+        
+        // Get monthly data for the last 6 months
+        const monthlyData = await fetchMonthlyData();
         
         setStats({
           totalSales,
           totalSpent,
           profit,
           profitMargin,
-          topProduct: products && products.length > 0 ? { name: products[0].product_name, quantity: products[0].quantity } : { name: '', quantity: 0 },
-          topClient,
-          topSupplier,
+          topProducts: topProducts || [],
+          topClients,
+          topSuppliers,
           lowStockProducts,
           pendingOrders,
           completedOrders: completedCount || 0,
           clientsCount: clientsCount || 0,
           suppliersCount: suppliersCount || 0,
-          totalClientSpending: totalClientSpend
+          categoriesCount: categoriesCount || 0,
+          monthlySales: [],
+          monthlyData
         });
       } catch (error) {
         console.error('Error fetching statistics:', error);
@@ -167,16 +195,402 @@ const Suporte = () => {
     fetchStats();
   }, []);
   
+  const fetchMonthlyData = async () => {
+    const today = new Date();
+    const months = [];
+    const data = [];
+    
+    // Get last 6 months
+    for (let i = 5; i >= 0; i--) {
+      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthName = month.toLocaleString('default', { month: 'short' });
+      months.push({ month, monthName });
+    }
+    
+    for (const { month, monthName } of months) {
+      const startDate = new Date(month.getFullYear(), month.getMonth(), 1).toISOString();
+      const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0).toISOString();
+      
+      // Get sales for this month
+      const { data: sales } = await supabase
+        .from('stock_exits')
+        .select(`
+          id,
+          date,
+          stock_exit_items:stock_exit_items(
+            quantity,
+            sale_price,
+            discount_percent
+          )
+        `)
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      let monthSales = 0;
+      if (sales) {
+        sales.forEach((sale: any) => {
+          if (sale.stock_exit_items) {
+            sale.stock_exit_items.forEach((item: any) => {
+              const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+              monthSales += item.quantity * item.sale_price * discountMultiplier;
+            });
+          }
+        });
+      }
+      
+      // Get purchases for this month
+      const { data: purchases } = await supabase
+        .from('stock_entries')
+        .select(`
+          id,
+          date,
+          stock_entry_items:stock_entry_items(
+            quantity,
+            purchase_price,
+            discount_percent
+          )
+        `)
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      let monthPurchases = 0;
+      if (purchases) {
+        purchases.forEach((purchase: any) => {
+          if (purchase.stock_entry_items) {
+            purchase.stock_entry_items.forEach((item: any) => {
+              const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+              monthPurchases += item.quantity * item.purchase_price * discountMultiplier;
+            });
+          }
+        });
+      }
+      
+      // Get orders for this month
+      const { data: orders, count: orderCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact' })
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      data.push({
+        name: monthName,
+        vendas: monthSales,
+        compras: monthPurchases,
+        lucro: monthSales - monthPurchases,
+        encomendas: orderCount || 0
+      });
+    }
+    
+    return data;
+  };
+  
+  const renderChart = () => {
+    if (isLoading) return <LoadingSpinner />;
+
+    switch(chartType) {
+      case 'resumo':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
+                    Resumo Financeiro <ChevronDown className="ml-1 h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white z-50">
+                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardTitle>
+              <CardDescription>Comparação entre vendas, gastos e lucro</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={[
+                  { name: 'Vendas', value: stats.totalSales },
+                  { name: 'Gastos', value: stats.totalSpent },
+                  { name: 'Lucro', value: stats.profit }
+                ]}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                  <Bar dataKey="value" fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </>
+        );
+      
+      case 'vendas':
+      case 'compras':
+      case 'lucro':
+      case 'encomendas':
+        const dataKey = chartType === 'vendas' ? 'vendas' : 
+                        chartType === 'compras' ? 'compras' : 
+                        chartType === 'lucro' ? 'lucro' : 'encomendas';
+        
+        const chartTitle = chartType === 'vendas' ? 'Vendas Mensais' : 
+                          chartType === 'compras' ? 'Compras Mensais' : 
+                          chartType === 'lucro' ? 'Lucro Mensal' : 'Encomendas Mensais';
+        
+        const chartDescription = chartType === 'encomendas' ? 'Número de encomendas por mês' : 'Valores em euros';
+        
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
+                    {chartTitle} <ChevronDown className="ml-1 h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white z-50">
+                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardTitle>
+              <CardDescription>{chartDescription}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value) => chartType === 'encomendas' ? value : formatCurrency(Number(value))} 
+                  />
+                  <Bar dataKey={dataKey} fill="#8884d8" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </>
+        );
+      
+      case 'produtos':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
+                    Produtos com mais movimento <ChevronDown className="ml-1 h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white z-50">
+                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardTitle>
+              <CardDescription>Top 5 produtos mais vendidos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.topProducts.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart 
+                    data={stats.topProducts.map(p => ({ name: p.product_name, value: p.quantity }))}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={150} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <CircleOff className="mx-auto h-8 w-8 mb-2" />
+                  <p>Não há dados de produtos disponíveis</p>
+                </div>
+              )}
+            </CardContent>
+          </>
+        );
+
+      case 'stockMinimo':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
+                    Produtos com Stock Mínimo <ChevronDown className="ml-1 h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white z-50">
+                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardTitle>
+              <CardDescription>Produtos que estão abaixo do stock mínimo definido</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.lowStockProducts.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="py-2 text-left">Produto</th>
+                        <th className="py-2 text-right">Stock Atual</th>
+                        <th className="py-2 text-right">Stock Mínimo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.lowStockProducts.map((product) => (
+                        <tr key={product.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/produtos/${product.id}`)}>
+                          <td className="py-2 text-left text-blue-600">{product.name}</td>
+                          <td className="py-2 text-right font-medium text-red-500">{product.current_stock}</td>
+                          <td className="py-2 text-right">{product.min_stock}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <CircleOff className="mx-auto h-8 w-8 mb-2" />
+                  <p>Não há produtos com stock baixo</p>
+                </div>
+              )}
+            </CardContent>
+          </>
+        );
+
+      case 'clientes':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
+                    Clientes com mais compras <ChevronDown className="ml-1 h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white z-50">
+                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardTitle>
+              <CardDescription>Top 5 clientes por número de compras</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.topClients.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart 
+                    data={stats.topClients.map(c => ({ name: c.name, value: c.orders }))}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={150} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <CircleOff className="mx-auto h-8 w-8 mb-2" />
+                  <p>Não há dados de clientes disponíveis</p>
+                </div>
+              )}
+            </CardContent>
+          </>
+        );
+
+      case 'fornecedores':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
+                    Fornecedores mais usados <ChevronDown className="ml-1 h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-white z-50">
+                    <DropdownMenuItem onSelect={() => setChartType('resumo')}>Resumo Financeiro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('vendas')}>Vendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('compras')}>Compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('lucro')}>Lucro</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('encomendas')}>Encomendas</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('produtos')}>Produtos com mais movimento</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('clientes')}>Clientes com mais compras</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setChartType('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </CardTitle>
+              <CardDescription>Top 5 fornecedores por número de entradas</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.topSuppliers.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart 
+                    data={stats.topSuppliers.map(s => ({ name: s.name, value: s.entries }))}
+                    layout="vertical"
+                  >
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" />
+                    <YAxis type="category" dataKey="name" width={150} />
+                    <Tooltip />
+                    <Bar dataKey="value" fill="#8884d8" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <CircleOff className="mx-auto h-8 w-8 mb-2" />
+                  <p>Não há dados de fornecedores disponíveis</p>
+                </div>
+              )}
+            </CardContent>
+          </>
+        );
+
+      default:
+        return null;
+    }
+  };
+  
   if (isLoading) {
     return <LoadingSpinner />;
   }
-  
-  // Prepare data for charts
-  const salesData = [
-    { name: 'Vendas', value: stats.totalSales },
-    { name: 'Gastos', value: stats.totalSpent },
-    { name: 'Lucro', value: stats.profit }
-  ];
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -237,56 +651,26 @@ const Suporte = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Resumo Financeiro</CardTitle>
-            <CardDescription>Comparação entre vendas, gastos e lucro</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={salesData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Bar dataKey="value" fill="#8884d8" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
+          {renderChart()}
         </Card>
         
         <Card>
           <CardHeader>
-            <CardTitle>Produtos com Stock Baixo</CardTitle>
-            <CardDescription>Produtos que estão abaixo do stock mínimo definido</CardDescription>
+            <CardTitle>Vendas e Compras (últimos 6 meses)</CardTitle>
+            <CardDescription>Comparação mensal entre vendas e compras</CardDescription>
           </CardHeader>
           <CardContent>
-            {stats.lowStockProducts.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="py-2 text-left">Produto</th>
-                      <th className="py-2 text-right">Stock Atual</th>
-                      <th className="py-2 text-right">Stock Mínimo</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {stats.lowStockProducts.map((product) => (
-                      <tr key={product.id} className="border-b hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/produtos/${product.id}`)}>
-                        <td className="py-2 text-left text-blue-600">{product.name}</td>
-                        <td className="py-2 text-right font-medium text-red-500">{product.current_stock}</td>
-                        <td className="py-2 text-right">{product.min_stock}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-4 text-gray-500">
-                <CircleOff className="mx-auto h-8 w-8 mb-2" />
-                <p>Não há produtos com stock baixo</p>
-              </div>
-            )}
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={stats.monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Legend />
+                <Line type="monotone" dataKey="vendas" stroke="#8884d8" activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="compras" stroke="#82ca9d" />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
@@ -299,19 +683,18 @@ const Suporte = () => {
           <CardContent>
             <div className="flex items-center">
               <PackageCheck className="w-4 h-4 mr-2 text-blue-500" />
-              {stats.topProduct.name ? (
+              {stats.topProducts.length > 0 ? (
                 <div className="text-md font-medium">
                   <span className="text-blue-600 cursor-pointer hover:underline" 
                     onClick={() => {
-                      // Navegar para o produto, precisaríamos do ID
-                      const productId = stats.lowStockProducts.find(p => p.name === stats.topProduct.name)?.id;
-                      if (productId) {
-                        navigate(`/produtos/${productId}`);
+                      const product = stats.topProducts[0];
+                      if (product.product_id) {
+                        navigate(`/produtos/${product.product_id}`);
                       }
                     }}>
-                    {stats.topProduct.name}
+                    {stats.topProducts[0].product_name}
                   </span>
-                  <span className="ml-2 text-sm text-gray-500">({stats.topProduct.quantity} vendidos)</span>
+                  <span className="ml-2 text-sm text-gray-500">({stats.topProducts[0].quantity} vendidos)</span>
                 </div>
               ) : (
                 <div className="text-md">Nenhuma venda registada</div>
@@ -327,16 +710,13 @@ const Suporte = () => {
           <CardContent>
             <div className="flex items-center">
               <Users className="w-4 h-4 mr-2 text-green-500" />
-              {stats.topClient.name ? (
+              {stats.topClients.length > 0 ? (
                 <div className="text-md font-medium">
                   <span className="text-blue-600 cursor-pointer hover:underline"
-                    onClick={() => {
-                      // Idealmente procuraríamos o ID do cliente para navegar
-                      navigate(`/clientes`);
-                    }}>
-                    {stats.topClient.name}
+                    onClick={() => navigate(`/clientes/consultar`)}>
+                    {stats.topClients[0].name}
                   </span>
-                  <span className="ml-2 text-sm text-gray-500">({stats.topClient.orders} compras)</span>
+                  <span className="ml-2 text-sm text-gray-500">({stats.topClients[0].orders} compras)</span>
                 </div>
               ) : (
                 <div className="text-md">Nenhum cliente com compras</div>
@@ -352,16 +732,13 @@ const Suporte = () => {
           <CardContent>
             <div className="flex items-center">
               <Truck className="w-4 h-4 mr-2 text-blue-500" />
-              {stats.topSupplier.name ? (
+              {stats.topSuppliers.length > 0 ? (
                 <div className="text-md font-medium">
                   <span className="text-blue-600 cursor-pointer hover:underline"
-                    onClick={() => {
-                      // Idealmente procuraríamos o ID do fornecedor para navegar
-                      navigate(`/fornecedores`);
-                    }}>
-                    {stats.topSupplier.name}
+                    onClick={() => navigate(`/fornecedores/consultar`)}>
+                    {stats.topSuppliers[0].name}
                   </span>
-                  <span className="ml-2 text-sm text-gray-500">({stats.topSupplier.entries} entradas)</span>
+                  <span className="ml-2 text-sm text-gray-500">({stats.topSuppliers[0].entries} entradas)</span>
                 </div>
               ) : (
                 <div className="text-md">Nenhum fornecedor com entradas</div>
@@ -379,7 +756,7 @@ const Suporte = () => {
               <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
               <div className="text-2xl font-bold">{stats.pendingOrders}</div>
               {stats.pendingOrders > 0 && (
-                <Button variant="ghost" size="sm" className="ml-2" onClick={() => navigate('/encomendas')}>
+                <Button variant="ghost" size="sm" className="ml-2" onClick={() => navigate('/encomendas/consultar')}>
                   Ver todas
                 </Button>
               )}
@@ -421,12 +798,15 @@ const Suporte = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto por Clientes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Categorias</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalClientSpending)}</div>
+              <Tag className="w-4 h-4 mr-2 text-green-500" />
+              <div className="text-2xl font-bold">{stats.categoriesCount}</div>
+              <Button variant="ghost" size="sm" className="ml-2" onClick={() => navigate('/categorias/consultar')}>
+                Ver todos
+              </Button>
             </div>
           </CardContent>
         </Card>
