@@ -582,29 +582,9 @@ const Suporte = () => {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <Card>
           {renderChart()}
-        </Card>
-        
-        <Card>
-          <CardHeader>
-            <CardTitle>Vendas e Compras (últimos 6 meses)</CardTitle>
-            <CardDescription>Comparação mensal entre vendas e compras</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={stats.monthlyData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                <Legend />
-                <Line type="monotone" dataKey="vendas" stroke="#8884d8" activeDot={{ r: 8 }} />
-                <Line type="monotone" dataKey="compras" stroke="#82ca9d" />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
         </Card>
       </div>
       
