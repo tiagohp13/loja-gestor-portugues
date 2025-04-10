@@ -12,6 +12,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ChartDropdown from '@/components/statistics/ChartDropdown';
 import { ChartType } from '@/components/statistics/ChartDropdown';
 
+interface TopProduct {
+  name: string;
+  quantity: number;
+  productId?: string;
+}
+
 const Suporte = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +27,7 @@ const Suporte = () => {
     totalSpent: 0,
     profit: 0,
     profitMargin: 0,
-    topProducts: [] as { name: string, quantity: number }[],
+    topProducts: [] as TopProduct[],
     topClients: [] as { name: string, orders: number, spending: number }[],
     topSuppliers: [] as { name: string, entries: number }[],
     lowStockProducts: [] as any[],
@@ -38,7 +44,6 @@ const Suporte = () => {
     const fetchStats = async () => {
       setIsLoading(true);
       try {
-        // Fetch total sales from stock exits
         const { data: exitItems, error: exitError } = await supabase
           .from('stock_exit_items')
           .select('quantity, sale_price, discount_percent');
@@ -51,7 +56,6 @@ const Suporte = () => {
           }, 0);
         }
         
-        // Fetch total spent on stock entries
         const { data: entryItems, error: entryError } = await supabase
           .from('stock_entry_items')
           .select('quantity, purchase_price, discount_percent');
@@ -64,25 +68,21 @@ const Suporte = () => {
           }, 0);
         }
         
-        // Calculate profit and margin
         const profit = totalSales - totalSpent;
         const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
         
-        // Top products
         const { data: topProductsData, error: productsError } = await supabase
           .from('stock_exit_items')
           .select('product_name, product_id, quantity')
           .order('quantity', { ascending: false })
           .limit(5);
         
-        // Map the database product fields to the expected stats format
         const topProducts = topProductsData?.map((product) => ({
           name: product.product_name,
           quantity: product.quantity,
           productId: product.product_id
         })) || [];
 
-        // Top clients
         const { data: clients, error: clientsError } = await supabase
           .from('stock_exits')
           .select('client_name, id')
@@ -97,7 +97,6 @@ const Suporte = () => {
           return acc;
         }, {}) || {};
         
-        // Calculate client spending
         const clientSpending: Record<string, number> = {};
         
         for (const clientName of Object.keys(clientCounts)) {
@@ -127,7 +126,6 @@ const Suporte = () => {
           spending: clientSpending[name] || 0
         })).sort((a, b) => b.orders - a.orders).slice(0, 5);
         
-        // Top suppliers
         const { data: suppliers, error: suppliersError } = await supabase
           .from('stock_entries')
           .select('supplier_name, id')
@@ -143,34 +141,27 @@ const Suporte = () => {
           .sort((a, b) => b.entries - a.entries)
           .slice(0, 5);
         
-        // Low stock products
         const lowStockProducts = await getLowStockProducts();
         
-        // Pending orders count
         const pendingOrders = await countPendingOrders();
         
-        // Completed orders count
         const { count: completedCount } = await supabase
           .from('orders')
           .select('*', { count: 'exact', head: true })
           .not('converted_to_stock_exit_id', 'is', null);
         
-        // Clients count
         const { count: clientsCount } = await supabase
           .from('clients')
           .select('*', { count: 'exact', head: true });
           
-        // Suppliers count
         const { count: suppliersCount } = await supabase
           .from('suppliers')
           .select('*', { count: 'exact', head: true });
         
-        // Categories count
         const { count: categoriesCount } = await supabase
           .from('categories')
           .select('*', { count: 'exact', head: true });
         
-        // Get monthly data for the last 6 months
         const monthlyData = await fetchMonthlyData();
         
         setStats({
@@ -205,7 +196,6 @@ const Suporte = () => {
     const months = [];
     const data = [];
     
-    // Get last 6 months
     for (let i = 5; i >= 0; i--) {
       const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
       const monthName = month.toLocaleString('default', { month: 'short' });
@@ -216,7 +206,6 @@ const Suporte = () => {
       const startDate = new Date(month.getFullYear(), month.getMonth(), 1).toISOString();
       const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0).toISOString();
       
-      // Get sales for this month
       const { data: sales } = await supabase
         .from('stock_exits')
         .select(`
@@ -243,7 +232,6 @@ const Suporte = () => {
         });
       }
       
-      // Get purchases for this month
       const { data: purchases } = await supabase
         .from('stock_entries')
         .select(`
@@ -270,7 +258,6 @@ const Suporte = () => {
         });
       }
       
-      // Get orders for this month
       const { data: orders, count: orderCount } = await supabase
         .from('orders')
         .select('*', { count: 'exact' })
