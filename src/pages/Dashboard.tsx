@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
@@ -17,15 +16,12 @@ const DashboardPage: React.FC = () => {
   const { products, suppliers, clients, stockEntries, stockExits, orders } = useData();
   const dashboardData = getDashboardData();
   
-  // Chart type state
   const [chartType, setChartType] = useState<string>('financial-summary');
   
-  // Ensure dates are properly converted for charting
   const ensureDate = (dateInput: string | Date): Date => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
   
-  // Calculate monthly data for chart
   const monthlyData = new Map();
   
   const today = new Date();
@@ -39,7 +35,6 @@ const DashboardPage: React.FC = () => {
     });
   }
   
-  // Calculate sales data - Update to use items array
   stockExits.forEach(exit => {
     const date = ensureDate(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -55,7 +50,6 @@ const DashboardPage: React.FC = () => {
     }
   });
   
-  // Calculate purchase data - Update to use items array
   stockEntries.forEach(entry => {
     const date = ensureDate(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -73,7 +67,6 @@ const DashboardPage: React.FC = () => {
   
   const chartData = Array.from(monthlyData.values());
   
-  // Count products by category
   const categoryCounts = products.reduce((acc, product) => {
     const { category } = product;
     if (!acc[category]) {
@@ -88,12 +81,10 @@ const DashboardPage: React.FC = () => {
     quantidade: count
   }));
   
-  // Calculate products with low stock
   const lowStockProducts = products.filter(product => 
     product.currentStock <= (product.minStock || 0) && product.minStock > 0
   );
   
-  // Calculate recent transactions - Update to use items array
   const allTransactions = [
     ...stockEntries.flatMap(entry => entry.items.map(item => ({
       id: entry.id,
@@ -119,12 +110,10 @@ const DashboardPage: React.FC = () => {
     })))
   ];
   
-  // Sort by date (most recent first) and limit to 5 transactions
   const recentTransactions = allTransactions
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
   
-  // Calculate most sold product - Update to use items array
   const productSales = stockExits.flatMap(exit => exit.items).reduce((acc, item) => {
     const { productId, quantity } = item;
     if (!acc[productId]) {
@@ -146,7 +135,6 @@ const DashboardPage: React.FC = () => {
   
   const mostSoldProduct = products.find(p => p.id === mostSoldProductId);
   
-  // Calculate most frequent client
   const clientPurchases = stockExits.reduce((acc, exit) => {
     const { clientId } = exit;
     if (!acc[clientId]) {
@@ -168,7 +156,6 @@ const DashboardPage: React.FC = () => {
   
   const mostFrequentClient = clients.find(c => c.id === mostFrequentClientId);
   
-  // Calculate most used supplier
   const supplierPurchases = stockEntries.reduce((acc, entry) => {
     const { supplierId } = entry;
     if (!acc[supplierId]) {
@@ -190,30 +177,26 @@ const DashboardPage: React.FC = () => {
   
   const mostUsedSupplier = suppliers.find(s => s.id === mostUsedSupplierId);
   
-  // Calculate total sales value - Update to use items array
   const totalSalesValue = stockExits.reduce((total, exit) => {
-    const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+    const exitTotal = exit.items.reduce((sum, item) => 
+      sum + (item.quantity * item.salePrice), 0);
     return total + exitTotal;
   }, 0);
   
-  // Calculate total purchase value
   const totalPurchaseValue = stockEntries.reduce((total, entry) => {
-    const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+    const entryTotal = entry.items.reduce((sum, item) => 
+      sum + (item.quantity * item.purchasePrice), 0);
     return total + entryTotal;
   }, 0);
   
-  // Calculate total stock value
   const totalStockValue = products.reduce((total, product) => {
     return total + (product.currentStock * product.purchasePrice);
   }, 0);
 
-  // Calculate profit
   const totalProfit = totalSalesValue - totalPurchaseValue;
   
-  // Calculate profit margin percentage
   const profitMarginPercent = totalSalesValue > 0 ? (totalProfit / totalSalesValue) * 100 : 0;
 
-  // Navigate to detail pages
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
   };
@@ -226,7 +209,6 @@ const DashboardPage: React.FC = () => {
     navigate(`/fornecedores/${id}`);
   };
 
-  // Function to get chart data based on selected type
   const getChartData = () => {
     switch(chartType) {
       case 'sales-only':
@@ -234,13 +216,11 @@ const DashboardPage: React.FC = () => {
       case 'purchases-only':
         return chartData.map(item => ({ name: item.name, compras: item.compras }));
       case 'profit-only':
-        // Fix: Ensure vendas and compras are numbers by using Number()
         return chartData.map(item => ({ 
           name: item.name, 
-          lucro: Number(item.vendas) - Number(item.compras) 
+          lucro: Number(item.vendas || 0) - Number(item.compras || 0) 
         }));
       case 'orders':
-        // Group orders by month
         const ordersByMonth = new Map();
         orders.forEach(order => {
           const date = ensureDate(order.date);
@@ -254,7 +234,6 @@ const DashboardPage: React.FC = () => {
           encomendas: ordersByMonth.get(key) || 0
         }));
       case 'stock-entries':
-        // Group stock entries by month
         const entriesByMonth = new Map();
         stockEntries.forEach(entry => {
           const date = ensureDate(entry.date);
@@ -268,7 +247,6 @@ const DashboardPage: React.FC = () => {
           entradas: entriesByMonth.get(key) || 0
         }));
       case 'stock-exits':
-        // Group stock exits by month
         const exitsByMonth = new Map();
         stockExits.forEach(exit => {
           const date = ensureDate(exit.date);
@@ -282,31 +260,28 @@ const DashboardPage: React.FC = () => {
           saidas: exitsByMonth.get(key) || 0
         }));
       case 'most-moving-products':
-        // Get top products by movement (entries + exits)
         const productMovements = {};
         
-        // Add movements from entries
         stockEntries.forEach(entry => 
           entry.items.forEach(item => {
             if (!productMovements[item.productName]) {
               productMovements[item.productName] = 0;
             }
-            productMovements[item.productName] += item.quantity;
+            productMovements[item.productName] += Number(item.quantity || 0);
           })
         );
         
-        // Add movements from exits
         stockExits.forEach(exit => 
           exit.items.forEach(item => {
             if (!productMovements[item.productName]) {
               productMovements[item.productName] = 0;
             }
-            productMovements[item.productName] += item.quantity;
+            productMovements[item.productName] += Number(item.quantity || 0);
           })
         );
         
         return Object.entries(productMovements)
-          .sort((a, b) => b[1] - a[1])
+          .sort((a, b) => Number(b[1]) - Number(a[1]))
           .slice(0, 5)
           .map(([name, quantity]) => ({ name, movimentos: quantity }));
       case 'low-stock-products':
@@ -318,7 +293,6 @@ const DashboardPage: React.FC = () => {
             minimo: product.minStock 
           }));
       case 'top-clients':
-        // Calculate clients with most purchases
         const clientPurchaseTotals = {};
         
         stockExits.forEach(exit => {
@@ -327,17 +301,16 @@ const DashboardPage: React.FC = () => {
           }
           
           const exitTotal = exit.items.reduce((sum, item) => 
-            sum + (item.quantity * item.salePrice), 0);
+            sum + (Number(item.quantity || 0) * Number(item.salePrice || 0)), 0);
           
           clientPurchaseTotals[exit.clientName] += exitTotal;
         });
         
         return Object.entries(clientPurchaseTotals)
-          .sort((a, b) => b[1] - a[1])
+          .sort((a, b) => Number(b[1]) - Number(a[1]))
           .slice(0, 5)
           .map(([name, value]) => ({ name, valor: value }));
       case 'top-suppliers':
-        // Calculate most used suppliers
         const supplierUsage = {};
         
         stockEntries.forEach(entry => {
@@ -346,28 +319,26 @@ const DashboardPage: React.FC = () => {
           }
           
           const entryTotal = entry.items.reduce((sum, item) => 
-            sum + (item.quantity * item.purchasePrice), 0);
+            sum + (Number(item.quantity || 0) * Number(item.purchasePrice || 0)), 0);
           
           supplierUsage[entry.supplierName] += entryTotal;
         });
         
         return Object.entries(supplierUsage)
-          .sort((a, b) => b[1] - a[1])
+          .sort((a, b) => Number(b[1]) - Number(a[1]))
           .slice(0, 5)
           .map(([name, value]) => ({ name, valor: value }));
       case 'financial-summary':
       default:
-        // Fix: Add lucro field to the chart data with proper number conversion
         return chartData.map(item => ({
           name: item.name,
           vendas: item.vendas,
           compras: item.compras,
-          lucro: Number(item.vendas) - Number(item.compras)
+          lucro: Number(item.vendas || 0) - Number(item.compras || 0)
         }));
     }
   };
 
-  // Function to get chart title based on selected type
   const getChartTitle = () => {
     switch(chartType) {
       case 'sales-only':
@@ -396,11 +367,9 @@ const DashboardPage: React.FC = () => {
     }
   };
 
-  // Function to render chart based on selected type
   const renderChart = () => {
     const data = getChartData();
     
-    // Define custom tooltip formatter based on chart type
     const tooltipFormatter = (value, name) => {
       if (['top-clients', 'top-suppliers'].includes(chartType)) {
         return [formatCurrency(value), name];
