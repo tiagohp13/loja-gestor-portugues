@@ -48,6 +48,7 @@ const StockExitNew = () => {
   });
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedProductDisplay, setSelectedProductDisplay] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
@@ -90,6 +91,7 @@ const StockExitNew = () => {
         salePrice: selectedProduct.salePrice,
         discountPercent: 0
       });
+      setSelectedProductDisplay(`${selectedProduct.code} - ${selectedProduct.name}`);
     }
     setIsProductSearchOpen(false);
   };
@@ -151,6 +153,7 @@ const StockExitNew = () => {
       salePrice: 0,
       discountPercent: 0
     });
+    setSelectedProductDisplay('');
     setSearchTerm('');
   };
   
@@ -348,7 +351,7 @@ const StockExitNew = () => {
                     <div className="relative">
                       <Input
                         placeholder="Pesquisar produto por nome ou código"
-                        value={searchTerm}
+                        value={selectedProductDisplay || searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10"
                         onClick={() => setIsProductSearchOpen(true)}

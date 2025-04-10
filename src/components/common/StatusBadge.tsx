@@ -1,85 +1,49 @@
 
 import React from 'react';
-import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
-import { LucideIcon } from 'lucide-react';
-
-type StatusVariant = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
 interface StatusBadgeProps {
-  variant?: StatusVariant;
-  children?: React.ReactNode;
+  status: string;
   className?: string;
-  status?: string;
-  icon?: LucideIcon;
 }
 
-const StatusBadge: React.FC<StatusBadgeProps> = ({ 
-  variant, 
-  children, 
-  className, 
-  status,
-  icon: Icon 
-}) => {
-  // Handle status prop if provided
-  if (status && !variant && !children) {
-    let statusVariant: StatusVariant = 'neutral';
-    let displayText = 'Desconhecido';
-    
-    switch (status.toLowerCase()) {
-      case 'active':
-        statusVariant = 'success';
-        displayText = 'Ativo';
-        break;
-      case 'inactive':
-        statusVariant = 'danger';
-        displayText = 'Inativo';
-        break;
-      case 'pending':
-        statusVariant = 'warning';
-        displayText = 'Pendente';
-        break;
-      default:
-        statusVariant = 'neutral';
-        displayText = status;
-    }
-    
-    return (
-      <Badge 
-        variant={mapVariantToUiBadge(statusVariant)} 
-        className={className}
-      >
-        {displayText}
-      </Badge>
-    );
+const StatusBadge: React.FC<StatusBadgeProps> = ({ status, className }) => {
+  let bgColor = 'bg-gray-100';
+  let textColor = 'text-gray-800';
+  
+  switch (status.toLowerCase()) {
+    case 'ativo':
+    case 'ativa':
+    case 'concluído':
+    case 'concluida':
+    case 'concluída':
+      bgColor = 'bg-green-100';
+      textColor = 'text-green-800';
+      break;
+    case 'inativo':
+    case 'inativa':
+    case 'cancelado':
+    case 'cancelada':
+      bgColor = 'bg-red-100';
+      textColor = 'text-red-800';
+      break;
+    case 'pendente':
+      bgColor = 'bg-orange-100';
+      textColor = 'text-orange-800';
+      break;
+    case 'em processamento':
+    case 'em andamento':
+      bgColor = 'bg-blue-100';
+      textColor = 'text-blue-800';
+      break;
+    default:
+      break;
   }
   
-  // Handle explicit variant and children
   return (
-    <Badge 
-      variant={mapVariantToUiBadge(variant || 'neutral')} 
-      className={cn("flex items-center gap-1", className)}
-    >
-      {Icon && <Icon className="h-3 w-3" />}
-      {children}
-    </Badge>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${bgColor} ${textColor} ${className || ''}`}>
+      {status}
+    </span>
   );
 };
-
-// Map our status variants to UI badge variants
-function mapVariantToUiBadge(variant: StatusVariant): "default" | "destructive" | "outline" | "secondary" {
-  switch (variant) {
-    case 'success':
-      return 'default'; // Using default (green) for success
-    case 'danger':
-      return 'destructive';
-    case 'warning':
-      return 'outline';
-    case 'info':
-    case 'neutral':
-    default:
-      return 'secondary';
-  }
-}
 
 export default StatusBadge;

@@ -92,17 +92,14 @@ const StockExitList = () => {
     }
   };
 
-  // Fetch data when component mounts
   useEffect(() => {
     setIsLoading(true);
     fetchAllExits();
   }, [setStockExits]);
 
-  // Setup realtime subscriptions
   useEffect(() => {
     console.log("Setting up realtime subscriptions for stock exits");
     
-    // Create a dedicated channel for stock_exits changes
     const channel = supabase.channel('stock_exits_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exits' }, 
@@ -115,7 +112,6 @@ const StockExitList = () => {
         console.log('Stock exits subscription status:', status);
       });
       
-    // Create a dedicated channel for stock_exit_items changes  
     const itemsChannel = supabase.channel('stock_exit_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_exit_items' }, 
