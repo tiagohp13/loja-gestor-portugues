@@ -31,7 +31,7 @@ const CategoryEdit: React.FC = () => {
         });
       } else {
         toast.error('Categoria não encontrada');
-        navigate('/categorias/consultar');
+        navigate('/categorias');
       }
     }
   }, [id, getCategory, navigate]);
@@ -63,7 +63,7 @@ const CategoryEdit: React.FC = () => {
       if (id) {
         updateCategory(id, category);
         toast.success('Categoria atualizada com sucesso');
-        navigate(`/categorias/${id}`);
+        navigate('/categorias');
       }
     } catch (error) {
       console.error('Error updating category:', error);
@@ -77,8 +77,8 @@ const CategoryEdit: React.FC = () => {
         title="Editar Categoria"
         description="Atualize os detalhes da categoria"
         actions={
-          <Button variant="outline" onClick={() => navigate(`/categorias/${id}`)}>
-            Voltar aos Detalhes
+          <Button variant="outline" onClick={() => navigate('/categorias')}>
+            Voltar à Lista
           </Button>
         }
       />
@@ -125,7 +125,7 @@ const CategoryEdit: React.FC = () => {
           </div>
 
           <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate(`/categorias/${id}`)}>
+            <Button variant="outline" type="button" onClick={() => navigate('/categorias')}>
               Cancelar
             </Button>
             <Button type="submit">Guardar Alterações</Button>

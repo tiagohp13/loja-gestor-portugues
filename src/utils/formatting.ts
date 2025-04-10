@@ -24,22 +24,21 @@ export const formatDateTime = (date: Date | string): string => {
   }).format(new Date(date));
 };
 
-// Add the missing formatDateString function
 export const formatDateString = (date: Date | string): string => {
   return formatDate(date);
 };
 
 export const generateFormattedOrderNumber = (counter: number): string => {
   const year = new Date().getFullYear();
-  return `ENC${year}/${counter.toString().padStart(5, '0')}`;
+  return `C${year}${counter.toString().padStart(3, '0')}`;
 };
 
 export const generateFormattedStockExitNumber = (counter: number): string => {
   const year = new Date().getFullYear();
-  return `SAI${year}/${counter.toString().padStart(5, '0')}`;
+  return `S${year}${counter.toString().padStart(3, '0')}`;
 };
 
 export const generateFormattedStockEntryNumber = (counter: number): string => {
   const year = new Date().getFullYear();
-  return `ENT${year}/${counter.toString().padStart(5, '0')}`;
+  return `E${year}${counter.toString().padStart(3, '0')}`;
 };

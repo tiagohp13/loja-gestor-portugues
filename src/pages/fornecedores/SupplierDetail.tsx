@@ -6,23 +6,41 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatDateString } from '@/utils/formatting';
+import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
-import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, Clock } from 'lucide-react';
+import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, Clock, DollarSign } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { getSupplierTotalSpent } from '@/integrations/supabase/client';
 
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getSupplier, getSupplierHistory, isLoading } = useData();
   const [supplierHistory, setSupplierHistory] = useState<{ entries: any[] }>({ entries: [] });
+  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [isLoadingTotal, setIsLoadingTotal] = useState(false);
   
   useEffect(() => {
     if (id) {
-      const history = getSupplierHistory(id);
-      if (history) {
-        setSupplierHistory(history);
-      }
+      const fetchSupplierData = async () => {
+        const history = getSupplierHistory(id);
+        if (history) {
+          setSupplierHistory(history);
+        }
+        
+        // Obter total gasto com o fornecedor
+        setIsLoadingTotal(true);
+        try {
+          const spent = await getSupplierTotalSpent(id);
+          setTotalSpent(spent);
+        } catch (error) {
+          console.error('Error fetching supplier total spent:', error);
+        } finally {
+          setIsLoadingTotal(false);
+        }
+      };
+      
+      fetchSupplierData();
     }
   }, [id, getSupplierHistory]);
   
@@ -76,6 +94,18 @@ const SupplierDetail = () => {
                 </div>
               </div>
             )}
+            
+            <div className="flex items-start">
+              <DollarSign className="h-5 w-5 mr-2 text-gray-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Gasto</p>
+                {isLoadingTotal ? (
+                  <p>Calculando...</p>
+                ) : (
+                  <p className="font-semibold text-blue-600">{formatCurrency(totalSpent)}</p>
+                )}
+              </div>
+            </div>
             
             {supplier.email && (
               <div className="flex items-start">
@@ -144,6 +174,9 @@ const SupplierDetail = () => {
           <CardContent>
             <div className="space-y-2">
               <p>Total de entradas: {supplierHistory.entries?.length || 0}</p>
+              {!isLoadingTotal && (
+                <p>Total gasto: {formatCurrency(totalSpent)}</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -165,16 +198,25 @@ const SupplierDetail = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {supplierHistory.entries.map((entry) => (
-                  <tr key={entry.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{entry.number}</td>
+                  <tr 
+                    key={entry.id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => navigate(`/entradas/${entry.id}`)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{entry.number}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(entry.date)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.invoiceNumber || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {entry.items.reduce((total, item) => 
-                        total + (item.quantity * item.purchasePrice * (1 - (item.discountPercent || 0) / 100)), 0).toFixed(2)} €
+                      {formatCurrency(entry.items.reduce((total, item) => 
+                        total + (item.quantity * item.purchasePrice * (1 - (item.discountPercent || 0) / 100)), 0))}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" onClick={() => navigate(`/entradas/detalhe/${entry.id}`)}>Ver</Button>
+                      <Button variant="ghost" onClick={(e) => {
+                        e.stopPropagation();
+                        navigate(`/entradas/${entry.id}`);
+                      }}>
+                        Ver
+                      </Button>
                     </td>
                   </tr>
                 ))}
