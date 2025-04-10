@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
@@ -12,13 +13,15 @@ import { Button } from '@/components/ui/button';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { products, suppliers, clients, stockEntries, stockExits, orders } = useData();
+  const { products, suppliers, clients, stockEntries, stockExits } = useData();
   const dashboardData = getDashboardData();
-    
+  
+  // Ensure dates are properly converted for charting
   const ensureDate = (dateInput: string | Date): Date => {
     return dateInput instanceof Date ? dateInput : new Date(dateInput);
   };
   
+  // Calculate monthly data for chart
   const monthlyData = new Map();
   
   const today = new Date();
@@ -32,6 +35,7 @@ const DashboardPage: React.FC = () => {
     });
   }
   
+  // Calculate sales data - Update to use items array
   stockExits.forEach(exit => {
     const date = ensureDate(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -47,6 +51,7 @@ const DashboardPage: React.FC = () => {
     }
   });
   
+  // Calculate purchase data - Update to use items array
   stockEntries.forEach(entry => {
     const date = ensureDate(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
@@ -64,6 +69,7 @@ const DashboardPage: React.FC = () => {
   
   const chartData = Array.from(monthlyData.values());
   
+  // Count products by category
   const categoryCounts = products.reduce((acc, product) => {
     const { category } = product;
     if (!acc[category]) {
@@ -78,10 +84,12 @@ const DashboardPage: React.FC = () => {
     quantidade: count
   }));
   
+  // Calculate products with low stock
   const lowStockProducts = products.filter(product => 
     product.currentStock <= (product.minStock || 0) && product.minStock > 0
   );
   
+  // Calculate recent transactions - Update to use items array
   const allTransactions = [
     ...stockEntries.flatMap(entry => entry.items.map(item => ({
       id: entry.id,
@@ -107,10 +115,12 @@ const DashboardPage: React.FC = () => {
     })))
   ];
   
+  // Sort by date (most recent first) and limit to 5 transactions
   const recentTransactions = allTransactions
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
   
+  // Calculate most sold product - Update to use items array
   const productSales = stockExits.flatMap(exit => exit.items).reduce((acc, item) => {
     const { productId, quantity } = item;
     if (!acc[productId]) {
@@ -132,6 +142,7 @@ const DashboardPage: React.FC = () => {
   
   const mostSoldProduct = products.find(p => p.id === mostSoldProductId);
   
+  // Calculate most frequent client
   const clientPurchases = stockExits.reduce((acc, exit) => {
     const { clientId } = exit;
     if (!acc[clientId]) {
@@ -153,6 +164,7 @@ const DashboardPage: React.FC = () => {
   
   const mostFrequentClient = clients.find(c => c.id === mostFrequentClientId);
   
+  // Calculate most used supplier
   const supplierPurchases = stockEntries.reduce((acc, entry) => {
     const { supplierId } = entry;
     if (!acc[supplierId]) {
@@ -174,26 +186,30 @@ const DashboardPage: React.FC = () => {
   
   const mostUsedSupplier = suppliers.find(s => s.id === mostUsedSupplierId);
   
+  // Calculate total sales value - Update to use items array
   const totalSalesValue = stockExits.reduce((total, exit) => {
-    const exitTotal = exit.items.reduce((sum, item) => 
-      sum + (item.quantity * item.salePrice), 0);
+    const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
     return total + exitTotal;
   }, 0);
   
+  // Calculate total purchase value
   const totalPurchaseValue = stockEntries.reduce((total, entry) => {
-    const entryTotal = entry.items.reduce((sum, item) => 
-      sum + (item.quantity * item.purchasePrice), 0);
+    const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
     return total + entryTotal;
   }, 0);
   
+  // Calculate total stock value
   const totalStockValue = products.reduce((total, product) => {
     return total + (product.currentStock * product.purchasePrice);
   }, 0);
 
+  // Calculate profit
   const totalProfit = totalSalesValue - totalPurchaseValue;
   
+  // Calculate profit margin percentage
   const profitMarginPercent = totalSalesValue > 0 ? (totalProfit / totalSalesValue) * 100 : 0;
 
+  // Navigate to detail pages
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
   };
@@ -264,15 +280,18 @@ const DashboardPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis />
-                <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                <Tooltip 
+                  formatter={(value: number) => [formatCurrency(value), '']}
+                  labelFormatter={(label) => `Período: ${label}`} 
+                />
                 <Legend />
-                <Bar dataKey="vendas" name="Vendas" fill="#1a56db" />
-                <Bar dataKey="compras" name="Compras" fill="#9333ea" />
-              </BarChart>
+                <Line type="monotone" dataKey="vendas" stroke="#1a56db" name="Vendas" />
+                <Line type="monotone" dataKey="compras" stroke="#9333ea" name="Compras" />
+              </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
@@ -546,7 +565,7 @@ const DashboardPage: React.FC = () => {
               <div className="flex justify-between py-2">
                 <dt className="text-gestorApp-gray font-medium">Margem de Lucro</dt>
                 <dd className="font-semibold text-green-600">
-                  {profitMarginPercent.toFixed(2)}%
+                  {profitMarginPercent.toFixed(2)}% ({formatCurrency(totalProfit)})
                 </dd>
               </div>
             </dl>

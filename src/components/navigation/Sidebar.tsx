@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart2, ClipboardList
+  UserIcon, Settings, Tag, BarChart, ClipboardList
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
@@ -70,7 +70,7 @@ const AppSidebar: React.FC = () => {
     { 
       path: '/suporte', 
       label: 'Estatísticas', 
-      icon: <BarChart2 className="w-5 h-5" />,
+      icon: <BarChart className="w-5 h-5" />,
       isActive: location.pathname.includes('/suporte')
     },
     { 
