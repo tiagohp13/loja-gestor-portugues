@@ -50,6 +50,14 @@ export interface Client {
   status?: string;
 }
 
+export interface ClientWithAddress extends Client {
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+  };
+}
+
 export interface Supplier {
   id: string;
   name: string;
@@ -62,6 +70,14 @@ export interface Supplier {
   createdAt: string;
   updatedAt: string;
   status?: string;
+}
+
+export interface SupplierWithAddress extends Supplier {
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+  };
 }
 
 export interface StockEntryItem {

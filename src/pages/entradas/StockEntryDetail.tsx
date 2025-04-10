@@ -17,14 +17,14 @@ import ClickableProductItem from '@/components/common/ClickableProductItem';
 const StockEntryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getStockEntry, deleteStockEntry } = useData();
+  const { stockEntries, deleteStockEntry } = useData();
   const [stockEntry, setStockEntry] = useState<any | null>(null);
   const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
-      const entry = getStockEntry(id);
+      const entry = stockEntries.find(entry => entry.id === id);
       if (entry) {
         setStockEntry(entry);
         if (entry.supplier) {
@@ -35,7 +35,7 @@ const StockEntryDetail = () => {
         navigate('/entradas/historico');
       }
     }
-  }, [id, getStockEntry, navigate]);
+  }, [id, stockEntries, navigate]);
 
   const handleDelete = () => {
     setIsDeleteDialogOpen(true);
@@ -56,7 +56,7 @@ const StockEntryDetail = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
-        title={`Entrada: ${stockEntry?.reference || ''}`}
+        title={`Entrada: ${stockEntry?.number || ''}`}
         description="Detalhes da entrada de stock"
         actions={
           <>
@@ -96,7 +96,7 @@ const StockEntryDetail = () => {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-1">Referência</p>
-                <p>{stockEntry.reference}</p>
+                <p>{stockEntry.number}</p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Data</p>
@@ -143,8 +143,8 @@ const StockEntryDetail = () => {
                       productId={item.productId}
                       name={item.productName}
                       quantity={item.quantity}
-                      price={item.price}
-                      total={item.total}
+                      price={item.purchasePrice}
+                      total={item.quantity * item.purchasePrice}
                     />
                   ))}
                 </tbody>
@@ -193,11 +193,12 @@ const StockEntryDetail = () => {
       </Tabs>
 
       <DeleteConfirmDialog
-        isOpen={isDeleteDialogOpen}
+        open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
+        onDelete={confirmDelete}
         title="Eliminar Entrada"
         description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
+        trigger={<></>}
       />
     </div>
   );

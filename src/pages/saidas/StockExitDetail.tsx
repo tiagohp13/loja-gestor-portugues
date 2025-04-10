@@ -17,14 +17,14 @@ import ClickableProductItem from '@/components/common/ClickableProductItem';
 const StockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getStockExit, deleteStockExit } = useData();
+  const { stockExits, deleteStockExit } = useData();
   const [stockExit, setStockExit] = useState<any | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
-      const exit = getStockExit(id);
+      const exit = stockExits.find(exit => exit.id === id);
       if (exit) {
         setStockExit(exit);
         if (exit.client) {
@@ -35,7 +35,7 @@ const StockExitDetail = () => {
         navigate('/saidas/historico');
       }
     }
-  }, [id, getStockExit, navigate]);
+  }, [id, stockExits, navigate]);
 
   const handleDelete = () => {
     setIsDeleteDialogOpen(true);
@@ -56,7 +56,7 @@ const StockExitDetail = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
-        title={`Saída: ${stockExit?.reference || ''}`}
+        title={`Saída: ${stockExit?.number || ''}`}
         description="Detalhes da saída de stock"
         actions={
           <>
@@ -96,7 +96,7 @@ const StockExitDetail = () => {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-1">Referência</p>
-                <p>{stockExit.reference}</p>
+                <p>{stockExit.number}</p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Data</p>
@@ -143,8 +143,8 @@ const StockExitDetail = () => {
                       productId={item.productId}
                       name={item.productName}
                       quantity={item.quantity}
-                      price={item.price}
-                      total={item.total}
+                      price={item.salePrice}
+                      total={item.quantity * item.salePrice}
                     />
                   ))}
                 </tbody>
@@ -193,11 +193,12 @@ const StockExitDetail = () => {
       </Tabs>
 
       <DeleteConfirmDialog
-        isOpen={isDeleteDialogOpen}
+        open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
+        onDelete={confirmDelete}
         title="Eliminar Saída"
         description="Tem certeza que deseja eliminar esta saída? Esta ação não pode ser desfeita."
+        trigger={<></>}
       />
     </div>
   );
