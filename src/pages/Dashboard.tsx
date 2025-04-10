@@ -1,15 +1,18 @@
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
 import PageHeader from '../components/ui/PageHeader';
-import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle } from 'lucide-react';
+import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle, ExternalLink } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatting';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { BarChart, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer } from 'recharts';
+import { Button } from '@/components/ui/button';
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { products, suppliers, clients, stockEntries, stockExits } = useData();
   const dashboardData = getDashboardData();
   
@@ -94,6 +97,7 @@ const DashboardPage: React.FC = () => {
       productId: item.productId,
       product: products.find(p => p.id === item.productId),
       entity: entry.supplierName || suppliers.find(s => s.id === entry.supplierId)?.name || 'Desconhecido',
+      entityId: entry.supplierId,
       quantity: item.quantity,
       date: entry.date,
       value: item.quantity * item.purchasePrice
@@ -104,6 +108,7 @@ const DashboardPage: React.FC = () => {
       productId: item.productId,
       product: products.find(p => p.id === item.productId),
       entity: exit.clientName || clients.find(c => c.id === exit.clientId)?.name || 'Desconhecido',
+      entityId: exit.clientId,
       quantity: item.quantity,
       date: exit.date,
       value: item.quantity * item.salePrice
@@ -187,10 +192,35 @@ const DashboardPage: React.FC = () => {
     return total + exitTotal;
   }, 0);
   
+  // Calculate total purchase value
+  const totalPurchaseValue = stockEntries.reduce((total, entry) => {
+    const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+    return total + entryTotal;
+  }, 0);
+  
   // Calculate total stock value
   const totalStockValue = products.reduce((total, product) => {
     return total + (product.currentStock * product.purchasePrice);
   }, 0);
+
+  // Calculate profit
+  const totalProfit = totalSalesValue - totalPurchaseValue;
+  
+  // Calculate profit margin percentage
+  const profitMarginPercent = totalSalesValue > 0 ? (totalProfit / totalSalesValue) * 100 : 0;
+
+  // Navigate to detail pages
+  const navigateToProductDetail = (id: string) => {
+    navigate(`/produtos/${id}`);
+  };
+
+  const navigateToClientDetail = (id: string) => {
+    navigate(`/clientes/${id}`);
+  };
+
+  const navigateToSupplierDetail = (id: string) => {
+    navigate(`/fornecedores/${id}`);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -301,7 +331,13 @@ const DashboardPage: React.FC = () => {
                     <div className="flex items-center">
                       <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
                       <div>
-                        <div className="font-medium">{product.name}</div>
+                        <Button 
+                          variant="link" 
+                          className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                          onClick={() => navigateToProductDetail(product.id)}
+                        >
+                          {product.name}
+                        </Button>
                         <div className="text-sm text-gestorApp-gray">Código: {product.code}</div>
                       </div>
                     </div>
@@ -338,9 +374,26 @@ const DashboardPage: React.FC = () => {
                     recentTransactions.map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
                         <div>
-                          <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
+                          <Button 
+                            variant="link" 
+                            className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                            onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
+                          >
+                            {transaction.product?.name || "Produto removido"}
+                          </Button>
                           <div className="text-sm text-gestorApp-gray">
-                            {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: {transaction.entity}
+                            {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: 
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto text-gestorApp-gray hover:text-blue-600"
+                              onClick={() => transaction.entityId && (
+                                transaction.type === 'entry' 
+                                  ? navigateToSupplierDetail(transaction.entityId)
+                                  : navigateToClientDetail(transaction.entityId)
+                              )}
+                            >
+                              {transaction.entity}
+                            </Button>
                           </div>
                         </div>
                         <div className="text-right">
@@ -369,9 +422,22 @@ const DashboardPage: React.FC = () => {
                     .map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
                         <div>
-                          <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
+                          <Button 
+                            variant="link" 
+                            className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                            onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
+                          >
+                            {transaction.product?.name || "Produto removido"}
+                          </Button>
                           <div className="text-sm text-gestorApp-gray">
-                            Fornecedor: {transaction.entity}
+                            Fornecedor: 
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto text-gestorApp-gray hover:text-blue-600"
+                              onClick={() => transaction.entityId && navigateToSupplierDetail(transaction.entityId)}
+                            >
+                              {transaction.entity}
+                            </Button>
                           </div>
                         </div>
                         <div className="text-right">
@@ -394,9 +460,22 @@ const DashboardPage: React.FC = () => {
                     .map((transaction) => (
                       <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
                         <div>
-                          <div className="font-medium">{transaction.product?.name || "Produto removido"}</div>
+                          <Button 
+                            variant="link" 
+                            className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                            onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
+                          >
+                            {transaction.product?.name || "Produto removido"}
+                          </Button>
                           <div className="text-sm text-gestorApp-gray">
-                            Cliente: {transaction.entity}
+                            Cliente: 
+                            <Button 
+                              variant="link" 
+                              className="p-0 h-auto text-gestorApp-gray hover:text-blue-600"
+                              onClick={() => transaction.entityId && navigateToClientDetail(transaction.entityId)}
+                            >
+                              {transaction.entity}
+                            </Button>
                           </div>
                         </div>
                         <div className="text-right">
@@ -426,25 +505,67 @@ const DashboardPage: React.FC = () => {
               <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Produto Mais Vendido</dt>
                 <dd className="font-semibold text-gestorApp-gray-dark">
-                  {mostSoldProduct?.name || 'N/A'}
+                  {mostSoldProduct ? (
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto font-semibold text-gestorApp-gray-dark hover:text-blue-600"
+                      onClick={() => mostSoldProduct && navigateToProductDetail(mostSoldProduct.id)}
+                    >
+                      {mostSoldProduct.name}
+                    </Button>
+                  ) : 'N/A'}
                 </dd>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Cliente Mais Frequente</dt>
                 <dd className="font-semibold text-gestorApp-gray-dark">
-                  {mostFrequentClient?.name || 'N/A'}
+                  {mostFrequentClient ? (
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto font-semibold text-gestorApp-gray-dark hover:text-blue-600"
+                      onClick={() => mostFrequentClient && navigateToClientDetail(mostFrequentClient.id)}
+                    >
+                      {mostFrequentClient.name}
+                    </Button>
+                  ) : 'N/A'}
                 </dd>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Fornecedor Mais Usado</dt>
                 <dd className="font-semibold text-gestorApp-gray-dark">
-                  {mostUsedSupplier?.name || 'N/A'}
+                  {mostUsedSupplier ? (
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto font-semibold text-gestorApp-gray-dark hover:text-blue-600"
+                      onClick={() => mostUsedSupplier && navigateToSupplierDetail(mostUsedSupplier.id)}
+                    >
+                      {mostUsedSupplier.name}
+                    </Button>
+                  ) : 'N/A'}
                 </dd>
               </div>
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between py-2 border-b">
+                <dt className="text-gestorApp-gray font-medium">Total Compras</dt>
+                <dd className="font-semibold text-purple-600">
+                  {formatCurrency(totalPurchaseValue)}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Total Vendas</dt>
                 <dd className="font-semibold text-gestorApp-blue">
                   {formatCurrency(totalSalesValue)}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <dt className="text-gestorApp-gray font-medium">Lucro</dt>
+                <dd className="font-semibold text-green-600">
+                  {formatCurrency(totalProfit)}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="text-gestorApp-gray font-medium">Margem de Lucro</dt>
+                <dd className="font-semibold text-green-600">
+                  {profitMarginPercent.toFixed(2)}% ({formatCurrency(totalProfit)})
                 </dd>
               </div>
             </dl>
@@ -473,7 +594,13 @@ const DashboardPage: React.FC = () => {
                     .map((product) => (
                       <tr key={product.id} className="border-b">
                         <td className="py-3">
-                          <div className="font-medium">{product.name}</div>
+                          <Button 
+                            variant="link" 
+                            className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                            onClick={() => navigateToProductDetail(product.id)}
+                          >
+                            {product.name}
+                          </Button>
                           <div className="text-sm text-gestorApp-gray">{product.category}</div>
                         </td>
                         <td className="py-3 text-right">{product.currentStock} un.</td>

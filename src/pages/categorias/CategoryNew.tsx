@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
 import PageHeader from '@/components/ui/PageHeader';
 import { Category } from '@/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CategoryNew = () => {
   const navigate = useNavigate();
@@ -27,10 +28,22 @@ const CategoryNew = () => {
     }));
   };
 
+  const handleStatusChange = (value: string) => {
+    setCategory(prev => ({
+      ...prev,
+      status: value
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
+      if (!category.name.trim()) {
+        toast.error('O nome da categoria é obrigatório');
+        return;
+      }
+
       await addCategory(category);
       toast.success('Categoria adicionada com sucesso!');
       navigate('/categorias');
@@ -80,16 +93,18 @@ const CategoryNew = () => {
           
           <div>
             <Label htmlFor="status">Status</Label>
-            <select
-              id="status"
-              name="status"
+            <Select
               value={category.status}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onValueChange={handleStatusChange}
             >
-              <option value="active">Ativo</option>
-              <option value="inactive">Inativo</option>
-            </select>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex justify-end space-x-4 pt-4">

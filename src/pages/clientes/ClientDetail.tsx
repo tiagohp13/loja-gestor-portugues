@@ -7,23 +7,40 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { formatDateTime, formatDateString } from '@/utils/formatting';
+import { formatDateTime, formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
-import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard } from 'lucide-react';
+import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, TrendingUp } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { supabase, getClientTotalSpent } from '@/integrations/supabase/client';
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getClient, getClientHistory, isLoading } = useData();
   const [clientHistory, setClientHistory] = useState<{ orders: any[], exits: any[] }>({ orders: [], exits: [] });
+  const [totalSpent, setTotalSpent] = useState<number>(0);
+  const [isLoadingTotal, setIsLoadingTotal] = useState(false);
   
   useEffect(() => {
     if (id) {
-      const history = getClientHistory(id);
-      if (history) {
-        setClientHistory(history);
-      }
+      const fetchClientData = async () => {
+        const history = getClientHistory(id);
+        if (history) {
+          setClientHistory(history);
+        }
+        
+        setIsLoadingTotal(true);
+        try {
+          const spent = await getClientTotalSpent(id);
+          setTotalSpent(spent);
+        } catch (error) {
+          console.error('Error fetching client total spent:', error);
+        } finally {
+          setIsLoadingTotal(false);
+        }
+      };
+      
+      fetchClientData();
     }
   }, [id, getClientHistory]);
   
@@ -77,6 +94,18 @@ const ClientDetail = () => {
                 </div>
               </div>
             )}
+            
+            <div className="flex items-start">
+              <TrendingUp className="h-5 w-5 mr-2 text-gray-500" />
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Gasto</p>
+                {isLoadingTotal ? (
+                  <p>Calculando...</p>
+                ) : (
+                  <p className="font-semibold text-blue-600">{formatCurrency(totalSpent)}</p>
+                )}
+              </div>
+            </div>
             
             {client.email && (
               <div className="flex items-start">

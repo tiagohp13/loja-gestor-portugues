@@ -4,8 +4,11 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CategoryEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,7 +16,8 @@ const CategoryEdit: React.FC = () => {
   const { getCategory, updateCategory } = useData();
   const [category, setCategory] = useState({
     name: '',
-    description: ''
+    description: '',
+    status: 'active'
   });
 
   useEffect(() => {
@@ -22,7 +26,8 @@ const CategoryEdit: React.FC = () => {
       if (foundCategory) {
         setCategory({
           name: foundCategory.name || '',
-          description: foundCategory.description || ''
+          description: foundCategory.description || '',
+          status: foundCategory.status || 'active'
         });
       } else {
         toast.error('Categoria não encontrada');
@@ -39,11 +44,30 @@ const CategoryEdit: React.FC = () => {
     }));
   };
 
+  const handleStatusChange = (value: string) => {
+    setCategory(prev => ({
+      ...prev,
+      status: value
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (id) {
-      updateCategory(id, category);
-      navigate(`/categorias/${id}`);
+    
+    try {
+      if (!category.name.trim()) {
+        toast.error('O nome da categoria é obrigatório');
+        return;
+      }
+      
+      if (id) {
+        updateCategory(id, category);
+        toast.success('Categoria atualizada com sucesso');
+        navigate(`/categorias/${id}`);
+      }
+    } catch (error) {
+      console.error('Error updating category:', error);
+      toast.error('Erro ao atualizar categoria');
     }
   };
 
@@ -62,9 +86,7 @@ const CategoryEdit: React.FC = () => {
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="space-y-2">
-            <label htmlFor="name" className="text-sm font-medium text-gestorApp-gray-dark">
-              Nome da Categoria
-            </label>
+            <Label htmlFor="name">Nome da Categoria</Label>
             <Input
               id="name"
               name="name"
@@ -76,16 +98,30 @@ const CategoryEdit: React.FC = () => {
           </div>
 
           <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium text-gestorApp-gray-dark">
-              Descrição
-            </label>
-            <Input
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
               id="description"
               name="description"
               value={category.description}
               onChange={handleChange}
               placeholder="Descrição da categoria (opcional)"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={category.status}
+              onValueChange={handleStatusChange}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Selecione o status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Ativo</SelectItem>
+                <SelectItem value="inactive">Inativo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex justify-end space-x-4">
