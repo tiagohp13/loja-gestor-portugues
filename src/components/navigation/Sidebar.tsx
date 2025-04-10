@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -81,19 +80,21 @@ const AppSidebar: React.FC = () => {
     }
   ];
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sessão terminada com sucesso');
+      navigate('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Erro ao terminar sessão');
+    }
   };
 
-  // Extract user display name from metadata or use email
   const getUserDisplayName = () => {
     if (!user) return '';
     
-    // Try to get name from user metadata
     const userName = user.user_metadata?.name;
-    
-    // If name exists in metadata, use it, otherwise use email
     return userName || user.email?.split('@')[0] || '';
   };
 
