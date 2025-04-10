@@ -7,7 +7,7 @@ import { formatCurrency } from '@/utils/formatting';
 import { useNavigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Button } from '@/components/ui/button';
-import { CircleOff, DollarSign, PackageCheck, PackageMinus, Users, TrendingUp, ShoppingCart, Truck } from 'lucide-react';
+import { CircleOff, DollarSign, PackageCheck, PackageMinus, Users, TrendingUp, ShoppingCart, Truck, Tag, ArrowRight } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const Suporte = () => {
@@ -26,7 +26,8 @@ const Suporte = () => {
     completedOrders: 0,
     clientsCount: 0,
     suppliersCount: 0,
-    totalClientSpending: 0
+    categoriesCount: 0,
+    categories: []
   });
 
   useEffect(() => {
@@ -124,23 +125,10 @@ const Suporte = () => {
           .from('suppliers')
           .select('*', { count: 'exact', head: true });
           
-        // Total client spending
-        const { data: totalClientSpending } = await supabase
-          .from('stock_exits')
-          .select(`
-            id,
-            stock_exit_items!inner(quantity, sale_price, discount_percent)
-          `);
-          
-        let totalClientSpend = 0;
-        if (totalClientSpending) {
-          totalClientSpending.forEach(exit => {
-            exit.stock_exit_items.forEach((item: any) => {
-              const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-              totalClientSpend += item.quantity * item.sale_price * discountMultiplier;
-            });
-          });
-        }
+        // Categories count and data
+        const { data: categories, count: categoriesCount } = await supabase
+          .from('categories')
+          .select('*', { count: 'exact' });
         
         setStats({
           totalSales,
@@ -155,7 +143,8 @@ const Suporte = () => {
           completedOrders: completedCount || 0,
           clientsCount: clientsCount || 0,
           suppliersCount: suppliersCount || 0,
-          totalClientSpending: totalClientSpend
+          categoriesCount: categoriesCount || 0,
+          categories: categories || []
         });
       } catch (error) {
         console.error('Error fetching statistics:', error);
@@ -177,6 +166,12 @@ const Suporte = () => {
     { name: 'Gastos', value: stats.totalSpent },
     { name: 'Lucro', value: stats.profit }
   ];
+  
+  // Prepare categories data for chart display
+  const categoriesData = stats.categories.map(cat => ({
+    name: cat.name,
+    productCount: cat.product_count || 0
+  }));
   
   return (
     <div className="container mx-auto px-4 py-6">
@@ -379,7 +374,7 @@ const Suporte = () => {
               <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
               <div className="text-2xl font-bold">{stats.pendingOrders}</div>
               {stats.pendingOrders > 0 && (
-                <Button variant="ghost" size="sm" className="ml-2" onClick={() => navigate('/encomendas')}>
+                <Button variant="ghost" size="sm" className="ml-2" onClick={() => navigate('/encomendas/consultar')}>
                   Ver todas
                 </Button>
               )}
@@ -421,13 +416,51 @@ const Suporte = () => {
         
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto por Clientes</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Categorias</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalClientSpending)}</div>
+              <Tag className="w-4 h-4 mr-2 text-blue-500" />
+              <div className="text-2xl font-bold">{stats.categoriesCount}</div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-2 flex items-center" 
+                onClick={() => navigate('/categorias/consultar')}
+              >
+                Ver todas
+                <ArrowRight className="ml-1 h-3 w-3" />
+              </Button>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 mb-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Categorias</CardTitle>
+            <CardDescription>Distribuição de produtos por categoria</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {categoriesData.length > 0 ? (
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoriesData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip formatter={(value) => [`${value} produto(s)`, 'Produtos']} />
+                    <Bar dataKey="productCount" fill="#3b82f6" name="Produtos" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                <CircleOff className="mx-auto h-8 w-8 mb-2" />
+                <p>Não há categorias registadas</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
