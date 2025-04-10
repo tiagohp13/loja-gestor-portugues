@@ -97,7 +97,6 @@ const OrderList = () => {
   useEffect(() => {
     console.log("Setting up realtime subscriptions for orders");
     
-    // Create a dedicated channel for orders changes
     const channel = supabase.channel('orders_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'orders' }, 
@@ -110,7 +109,6 @@ const OrderList = () => {
         console.log('Orders subscription status:', status);
       });
       
-    // Create a dedicated channel for order items changes
     const itemsChannel = supabase.channel('order_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'order_items' }, 
@@ -262,11 +260,16 @@ const OrderList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                       {order.convertedToStockExitId ? (
-                        <StatusBadge variant="success" icon={ShoppingCart}>
+                        <StatusBadge 
+                          variant="success" 
+                          icon={ShoppingCart}
+                        >
                           Convertida em Saída
                         </StatusBadge>
                       ) : (
-                        <StatusBadge variant="warning">
+                        <StatusBadge 
+                          variant="warning"
+                        >
                           Pendente
                         </StatusBadge>
                       )}
