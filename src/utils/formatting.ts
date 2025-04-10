@@ -28,6 +28,14 @@ export const formatDateString = (date: Date | string): string => {
   return formatDate(date);
 };
 
+export const formatPercentage = (value: number): string => {
+  return new Intl.NumberFormat('pt-PT', {
+    style: 'percent',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value / 100);
+};
+
 export const generateFormattedOrderNumber = (counter: number): string => {
   const year = new Date().getFullYear();
   return `C${year}${counter.toString().padStart(3, '0')}`;

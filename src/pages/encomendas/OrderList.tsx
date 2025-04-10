@@ -20,9 +20,15 @@ const OrderList = () => {
   const { orders, deleteOrder, setOrders } = useData();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() => {
+    return (localStorage.getItem('orderSortDirection') as 'asc' | 'desc') || 'desc';
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [localOrders, setLocalOrders] = useState<Order[]>([]);
+  
+  useEffect(() => {
+    localStorage.setItem('orderSortDirection', sortOrder);
+  }, [sortOrder]);
   
   const filteredOrders = localOrders.filter(order => 
     order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -129,7 +135,8 @@ const OrderList = () => {
   }, []);
 
   const toggleSortOrder = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newSortOrder);
   };
   
   const handleViewOrder = (id: string) => {

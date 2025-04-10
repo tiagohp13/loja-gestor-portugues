@@ -318,7 +318,7 @@ export const batchSaveToTable = async (table: TableName, items: any[]): Promise<
 // Get client's total spent
 export const getClientTotalSpent = async (clientId: string): Promise<number> => {
   try {
-    // Buscar todas as saídas para este cliente
+    // Fetch all stock exits for this client
     const { data: exitData, error: exitError } = await supabase
       .from('stock_exits')
       .select('id')
@@ -333,7 +333,7 @@ export const getClientTotalSpent = async (clientId: string): Promise<number> => 
       return 0;
     }
     
-    // Buscar os itens de saída para todos os IDs de saída
+    // Fetch the exit items for all exit IDs
     const exitIds = exitData.map(exit => exit.id);
     
     const { data: itemsData, error: itemsError } = await supabase
@@ -346,7 +346,7 @@ export const getClientTotalSpent = async (clientId: string): Promise<number> => 
       return 0;
     }
     
-    // Calcular o total gasto
+    // Calculate total spent
     let totalSpent = 0;
     
     if (itemsData && itemsData.length > 0) {

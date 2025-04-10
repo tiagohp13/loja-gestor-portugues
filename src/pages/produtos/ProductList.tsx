@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Search, Edit, Trash2, History, Plus, ChevronDown, ChevronUp } from 'lucide-react';
@@ -51,12 +51,25 @@ const ProductList = () => {
   const navigate = useNavigate();
   const { products, deleteProduct } = useData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('name');
-  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [sortField, setSortField] = useState<SortField>(() => {
+    // Get sorting preference from localStorage or default to 'name'
+    return (localStorage.getItem('productSortField') as SortField) || 'name';
+  });
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() => {
+    // Get direction preference from localStorage or default to 'asc'
+    return (localStorage.getItem('productSortDirection') as SortDirection) || 'asc';
+  });
+
+  // Save sort preferences to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('productSortField', sortField);
+    localStorage.setItem('productSortDirection', sortDirection);
+  }, [sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+      setSortDirection(newDirection);
     } else {
       setSortField(field);
       setSortDirection('asc');

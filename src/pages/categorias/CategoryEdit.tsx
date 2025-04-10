@@ -51,7 +51,7 @@ const CategoryEdit: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     try {
@@ -61,9 +61,9 @@ const CategoryEdit: React.FC = () => {
       }
       
       if (id) {
-        updateCategory(id, category);
+        await updateCategory(id, category);
         toast.success('Categoria atualizada com sucesso');
-        navigate('/categorias');
+        navigate('/categorias'); // Ensure navigation happens after the update
       }
     } catch (error) {
       console.error('Error updating category:', error);
