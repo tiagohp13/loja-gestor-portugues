@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -35,7 +36,16 @@ const OrderList = () => {
     order.number.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
+  // Updated sorting logic to prioritize pending orders and then sort by date
   const sortedOrders = [...filteredOrders].sort((a, b) => {
+    // First sort by status (pending orders first)
+    const aPending = !a.convertedToStockExitId;
+    const bPending = !b.convertedToStockExitId;
+    
+    if (aPending && !bPending) return -1;
+    if (!aPending && bPending) return 1;
+    
+    // Then sort by date based on the selected sort order
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
