@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -66,20 +65,18 @@ import Support from './pages/Suporte';
 import NotFound from './pages/NotFound';
 
 // Layout
-import AppLayout from './components/navigation/AppSidebar';
+import AppLayout from './components/layouts/AppLayout';
 
 // Auth Route Guard
 const ProtectedRoute = () => {
   const { isAuthenticated, isInitialized } = useAuth();
   const location = useLocation();
   
-  // Show loading while checking authentication
   if (!isInitialized) {
     return <LoadingSpinner />;
   }
   
   if (isAuthenticated === false) {
-    // Save the attempted URL for redirecting after login
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
@@ -100,53 +97,44 @@ function App() {
                   <Route path="/" element={<Navigate to="/dashboard" replace />} />
                   <Route path="/dashboard" element={<DashboardPage />} />
                   
-                  {/* Products */}
                   <Route path="/produtos/consultar" element={<ProductList />} />
                   <Route path="/produtos/novo" element={<ProductNew />} />
                   <Route path="/produtos/:id" element={<ProductDetail />} />
                   <Route path="/produtos/editar/:id" element={<ProductEdit />} />
                   
-                  {/* Categories */}
                   <Route path="/categorias/consultar" element={<CategoryList />} />
                   <Route path="/categorias/nova" element={<CategoryNew />} />
                   <Route path="/categorias/:id" element={<CategoryDetail />} />
                   <Route path="/categorias/editar/:id" element={<CategoryEdit />} />
                   
-                  {/* Clients */}
                   <Route path="/clientes/consultar" element={<ClientList />} />
                   <Route path="/clientes/novo" element={<ClientNew />} />
                   <Route path="/clientes/:id" element={<ClientDetail />} />
                   <Route path="/clientes/editar/:id" element={<ClientEdit />} />
                   
-                  {/* Suppliers */}
                   <Route path="/fornecedores/consultar" element={<SupplierList />} />
                   <Route path="/fornecedores/novo" element={<SupplierNew />} />
                   <Route path="/fornecedores/:id" element={<SupplierDetail />} />
                   <Route path="/fornecedores/editar/:id" element={<SupplierEdit />} />
                   
-                  {/* Orders */}
                   <Route path="/encomendas/consultar" element={<OrderList />} />
                   <Route path="/encomendas/nova" element={<OrderNew />} />
                   <Route path="/encomendas/:id" element={<OrderDetail />} />
                   <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
                   <Route path="/encomendas/converter/:id" element={<OrderConverting />} />
                   
-                  {/* Purchases (Previously Stock Entries) */}
                   <Route path="/entradas/historico" element={<StockEntryList />} />
                   <Route path="/entradas/nova" element={<StockEntryNew />} />
                   <Route path="/entradas/:id" element={<StockEntryDetail />} />
                   <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
                   
-                  {/* Sales (Previously Stock Exits) */}
                   <Route path="/saidas/historico" element={<StockExitList />} />
                   <Route path="/saidas/nova" element={<StockExitNew />} />
                   <Route path="/saidas/:id" element={<StockExitDetail />} />
                   <Route path="/saidas/editar/:id" element={<StockExitEdit />} />
                   
-                  {/* Settings */}
                   <Route path="/configuracoes" element={<Settings />} />
                   
-                  {/* Statistics (Previously Support) */}
                   <Route path="/suporte" element={<Support />} />
                 </Route>
               </Route>

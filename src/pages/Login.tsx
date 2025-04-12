@@ -56,6 +56,7 @@ const Login: React.FC = () => {
             placeholder="seu@email.pt"
             required
             className="w-full"
+            autoComplete="email"
           />
         </div>
         
@@ -69,6 +70,7 @@ const Login: React.FC = () => {
             placeholder="••••••••"
             required
             className="w-full"
+            autoComplete="current-password"
           />
         </div>
         
