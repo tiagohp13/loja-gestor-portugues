@@ -43,9 +43,9 @@ const Login: React.FC = () => {
 
   return (
     <AuthLayout>
-      <h2 className="text-xl font-semibold mb-6 text-center">Iniciar Sessão</h2>
+      <h2 className="text-xl sm:text-2xl font-semibold mb-6 text-center">Iniciar Sessão</h2>
       
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 w-full px-2 sm:px-4">
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -55,6 +55,7 @@ const Login: React.FC = () => {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="seu@email.pt"
             required
+            className="w-full"
           />
         </div>
         
@@ -67,6 +68,7 @@ const Login: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••"
             required
+            className="w-full"
           />
         </div>
         

@@ -1,21 +1,26 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Menu
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
-  SidebarMenuItem
+  SidebarMenuItem, SidebarTrigger, useSidebar
 } from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
 
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
   
   const navigationItems = [
     { 
@@ -91,6 +96,13 @@ const AppSidebar: React.FC = () => {
     }
   };
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
   const getUserDisplayName = () => {
     if (!user) return '';
     
@@ -99,8 +111,8 @@ const AppSidebar: React.FC = () => {
   };
 
   return (
-    <Sidebar variant="sidebar" collapsible="none">
-      <SidebarHeader className="p-4 flex items-center justify-center border-b">
+    <Sidebar variant="sidebar" collapsible="offcanvas">
+      <SidebarHeader className="p-4 flex items-center justify-between border-b">
         <h2 className="text-lg font-bold text-gestorApp-blue">Gestor de Stock</h2>
       </SidebarHeader>
       
@@ -111,18 +123,13 @@ const AppSidebar: React.FC = () => {
             <SidebarMenu>
               {navigationItems.map((item, index) => (
                 <SidebarMenuItem key={index}>
-                  <SidebarMenuButton>
-                    <Link 
-                      to={item.path} 
-                      className={`flex items-center space-x-2 ${
-                        item.isActive 
-                          ? 'font-bold text-gestorApp-blue' 
-                          : 'text-gestorApp-gray'
-                      }`}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </Link>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.path)}
+                    isActive={item.isActive}
+                    tooltip={item.label}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}

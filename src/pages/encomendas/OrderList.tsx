@@ -15,10 +15,12 @@ import { Order } from '@/types';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import StatusBadge from '@/components/common/StatusBadge';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { orders, deleteOrder, setOrders } = useData();
+  const isMobile = useIsMobile();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() => {
@@ -191,8 +193,65 @@ const OrderList = () => {
     );
   }
 
+  // Mobile card view rendering
+  const renderMobileCard = (order: Order) => (
+    <div 
+      key={order.id}
+      className="bg-white rounded-lg shadow p-4 mb-4 cursor-pointer hover:bg-gray-50"
+      onClick={() => handleViewOrder(order.id)}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h3 className="font-medium text-gestorApp-blue">{order.number}</h3>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={(e) => handleEditOrder(e, order.id)}
+            disabled={order.convertedToStockExitId !== null}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <DeleteConfirmDialog
+            title="Eliminar Encomenda"
+            description="Tem a certeza que deseja eliminar esta encomenda?"
+            onDelete={() => handleDeleteOrder(order.id)}
+            trigger={
+              <Button variant="outline" size="sm">
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            }
+          />
+        </div>
+      </div>
+      
+      <div className="grid grid-cols-2 gap-y-2 text-sm">
+        <div className="text-gestorApp-gray">Data:</div>
+        <div>{format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}</div>
+        
+        <div className="text-gestorApp-gray">Cliente:</div>
+        <div>{order.clientName}</div>
+        
+        <div className="text-gestorApp-gray">Valor:</div>
+        <div>{formatCurrency(calculateOrderTotal(order))}</div>
+        
+        <div className="text-gestorApp-gray">Estado:</div>
+        <div>
+          {order.convertedToStockExitId ? (
+            <StatusBadge variant="success" icon={ShoppingCart}>
+              Convertida em Saída
+            </StatusBadge>
+          ) : (
+            <StatusBadge variant="warning">
+              Pendente
+            </StatusBadge>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <PageHeader 
         title="Consultar Encomendas" 
         description="Consulte e gerencie as suas encomendas"
@@ -203,7 +262,7 @@ const OrderList = () => {
         }
       />
       
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-white rounded-lg shadow p-4 sm:p-6 mt-4 sm:mt-6">
         <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
           <div className="relative w-full md:w-2/3">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
@@ -231,6 +290,10 @@ const OrderList = () => {
               </Button>
             }
           />
+        ) : isMobile ? (
+          <div className="space-y-4">
+            {sortedOrders.map(renderMobileCard)}
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
