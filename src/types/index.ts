@@ -136,13 +136,13 @@ export interface StockEntry {
   number: string;
   supplierId: string;
   supplierName: string;
-  items: StockEntryItem[];
-  invoiceNumber?: string;
-  notes?: string;
   date: string;
+  invoiceNumber: string;
+  notes: string;
   createdAt: string;
-  status?: string;
   type?: string;
+  status?: string;
+  items: StockEntryItem[];
 }
 
 export interface Order {

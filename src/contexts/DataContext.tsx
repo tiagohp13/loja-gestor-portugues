@@ -72,7 +72,7 @@ interface DataContextType {
   
   // Export/Import
   exportData: (type: ExportDataType) => void;
-  importData: (type: ExportDataType, data: string) => Promise<void>;
+  importData: <T extends ExportDataType>(type: T, data: string) => Promise<void>;
   updateData: <T extends keyof DataState>(type: T, data: DataState[T]) => void;
   
   // Business Analytics
@@ -997,6 +997,530 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
   
+  const addOrder = async (order: Omit<Order, 'id' | 'number'>): Promise<Order> => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .insert({
+          client_id: order.clientId,
+          client_name: order.clientName,
+          date: order.date,
+          notes: order.notes,
+          discount: order.discount
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        if (order.items && order.items.length > 0) {
+          const orderItems = order.items.map(item => ({
+            order_id: data.id,
+            product_id: item.productId,
+            product_name: item.productName,
+            quantity: item.quantity,
+            sale_price: item.salePrice,
+            discount_percent: item.discountPercent
+          }));
+          
+          const { error: itemsError } = await supabase
+            .from('order_items')
+            .insert(orderItems);
+          
+          if (itemsError) throw itemsError;
+        }
+        
+        const newOrder: Order = {
+          id: data.id,
+          number: data.number,
+          clientId: data.client_id || '',
+          clientName: data.client_name || '',
+          date: data.date,
+          notes: data.notes || '',
+          convertedToStockExitId: data.converted_to_stock_exit_id,
+          convertedToStockExitNumber: data.converted_to_stock_exit_number,
+          discount: Number(data.discount || 0),
+          items: order.items
+        };
+        
+        setOrders([newOrder, ...orders]);
+        return newOrder;
+      }
+      
+      throw new Error('Failed to add order');
+    } catch (error) {
+      console.error('Error adding order:', error);
+      toast.error('Erro ao adicionar encomenda');
+      throw error;
+    }
+  };
+  
+  const updateOrder = async (id: string, order: Partial<Order>): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({
+          client_id: order.clientId,
+          client_name: order.clientName,
+          date: order.date,
+          notes: order.notes,
+          discount: order.discount
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      if (order.items) {
+        const { error: deleteError } = await supabase
+          .from('order_items')
+          .delete()
+          .eq('order_id', id);
+        
+        if (deleteError) throw deleteError;
+        
+        const orderItems = order.items.map(item => ({
+          order_id: id,
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          sale_price: item.salePrice,
+          discount_percent: item.discountPercent
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('order_items')
+          .insert(orderItems);
+        
+        if (itemsError) throw itemsError;
+      }
+      
+      setOrders(orders.map(o => 
+        o.id === id ? { ...o, ...order } : o
+      ));
+    } catch (error) {
+      console.error('Error updating order:', error);
+      toast.error('Erro ao atualizar encomenda');
+      throw error;
+    }
+  };
+  
+  const deleteOrder = async (id: string): Promise<void> => {
+    try {
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', id);
+      
+      if (itemsError) throw itemsError;
+      
+      const { error } = await supabase
+        .from('orders')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setOrders(orders.filter(o => o.id !== id));
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      toast.error('Erro ao eliminar encomenda');
+      throw error;
+    }
+  };
+  
+  const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>): Promise<StockEntry> => {
+    try {
+      const { data, error } = await supabase
+        .from('stock_entries')
+        .insert({
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          date: entry.date,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (entry.items && entry.items.length > 0) {
+        const entryItems = entry.items.map(item => ({
+          entry_id: data.id,
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          purchase_price: item.purchasePrice,
+          discount_percent: item.discountPercent
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('stock_entry_items')
+          .insert(entryItems);
+        
+        if (itemsError) throw itemsError;
+        
+        for (const item of entry.items) {
+          if (!item.productId) continue;
+          
+          await supabase.rpc(
+            'get_next_counter',
+            { counter_id: 'stock_entries' }
+          );
+        }
+      }
+      
+      const newEntry: StockEntry = {
+        id: data.id,
+        number: data.number,
+        supplierId: data.supplier_id || '',
+        supplierName: data.supplier_name,
+        date: data.date,
+        invoiceNumber: data.invoice_number || '',
+        notes: data.notes || '',
+        createdAt: data.created_at,
+        type: entry.type,
+        status: entry.status,
+        items: entry.items || []
+      };
+      
+      setStockEntries([newEntry, ...stockEntries]);
+      return newEntry;
+    } catch (error) {
+      console.error('Error adding stock entry:', error);
+      toast.error('Erro ao adicionar entrada de stock');
+      throw error;
+    }
+  };
+  
+  const updateStockEntry = async (id: string, entry: Partial<StockEntry>): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('stock_entries')
+        .update({
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          date: entry.date,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      if (entry.items) {
+        for (const item of entry.items) {
+          if (!item.productId) continue;
+          
+          await supabase.rpc(
+            'get_next_counter',
+            { counter_id: 'stock_entries' }
+          );
+        }
+      }
+      
+      setStockEntries(stockEntries.map(e => 
+        e.id === id ? { ...e, ...entry } : e
+      ));
+    } catch (error) {
+      console.error('Error updating stock entry:', error);
+      toast.error('Erro ao atualizar entrada de stock');
+      throw error;
+    }
+  };
+  
+  const deleteStockEntry = async (id: string): Promise<void> => {
+    try {
+      const { error: itemsError } = await supabase
+        .from('stock_entry_items')
+        .delete()
+        .eq('entry_id', id);
+      
+      if (itemsError) throw itemsError;
+      
+      const { error } = await supabase
+        .from('stock_entries')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setStockEntries(stockEntries.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting stock entry:', error);
+      toast.error('Erro ao eliminar entrada de stock');
+      throw error;
+    }
+  };
+  
+  const addStockExit = async (exit: Omit<StockExit, 'id' | 'number' | 'createdAt'>): Promise<StockExit> => {
+    try {
+      const { data, error } = await supabase
+        .from('stock_exits')
+        .insert({
+          client_id: exit.clientId,
+          client_name: exit.clientName,
+          date: exit.date,
+          invoice_number: exit.invoiceNumber,
+          notes: exit.notes,
+          from_order_id: exit.fromOrderId,
+          from_order_number: exit.fromOrderNumber,
+          discount: exit.discount
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (exit.items && exit.items.length > 0) {
+        const exitItems = exit.items.map(item => ({
+          exit_id: data.id,
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          sale_price: item.salePrice,
+          discount_percent: item.discountPercent
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('stock_exit_items')
+          .insert(exitItems);
+        
+        if (itemsError) throw itemsError;
+        
+        for (const item of exit.items) {
+          if (!item.productId) continue;
+          
+          await supabase.rpc(
+            'get_next_counter',
+            { counter_id: 'stock_exits' }
+          );
+        }
+      }
+      
+      if (exit.fromOrderId) {
+        const { error: orderError } = await supabase
+          .from('orders')
+          .update({
+            converted_to_stock_exit_id: data.id,
+            converted_to_stock_exit_number: data.number
+          })
+          .eq('id', exit.fromOrderId);
+        
+        if (orderError) {
+          console.error('Error updating order:', orderError);
+          // Continue anyway as the stock exit is created
+        }
+      }
+      
+      const newExit: StockExit = {
+        id: data.id,
+        number: data.number,
+        clientId: data.client_id || '',
+        clientName: data.client_name,
+        date: data.date,
+        invoiceNumber: data.invoice_number || '',
+        notes: data.notes || '',
+        fromOrderId: data.from_order_id,
+        fromOrderNumber: data.from_order_number,
+        createdAt: data.created_at,
+        discount: Number(data.discount || 0),
+        items: exit.items || []
+      };
+      
+      setStockExits([newExit, ...stockExits]);
+      
+      if (exit.fromOrderId) {
+        setOrders(orders.map(order => 
+          order.id === exit.fromOrderId ? {
+            ...order,
+            convertedToStockExitId: newExit.id,
+            convertedToStockExitNumber: newExit.number
+          } : order
+        ));
+      }
+      
+      return newExit;
+    } catch (error) {
+      console.error('Error adding stock exit:', error);
+      toast.error('Erro ao adicionar saída de stock');
+      throw error;
+    }
+  };
+  
+  const updateStockExit = async (id: string, exit: Partial<StockExit>): Promise<void> => {
+    try {
+      const { error } = await supabase
+        .from('stock_exits')
+        .update({
+          client_id: exit.clientId,
+          client_name: exit.clientName,
+          date: exit.date,
+          invoice_number: exit.invoiceNumber,
+          notes: exit.notes,
+          discount: exit.discount
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      if (exit.items) {
+        for (const item of exit.items) {
+          if (!item.productId) continue;
+          
+          await supabase.rpc(
+            'get_next_counter',
+            { counter_id: 'stock_exits' }
+          );
+        }
+      }
+      
+      setStockExits(stockExits.map(e => 
+        e.id === id ? { ...e, ...exit } : e
+      ));
+    } catch (error) {
+      console.error('Error updating stock exit:', error);
+      toast.error('Erro ao atualizar saída de stock');
+      throw error;
+    }
+  };
+  
+  const deleteStockExit = async (id: string): Promise<void> => {
+    try {
+      const exitToDelete = stockExits.find(exit => exit.id === id);
+      
+      const { error: itemsError } = await supabase
+        .from('stock_exit_items')
+        .delete()
+        .eq('exit_id', id);
+      
+      if (itemsError) throw itemsError;
+      
+      const { error } = await supabase
+        .from('stock_exits')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      if (exitToDelete && exitToDelete.fromOrderId) {
+        const { error: orderError } = await supabase
+          .from('orders')
+          .update({
+            converted_to_stock_exit_id: null,
+            converted_to_stock_exit_number: null
+          })
+          .eq('id', exitToDelete.fromOrderId);
+        
+        if (orderError) {
+          console.error('Error updating order:', orderError);
+          // Continue anyway as the stock exit is deleted
+        }
+        
+        setOrders(orders.map(order => 
+          order.id === exitToDelete.fromOrderId ? {
+            ...order,
+            convertedToStockExitId: undefined,
+            convertedToStockExitNumber: undefined
+          } : order
+        ));
+      }
+      
+      setStockExits(stockExits.filter(e => e.id !== id));
+    } catch (error) {
+      console.error('Error deleting stock exit:', error);
+      toast.error('Erro ao eliminar saída de stock');
+      throw error;
+    }
+  };
+  
+  const exportData = (type: ExportDataType) => {
+    let data: any[] = [];
+    
+    switch (type) {
+      case 'products':
+        data = products;
+        break;
+      case 'categories':
+        data = categories;
+        break;
+      case 'clients':
+        data = clients;
+        break;
+      case 'suppliers':
+        data = suppliers;
+        break;
+      case 'orders':
+        data = orders;
+        break;
+      case 'stockEntries':
+        data = stockEntries;
+        break;
+      case 'stockExits':
+        data = stockExits;
+        break;
+    }
+    
+    const jsonString = JSON.stringify(data, null, 2);
+    const blob = new Blob([jsonString], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${type}_${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    
+    URL.revokeObjectURL(url);
+  };
+  
+  const importData = <T extends ExportDataType>(type: T, data: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      try {
+        const parsedData = JSON.parse(data);
+        
+        if (!Array.isArray(parsedData)) {
+          throw new Error('Data must be an array');
+        }
+        
+        updateData(type, parsedData);
+        
+        toast.success(`Dados de ${type} importados com sucesso`);
+        resolve();
+      } catch (error) {
+        console.error(`Error importing ${type} data:`, error);
+        toast.error(`Erro ao importar dados de ${type}`);
+        reject(error);
+      }
+    });
+  };
+  
+  const updateData = <T extends keyof DataState>(type: T, data: DataState[T]) => {
+    switch (type) {
+      case 'products':
+        setProducts(data as Product[]);
+        break;
+      case 'categories':
+        setCategories(data as Category[]);
+        break;
+      case 'clients':
+        setClients(data as Client[]);
+        break;
+      case 'suppliers':
+        setSuppliers(data as Supplier[]);
+        break;
+      case 'orders':
+        setOrders(data as Order[]);
+        break;
+      case 'stockEntries':
+        setStockEntries(data as StockEntry[]);
+        break;
+      case 'stockExits':
+        setStockExits(data as StockExit[]);
+        break;
+    }
+  };
+  
   const createStockEntry = async (entry: any) => {
     try {
       const { data: entryData, error: entryError } = await supabase
@@ -1006,9 +1530,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           supplier_name: entry.supplierName,
           date: entry.date,
           invoice_number: entry.invoiceNumber,
-          notes: entry.notes,
-          type: entry.type || null,
-          status: entry.status || 'active'
+          notes: entry.notes
         })
         .select()
         .single();
@@ -1034,19 +1556,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         for (const item of entry.items) {
           if (!item.productId) continue;
           
-          const { error: stockError } = await supabase.rpc(
-            'increment_value', 
-            { 
-              table_name: 'products',
-              column_name: 'current_stock',
-              row_id: item.productId,
-              increment_amount: item.quantity
-            }
-          );
-          
-          if (stockError) {
-            console.error(`Error updating stock for product ${item.productId}:`, stockError);
-          }
+          await fetchProducts();
         }
       }
       
@@ -1059,8 +1569,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         invoiceNumber: entryData.invoice_number || '',
         notes: entryData.notes || '',
         createdAt: entryData.created_at,
-        status: entryData.status,
-        type: entryData.type,
+        status: entry.status,
+        type: entry.type,
         items: entry.items?.map((item: any) => ({
           id: crypto.randomUUID(),
           productId: item.productId,
@@ -1157,7 +1667,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         // Loading state
         isLoading,
-        setIsLoading,
+        setIsLoading
       }}
     >
       {children}
