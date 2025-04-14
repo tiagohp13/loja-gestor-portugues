@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -134,16 +133,14 @@ export interface StockExitItem {
 
 export interface StockEntry {
   id: string;
-  type: 'purchase' | 'consumption';
   number: string;
   supplierId: string;
   supplierName: string;
-  date: string;
+  items: StockEntryItem[];
   invoiceNumber?: string;
   notes?: string;
+  date: string;
   createdAt: string;
-  items: StockEntryItem[];
-  status?: string;
 }
 
 export interface Order {

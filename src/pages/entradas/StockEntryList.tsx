@@ -1,5 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useData } from '../../contexts/DataContext';
 import { Search, Edit, Trash2, Plus, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +11,6 @@ import EmptyState from '@/components/common/EmptyState';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
-import { useData } from '@/contexts/DataContext';
 import { StockEntry } from '@/types';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -22,13 +23,11 @@ const StockEntryList = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
   
-  const filteredEntries = localEntries
-    .filter(entry => entry.type !== 'consumption')
-    .filter(entry => 
-      entry.supplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      entry.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+  const filteredEntries = localEntries.filter(entry => 
+    entry.supplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    entry.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
   
   const sortedEntries = [...filteredEntries].sort((a, b) => {
     const dateA = new Date(a.date).getTime();
@@ -66,8 +65,6 @@ const StockEntryList = () => {
           notes: entry.notes,
           date: entry.date,
           createdAt: entry.created_at,
-          // Since `type` doesn't exist yet in the database schema, default to 'purchase'
-          type: 'purchase' as 'purchase' | 'consumption', // Explicitly cast to the union type
           items: entry.stock_entry_items.map((item: any) => ({
             id: item.id,
             productId: item.product_id,
@@ -92,14 +89,17 @@ const StockEntryList = () => {
     }
   };
 
+  // Fetch data when component mounts
   useEffect(() => {
     setIsLoading(true);
     fetchAllEntries();
   }, [setStockEntries]);
 
+  // Setup realtime subscriptions
   useEffect(() => {
     console.log("Setting up realtime subscriptions for stock entries");
     
+    // Create a dedicated channel for entries
     const entriesChannel = supabase.channel('stock_entries_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_entries' }, 
@@ -116,6 +116,7 @@ const StockEntryList = () => {
             return;
           }
           
+          // For inserts and updates, refresh the entire list
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             console.log('Handling insert/update, refreshing entries list');
             fetchAllEntries();
@@ -126,6 +127,7 @@ const StockEntryList = () => {
         console.log('Stock entries subscription status:', status);
       });
       
+    // Create a dedicated channel for entry items
     const itemsChannel = supabase.channel('stock_entry_items_realtime')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'stock_entry_items' }, 

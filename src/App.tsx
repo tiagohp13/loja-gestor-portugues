@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -84,11 +83,6 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
-// Consumption pages
-import ConsumptionList from './pages/consumo/ConsumptionList';
-import ConsumptionNew from './pages/consumo/ConsumptionNew';
-import ConsumptionDetail from './pages/consumo/ConsumptionDetail';
-
 function App() {
   return (
     <BrowserRouter>
@@ -142,10 +136,6 @@ function App() {
                   <Route path="/configuracoes" element={<Settings />} />
                   
                   <Route path="/suporte" element={<Support />} />
-                  
-                  <Route path="/consumo/consultar" element={<ConsumptionList />} />
-                  <Route path="/consumo/novo" element={<ConsumptionNew />} />
-                  <Route path="/consumo/:id" element={<ConsumptionDetail />} />
                 </Route>
               </Route>
               
