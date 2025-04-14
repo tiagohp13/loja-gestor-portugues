@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Select from 'react-select';
 import { Plus, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,7 +15,6 @@ import { cn } from "@/lib/utils";
 import { useData } from '@/contexts/DataContext';
 import { Product, StockEntryItem, Supplier } from '@/types';
 import { toast } from 'sonner';
-import Select from 'react-select';
 
 interface EntryDetails {
   supplierId: string;
@@ -44,10 +44,12 @@ const StockEntryNew = () => {
     label: supplier.name,
   }));
   
-  const handleSupplierSelect = (option: any) => {
-    const supplier = suppliers.find(s => s.id === option.value) || null;
-    setSelectedSupplier(supplier);
-    setEntryDetails(prev => ({ ...prev, supplierId: option.value }));
+  const handleSupplierSelect = (option: { value: string, label: string } | null) => {
+    if (option) {
+      const supplier = suppliers.find(s => s.id === option.value) || null;
+      setSelectedSupplier(supplier);
+      setEntryDetails(prev => ({ ...prev, supplierId: option.value }));
+    }
   };
   
   const filteredProducts = products.filter(product =>
