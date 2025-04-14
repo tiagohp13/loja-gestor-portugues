@@ -18,10 +18,10 @@ const ConsumptionNew = () => {
       await createStockEntry({
         ...formData,
         type: 'consumption',
-        status: 'active',
         updateStock: false // This ensures stock levels aren't affected
       });
       navigate('/consumo/consultar');
+      toast.success('Consumo registado com sucesso');
     } catch (error) {
       console.error('Error creating consumption entry:', error);
       toast.error('Erro ao registar consumo');
@@ -41,7 +41,6 @@ const ConsumptionNew = () => {
       />
 
       <Card className="mt-6">
-        {/* Reuse the same form component as stock entries but with consumption type */}
         <StockEntryForm onSubmit={handleSubmit} type="consumption" />
       </Card>
     </div>
