@@ -918,4 +918,249 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           tax_id: supplier.taxId,
           payment_terms: supplier.paymentTerms,
           notes: supplier.notes,
-          status: supplier
+          status: supplier.status
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        const newSupplier: Supplier = {
+          id: data.id,
+          name: data.name,
+          email: data.email || '',
+          phone: data.phone || '',
+          address: data.address || '',
+          taxId: data.tax_id || '',
+          paymentTerms: data.payment_terms || '',
+          notes: data.notes || '',
+          createdAt: data.created_at,
+          updatedAt: data.updated_at,
+          status: data.status
+        };
+        
+        setSuppliers([...suppliers, newSupplier]);
+        return newSupplier;
+      }
+      
+      throw new Error('Failed to add supplier');
+    } catch (error) {
+      console.error('Error adding supplier:', error);
+      toast.error('Erro ao adicionar fornecedor');
+      throw error;
+    }
+  };
+  
+  const updateSupplier = async (id: string, supplier: Partial<Supplier>) => {
+    try {
+      const { error } = await supabase
+        .from('suppliers')
+        .update({
+          name: supplier.name,
+          email: supplier.email,
+          phone: supplier.phone,
+          address: supplier.address,
+          tax_id: supplier.taxId,
+          payment_terms: supplier.paymentTerms,
+          notes: supplier.notes,
+          status: supplier.status
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setSuppliers(suppliers.map(s => 
+        s.id === id ? { ...s, ...supplier } : s
+      ));
+    } catch (error) {
+      console.error('Error updating supplier:', error);
+      toast.error('Erro ao atualizar fornecedor');
+      throw error;
+    }
+  };
+  
+  const deleteSupplier = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('suppliers')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+      
+      setSuppliers(suppliers.filter(s => s.id !== id));
+    } catch (error) {
+      console.error('Error deleting supplier:', error);
+      toast.error('Erro ao eliminar fornecedor');
+      throw error;
+    }
+  };
+  
+  const createStockEntry = async (entry: any) => {
+    try {
+      const { data: entryData, error: entryError } = await supabase
+        .from('stock_entries')
+        .insert({
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          date: entry.date,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes,
+          type: entry.type || null,
+          status: entry.status || 'active'
+        })
+        .select()
+        .single();
+      
+      if (entryError) throw entryError;
+      
+      if (entry.items && entry.items.length > 0) {
+        const items = entry.items.map((item: any) => ({
+          entry_id: entryData.id,
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          purchase_price: item.purchasePrice,
+          discount_percent: item.discountPercent
+        }));
+        
+        const { error: itemsError } = await supabase
+          .from('stock_entry_items')
+          .insert(items);
+        
+        if (itemsError) throw itemsError;
+        
+        for (const item of entry.items) {
+          if (!item.productId) continue;
+          
+          const { error: stockError } = await supabase.rpc(
+            'increment_value', 
+            { 
+              table_name: 'products',
+              column_name: 'current_stock',
+              row_id: item.productId,
+              increment_amount: item.quantity
+            }
+          );
+          
+          if (stockError) {
+            console.error(`Error updating stock for product ${item.productId}:`, stockError);
+          }
+        }
+      }
+      
+      const newEntry: StockEntry = {
+        id: entryData.id,
+        number: entryData.number || '',
+        supplierId: entryData.supplier_id || '',
+        supplierName: entryData.supplier_name || '',
+        date: entryData.date,
+        invoiceNumber: entryData.invoice_number || '',
+        notes: entryData.notes || '',
+        createdAt: entryData.created_at,
+        status: entryData.status,
+        type: entryData.type,
+        items: entry.items?.map((item: any) => ({
+          id: crypto.randomUUID(),
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          purchasePrice: item.purchasePrice,
+          discountPercent: item.discountPercent
+        })) || []
+      };
+      
+      await fetchStockEntries();
+      
+      await fetchProducts();
+      
+      return newEntry;
+    } catch (error) {
+      console.error('Error creating stock entry:', error);
+      toast.error('Erro ao criar entrada de stock');
+      throw error;
+    }
+  };
+  
+  return (
+    <DataContext.Provider
+      value={{
+        // Products
+        products,
+        setProducts,
+        addProduct,
+        updateProduct,
+        deleteProduct,
+        getProduct,
+        getProductHistory,
+        
+        // Categories
+        categories,
+        setCategories,
+        addCategory,
+        updateCategory,
+        deleteCategory,
+        getCategory,
+        
+        // Clients
+        clients,
+        setClients,
+        addClient,
+        updateClient,
+        deleteClient,
+        getClient,
+        getClientHistory,
+        
+        // Suppliers
+        suppliers,
+        setSuppliers,
+        addSupplier,
+        updateSupplier,
+        deleteSupplier,
+        getSupplier,
+        getSupplierHistory,
+        
+        // Orders
+        orders,
+        setOrders,
+        addOrder,
+        updateOrder,
+        deleteOrder,
+        findOrder,
+        findProduct,
+        findClient,
+        convertOrderToStockExit,
+        
+        // Stock Entries
+        stockEntries,
+        setStockEntries,
+        addStockEntry,
+        updateStockEntry,
+        deleteStockEntry,
+        createStockEntry,
+        
+        // Stock Exits
+        stockExits,
+        setStockExits,
+        addStockExit,
+        updateStockExit,
+        deleteStockExit,
+        
+        // Export/Import
+        exportData,
+        importData,
+        updateData,
+        
+        // Business Analytics
+        getBusinessAnalytics,
+        
+        // Loading state
+        isLoading,
+        setIsLoading,
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
+};
