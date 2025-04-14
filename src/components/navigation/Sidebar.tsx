@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Menu
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Menu, Coffee
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
@@ -58,6 +58,12 @@ const AppSidebar: React.FC = () => {
       label: 'Encomendas', 
       icon: <ClipboardList className="w-5 h-5" />,
       isActive: location.pathname.includes('/encomendas')
+    },
+    { 
+      path: '/consumo/historico', 
+      label: 'Consumo', 
+      icon: <Coffee className="w-5 h-5" />,
+      isActive: location.pathname.includes('/consumo')
     },
     { 
       path: '/entradas/historico', 
