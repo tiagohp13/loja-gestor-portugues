@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { PageHeader } from '@/components/ui/PageHeader';
+import PageHeader from '@/components/ui/PageHeader';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/utils/formatting';
