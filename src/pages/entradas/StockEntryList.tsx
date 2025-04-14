@@ -67,7 +67,8 @@ const StockEntryList = () => {
           notes: entry.notes,
           date: entry.date,
           createdAt: entry.created_at,
-          type: entry.type,
+          // If type exists in the database use it, otherwise default to 'purchase'
+          type: entry.type || 'purchase',
           items: entry.stock_entry_items.map((item: any) => ({
             id: item.id,
             productId: item.product_id,
