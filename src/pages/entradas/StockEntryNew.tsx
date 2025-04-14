@@ -1,449 +1,314 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { Plus, X, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Plus, Trash, ArrowLeft, Save, Calendar } from 'lucide-react';
-import { StockEntryItem } from '@/types';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
-import { Calendar as CalendarComponent } from '@/components/ui/calendar';
+import { CalendarIcon } from 'lucide-react';
+import { cn } from "@/lib/utils";
+import { useData } from '@/contexts/DataContext';
+import { Product, StockEntryItem, Supplier } from '@/types';
+import { toast } from 'sonner';
+import Select from 'react-select';
+
+interface EntryDetails {
+  supplierId: string;
+  invoiceNumber: string;
+  notes: string;
+}
 
 const StockEntryNew = () => {
   const navigate = useNavigate();
-  const { addStockEntry, products, suppliers } = useData();
-  const [entryDetails, setEntryDetails] = useState({
-    supplierId: '',
-    supplierName: '',
-    date: new Date().toISOString().split('T')[0],
-    invoiceNumber: '',
-    notes: ''
-  });
-  
+  const { products, suppliers, addStockEntry, createStockEntry } = useData();
   const [items, setItems] = useState<StockEntryItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<{
-    productId: string;
-    productName: string;
-    quantity: number;
-    purchasePrice: number;
-  }>({
-    productId: '',
-    productName: '',
-    quantity: 1,
-    purchasePrice: 0
-  });
-  
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedProductDisplay, setSelectedProductDisplay] = useState('');
-  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
-  const [isSupplierSearchOpen, setIsSupplierSearchOpen] = useState(false);
-  const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [purchasePrice, setPurchasePrice] = useState<number>(0);
+  const [discountPercent, setDiscountPercent] = useState<number>(0);
+  const [entryDetails, setEntryDetails] = useState<EntryDetails>({
+    supplierId: '',
+    invoiceNumber: '',
+    notes: '',
+  });
   const [entryDate, setEntryDate] = useState<Date>(new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const handleEntryDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEntryDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  
+  const supplierOptions = suppliers.map(supplier => ({
+    value: supplier.id,
+    label: supplier.name,
+  }));
+  
+  const handleSupplierSelect = (option: any) => {
+    const supplier = suppliers.find(s => s.id === option.value) || null;
+    setSelectedSupplier(supplier);
+    setEntryDetails(prev => ({ ...prev, supplierId: option.value }));
   };
   
-  const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentItem(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'purchasePrice' 
-              ? parseFloat(value) || 0 
-              : value
-    }));
-  };
-
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
-  };
-
-  const handleSupplierSearch = (value: string) => {
-    setSupplierSearchTerm(value);
-  };
-
-  const handleProductSelect = (productId: string) => {
-    const selectedProduct = products.find(p => p.id === productId);
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.code.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const handleAddProduct = () => {
     if (selectedProduct) {
-      setCurrentItem({
+      const newItem: StockEntryItem = {
+        id: crypto.randomUUID(),
         productId: selectedProduct.id,
         productName: selectedProduct.name,
-        quantity: 1,
-        purchasePrice: selectedProduct.purchasePrice
-      });
-      setSelectedProductDisplay(`${selectedProduct.code} - ${selectedProduct.name}`);
-    }
-    setIsProductSearchOpen(false);
-  };
-  
-  const handleSupplierSelect = (supplierId: string) => {
-    const selectedSupplier = suppliers.find(s => s.id === supplierId);
-    setEntryDetails(prev => ({
-      ...prev,
-      supplierId,
-      supplierName: selectedSupplier?.name || ''
-    }));
-    setIsSupplierSearchOpen(false);
-  };
-  
-  const addItemToEntry = () => {
-    if (!currentItem.productId || currentItem.quantity <= 0) {
-      toast.error('Selecione um produto e uma quantidade válida');
-      return;
-    }
-    
-    const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...items];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        purchasePrice: currentItem.purchasePrice
+        quantity: quantity,
+        purchasePrice: purchasePrice,
+        discountPercent: discountPercent
       };
-      setItems(updatedItems);
-    } else {
-      setItems([...items, { 
-        id: crypto.randomUUID(),
-        ...currentItem 
-      }]);
+      setItems([...items, newItem]);
+      setSelectedProduct(null);
+      setSearchTerm('');
+      setQuantity(1);
+      setPurchasePrice(0);
+      setDiscountPercent(0);
     }
-    
-    setCurrentItem({
-      productId: '',
-      productName: '',
-      quantity: 1,
-      purchasePrice: 0
-    });
-    setSelectedProductDisplay('');
-    setSearchTerm('');
   };
   
-  const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+  const handleRemoveItem = (id: string) => {
+    setItems(items.filter(item => item.id !== id));
+  };
+  
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value);
+    setQuantity(isNaN(value) ? 1 : value);
+  };
+  
+  const handlePurchasePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setPurchasePrice(isNaN(value) ? 0 : value);
+  };
+  
+  const handleDiscountPercentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    setDiscountPercent(isNaN(value) ? 0 : value);
+  };
+  
+  const handleEntryDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEntryDetails(prev => ({ ...prev, [name]: value }));
   };
 
-  const filteredProducts = searchTerm
-    ? products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : products;
-
-  const filteredSuppliers = supplierSearchTerm
-    ? suppliers.filter(supplier => 
-        supplier.name.toLowerCase().includes(supplierSearchTerm.toLowerCase())
-      )
-    : suppliers;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!entryDetails.supplierId || items.length === 0) {
-      toast.error('Selecione um fornecedor e adicione pelo menos um produto');
+  const handleSave = async () => {
+    if (items.length === 0) {
+      toast.error('Adicione pelo menos um produto à entrada');
       return;
     }
-    
-    const supplier = suppliers.find(s => s.id === entryDetails.supplierId);
-    
-    if (!supplier) {
-      toast.error('Fornecedor não encontrado');
-      return;
-    }
-    
-    const loadingToast = toast.loading('Registando entrada...');
     
     try {
-      await addStockEntry({
+      const loadingToast = toast.loading('A guardar entrada de stock...');
+      
+      await createStockEntry({
         supplierId: entryDetails.supplierId,
-        supplierName: supplier.name,
+        supplierName: selectedSupplier?.name || '',
         items: items,
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
         notes: entryDetails.notes,
-        type: 'purchase'
+        type: 'purchase' as 'purchase' | 'consumption'
       });
       
       toast.dismiss(loadingToast);
-      toast.success('Entrada registada com sucesso');
+      toast.success('Entrada de stock guardada com sucesso');
+      
       navigate('/entradas/historico');
     } catch (error) {
-      toast.dismiss(loadingToast);
-      console.error("Erro ao registar entrada:", error);
-      toast.error('Erro ao registar entrada');
+      console.error('Error saving entry:', error);
+      toast.error('Erro ao guardar entrada de stock');
     }
   };
 
-  const totalValue = items.reduce((total, item) => 
-    total + (item.quantity * item.purchasePrice), 0);
-
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="mb-6">
-        <div className="flex flex-col space-y-1">
-          <h1 className="text-2xl font-bold">Nova Entrada</h1>
-          <p className="text-gray-500">Registar uma nova entrada no inventário</p>
-        </div>
+      <div className="mb-4">
+        <Button onClick={() => navigate('/entradas/historico')}>Voltar</Button>
       </div>
-
-      <div className="flex justify-between mb-6">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/entradas/historico')}
-          className="flex items-center gap-2"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Cancelar
-        </Button>
-        <Button 
-          onClick={handleSubmit}
-          disabled={items.length === 0 || !entryDetails.supplierId}
-          className="flex items-center gap-2"
-        >
-          <Save className="h-4 w-4" />
-          Guardar Entrada
-        </Button>
-      </div>
-      
       <div className="bg-white rounded-lg shadow p-6">
-        <form className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium mb-1">Fornecedor</label>
-              <Popover open={isSupplierSearchOpen} onOpenChange={setIsSupplierSearchOpen}>
-                <PopoverTrigger asChild>
-                  <div className="relative">
-                    <Input
-                      placeholder="Pesquisar fornecedor por nome"
-                      value={supplierSearchTerm}
-                      onChange={(e) => setSupplierSearchTerm(e.target.value)}
-                      className="pl-10"
-                      onClick={() => setIsSupplierSearchOpen(true)}
-                    />
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-[calc(100vw-2rem)] md:w-[500px]" align="start">
-                  <Command>
-                    <CommandInput 
-                      placeholder="Pesquisar fornecedor..." 
-                      value={supplierSearchTerm}
-                      onValueChange={handleSupplierSearch}
-                    />
-                    <CommandList>
-                      <CommandEmpty>Nenhum fornecedor encontrado</CommandEmpty>
-                      <CommandGroup heading="Fornecedores">
-                        {filteredSuppliers.map((supplier) => (
-                          <CommandItem 
-                            key={supplier.id} 
-                            value={supplier.name}
-                            onSelect={() => handleSupplierSelect(supplier.id)}
-                          >
-                            {supplier.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {entryDetails.supplierId && (
-                <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
-                  <div className="font-medium">
-                    {suppliers.find(s => s.id === entryDetails.supplierId)?.name || ""}
-                  </div>
+        <h2 className="text-2xl font-semibold mb-4">Nova Entrada de Stock</h2>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <Label htmlFor="supplier">Fornecedor</Label>
+            <Select
+              options={supplierOptions}
+              onChange={handleSupplierSelect}
+              placeholder="Selecionar Fornecedor"
+            />
+          </div>
+          <div>
+            <Label>Data da Entrada</Label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !entryDate && "text-muted-foreground"
+                  )}
+                >
+                  {entryDate ? format(entryDate, "dd/MM/yyyy", { locale: pt }) : (
+                    <span>Escolher Data</span>
+                  )}
+                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center" side="bottom">
+                <Calendar
+                  mode="single"
+                  locale={pt}
+                  selected={entryDate}
+                  onSelect={setEntryDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div>
+            <Label htmlFor="invoiceNumber">Número da Fatura</Label>
+            <Input
+              type="text"
+              id="invoiceNumber"
+              name="invoiceNumber"
+              value={entryDetails.invoiceNumber}
+              onChange={handleEntryDetailsChange}
+            />
+          </div>
+          <div>
+            <Label htmlFor="notes">Notas</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={entryDetails.notes}
+              onChange={handleEntryDetailsChange}
+            />
+          </div>
+        </div>
+        
+        <div className="mb-4">
+          <h3 className="text-xl font-semibold mb-2">Adicionar Produto</h3>
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="relative w-full md:w-2/5">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+              <Input
+                className="pl-10"
+                placeholder="Pesquisar produto por nome ou código..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                onFocus={() => setSearchTerm('')}
+              />
+              {searchTerm && (
+                <div className="absolute z-10 bg-white border rounded-md shadow-md mt-1 w-full">
+                  {filteredProducts.length > 0 ? (
+                    filteredProducts.map(product => (
+                      <div
+                        key={product.id}
+                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        onClick={() => {
+                          setSelectedProduct(product);
+                          setSearchTerm(product.name);
+                        }}
+                      >
+                        {product.name} ({product.code})
+                      </div>
+                    ))
+                  ) : (
+                    <div className="px-4 py-2 text-gray-500">Nenhum produto encontrado.</div>
+                  )}
                 </div>
               )}
             </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Data da Entrada</label>
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger asChild>
-                  <Button 
-                    variant="outline" 
-                    className="w-full justify-start text-left font-normal"
-                  >
-                    <Calendar className="mr-2 h-4 w-4" />
-                    {format(entryDate, "dd 'de' MMMM 'de' yyyy", { locale: pt })}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <CalendarComponent
-                    mode="single"
-                    selected={entryDate}
-                    onSelect={(date) => {
-                      if (date) {
-                        setEntryDate(date);
-                        setCalendarOpen(false);
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
+            <div className="w-full md:w-1/5">
+              <Label htmlFor="quantity">Quantidade</Label>
+              <Input
+                type="number"
+                id="quantity"
+                value={quantity}
+                onChange={handleQuantityChange}
+              />
+            </div>
+            <div className="w-full md:w-1/5">
+              <Label htmlFor="purchasePrice">Preço Compra</Label>
+              <Input
+                type="number"
+                id="purchasePrice"
+                value={purchasePrice}
+                onChange={handlePurchasePriceChange}
+              />
+            </div>
+            <div className="w-full md:w-1/5">
+              <Label htmlFor="discountPercent">Desconto (%)</Label>
+              <Input
+                type="number"
+                id="discountPercent"
+                value={discountPercent}
+                onChange={handleDiscountPercentChange}
+              />
+            </div>
+            <div className="flex items-end">
+              <Button onClick={handleAddProduct}><Plus className="mr-2 h-4 w-4" /> Adicionar</Button>
             </div>
           </div>
-
-          <div className="border-t border-gray-200 pt-6">
-            <h2 className="text-lg font-medium mb-4">Produtos</h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div className="md:col-span-1">
-                <label className="block text-sm font-medium mb-1">Produto</label>
-                <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
-                  <PopoverTrigger asChild>
-                    <div className="relative">
-                      <Input
-                        placeholder="Pesquisar produto por nome ou código"
-                        value={selectedProductDisplay || searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-10"
-                        onClick={() => setIsProductSearchOpen(true)}
-                      />
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    </div>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0 w-[calc(100vw-2rem)] md:w-[500px]" align="start">
-                    <Command>
-                      <CommandInput 
-                        placeholder="Pesquisar produto..." 
-                        value={searchTerm}
-                        onValueChange={handleSearch}
-                      />
-                      <CommandList>
-                        <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
-                        <CommandGroup heading="Produtos">
-                          {filteredProducts.map((product) => (
-                            <CommandItem 
-                              key={product.id} 
-                              value={`${product.code} - ${product.name}`}
-                              onSelect={() => handleProductSelect(product.id)}
-                            >
-                              <div className="flex flex-col">
-                                <span className="font-medium">{product.code} - {product.name}</span>
-                                <span className="text-xs text-gray-500">Stock: {product.currentStock}</span>
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Quantidade</label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={currentItem.quantity}
-                  onChange={(e) => setCurrentItem(prev => ({...prev, quantity: parseInt(e.target.value) || 1}))}
-                />
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium mb-1">Preço Compra (€)</label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={currentItem.purchasePrice}
-                  onChange={(e) => setCurrentItem(prev => ({...prev, purchasePrice: parseFloat(e.target.value) || 0}))}
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-center mb-6">
-              <Button 
-                onClick={addItemToEntry}
-                disabled={!currentItem.productId || currentItem.quantity <= 0}
-                className="bg-blue-500 hover:bg-blue-600 text-white w-full md:w-auto"
-              >
-                <Plus className="mr-2 h-4 w-4" /> Adicionar
-              </Button>
-            </div>
-            
-            <div className="border rounded-md overflow-hidden">
+        </div>
+        
+        {items.length > 0 && (
+          <div className="mb-6">
+            <h3 className="text-xl font-semibold mb-2">Itens da Entrada</h3>
+            <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Produto
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Quantidade
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Preço Compra
+                    </th>
+                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Desconto (%)
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Ações
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {items.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
-                        Nenhum produto adicionado
+                  {items.map(item => (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.productName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.quantity}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.purchasePrice}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.discountPercent}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <Button variant="outline" size="sm" onClick={() => handleRemoveItem(item.id)}>
+                          <X className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
-                  ) : (
-                    items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.productName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.purchasePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{(item.quantity * item.purchasePrice).toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeItem(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
+                  ))}
                 </tbody>
-                <tfoot className="bg-gray-50">
-                  <tr>
-                    <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      Total
-                    </td>
-                    <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
-                      {totalValue.toFixed(2)} €
-                    </td>
-                  </tr>
-                </tfoot>
               </table>
             </div>
           </div>
-          
-          <div>
-            <label className="block text-sm font-medium mb-1">Notas</label>
-            <Textarea
-              placeholder="Observações ou notas adicionais sobre esta entrada..."
-              value={entryDetails.notes}
-              onChange={(e) => setEntryDetails(prev => ({...prev, notes: e.target.value}))}
-              className="h-24"
-            />
-          </div>
-        </form>
+        )}
+        
+        <div className="flex justify-end">
+          <Button onClick={handleSave}>Guardar Entrada</Button>
+        </div>
       </div>
     </div>
   );

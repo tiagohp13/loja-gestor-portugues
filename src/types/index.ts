@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -133,7 +134,7 @@ export interface StockExitItem {
 
 export interface StockEntry {
   id: string;
-  type?: 'purchase' | 'consumption';
+  type: 'purchase' | 'consumption';
   number: string;
   supplierId: string;
   supplierName: string;
