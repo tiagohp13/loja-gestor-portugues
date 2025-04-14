@@ -195,6 +195,7 @@ const StockEntryForm: React.FC<StockEntryFormProps> = ({ onSubmit, type = 'purch
                           selected={field.value}
                           onSelect={field.onChange}
                           initialFocus
+                          className="pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
@@ -250,14 +251,19 @@ const StockEntryForm: React.FC<StockEntryFormProps> = ({ onSubmit, type = 'purch
                         <TableRow key={item.id}>
                           <TableCell>
                             <Select
-                              value={item.productId}
+                              value={item.productId || "placeholder-value"}
                               onValueChange={(value) => updateItem(item.id, 'productId', value)}
                             >
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione um produto" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value={item.productId}>{item.productName}</SelectItem>
+                                {/* Only add an item if there's a valid product ID */}
+                                {item.productId && (
+                                  <SelectItem key={item.productId} value={item.productId}>
+                                    {item.productName}
+                                  </SelectItem>
+                                )}
                                 {availableProducts
                                   .filter(p => p.id !== item.productId)
                                   .map(product => (
