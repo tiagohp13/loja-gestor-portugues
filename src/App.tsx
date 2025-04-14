@@ -83,6 +83,10 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
+// Add new imports for Consumption pages
+import ConsumptionList from './pages/consumo/ConsumptionList';
+import ConsumptionNew from './pages/consumo/ConsumptionNew';
+
 function App() {
   return (
     <BrowserRouter>
@@ -136,6 +140,9 @@ function App() {
                   <Route path="/configuracoes" element={<Settings />} />
                   
                   <Route path="/suporte" element={<Support />} />
+                  
+                  <Route path="/consumo/consultar" element={<ConsumptionList />} />
+                  <Route path="/consumo/novo" element={<ConsumptionNew />} />
                 </Route>
               </Route>
               
