@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -177,7 +176,8 @@ const StockEntryNew = () => {
         items: items,
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
-        notes: entryDetails.notes
+        notes: entryDetails.notes,
+        type: 'purchase'
       });
       
       toast.dismiss(loadingToast);

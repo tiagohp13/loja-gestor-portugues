@@ -68,7 +68,7 @@ const StockEntryList = () => {
           date: entry.date,
           createdAt: entry.created_at,
           // Since `type` doesn't exist yet in the database schema, default to 'purchase'
-          type: 'purchase',
+          type: 'purchase' as 'purchase' | 'consumption', // Explicitly cast to the union type
           items: entry.stock_entry_items.map((item: any) => ({
             id: item.id,
             productId: item.product_id,

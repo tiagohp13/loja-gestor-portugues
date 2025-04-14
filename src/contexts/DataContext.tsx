@@ -583,6 +583,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           invoiceNumber: entry.invoice_number || '',
           notes: entry.notes || '',
           createdAt: entry.created_at,
+          type: 'purchase', // Default type for existing entries
           items: entry.stock_entry_items?.map((item: any) => ({
             id: item.id,
             productId: item.product_id || '',
@@ -1196,7 +1197,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         invoiceNumber: data.invoice_number || '',
         notes: data.notes || '',
         createdAt: data.created_at,
-        type: entry.type,
+        type: entry.type || 'purchase', // Use the provided type or default to 'purchase'
         status: entry.status,
         items: entry.items || []
       };
@@ -1600,9 +1601,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         date: entryData.date,
         invoiceNumber: entryData.invoice_number || '',
         notes: entryData.notes || '',
-        createdAt: entryData.created_at,
         status: entry.status,
-        type: entry.type,
+        type: entry.type || 'purchase', // Use the provided type or default to purchase
         items: entry.items?.map((item: any) => ({
           id: crypto.randomUUID(),
           productId: item.productId,
