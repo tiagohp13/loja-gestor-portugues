@@ -5,6 +5,8 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useData } from '@/contexts/DataContext';
+import StockEntryForm from '@/components/forms/StockEntryForm';
+import { toast } from 'sonner';
 
 const ConsumptionNew = () => {
   const navigate = useNavigate();
@@ -16,11 +18,13 @@ const ConsumptionNew = () => {
       await createStockEntry({
         ...formData,
         type: 'consumption',
+        status: 'active',
         updateStock: false // This ensures stock levels aren't affected
       });
       navigate('/consumo/consultar');
     } catch (error) {
       console.error('Error creating consumption entry:', error);
+      toast.error('Erro ao registar consumo');
     }
   };
 
@@ -37,7 +41,7 @@ const ConsumptionNew = () => {
       />
 
       <Card className="mt-6">
-        {/* Reuse the same form component as stock entries */}
+        {/* Reuse the same form component as stock entries but with consumption type */}
         <StockEntryForm onSubmit={handleSubmit} type="consumption" />
       </Card>
     </div>

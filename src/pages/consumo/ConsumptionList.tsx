@@ -40,23 +40,31 @@ const ConsumptionList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {consumptionEntries.map((entry) => (
-              <TableRow
-                key={entry.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => navigate(`/consumo/${entry.id}`)}
-              >
-                <TableCell>{entry.number}</TableCell>
-                <TableCell>{formatDateString(entry.date)}</TableCell>
-                <TableCell>{entry.supplierName}</TableCell>
-                <TableCell>
-                  <StatusBadge status={entry.status} />
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(entry.items?.reduce((acc, item) => acc + (item.quantity * item.purchasePrice), 0) || 0)}
+            {consumptionEntries.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                  Nenhum registo de consumo encontrado
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              consumptionEntries.map((entry) => (
+                <TableRow
+                  key={entry.id}
+                  className="cursor-pointer hover:bg-muted/50"
+                  onClick={() => navigate(`/consumo/${entry.id}`)}
+                >
+                  <TableCell>{entry.number}</TableCell>
+                  <TableCell>{formatDateString(entry.date)}</TableCell>
+                  <TableCell>{entry.supplierName}</TableCell>
+                  <TableCell>
+                    <StatusBadge status={entry.status || 'active'} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(entry.items?.reduce((acc, item) => acc + (item.quantity * item.purchasePrice), 0) || 0)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </Card>

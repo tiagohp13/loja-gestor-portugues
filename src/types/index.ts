@@ -141,6 +141,8 @@ export interface StockEntry {
   notes?: string;
   date: string;
   createdAt: string;
+  status?: string;
+  type?: string;
 }
 
 export interface Order {

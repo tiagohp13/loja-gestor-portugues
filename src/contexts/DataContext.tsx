@@ -61,6 +61,7 @@ interface DataContextType {
   addStockEntry: (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>) => Promise<StockEntry>;
   updateStockEntry: (id: string, entry: Partial<StockEntry>) => Promise<void>;
   deleteStockEntry: (id: string) => Promise<void>;
+  createStockEntry: (entry: any) => Promise<StockEntry>;
   
   // Stock Exits
   stockExits: StockExit[];
@@ -1496,6 +1497,123 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
   
+  const createStockEntry = async (entry: any) => {
+    const shouldUpdateStock = entry.type !== 'consumption' && entry.updateStock !== false;
+    
+    try {
+      const { data: entryNumberData, error: entryNumberError } = await supabase
+        .rpc('get_next_counter', { counter_id: 'entry' });
+      
+      if (entryNumberError) throw entryNumberError;
+      
+      const entryNumber = entryNumberData || `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      
+      const tempId = crypto.randomUUID();
+      
+      const itemsWithIds = entry.items.map((item: any) => {
+        if (!item.id) {
+          return { ...item, id: crypto.randomUUID() };
+        }
+        return item;
+      });
+      
+      const optimisticEntry: StockEntry = {
+        id: tempId,
+        number: entryNumber,
+        supplierId: entry.supplierId,
+        supplierName: entry.supplierName,
+        date: entry.date,
+        invoiceNumber: entry.invoiceNumber || '',
+        notes: entry.notes || '',
+        createdAt: new Date().toISOString(),
+        items: itemsWithIds,
+        type: entry.type || 'purchase',
+        status: entry.status || 'active'
+      };
+      
+      setStockEntries(prev => [optimisticEntry, ...prev]);
+      
+      const { data, error } = await supabase
+        .from('stock_entries')
+        .insert({
+          number: entryNumber,
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          date: entry.date,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes,
+          type: entry.type || 'purchase',
+          status: entry.status || 'active'
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      if (!data) throw new Error('Failed to add stock entry');
+      
+      const entryItems = itemsWithIds.map((item: any) => ({
+        entry_id: data.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        purchase_price: item.purchasePrice,
+        discount_percent: item.discountPercent
+      }));
+      
+      const { error: itemsError } = await supabase
+        .from('stock_entry_items')
+        .insert(entryItems);
+      
+      if (itemsError) throw itemsError;
+      
+      if (shouldUpdateStock) {
+        for (const item of itemsWithIds) {
+          try {
+            console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
+            await increment('products', 'current_stock', item.productId, item.quantity);
+          } catch (error) {
+            console.error('Error updating product stock:', error);
+          }
+        }
+      }
+      
+      const newEntry: StockEntry = {
+        id: data.id,
+        number: data.number,
+        supplierId: data.supplier_id || '',
+        supplierName: data.supplier_name,
+        date: data.date,
+        invoiceNumber: data.invoice_number || '',
+        notes: data.notes || '',
+        createdAt: data.created_at,
+        type: data.type,
+        status: data.status,
+        items: itemsWithIds.map(item => ({
+          ...item,
+          id: item.id || crypto.randomUUID()
+        }))
+      };
+      
+      setStockEntries(prev => [
+        ...prev.filter(e => e.id !== tempId),
+        newEntry
+      ]);
+      
+      if (shouldUpdateStock) {
+        await fetchProducts();
+      }
+      
+      toast.success(entry.type === 'consumption' ? 'Consumo registado com sucesso' : 'Entrada registada com sucesso');
+      return newEntry;
+    } catch (error) {
+      console.error('Error adding stock entry:', error);
+      toast.error(entry.type === 'consumption' ? 'Erro ao adicionar consumo' : 'Erro ao adicionar entrada de stock');
+      setStockEntries(prev => prev.filter(e => e.id !== crypto.randomUUID()));
+      throw error;
+    }
+  };
+  
   const exportData = (type: ExportDataType) => {
   };
   
@@ -1579,6 +1697,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addStockEntry,
     updateStockEntry,
     deleteStockEntry,
+    createStockEntry,
     stockExits,
     setStockExits,
     addStockExit,
