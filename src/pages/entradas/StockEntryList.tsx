@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, Plus, ArrowUpDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
 import { useData } from '@/contexts/DataContext';
 import { StockEntry } from '@/types';
+import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -64,6 +67,7 @@ const StockEntryList = () => {
           notes: entry.notes,
           date: entry.date,
           createdAt: entry.created_at,
+          type: entry.type,
           items: entry.stock_entry_items.map((item: any) => ({
             id: item.id,
             productId: item.product_id,

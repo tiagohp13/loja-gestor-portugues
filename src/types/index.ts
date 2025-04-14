@@ -142,7 +142,6 @@ export interface StockEntry {
   notes?: string;
   createdAt: string;
   items: StockEntryItem[];
-  type?: string;
   status?: string;
 }
 
