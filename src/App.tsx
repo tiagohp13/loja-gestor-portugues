@@ -83,10 +83,6 @@ const ProtectedRoute = () => {
   return <Outlet />;
 };
 
-// Add these new imports
-import ConsumptionList from './pages/consumo/ConsumptionList';
-import ConsumptionNew from './pages/consumo/ConsumptionNew';
-
 function App() {
   return (
     <BrowserRouter>
@@ -136,9 +132,6 @@ function App() {
                   <Route path="/saidas/nova" element={<StockExitNew />} />
                   <Route path="/saidas/:id" element={<StockExitDetail />} />
                   <Route path="/saidas/editar/:id" element={<StockExitEdit />} />
-                  
-                  <Route path="/consumo/historico" element={<ConsumptionList />} />
-                  <Route path="/consumo/novo" element={<ConsumptionNew />} />
                   
                   <Route path="/configuracoes" element={<Settings />} />
                   
