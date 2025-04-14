@@ -999,6 +999,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const addOrder = async (order: Omit<Order, 'id' | 'number'>): Promise<Order> => {
     try {
+      const { data: counterData, error: counterError } = await supabase.rpc(
+        'get_next_counter',
+        { counter_id: 'orders' }
+      );
+      
+      if (counterError) throw counterError;
+      
       const { data, error } = await supabase
         .from('orders')
         .insert({
@@ -1006,7 +1013,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           client_name: order.clientName,
           date: order.date,
           notes: order.notes,
-          discount: order.discount
+          discount: order.discount,
+          number: counterData || `ORD-${Date.now()}`  // Use the counter or generate a fallback
         })
         .select()
         .single();
@@ -1131,6 +1139,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>): Promise<StockEntry> => {
     try {
+      const { data: counterData, error: counterError } = await supabase.rpc(
+        'get_next_counter',
+        { counter_id: 'stock_entries' }
+      );
+      
+      if (counterError) throw counterError;
+      
       const { data, error } = await supabase
         .from('stock_entries')
         .insert({
@@ -1138,7 +1153,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           supplier_name: entry.supplierName,
           date: entry.date,
           invoice_number: entry.invoiceNumber,
-          notes: entry.notes
+          notes: entry.notes,
+          number: counterData || `ENTRY-${Date.now()}`  // Use the counter or generate a fallback
         })
         .select()
         .single();
@@ -1256,6 +1272,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const addStockExit = async (exit: Omit<StockExit, 'id' | 'number' | 'createdAt'>): Promise<StockExit> => {
     try {
+      const { data: counterData, error: counterError } = await supabase.rpc(
+        'get_next_counter',
+        { counter_id: 'stock_exits' }
+      );
+      
+      if (counterError) throw counterError;
+      
       const { data, error } = await supabase
         .from('stock_exits')
         .insert({
@@ -1266,7 +1289,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           notes: exit.notes,
           from_order_id: exit.fromOrderId,
           from_order_number: exit.fromOrderNumber,
-          discount: exit.discount
+          discount: exit.discount,
+          number: counterData || `EXIT-${Date.now()}`  // Use the counter or generate a fallback
         })
         .select()
         .single();
@@ -1523,6 +1547,13 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const createStockEntry = async (entry: any) => {
     try {
+      const { data: counterData, error: counterError } = await supabase.rpc(
+        'get_next_counter',
+        { counter_id: 'stock_entries' }
+      );
+      
+      if (counterError) throw counterError;
+      
       const { data: entryData, error: entryError } = await supabase
         .from('stock_entries')
         .insert({
@@ -1530,7 +1561,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           supplier_name: entry.supplierName,
           date: entry.date,
           invoice_number: entry.invoiceNumber,
-          notes: entry.notes
+          notes: entry.notes,
+          number: counterData || `ENTRY-${Date.now()}`  // Use the counter or generate a fallback
         })
         .select()
         .single();
