@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
@@ -310,8 +309,8 @@ const Suporte = () => {
                   <YAxis />
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                   <Legend />
-                  <Bar name="Vendas" dataKey="vendas" fill="#8884d8" />
-                  <Bar name="Compras" dataKey="compras" fill="#82ca9d" />
+                  <Bar name="Vendas" dataKey="vendas" fill="#22c55e" />
+                  <Bar name="Compras" dataKey="compras" fill="#7E69AB" />
                   <Bar name="Lucro" dataKey="lucro" fill="#ffc658" />
                 </BarChart>
               </ResponsiveContainer>
@@ -320,30 +319,17 @@ const Suporte = () => {
         );
       
       case 'vendas':
-      case 'compras':
-      case 'lucro':
-      case 'encomendas':
-        const dataKey = chartType === 'vendas' ? 'vendas' : 
-                        chartType === 'compras' ? 'compras' : 
-                        chartType === 'lucro' ? 'lucro' : 'encomendas';
-        
-        const chartTitle = chartType === 'vendas' ? 'Vendas Mensais' : 
-                          chartType === 'compras' ? 'Compras Mensais' : 
-                          chartType === 'lucro' ? 'Lucro Mensal' : 'Encomendas Mensais';
-        
-        const chartDescription = chartType === 'encomendas' ? 'Número de encomendas por mês' : 'Valores em euros';
-        
         return (
           <>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <ChartDropdown 
                   currentType={chartType} 
-                  title={chartTitle} 
+                  title="Vendas Mensais" 
                   onSelect={setChartType} 
                 />
               </CardTitle>
-              <CardDescription>{chartDescription}</CardDescription>
+              <CardDescription>Valores de vendas em euros</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -351,10 +337,62 @@ const Suporte = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip 
-                    formatter={(value) => chartType === 'encomendas' ? value : formatCurrency(Number(value))} 
-                  />
-                  <Bar dataKey={dataKey} fill="#8884d8" />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                  <Bar dataKey="vendas" fill="#22c55e" name="Vendas" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </>
+        );
+      
+      case 'compras':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Compras Mensais" 
+                  onSelect={setChartType} 
+                />
+              </CardTitle>
+              <CardDescription>Valores de compras em euros</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                  <Bar dataKey="compras" fill="#7E69AB" name="Compras" />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </>
+        );
+      
+      case 'lucro':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Lucro Mensal" 
+                  onSelect={setChartType} 
+                />
+              </CardTitle>
+              <CardDescription>Valores de lucro em euros</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={stats.monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                  <Bar dataKey="lucro" fill="#ffc658" name="Lucro" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
