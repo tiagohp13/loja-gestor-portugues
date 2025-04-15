@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
@@ -271,8 +272,8 @@ const DashboardPage: React.FC = () => {
                   labelFormatter={(label) => `Período: ${label}`} 
                 />
                 <Legend />
-                <Line type="monotone" dataKey="vendas" stroke="#1a56db" name="Vendas" />
-                <Line type="monotone" dataKey="compras" stroke="#9333ea" name="Compras" />
+                <Line type="monotone" dataKey="vendas" stroke="#22c55e" name="Vendas" /> {/* Soft Green for Sales */}
+                <Line type="monotone" dataKey="compras" stroke="#7E69AB" name="Compras" /> {/* Purple for Purchases */}
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
