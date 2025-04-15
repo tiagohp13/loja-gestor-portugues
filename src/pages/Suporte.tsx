@@ -37,7 +37,8 @@ const Suporte = () => {
     suppliersCount: 0,
     categoriesCount: 0,
     monthlySales: [] as any[],
-    monthlyData: [] as any[]
+    monthlyData: [] as any[],
+    monthlyOrders: [] as any[]
   });
 
   useEffect(() => {
@@ -163,6 +164,7 @@ const Suporte = () => {
           .select('*', { count: 'exact', head: true });
         
         const monthlyData = await fetchMonthlyData();
+        const monthlyOrders = await fetchMonthlyOrders();
         
         setStats({
           totalSales,
@@ -179,7 +181,8 @@ const Suporte = () => {
           suppliersCount: suppliersCount || 0,
           categoriesCount: categoriesCount || 0,
           monthlySales: [],
-          monthlyData
+          monthlyData,
+          monthlyOrders
         });
       } catch (error) {
         console.error('Error fetching statistics:', error);
@@ -278,6 +281,46 @@ const Suporte = () => {
         compras: monthPurchases,
         lucro: monthSales - monthPurchases,
         encomendas: orderCount || 0
+      });
+    }
+    
+    return data;
+  };
+  
+  const fetchMonthlyOrders = async () => {
+    const today = new Date();
+    const months = [];
+    const data = [];
+    
+    for (let i = 5; i >= 0; i--) {
+      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const monthName = month.toLocaleString('default', { month: 'short' });
+      months.push({ month, monthName });
+    }
+    
+    for (const { month, monthName } of months) {
+      const startDate = new Date(month.getFullYear(), month.getMonth(), 1).toISOString();
+      const endDate = new Date(month.getFullYear(), month.getMonth() + 1, 0).toISOString();
+      
+      const { count: pendingCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .is('converted_to_stock_exit_id', null)
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      const { count: completedCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: true })
+        .not('converted_to_stock_exit_id', 'is', null)
+        .gte('date', startDate)
+        .lte('date', endDate);
+      
+      data.push({
+        name: monthName,
+        pendentes: pendingCount || 0,
+        concluidas: completedCount || 0,
+        total: (pendingCount || 0) + (completedCount || 0)
       });
     }
     
@@ -549,6 +592,42 @@ const Suporte = () => {
                 <div className="text-center py-4 text-gray-500">
                   <CircleOff className="mx-auto h-8 w-8 mb-2" />
                   <p>Não há dados de fornecedores disponíveis</p>
+                </div>
+              )}
+            </CardContent>
+          </>
+        );
+
+      case 'encomendas':
+        return (
+          <>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <ChartDropdown 
+                  currentType={chartType} 
+                  title="Encomendas Mensais" 
+                  onSelect={setChartType} 
+                />
+              </CardTitle>
+              <CardDescription>Encomendas pendentes e concluídas nos últimos 6 meses</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {stats.monthlyOrders.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.monthlyOrders}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="pendentes" fill="#3065ac" name="Encomendas Pendentes" />
+                    <Bar dataKey="concluidas" fill="#bdecb6" name="Encomendas Concluídas" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <CircleOff className="mx-auto h-8 w-8 mb-2" />
+                  <p>Não há dados de encomendas disponíveis</p>
                 </div>
               )}
             </CardContent>
