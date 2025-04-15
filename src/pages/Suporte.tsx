@@ -309,9 +309,9 @@ const Suporte = () => {
                   <YAxis />
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                   <Legend />
-                  <Bar name="Vendas" dataKey="vendas" fill="#bdecb6" />
+                  <Bar name="Vendas" dataKey="vendas" fill="#3065ac" />
                   <Bar name="Compras" dataKey="compras" fill="#ff6961" />
-                  <Bar name="Lucro" dataKey="lucro" fill="#FFAE69" />
+                  <Bar name="Lucro" dataKey="lucro" fill="#bdecb6" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -338,7 +338,7 @@ const Suporte = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Bar dataKey="vendas" fill="#bdecb6" name="Vendas" />
+                  <Bar dataKey="vendas" fill="#3065ac" name="Vendas" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -392,7 +392,7 @@ const Suporte = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Bar dataKey="lucro" fill="#FFAE69" name="Lucro" />
+                  <Bar dataKey="lucro" fill="#bdecb6" name="Lucro" />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
