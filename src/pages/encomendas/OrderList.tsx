@@ -15,6 +15,8 @@ import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/
 import { toast } from 'sonner';
 import StatusBadge from '@/components/common/StatusBadge';
 import { useIsMobile } from '@/hooks/use-mobile';
+import OrderMobileCard from "./components/OrderMobileCard";
+import OrderTable from "./components/OrderTable";
 
 const OrderList = () => {
   const navigate = useNavigate();
@@ -192,68 +194,6 @@ const OrderList = () => {
     );
   }
 
-  const renderMobileCard = (order: Order) => (
-    <div 
-      key={order.id}
-      className="bg-white rounded-lg shadow p-4 mb-4 cursor-pointer hover:bg-gray-50"
-      onClick={() => handleViewOrder(order.id)}
-    >
-      <div className="flex justify-between items-start mb-2">
-        <h3 className="font-medium text-gestorApp-blue">{order.number}</h3>
-        <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={(e) => handleEditOrder(e, order.id)}
-            disabled={order.convertedToStockExitId !== null}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
-          <DeleteConfirmDialog
-            title="Eliminar Encomenda"
-            description="Tem a certeza que deseja eliminar esta encomenda?"
-            onDelete={() => handleDeleteOrder(order.id)}
-            trigger={
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                }}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            }
-          />
-        </div>
-      </div>
-      
-      <div className="grid grid-cols-2 gap-y-2 text-sm">
-        <div className="text-gestorApp-gray">Data:</div>
-        <div>{format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}</div>
-        
-        <div className="text-gestorApp-gray">Cliente:</div>
-        <div>{order.clientName}</div>
-        
-        <div className="text-gestorApp-gray">Valor:</div>
-        <div>{formatCurrency(calculateOrderTotal(order))}</div>
-        
-        <div className="text-gestorApp-gray">Estado:</div>
-        <div>
-          {order.convertedToStockExitId ? (
-            <StatusBadge variant="success" icon={ShoppingCart}>
-              Convertida em Saída
-            </StatusBadge>
-          ) : (
-            <StatusBadge variant="warning">
-              Pendente
-            </StatusBadge>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
       <PageHeader 
@@ -296,101 +236,25 @@ const OrderList = () => {
           />
         ) : isMobile ? (
           <div className="space-y-4">
-            {sortedOrders.map(renderMobileCard)}
+            {sortedOrders.map((order) => (
+              <OrderMobileCard
+                key={order.id}
+                order={order}
+                onView={handleViewOrder}
+                onEdit={handleEditOrder}
+                onDelete={handleDeleteOrder}
+                calculateOrderTotal={calculateOrderTotal}
+              />
+            ))}
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Nº Encomenda
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Data
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Cliente
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Valor
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {sortedOrders.map((order) => (
-                  <tr 
-                    key={order.id} 
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleViewOrder(order.id)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
-                      {order.number}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {order.clientName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {formatCurrency(calculateOrderTotal(order))}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                      {order.convertedToStockExitId ? (
-                        <StatusBadge 
-                          variant="success" 
-                          icon={ShoppingCart}
-                        >
-                          Convertida em Saída
-                        </StatusBadge>
-                      ) : (
-                        <StatusBadge 
-                          variant="warning"
-                        >
-                          Pendente
-                        </StatusBadge>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div onClick={(e) => e.stopPropagation()} className="flex justify-end space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={(e) => handleEditOrder(e, order.id)}
-                          disabled={order.convertedToStockExitId !== null}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <DeleteConfirmDialog
-                          title="Eliminar Encomenda"
-                          description="Tem a certeza que deseja eliminar esta encomenda?"
-                          onDelete={() => handleDeleteOrder(order.id)}
-                          trigger={
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          }
-                        />
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <OrderTable
+            orders={sortedOrders}
+            onView={handleViewOrder}
+            onEdit={handleEditOrder}
+            onDelete={handleDeleteOrder}
+            calculateOrderTotal={calculateOrderTotal}
+          />
         )}
       </div>
     </div>
