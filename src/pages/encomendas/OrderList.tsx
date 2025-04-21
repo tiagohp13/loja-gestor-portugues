@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -38,16 +37,13 @@ const OrderList = () => {
     order.number.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Updated sorting logic to prioritize pending orders and then sort by date
   const sortedOrders = [...filteredOrders].sort((a, b) => {
-    // First sort by status (pending orders first)
     const aPending = !a.convertedToStockExitId;
     const bPending = !b.convertedToStockExitId;
     
     if (aPending && !bPending) return -1;
     if (!aPending && bPending) return 1;
     
-    // Then sort by date based on the selected sort order
     const dateA = new Date(a.date).getTime();
     const dateB = new Date(b.date).getTime();
     return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
@@ -164,13 +160,10 @@ const OrderList = () => {
     try {
       console.log("Deleting order:", id);
       
-      // Adiciona ID à cache de itens excluídos para evitar reaparecer com atualização em tempo real
       addToDeletedCache('orders', id);
       
-      // Atualiza a lista local imediatamente para uma melhor experiência de usuário
       setLocalOrders(prev => prev.filter(order => order.id !== id));
       
-      // Chama a função de excluir do contexto para atualizar o estado global e fazer a chamada da API
       const result = await deleteOrder(id);
       console.log("Delete result:", result);
       
@@ -199,7 +192,6 @@ const OrderList = () => {
     );
   }
 
-  // Mobile card view rendering
   const renderMobileCard = (order: Order) => (
     <div 
       key={order.id}
@@ -222,7 +214,13 @@ const OrderList = () => {
             description="Tem a certeza que deseja eliminar esta encomenda?"
             onDelete={() => handleDeleteOrder(order.id)}
             trigger={
-              <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                }}
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             }
@@ -375,7 +373,13 @@ const OrderList = () => {
                           description="Tem a certeza que deseja eliminar esta encomenda?"
                           onDelete={() => handleDeleteOrder(order.id)}
                           trigger={
-                            <Button variant="outline" size="sm">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           }
