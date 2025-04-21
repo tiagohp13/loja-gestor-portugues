@@ -162,6 +162,8 @@ const OrderList = () => {
   
   const handleDeleteOrder = async (id: string) => {
     try {
+      console.log("Deleting order:", id);
+      
       // Adiciona ID à cache de itens excluídos para evitar reaparecer com atualização em tempo real
       addToDeletedCache('orders', id);
       
@@ -169,7 +171,8 @@ const OrderList = () => {
       setLocalOrders(prev => prev.filter(order => order.id !== id));
       
       // Chama a função de excluir do contexto para atualizar o estado global e fazer a chamada da API
-      await deleteOrder(id);
+      const result = await deleteOrder(id);
+      console.log("Delete result:", result);
       
       toast.success("Encomenda eliminada com sucesso");
     } catch (error) {
@@ -219,7 +222,7 @@ const OrderList = () => {
             description="Tem a certeza que deseja eliminar esta encomenda?"
             onDelete={() => handleDeleteOrder(order.id)}
             trigger={
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                 <Trash2 className="h-4 w-4" />
               </Button>
             }
