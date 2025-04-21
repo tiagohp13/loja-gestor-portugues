@@ -162,10 +162,13 @@ const OrderList = () => {
   
   const handleDeleteOrder = async (id: string) => {
     try {
+      // Adiciona ID à cache de itens excluídos para evitar reaparecer com atualização em tempo real
       addToDeletedCache('orders', id);
       
+      // Atualiza a lista local imediatamente para uma melhor experiência de usuário
       setLocalOrders(prev => prev.filter(order => order.id !== id));
       
+      // Chama a função de excluir do contexto para atualizar o estado global e fazer a chamada da API
       await deleteOrder(id);
       
       toast.success("Encomenda eliminada com sucesso");
