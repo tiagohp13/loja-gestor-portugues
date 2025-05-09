@@ -41,8 +41,8 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
   // Helper function to format value based on unit
   const formatValue = (value: number, unit: string, isPercentage?: boolean) => {
     // Ensure the value is a valid number before formatting
-    if (isNaN(value)) {
-      return isPercentage ? "0.00%" : "0";
+    if (isNaN(value) || value === undefined || value === null) {
+      return isPercentage ? "0,00%" : "0";
     }
     
     if (isPercentage) return formatPercentage(value);
@@ -53,7 +53,7 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
   // Calculate progress percentage for the progress bar
   const calculateProgress = (value: number, target: number) => {
     if (target === 0) return 0;
-    if (isNaN(value)) return 0; // Handle NaN values
+    if (isNaN(value) || value === undefined || value === null) return 0; // Handle invalid values
     const progress = (value / target) * 100;
     return progress > 100 ? 100 : progress;
   };

@@ -4,22 +4,38 @@ import { SupportStats } from '../useSupportData';
 
 export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Since we can't use hooks directly in regular functions, we'll calculate the KPIs directly here
-  // This is similar to the logic in useKpiCalculations but for a different output format
   
-  // Calculate basic metrics
+  // Calculate basic metrics - make sure these are correct
   const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
   const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
+  
+  // Make sure we're using the correct client count (total number of clients created)
+  const clientsCount = stats.clientsCount;
+  
+  // Make sure we're using the correct sales count (total number of sales created)
+  const salesCount = stats.completedOrders;
+  
+  console.log('Debug KPI values:', { 
+    completedExitsCount, 
+    totalEntries, 
+    clientsCount, 
+    salesCount,
+    totalSales: stats.totalSales,
+    totalSpent: stats.totalSpent,
+    profit: stats.profit
+  });
   
   // Calculate KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
   
   // Correct calculation for Taxa de Conversão - divide total sales by total clients and multiply by 100
-  const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
+  const salesConversionRate = clientsCount > 0 ? (salesCount / clientsCount) * 100 : 0;
   
+  // Fix average values calculations
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
-  const averageSaleValue = completedExitsCount > 0 ? stats.totalSales / completedExitsCount : 0;
-  const averageProfitPerSale = completedExitsCount > 0 ? stats.profit / completedExitsCount : 0;
-  const profitPerClient = stats.clientsCount > 0 ? stats.profit / stats.clientsCount : 0;
+  const averageSaleValue = salesCount > 0 ? stats.totalSales / salesCount : 0;
+  const averageProfitPerSale = salesCount > 0 ? stats.profit / salesCount : 0;
+  const profitPerClient = clientsCount > 0 ? stats.profit / clientsCount : 0;
   
   return [
     {
@@ -112,4 +128,3 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     }
   ];
 };
-
