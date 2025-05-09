@@ -32,8 +32,10 @@ export {
   insertIntoTable,
   updateTable,
   batchSaveToTable,
-  TableName
 } from './utils/tableUtils';
+
+// Fix for 'export type' when 'isolatedModules' is enabled
+export type { TableName } from './utils/tableUtils';
 
 export { 
   addToDeletedCache, 

@@ -1,144 +1,122 @@
 
 import { supabase } from '../client';
+import { camelToSnake, snakeToCamel } from './formatUtils';
 
-// Type for tables that can be inserted/updated
-export type TableName = 'products' | 'categories' | 'clients' | 'suppliers';
+export type TableName = 
+  | 'products' 
+  | 'clients' 
+  | 'suppliers' 
+  | 'categories' 
+  | 'stock_entries' 
+  | 'stock_entry_items' 
+  | 'stock_exits' 
+  | 'stock_exit_items' 
+  | 'orders' 
+  | 'order_items';
 
 /**
- * Insert data into a Supabase table
+ * Insert a record into a table with proper case conversion
  */
 export const insertIntoTable = async (table: TableName, data: any) => {
-  // Convert any camelCase properties to snake_case for Supabase
-  const formattedData = formatItemForDatabase(table, data);
-  console.log(`Inserting into ${table}:`, formattedData);
-  
-  const { data: result, error } = await supabase
-    .from(table)
-    .insert(formattedData)
-    .select();
+  try {
+    const snakeCaseData = camelToSnake(data);
     
-  if (error) {
-    console.error(`Error inserting into ${table}:`, error);
-  } else {
-    console.log(`Successfully inserted into ${table}:`, result);
+    const { data: result, error } = await supabase
+      .from(table)
+      .insert(snakeCaseData)
+      .select();
+    
+    if (error) {
+      console.error(`Error inserting into ${table}:`, error);
+      return null;
+    }
+    
+    return snakeToCamel(result);
+  } catch (err) {
+    console.error(`Exception inserting into ${table}:`, err);
+    return null;
   }
-  
-  return { data: result, error };
 };
 
 /**
- * Update data in a Supabase table
+ * Update a record in a table with proper case conversion
  */
 export const updateTable = async (table: TableName, id: string, data: any) => {
-  // Convert any camelCase properties to snake_case for Supabase
-  const formattedData = formatItemForDatabase(table, data);
-  console.log(`Updating ${table} with ID ${id}:`, formattedData);
-  
-  const { data: result, error } = await supabase
-    .from(table)
-    .update(formattedData)
-    .eq('id', id)
-    .select();
+  try {
+    const snakeCaseData = camelToSnake(data);
     
-  if (error) {
-    console.error(`Error updating ${table}:`, error);
-  } else {
-    console.log(`Successfully updated ${table}:`, result);
-  }
-  
-  return { data: result, error };
-};
-
-/**
- * Batch insert or update multiple items with enhanced error handling
- */
-export const batchSaveToTable = async (table: TableName, items: any[]): Promise<{success: boolean, errors: string[]}> => {
-  const errors: string[] = [];
-  let successCount = 0;
-  
-  console.log(`Batch saving ${items.length} items to ${table}`);
-  
-  for (const item of items) {
-    try {
-      if (!item.id) {
-        item.id = crypto.randomUUID();
-      }
-      
-      const { error } = await insertIntoTable(table, item);
-      
-      if (error) {
-        errors.push(`Failed to save item: ${error.message}`);
-        console.error(`Error saving to ${table}:`, error);
-      } else {
-        successCount++;
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      errors.push(`Exception saving item: ${errorMessage}`);
-      console.error(`Exception saving to ${table}:`, err);
+    const { data: result, error } = await supabase
+      .from(table)
+      .update(snakeCaseData)
+      .eq('id', id)
+      .select();
+    
+    if (error) {
+      console.error(`Error updating ${table}:`, error);
+      return null;
     }
+    
+    return snakeToCamel(result);
+  } catch (err) {
+    console.error(`Exception updating ${table}:`, err);
+    return null;
   }
-  
-  console.log(`Batch save complete: ${successCount}/${items.length} successful`);
-  return {
-    success: errors.length === 0,
-    errors
-  };
 };
 
 /**
- * Format item data for database based on table type
+ * Batch save (insert or update) records to a table
  */
-const formatItemForDatabase = (table: TableName, item: any) => {
-  // Remove fields that shouldn't be sent to Supabase
-  const { createdAt, updatedAt, ...cleanedItem } = item;
-  
-  switch (table) {
-    case 'products':
-      return {
-        id: cleanedItem.id,
-        code: cleanedItem.code,
-        name: cleanedItem.name,
-        description: cleanedItem.description,
-        category: cleanedItem.category,
-        purchase_price: cleanedItem.purchasePrice,
-        sale_price: cleanedItem.salePrice,
-        current_stock: cleanedItem.currentStock,
-        min_stock: cleanedItem.minStock,
-        status: cleanedItem.status,
-        image: cleanedItem.image
-      };
-    case 'clients':
-      return {
-        id: cleanedItem.id,
-        name: cleanedItem.name,
-        email: cleanedItem.email,
-        phone: cleanedItem.phone,
-        address: cleanedItem.address,
-        tax_id: cleanedItem.taxId,
-        notes: cleanedItem.notes,
-        status: cleanedItem.status
-      };
-    case 'categories':
-      return {
-        id: cleanedItem.id,
-        name: cleanedItem.name,
-        description: cleanedItem.description,
-        status: cleanedItem.status
-      };
-    case 'suppliers':
-      return {
-        id: cleanedItem.id,
-        name: cleanedItem.name,
-        email: cleanedItem.email,
-        phone: cleanedItem.phone,
-        address: cleanedItem.address,
-        tax_id: cleanedItem.taxId,
-        payment_terms: cleanedItem.paymentTerms,
-        notes: cleanedItem.notes,
-        status: cleanedItem.status
-      };
-    default:
-      return cleanedItem;
+export const batchSaveToTable = async (table: TableName, records: any[]) => {
+  try {
+    if (!records || records.length === 0) {
+      return [];
+    }
+    
+    const snakeCaseRecords = records.map(record => camelToSnake(record));
+    
+    // Split into those with IDs (to update) and those without (to insert)
+    const toInsert = snakeCaseRecords.filter(record => !record.id);
+    const toUpdate = snakeCaseRecords.filter(record => !!record.id);
+    
+    const results = [];
+    
+    // Insert new records
+    if (toInsert.length > 0) {
+      const { data: insertedData, error: insertError } = await supabase
+        .from(table)
+        .insert(toInsert)
+        .select();
+      
+      if (insertError) {
+        console.error(`Error inserting batch into ${table}:`, insertError);
+      } else if (insertedData) {
+        results.push(...insertedData);
+      }
+    }
+    
+    // Update existing records (one by one to ensure proper handling)
+    for (const record of toUpdate) {
+      const id = record.id;
+      
+      // Omit id from the update data
+      const { id: _, ...updateData } = record;
+      
+      const { data: updatedData, error: updateError } = await supabase
+        .from(table)
+        .update(updateData)
+        .eq('id', id)
+        .select();
+      
+      if (updateError) {
+        console.error(`Error updating record in ${table}:`, updateError);
+      } else if (updatedData && updatedData.length > 0) {
+        results.push(...updatedData);
+      }
+    }
+    
+    return snakeToCamel(results);
+  } catch (err) {
+    console.error(`Exception in batchSaveToTable for ${table}:`, err);
+    return [];
   }
 };
