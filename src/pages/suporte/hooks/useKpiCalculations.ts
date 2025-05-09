@@ -18,8 +18,7 @@ export const useKpiCalculations = (stats: SupportStats) => {
     const profitMargin = stats.profitMargin; // Já calculado no sistema
     
     // Taxa de Conversão de Vendas = (Número de Vendas / Número de Clientes) × 100
-    // Corrigido para usar o número de vendas (completedExitsCount) dividido pelo número de clientes
-    const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
+    const salesConversionRate = stats.clientsCount > 0 ? (stats.completedOrders / stats.clientsCount) * 100 : 0;
     
     // Valor Médio de Compra = Valor de Compras / Número de Compras
     const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;

@@ -18,17 +18,17 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     totalSales: stats.totalSales,
     totalSpent: stats.totalSpent,
     profit: stats.profit,
-    // Taxa de conversão = (clientes / vendas) * 100 para obter 90.48%
-    calculatedTaxaConversao: (clientsCount / salesCount) * 100
+    // Taxa de conversão - verificar usando os valores corretos
+    calculatedTaxaConversao: (salesCount / clientsCount) * 100
   });
   
   // Cálculos dos KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
   const profitMargin = stats.profitMargin;
   
-  // Taxa de Conversão = (Número de Clientes / Número de Vendas) * 100
-  // Com os valores 21 clientes / 19 vendas * 100 = 90,48%
-  const salesConversionRate = (clientsCount / salesCount) * 100;
+  // Taxa de Conversão = (Número de Vendas / Número de Clientes) * 100
+  // Isso calcula a porcentagem de clientes que fizeram compras
+  const salesConversionRate = (salesCount / clientsCount) * 100;
   
   // Outros cálculos de médias
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
@@ -73,8 +73,8 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     unit: '%',
     isPercentage: true,
     previousValue: 17.5,
-    description: "Mede a eficiência de transformar clientes em vendas.",
-    formula: "(Número de Clientes / Número de Vendas) × 100",
+    description: "Mede a eficiência em converter clientes em vendas.",
+    formula: "(Número de Vendas / Número de Clientes) × 100",
     belowTarget: salesConversionRate < 20
   };
   
