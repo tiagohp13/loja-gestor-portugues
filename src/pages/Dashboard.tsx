@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../contexts/DataContext';
 import { getDashboardData } from '../data/mockData';
 import PageHeader from '../components/ui/PageHeader';
-import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle, ExternalLink } from 'lucide-react';
+import { Package, Users, Truck, TrendingUp, ShoppingCart, AlertTriangle, ExternalLink, Percent, Euro } from 'lucide-react';
 import { formatCurrency, formatDate } from '../utils/formatting';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -191,6 +191,10 @@ const DashboardPage: React.FC = () => {
   const totalProfit = totalSalesValue - totalPurchaseValue;
   
   const profitMarginPercent = totalSalesValue > 0 ? (totalProfit / totalSalesValue) * 100 : 0;
+  
+  // Calcular o ROI em euros e percentagem
+  const roiValue = totalProfit; // O ROI em euros é o lucro (vendas - compras)
+  const roiPercent = totalPurchaseValue > 0 ? (roiValue / totalPurchaseValue) * 100 : 0; // ROI% = (Lucro / Investimento) * 100
 
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -544,10 +548,26 @@ const DashboardPage: React.FC = () => {
                   {formatCurrency(totalProfit)}
                 </dd>
               </div>
-              <div className="flex justify-between py-2">
+              <div className="flex justify-between py-2 border-b">
                 <dt className="text-gestorApp-gray font-medium">Margem de Lucro</dt>
                 <dd className="font-semibold text-green-600">
                   {profitMarginPercent.toFixed(2)}%
+                </dd>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <dt className="flex items-center text-gestorApp-gray font-medium">
+                  <Euro className="h-4 w-4 mr-1" /> ROI (Valor)
+                </dt>
+                <dd className="font-semibold text-green-600">
+                  {formatCurrency(roiValue)}
+                </dd>
+              </div>
+              <div className="flex justify-between py-2">
+                <dt className="flex items-center text-gestorApp-gray font-medium">
+                  <Percent className="h-4 w-4 mr-1" /> ROI (Percentagem)
+                </dt>
+                <dd className="font-semibold text-green-600">
+                  {roiPercent.toFixed(2)}%
                 </dd>
               </div>
             </dl>
