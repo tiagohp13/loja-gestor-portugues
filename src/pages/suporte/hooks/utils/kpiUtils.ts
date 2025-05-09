@@ -7,6 +7,25 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Calculate ROI using real data
   const roi = calculateRoiPercent(stats.profit, stats.totalSpent);
   
+  // Calculate other metrics
+  const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
+  const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
+  
+  // Sales Conversion Rate = (Number of Sales / Number of Clients) × 100
+  const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
+  
+  // Average Purchase Value = Purchase Value / Number of Purchases
+  const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
+  
+  // Average Sale Value = Sales Value / Number of Sales
+  const averageSaleValue = completedExitsCount > 0 ? stats.totalSales / completedExitsCount : 0;
+  
+  // Average Profit per Sale = Profit / Number of Sales
+  const averageProfitPerSale = completedExitsCount > 0 ? stats.profit / completedExitsCount : 0;
+  
+  // Profit per Client = Profit / Number of Clients
+  const profitPerClient = stats.clientsCount > 0 ? stats.profit / stats.clientsCount : 0;
+  
   return [
     {
       name: "ROI",
@@ -29,7 +48,72 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       description: "Mede a rentabilidade da empresa.",
       formula: "(Lucro / Receita) × 100",
       belowTarget: stats.profitMargin < 25
+    },
+    {
+      name: "Taxa de Conversão",
+      value: salesConversionRate,
+      target: 20,
+      unit: '%',
+      isPercentage: true,
+      previousValue: 17.5,
+      description: "Mede a eficiência de transformar clientes em vendas.",
+      formula: "(Número de Vendas / Número de Clientes) × 100",
+      belowTarget: salesConversionRate < 20
+    },
+    {
+      name: "Valor Médio de Compra",
+      value: averagePurchaseValue,
+      target: 500,
+      unit: '€',
+      isPercentage: false,
+      previousValue: 450,
+      description: "Valor médio gasto em cada compra a fornecedores.",
+      formula: "Valor de Compras / Número de Compras",
+      belowTarget: false
+    },
+    {
+      name: "Valor Médio de Venda",
+      value: averageSaleValue,
+      target: 600,
+      unit: '€',
+      isPercentage: false,
+      previousValue: 550,
+      description: "Valor médio recebido em cada venda a clientes.",
+      formula: "Valor de Vendas / Número de Vendas",
+      belowTarget: averageSaleValue < 600
+    },
+    {
+      name: "Lucro Total",
+      value: stats.profit,
+      target: 10000,
+      unit: '€',
+      isPercentage: false,
+      previousValue: 9500,
+      description: "Lucro total gerado no período.",
+      formula: "Valor de Vendas - Valor de Compras",
+      belowTarget: stats.profit < 10000
+    },
+    {
+      name: "Lucro Médio por Venda",
+      value: averageProfitPerSale,
+      target: 200,
+      unit: '€',
+      isPercentage: false,
+      previousValue: 180,
+      description: "Lucro médio gerado em cada venda.",
+      formula: "Lucro / Número de Vendas",
+      belowTarget: averageProfitPerSale < 200
+    },
+    {
+      name: "Lucro por Cliente",
+      value: profitPerClient,
+      target: 800,
+      unit: '€',
+      isPercentage: false,
+      previousValue: 750,
+      description: "Lucro médio gerado por cada cliente.",
+      formula: "Lucro / Número de Clientes",
+      belowTarget: profitPerClient < 800
     }
-    // Removed: Ponto de Equilíbrio, Taxa de Conversão, Churn Rate, Lifetime Value, and NPS
   ];
 };
