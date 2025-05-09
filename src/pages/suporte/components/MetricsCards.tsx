@@ -15,7 +15,8 @@ const MetricsCards: React.FC<MetricsCardsProps> = ({ stats }) => {
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      {/* Primeira seção: Top métricas (produtos mais vendidos, clientes frequentes, fornecedores usados) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Produto Mais Vendido</CardTitle>
@@ -88,7 +89,8 @@ const MetricsCards: React.FC<MetricsCardsProps> = ({ stats }) => {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+      {/* Segunda seção: Os 4 cartões em uma única linha */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total de Clientes</CardTitle>
