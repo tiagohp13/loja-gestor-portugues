@@ -86,26 +86,6 @@ const MetricsCards: React.FC<MetricsCardsProps> = ({ stats }) => {
             </div>
           </CardContent>
         </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Encomendas Pendentes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center">
-              <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
-              <div className="text-2xl font-bold">{stats.pendingOrders}</div>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="ml-2" 
-                onClick={() => navigate('/encomendas/consultar')}
-              >
-                Ver todas
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -149,6 +129,26 @@ const MetricsCards: React.FC<MetricsCardsProps> = ({ stats }) => {
               <div className="text-2xl font-bold">{stats.categoriesCount}</div>
               <Button variant="ghost" size="sm" className="ml-2" onClick={() => navigate('/categorias/consultar')}>
                 Ver todos
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Encomendas Pendentes</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center">
+              <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
+              <div className="text-2xl font-bold">{stats.pendingOrders}</div>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="ml-2" 
+                onClick={() => navigate('/encomendas/consultar')}
+              >
+                Ver todas
               </Button>
             </div>
           </CardContent>
