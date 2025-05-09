@@ -1,29 +1,22 @@
 
 import { KPI } from '@/components/statistics/KPIPanel';
 import { SupportStats } from '../../types/supportTypes';
-import { calculateRoiPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
+import { useKpiCalculations } from '../useKpiCalculations';
 
 export const generateKPIs = (stats: SupportStats): KPI[] => {
-  // Calculate ROI using real data
-  const roi = calculateRoiPercent(stats.profit, stats.totalSpent);
+  // Since we can't use hooks directly in regular functions, we'll calculate the KPIs directly here
+  // This is similar to the logic in useKpiCalculations but for a different output format
   
-  // Calculate other metrics
+  // Calculate basic metrics
   const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
   const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
   
-  // Sales Conversion Rate = (Number of Sales / Number of Clients) × 100
+  // Calculate KPIs
+  const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
   const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
-  
-  // Average Purchase Value = Purchase Value / Number of Purchases
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
-  
-  // Average Sale Value = Sales Value / Number of Sales
   const averageSaleValue = completedExitsCount > 0 ? stats.totalSales / completedExitsCount : 0;
-  
-  // Average Profit per Sale = Profit / Number of Sales
   const averageProfitPerSale = completedExitsCount > 0 ? stats.profit / completedExitsCount : 0;
-  
-  // Profit per Client = Profit / Number of Clients
   const profitPerClient = stats.clientsCount > 0 ? stats.profit / stats.clientsCount : 0;
   
   return [

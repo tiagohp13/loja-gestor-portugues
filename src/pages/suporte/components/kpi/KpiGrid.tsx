@@ -12,44 +12,20 @@ import {
 } from 'lucide-react';
 import KpiCard from './KpiCard';
 import { SupportStats } from '../../hooks/useSupportData';
+import { useKpiCalculations } from '../../hooks/useKpiCalculations';
 
 interface KpiGridProps {
   stats: SupportStats;
 }
 
 const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
-  // Calcular KPIs com base nos dados existentes
-  const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
-  const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
-  
-  // ROI (Retorno sobre o Investimento) = (Lucro / Valor de Compras) × 100
-  const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
-  
-  // Margem de Lucro = (Lucro / Valor de Vendas) × 100
-  const profitMargin = stats.profitMargin; // Já calculado no sistema
-  
-  // Taxa de Conversão de Vendas = (Número de Vendas / Número de Clientes) × 100
-  const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
-  
-  // Valor Médio de Compra = Valor de Compras / Número de Compras
-  const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
-  
-  // Valor Médio de Venda = Valor de Vendas / Número de Vendas
-  const averageSaleValue = completedExitsCount > 0 ? stats.totalSales / completedExitsCount : 0;
-  
-  // Lucro Total = Valor de Vendas - Valor de Compras
-  const totalProfit = stats.profit; // Já calculado no sistema
-  
-  // Lucro Médio por Venda = Lucro / Número de Vendas
-  const averageProfitPerSale = completedExitsCount > 0 ? stats.profit / completedExitsCount : 0;
-  
-  // Lucro por Cliente = Lucro / Número de Clientes
-  const profitPerClient = stats.clientsCount > 0 ? stats.profit / stats.clientsCount : 0;
+  // Use our new hook to get all the calculated KPIs
+  const kpis = useKpiCalculations(stats);
 
   const kpiData = [
     {
       title: "ROI",
-      value: roi,
+      value: kpis.roi,
       icon: <TrendingUp />,
       tooltipText: "(Lucro / Valor de Compras) × 100",
       isPercentage: true,
@@ -57,7 +33,7 @@ const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
     },
     {
       title: "Margem de Lucro",
-      value: profitMargin,
+      value: kpis.profitMargin,
       icon: <Percent />,
       tooltipText: "(Lucro / Valor de Vendas) × 100",
       isPercentage: true,
@@ -65,7 +41,7 @@ const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
     },
     {
       title: "Taxa de Conversão",
-      value: salesConversionRate,
+      value: kpis.salesConversionRate,
       icon: <PieChart />,
       tooltipText: "(Vendas / Clientes) × 100",
       isPercentage: true,
@@ -73,35 +49,35 @@ const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
     },
     {
       title: "Valor Médio de Compra",
-      value: averagePurchaseValue,
+      value: kpis.averagePurchaseValue,
       icon: <ShoppingCart />,
       tooltipText: "Valor de Compras / Número de Compras",
       iconColor: "text-orange-500"
     },
     {
       title: "Valor Médio de Venda",
-      value: averageSaleValue,
+      value: kpis.averageSaleValue,
       icon: <DollarSign />,
       tooltipText: "Valor de Vendas / Número de Vendas",
       iconColor: "text-green-500"
     },
     {
       title: "Lucro Total",
-      value: totalProfit,
+      value: kpis.totalProfit,
       icon: <Coins />,
       tooltipText: "Valor de Vendas - Valor de Compras",
       iconColor: "text-green-500"
     },
     {
       title: "Lucro Médio por Venda",
-      value: averageProfitPerSale,
+      value: kpis.averageProfitPerSale,
       icon: <BarChart />,
       tooltipText: "Lucro / Número de Vendas",
       iconColor: "text-blue-500"
     },
     {
       title: "Lucro por Cliente",
-      value: profitPerClient,
+      value: kpis.profitPerClient,
       icon: <Users />,
       tooltipText: "Lucro / Número de Clientes",
       iconColor: "text-indigo-500"
