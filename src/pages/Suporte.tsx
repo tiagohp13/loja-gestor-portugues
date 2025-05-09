@@ -33,15 +33,6 @@ const Suporte = () => {
       
       <SummaryCards stats={stats} />
       
-      {/* KPI Panel */}
-      <div className="mb-6">
-        <KPIPanel 
-          title="Indicadores de Performance" 
-          description="Principais KPIs do negócio" 
-          kpis={kpis} 
-        />
-      </div>
-      
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <SupportChart 
           chartType={chartType}
@@ -61,8 +52,17 @@ const Suporte = () => {
       
       <MetricsCards stats={stats} />
       
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 mb-6">
         <OperationsSummary stats={stats} />
+      </div>
+      
+      {/* KPI Panel moved to the bottom of the page */}
+      <div className="mb-6">
+        <KPIPanel 
+          title="Indicadores de Performance" 
+          description="Principais KPIs do negócio" 
+          kpis={kpis} 
+        />
       </div>
     </div>
   );

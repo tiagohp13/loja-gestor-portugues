@@ -1,7 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { KPI } from '@/components/statistics/KPIPanel';
+import { 
+  calculateRoiPercent, 
+  calculateProfitMarginPercent 
+} from '@/pages/dashboard/hooks/utils/financialUtils';
 
 export interface SupportStats {
   totalSales: number;
@@ -49,79 +52,7 @@ export const useSupportData = (): SupportDataReturn => {
     monthlyOrders: []
   });
   
-  // KPI data
-  const [kpis, setKpis] = useState<KPI[]>([
-    {
-      name: "ROI",
-      value: 32.4,
-      target: 40,
-      unit: '%',
-      isPercentage: true,
-      previousValue: 30.1,
-      description: "Mede o retorno em relação ao custo de investimento.",
-      formula: "(Lucro / Custo) × 100",
-      belowTarget: true
-    },
-    {
-      name: "Margem de Lucro",
-      value: 28.6,
-      target: 25,
-      unit: '%',
-      isPercentage: true,
-      previousValue: 25.2,
-      description: "Mede a rentabilidade da empresa.",
-      formula: "(Lucro / Receita) × 100"
-    },
-    {
-      name: "Ponto de Equilíbrio",
-      value: 520,
-      target: 500,
-      unit: 'unidades',
-      previousValue: 540,
-      description: "Mede o volume de vendas necessário para cobrir os custos.",
-      formula: "Custos fixos / (Preço venda unitário - Custo variável unitário)"
-    },
-    {
-      name: "Taxa de Conversão",
-      value: 18.3,
-      target: 20,
-      unit: '%',
-      isPercentage: true,
-      previousValue: 17.5,
-      description: "Mede a eficiência de transformar leads em clientes.",
-      formula: "(Número de vendas / Número de leads) × 100",
-      belowTarget: true
-    },
-    {
-      name: "Churn Rate",
-      value: 3.7,
-      target: 5,
-      unit: '%',
-      isPercentage: true,
-      previousValue: 4.2,
-      description: "Mede a fidelidade dos clientes e a rotatividade.",
-      formula: "(Clientes perdidos / Clientes no início do período) × 100"
-    },
-    {
-      name: "Lifetime Value",
-      value: 3250,
-      target: 3000,
-      unit: '€',
-      previousValue: 3100,
-      description: "Mede o valor total que um cliente gera ao longo do relacionamento.",
-      formula: "Valor médio de compra × Compras por ano × Anos de relação"
-    },
-    {
-      name: "NPS",
-      value: 42,
-      target: 50,
-      unit: 'pontos',
-      previousValue: 38,
-      description: "Mede a satisfação e lealdade dos clientes.",
-      formula: "% de promotores - % de detratores",
-      belowTarget: true
-    }
-  ]);
+  const [kpis, setKpis] = useState<KPI[]>([]);
   
   useEffect(() => {
     const fetchStats = async () => {
@@ -152,7 +83,12 @@ export const useSupportData = (): SupportDataReturn => {
         }
         
         const profit = totalSales - totalSpent;
-        const profitMargin = totalSales > 0 ? (profit / totalSales) * 100 : 0;
+        
+        // Calculate profit margin using real data
+        const profitMargin = calculateProfitMarginPercent(profit, totalSales);
+        
+        // Calculate ROI using real data
+        const roi = calculateRoiPercent(profit, totalSpent);
         
         const { data: topProductsData, error: productsError } = await supabase
           .from('stock_exit_items')
@@ -266,6 +202,85 @@ export const useSupportData = (): SupportDataReturn => {
           monthlyData,
           monthlyOrders
         });
+        
+        // Update KPIs with real calculated data
+        setKpis([
+          {
+            name: "ROI",
+            value: roi,
+            target: 40,
+            unit: '%',
+            isPercentage: true,
+            previousValue: 30.1,
+            description: "Mede o retorno em relação ao custo de investimento.",
+            formula: "(Lucro / Custo) × 100",
+            belowTarget: roi < 40
+          },
+          {
+            name: "Margem de Lucro",
+            value: profitMargin,
+            target: 25,
+            unit: '%',
+            isPercentage: true,
+            previousValue: 25.2,
+            description: "Mede a rentabilidade da empresa.",
+            formula: "(Lucro / Receita) × 100",
+            belowTarget: profitMargin < 25
+          },
+          {
+            name: "Ponto de Equilíbrio",
+            value: 520,
+            target: 500,
+            unit: 'unidades',
+            previousValue: 540,
+            description: "Mede o volume de vendas necessário para cobrir os custos.",
+            formula: "Custos fixos / (Preço venda unitário - Custo variável unitário)",
+            belowTarget: false
+          },
+          {
+            name: "Taxa de Conversão",
+            value: 18.3,
+            target: 20,
+            unit: '%',
+            isPercentage: true,
+            previousValue: 17.5,
+            description: "Mede a eficiência de transformar leads em clientes.",
+            formula: "(Número de vendas / Número de leads) × 100",
+            belowTarget: true
+          },
+          {
+            name: "Churn Rate",
+            value: 3.7,
+            target: 5,
+            unit: '%',
+            isPercentage: true,
+            previousValue: 4.2,
+            description: "Mede a fidelidade dos clientes e a rotatividade.",
+            formula: "(Clientes perdidos / Clientes no início do período) × 100",
+            belowTarget: false
+          },
+          {
+            name: "Lifetime Value",
+            value: 3250,
+            target: 3000,
+            unit: '€',
+            previousValue: 3100,
+            description: "Mede o valor total que um cliente gera ao longo do relacionamento.",
+            formula: "Valor médio de compra × Compras por ano × Anos de relação",
+            belowTarget: false
+          },
+          {
+            name: "NPS",
+            value: 42,
+            target: 50,
+            unit: 'pontos',
+            previousValue: 38,
+            description: "Mede a satisfação e lealdade dos clientes.",
+            formula: "% de promotores - % de detratores",
+            belowTarget: true
+          }
+        ]);
+        
       } catch (error) {
         console.error('Error fetching statistics:', error);
       } finally {
