@@ -9,7 +9,6 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
-import OperationsSummary from './suporte/components/OperationsSummary';
 
 const Suporte = () => {
   const navigate = useNavigate();
@@ -51,10 +50,6 @@ const Suporte = () => {
       </div>
       
       <MetricsCards stats={stats} />
-      
-      <div className="grid grid-cols-1 gap-6 mb-6">
-        <OperationsSummary stats={stats} />
-      </div>
       
       {/* KPI Panel moved to the bottom of the page */}
       <div className="mb-6">

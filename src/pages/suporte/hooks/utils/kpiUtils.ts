@@ -1,7 +1,6 @@
 
 import { KPI } from '@/components/statistics/KPIPanel';
 import { SupportStats } from '../../types/supportTypes';
-import { useKpiCalculations } from '../useKpiCalculations';
 
 export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Since we can't use hooks directly in regular functions, we'll calculate the KPIs directly here
@@ -13,7 +12,10 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   
   // Calculate KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
+  
+  // Corrigido: Taxa de Conversão = (Número de Vendas / Número de Clientes) × 100
   const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
+  
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
   const averageSaleValue = completedExitsCount > 0 ? stats.totalSales / completedExitsCount : 0;
   const averageProfitPerSale = completedExitsCount > 0 ? stats.profit / completedExitsCount : 0;
