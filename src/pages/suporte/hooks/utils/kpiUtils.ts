@@ -1,6 +1,6 @@
 
 import { KPI } from '@/components/statistics/KPIPanel';
-import { SupportStats } from '../../types/supportTypes';
+import { SupportStats } from '../useSupportData';
 
 export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Since we can't use hooks directly in regular functions, we'll calculate the KPIs directly here
@@ -13,7 +13,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Calculate KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
   
-  // Corrigido: Taxa de Conversão = (Número de Vendas / Número de Clientes) × 100
+  // Taxa de Conversão = (Número de Vendas / Número de Clientes) × 100
   const salesConversionRate = stats.clientsCount > 0 ? (completedExitsCount / stats.clientsCount) * 100 : 0;
   
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
@@ -78,17 +78,6 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       belowTarget: averageSaleValue < 600
     },
     {
-      name: "Lucro Total",
-      value: stats.profit,
-      target: 10000,
-      unit: '€',
-      isPercentage: false,
-      previousValue: 9500,
-      description: "Lucro total gerado no período.",
-      formula: "Valor de Vendas - Valor de Compras",
-      belowTarget: stats.profit < 10000
-    },
-    {
       name: "Lucro Médio por Venda",
       value: averageProfitPerSale,
       target: 200,
@@ -98,6 +87,17 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       description: "Lucro médio gerado em cada venda.",
       formula: "Lucro / Número de Vendas",
       belowTarget: averageProfitPerSale < 200
+    },
+    {
+      name: "Lucro Total",
+      value: stats.profit,
+      target: 10000,
+      unit: '€',
+      isPercentage: false,
+      previousValue: 9500,
+      description: "Lucro total gerado no período.",
+      formula: "Valor de Vendas - Valor de Compras",
+      belowTarget: stats.profit < 10000
     },
     {
       name: "Lucro por Cliente",
