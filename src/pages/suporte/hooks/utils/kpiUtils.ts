@@ -18,6 +18,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     totalSales: stats.totalSales,
     totalSpent: stats.totalSpent,
     profit: stats.profit,
+    // Taxa de conversão = (vendas / clientes) * 100
     calculatedTaxaConversao: (salesCount / clientsCount) * 100
   });
   
