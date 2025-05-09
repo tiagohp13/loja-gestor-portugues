@@ -13,6 +13,7 @@ import LowStockProducts from './dashboard/components/LowStockProducts';
 import RecentTransactions from './dashboard/components/RecentTransactions';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
 import FeaturedProducts from './dashboard/components/FeaturedProducts';
+import { TransactionItem } from './dashboard/hooks/utils/transactionUtils';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,7 +78,7 @@ const DashboardPage: React.FC = () => {
         />
         
         <RecentTransactions 
-          recentTransactions={recentTransactions}
+          recentTransactions={recentTransactions as TransactionItem[]} 
           navigateToProductDetail={navigateToProductDetail}
           navigateToClientDetail={navigateToClientDetail}
           navigateToSupplierDetail={navigateToSupplierDetail}

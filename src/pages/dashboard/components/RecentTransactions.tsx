@@ -4,22 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/utils/formatting';
-import { Product } from '@/types';
-
-interface Transaction {
-  id: string;
-  type: 'entry' | 'exit';
-  productId: string;
-  product: Product | undefined;
-  entity: string;
-  entityId: string;
-  quantity: number;
-  date: string | Date;
-  value: number;
-}
+import { TransactionItem } from '../hooks/utils/transactionUtils';
 
 interface RecentTransactionsProps {
-  recentTransactions: Transaction[];
+  recentTransactions: TransactionItem[];
   navigateToProductDetail: (id: string) => void;
   navigateToClientDetail: (id: string) => void;
   navigateToSupplierDetail: (id: string) => void;
@@ -50,7 +38,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
             <ul className="space-y-3">
               {recentTransactions.length > 0 ? (
                 recentTransactions.map((transaction) => (
-                  <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
+                  <li key={`${transaction.id}-${transaction.productId}`} className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <div>
                       <Button 
                         variant="link" 
@@ -98,7 +86,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
               {recentTransactions
                 .filter(t => t.type === 'entry')
                 .map((transaction) => (
-                  <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
+                  <li key={`${transaction.id}-${transaction.productId}-entry`} className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <div>
                       <Button 
                         variant="link" 
@@ -136,7 +124,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
               {recentTransactions
                 .filter(t => t.type === 'exit')
                 .map((transaction) => (
-                  <li key={transaction.id} className="flex justify-between p-3 bg-gray-50 rounded-md">
+                  <li key={`${transaction.id}-${transaction.productId}-exit`} className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <div>
                       <Button 
                         variant="link" 

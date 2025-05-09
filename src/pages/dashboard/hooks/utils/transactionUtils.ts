@@ -5,7 +5,7 @@ export type TransactionItem = {
   id: string;
   type: 'entry' | 'exit';
   productId: string;
-  product?: Product;
+  product: Product | undefined;  // Changed from optional to required to match Transaction type
   entity: string;
   entityId: string;
   quantity: number;
