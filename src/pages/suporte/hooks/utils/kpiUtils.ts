@@ -1,3 +1,4 @@
+
 import { KPI } from '@/components/statistics/KPIPanel';
 import { SupportStats } from '../useSupportData';
 
@@ -6,26 +7,26 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
   const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
   
-  // Verificamos que estamos usando os valores corretos
+  // Valores para cálculos
   const clientsCount = stats.clientsCount;
   const salesCount = stats.completedOrders;
   
-  // Debug para verificar os valores
+  // Debug para verificar os valores usados no cálculo
   console.log('Debug KPI values:', { 
     clientsCount, 
     salesCount,
     totalSales: stats.totalSales,
     totalSpent: stats.totalSpent,
     profit: stats.profit,
-    calculatedTaxaConversao: salesCount > 0 && clientsCount > 0 ? (salesCount / clientsCount) * 100 : 0
+    calculatedTaxaConversao: (salesCount / clientsCount) * 100
   });
   
   // Cálculos dos KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
+  const profitMargin = stats.profitMargin;
   
-  // CORREÇÃO: Taxa de Conversão = (Número de Vendas / Número de Clientes) * 100
-  // Garante que temos valores válidos antes de calcular
-  const salesConversionRate = clientsCount > 0 ? (salesCount / clientsCount) * 100 : 0;
+  // Taxa de Conversão = (Número de Vendas / Número de Clientes) * 100
+  const salesConversionRate = (salesCount / clientsCount) * 100;
   
   // Outros cálculos de médias
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
@@ -34,7 +35,10 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   const profitPerClient = clientsCount > 0 ? stats.profit / clientsCount : 0;
   
   // Array de KPIs
-  const kpis: KPI[] = [
+  const kpis: KPI[] = [];
+  
+  // Adicionamos os KPIs ao array
+  kpis.push(
     {
       name: "ROI",
       value: roi,
@@ -56,20 +60,24 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       description: "Mede a rentabilidade da empresa.",
       formula: "(Lucro / Receita) × 100",
       belowTarget: stats.profitMargin < 25
-    },
-    // REFORMULADO: Taxa de Conversão
-    {
-      name: "Taxa de Conversão",
-      value: salesConversionRate,
-      target: 20,
-      unit: '%',
-      isPercentage: true,
-      previousValue: 17.5,
-      description: "Mede a eficiência de transformar clientes em vendas.",
-      formula: "(Número de Vendas / Número de Clientes) × 100",
-      belowTarget: false // Com 90.48% estará acima da meta de 20%
     }
-  ];
+  );
+  
+  // Criamos a Taxa de Conversão como um objeto separado para garantir que está correto
+  const taxaConversao: KPI = {
+    name: "Taxa de Conversão",
+    value: salesConversionRate,
+    target: 20,
+    unit: '%',
+    isPercentage: true,
+    previousValue: 17.5,
+    description: "Mede a eficiência de transformar clientes em vendas.",
+    formula: "(Número de Vendas / Número de Clientes) × 100",
+    belowTarget: salesConversionRate < 20
+  };
+  
+  // Adicionamos a Taxa de Conversão ao array de KPIs
+  kpis.push(taxaConversao);
   
   // Adicionamos os KPIs restantes ao array
   kpis.push(
