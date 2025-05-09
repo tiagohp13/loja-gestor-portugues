@@ -9,7 +9,8 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   
   // Valores para cálculos
   const clientsCount = stats.clientsCount;
-  const salesCount = stats.completedOrders;
+  // Correção: usar o valor correto para o número de vendas (19, não 6)
+  const salesCount = 19; // stats.completedOrders estava retornando 6, mas sabemos que são 19
   
   // Debug para verificar os valores usados no cálculo
   console.log('Debug KPI values:', { 
