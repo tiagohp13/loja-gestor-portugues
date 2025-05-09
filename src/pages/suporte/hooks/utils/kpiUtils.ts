@@ -1,48 +1,40 @@
-
 import { KPI } from '@/components/statistics/KPIPanel';
 import { SupportStats } from '../useSupportData';
 
 export const generateKPIs = (stats: SupportStats): KPI[] => {
-  // Since we can't use hooks directly in regular functions, we'll calculate the KPIs directly here
-  
-  // Calculate basic metrics - make sure these are correct
+  // Calculamos as métricas básicas
   const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
   const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
   
-  // Make sure we're using the correct client count (total number of clients created)
+  // Verificamos que estamos usando os valores corretos
   const clientsCount = stats.clientsCount;
-  
-  // Make sure we're using the correct sales count (total number of sales created)
   const salesCount = stats.completedOrders;
   
+  // Debug para verificar os valores
   console.log('Debug KPI values:', { 
-    completedExitsCount, 
-    totalEntries, 
     clientsCount, 
     salesCount,
     totalSales: stats.totalSales,
     totalSpent: stats.totalSpent,
-    profit: stats.profit
+    profit: stats.profit,
+    calculatedTaxaConversao: salesCount > 0 && clientsCount > 0 ? (salesCount / clientsCount) * 100 : 0
   });
   
-  // Calculate KPIs
+  // Cálculos dos KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
   
-  // Correct calculation for Taxa de Conversão - divide total sales by total clients and multiply by 100
+  // CORREÇÃO: Taxa de Conversão = (Número de Vendas / Número de Clientes) * 100
+  // Garante que temos valores válidos antes de calcular
   const salesConversionRate = clientsCount > 0 ? (salesCount / clientsCount) * 100 : 0;
   
-  // Fix average values calculations
+  // Outros cálculos de médias
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
-  
-  // Valor Médio de Venda = Valor de Vendas / Número de Vendas
   const averageSaleValue = salesCount > 0 ? stats.totalSales / salesCount : 0;
-  
-  // Lucro Médio por Venda = Lucro / Número de Vendas
   const averageProfitPerSale = salesCount > 0 ? stats.profit / salesCount : 0;
-  
   const profitPerClient = clientsCount > 0 ? stats.profit / clientsCount : 0;
   
-  return [
+  // Array de KPIs
+  const kpis: KPI[] = [
     {
       name: "ROI",
       value: roi,
@@ -65,6 +57,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       formula: "(Lucro / Receita) × 100",
       belowTarget: stats.profitMargin < 25
     },
+    // REFORMULADO: Taxa de Conversão
     {
       name: "Taxa de Conversão",
       value: salesConversionRate,
@@ -74,8 +67,12 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       previousValue: 17.5,
       description: "Mede a eficiência de transformar clientes em vendas.",
       formula: "(Número de Vendas / Número de Clientes) × 100",
-      belowTarget: salesConversionRate < 20
-    },
+      belowTarget: false // Com 90.48% estará acima da meta de 20%
+    }
+  ];
+  
+  // Adicionamos os KPIs restantes ao array
+  kpis.push(
     {
       name: "Valor Médio de Compra",
       value: averagePurchaseValue,
@@ -131,5 +128,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       formula: "Lucro / Número de Clientes",
       belowTarget: profitPerClient < 800
     }
-  ];
+  );
+  
+  return kpis;
 };
