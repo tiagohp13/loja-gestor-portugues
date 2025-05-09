@@ -11,6 +11,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import ChartDropdown from '@/components/statistics/ChartDropdown';
 import { ChartType } from '@/components/statistics/ChartDropdown';
+import KPIPanel, { KPI } from '@/components/statistics/KPIPanel';
 
 interface TopProduct {
   name: string;
@@ -40,6 +41,80 @@ const Suporte = () => {
     monthlyData: [] as any[],
     monthlyOrders: [] as any[]
   });
+
+  // KPI data
+  const [kpis, setKpis] = useState<KPI[]>([
+    {
+      name: "ROI",
+      value: 32.4,
+      target: 40,
+      unit: '%',
+      isPercentage: true,
+      previousValue: 30.1,
+      description: "Mede o retorno em relação ao custo de investimento.",
+      formula: "(Lucro / Custo) × 100",
+      belowTarget: true
+    },
+    {
+      name: "Margem de Lucro",
+      value: 28.6,
+      target: 25,
+      unit: '%',
+      isPercentage: true,
+      previousValue: 25.2,
+      description: "Mede a rentabilidade da empresa.",
+      formula: "(Lucro / Receita) × 100"
+    },
+    {
+      name: "Ponto de Equilíbrio",
+      value: 520,
+      target: 500,
+      unit: 'unidades',
+      previousValue: 540,
+      description: "Mede o volume de vendas necessário para cobrir os custos.",
+      formula: "Custos fixos / (Preço venda unitário - Custo variável unitário)"
+    },
+    {
+      name: "Taxa de Conversão",
+      value: 18.3,
+      target: 20,
+      unit: '%',
+      isPercentage: true,
+      previousValue: 17.5,
+      description: "Mede a eficiência de transformar leads em clientes.",
+      formula: "(Número de vendas / Número de leads) × 100",
+      belowTarget: true
+    },
+    {
+      name: "Churn Rate",
+      value: 3.7,
+      target: 5,
+      unit: '%',
+      isPercentage: true,
+      previousValue: 4.2,
+      description: "Mede a fidelidade dos clientes e a rotatividade.",
+      formula: "(Clientes perdidos / Clientes no início do período) × 100"
+    },
+    {
+      name: "Lifetime Value",
+      value: 3250,
+      target: 3000,
+      unit: '€',
+      previousValue: 3100,
+      description: "Mede o valor total que um cliente gera ao longo do relacionamento.",
+      formula: "Valor médio de compra × Compras por ano × Anos de relação"
+    },
+    {
+      name: "NPS",
+      value: 42,
+      target: 50,
+      unit: 'pontos',
+      previousValue: 38,
+      description: "Mede a satisfação e lealdade dos clientes.",
+      formula: "% de promotores - % de detratores",
+      belowTarget: true
+    }
+  ]);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -698,6 +773,15 @@ const Suporte = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
+      
+      {/* KPI Panel */}
+      <div className="mb-6">
+        <KPIPanel 
+          title="Indicadores de Performance" 
+          description="Principais KPIs do negócio" 
+          kpis={kpis} 
+        />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
