@@ -218,10 +218,15 @@ export const useDashboardData = () => {
   }, [totalProfit, totalSalesValue]);
   
   // Calcular o ROI
-  const roiValue = totalProfit;
+  const roiValue = useMemo(() => {
+    // ROI em euros é o resultado do lucro dividido pelo valor das compras
+    return totalPurchaseValue > 0 ? totalProfit / totalPurchaseValue : 0;
+  }, [totalProfit, totalPurchaseValue]);
+  
   const roiPercent = useMemo(() => {
-    return totalPurchaseValue > 0 ? (roiValue / totalPurchaseValue) * 100 : 0;
-  }, [roiValue, totalPurchaseValue]);
+    // ROI em percentagem é o ROI em euros multiplicado por 100
+    return totalPurchaseValue > 0 ? (totalProfit / totalPurchaseValue) * 100 : 0;
+  }, [totalProfit, totalPurchaseValue]);
 
   return {
     products,
