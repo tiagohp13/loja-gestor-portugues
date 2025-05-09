@@ -9,10 +9,7 @@ const OperationsSummary: React.FC<OperationsSummaryProps> = ({
   stats
 }) => {
   return <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Resumo de Operações</CardTitle>
-        <CardDescription>Principais indicadores de desempenho do negócio</CardDescription>
-      </CardHeader>
+      
       
     </Card>;
 };
