@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { TrendingUp, TrendingDown, AlertTriangle, Euro, BadgeDollarSign, Users, BadgePercent, Info, CalendarDays } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
-import { formatCurrency, formatPercent } from '@/utils/formatting';
+import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 export interface KPI {
@@ -40,7 +40,7 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
 
   // Helper function to format value based on unit
   const formatValue = (value: number, unit: string, isPercentage?: boolean) => {
-    if (isPercentage) return formatPercent(value);
+    if (isPercentage) return formatPercentage(value);
     if (unit === '€') return formatCurrency(value);
     return value.toLocaleString();
   };
