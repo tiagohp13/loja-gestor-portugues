@@ -11,8 +11,8 @@ export interface DashboardCardData {
   title: string;
   value: number | string;
   icon: JSX.Element;
-  variation?: MonthlyVariation;
   navigateTo: string;
   iconColor: string;
   iconBackground: string;
+  variation?: MonthlyVariation; // Keeping this for backward compatibility but won't use it
 }

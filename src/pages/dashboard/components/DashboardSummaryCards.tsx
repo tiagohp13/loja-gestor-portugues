@@ -5,7 +5,6 @@ import { formatCurrency } from '@/utils/formatting';
 import { Product, Client, Supplier } from '@/types/';
 import DashboardSummaryCard from './DashboardSummaryCard';
 import { DashboardCardData } from '@/types/dashboard';
-import { getCurrentMonthName } from '@/utils/dateUtils';
 
 interface DashboardSummaryCardsProps {
   products: Product[];
@@ -14,45 +13,17 @@ interface DashboardSummaryCardsProps {
   totalStockValue: number;
 }
 
-// Generate variation data based on current data
-// In a real implementation, this would come from the API or be calculated
-const getVariationData = (current: number): { 
-  previousValue: number;
-} => {
-  // For demo purposes, generate a random previous value
-  // In a real implementation, this would be actual historical data
-  const variationPercent = Math.random() * 0.2 - 0.1; // Between -10% and +10%
-  const previousValue = Math.round(current / (1 + variationPercent));
-  
-  return {
-    previousValue
-  };
-};
-
 const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
   products,
   clients,
   suppliers,
   totalStockValue
 }) => {
-  // Create variation data for each metric
-  const productsVariation = getVariationData(products.length);
-  const clientsVariation = getVariationData(clients.length);
-  const suppliersVariation = getVariationData(suppliers.length);
-  const stockValueVariation = getVariationData(totalStockValue);
-  
   const cards: DashboardCardData[] = [
     {
       title: 'Total Produtos',
       value: products.length,
       icon: <Package className="h-6 w-6" />,
-      variation: {
-        currentValue: products.length,
-        previousValue: productsVariation.previousValue,
-        percentChange: ((products.length - productsVariation.previousValue) / productsVariation.previousValue) * 100,
-        absoluteChange: products.length - productsVariation.previousValue,
-        previousMonth: ''
-      },
       navigateTo: '/produtos/consultar',
       iconColor: 'text-blue-500',
       iconBackground: 'bg-blue-100'
@@ -61,13 +32,6 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
       title: 'Total Clientes',
       value: clients.length,
       icon: <Users className="h-6 w-6" />,
-      variation: {
-        currentValue: clients.length,
-        previousValue: clientsVariation.previousValue,
-        percentChange: ((clients.length - clientsVariation.previousValue) / clientsVariation.previousValue) * 100,
-        absoluteChange: clients.length - clientsVariation.previousValue,
-        previousMonth: ''
-      },
       navigateTo: '/clientes/consultar',
       iconColor: 'text-green-500',
       iconBackground: 'bg-green-100'
@@ -76,13 +40,6 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
       title: 'Total Fornecedores',
       value: suppliers.length,
       icon: <Truck className="h-6 w-6" />,
-      variation: {
-        currentValue: suppliers.length,
-        previousValue: suppliersVariation.previousValue,
-        percentChange: ((suppliers.length - suppliersVariation.previousValue) / suppliersVariation.previousValue) * 100,
-        absoluteChange: suppliers.length - suppliersVariation.previousValue,
-        previousMonth: ''
-      },
       navigateTo: '/fornecedores/consultar',
       iconColor: 'text-orange-500',
       iconBackground: 'bg-orange-100'
@@ -91,13 +48,6 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
       title: 'Valor do Stock',
       value: formatCurrency(totalStockValue),
       icon: <TrendingUp className="h-6 w-6" />,
-      variation: {
-        currentValue: totalStockValue,
-        previousValue: stockValueVariation.previousValue,
-        percentChange: ((totalStockValue - stockValueVariation.previousValue) / stockValueVariation.previousValue) * 100,
-        absoluteChange: totalStockValue - stockValueVariation.previousValue,
-        previousMonth: ''
-      },
       navigateTo: '/produtos/consultar',
       iconColor: 'text-purple-500',
       iconBackground: 'bg-purple-100'

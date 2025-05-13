@@ -1,10 +1,9 @@
 
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCardData } from '@/types/dashboard';
-import { getCurrentMonthName } from '@/utils/dateUtils';
 
 interface DashboardSummaryCardProps {
   cardData: DashboardCardData;
@@ -12,8 +11,7 @@ interface DashboardSummaryCardProps {
 
 const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData }) => {
   const navigate = useNavigate();
-  const { title, value, icon, variation, navigateTo, iconColor, iconBackground } = cardData;
-  const currentMonth = getCurrentMonthName();
+  const { title, value, icon, navigateTo, iconColor, iconBackground } = cardData;
   
   const handleNavigate = () => {
     navigate(navigateTo);
@@ -21,7 +19,7 @@ const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData })
   
   return (
     <Card className="stat-card overflow-hidden transition-all duration-300 hover:shadow-md relative group">
-      <CardContent className="px-6 py-5">
+      <CardContent className="px-6 py-4">
         <div className="flex items-start justify-between">
           <div className={`rounded-lg ${iconBackground} p-3 mb-3`}>
             <div className={`h-6 w-6 ${iconColor}`}>
@@ -42,27 +40,6 @@ const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData })
         <div className="space-y-1">
           <p className="text-sm font-medium text-gestorApp-gray">{title}</p>
           <p className="text-2xl font-bold text-gestorApp-gray-dark">{value}</p>
-          
-          {variation && (
-            <div className="flex items-center mt-2">
-              {variation.percentChange !== undefined && variation.percentChange > 0 ? (
-                <ArrowUp className="h-3 w-3 text-green-500 mr-1" />
-              ) : variation.percentChange !== undefined && variation.percentChange < 0 ? (
-                <ArrowDown className="h-3 w-3 text-red-500 mr-1" />
-              ) : null}
-              
-              <span className={`text-xs ${
-                variation.percentChange !== undefined && variation.percentChange > 0
-                  ? 'text-green-500'
-                  : variation.percentChange !== undefined && variation.percentChange < 0
-                  ? 'text-red-500'
-                  : 'text-gray-500'
-              }`}>
-                {variation.absoluteChange > 0 ? '+' : ''}
-                {variation.absoluteChange} este {currentMonth}
-              </span>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
