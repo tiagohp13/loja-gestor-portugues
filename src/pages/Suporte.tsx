@@ -9,9 +9,11 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
+import { useToast } from '@/hooks/use-toast';
 
 const Suporte = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [chartType, setChartType] = useState<ChartType>('resumo');
   const { isLoading, stats, kpis } = useSupportData();
   

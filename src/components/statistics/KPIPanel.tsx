@@ -1,11 +1,13 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingUp, TrendingDown, AlertTriangle, Euro, BadgeDollarSign, Users, BadgePercent, Info, CalendarDays } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Euro, BadgeDollarSign, Users, BadgePercent, Info, CalendarDays, Pencil } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import KPIEditModal from './KPIEditModal';
 
 export interface KPI {
   name: string;
@@ -27,6 +29,9 @@ interface KPIPanelProps {
 }
 
 const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de desempenho" }: KPIPanelProps) => {
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [kpisState, setKpisState] = useState<KPI[]>(kpis);
+  
   // Helper function to get trend icon
   const getTrendIcon = (current: number, previous?: number) => {
     if (!previous) return null;
@@ -74,16 +79,33 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
     const key = Object.keys(icons).find(k => name.includes(k));
     return key ? icons[key as keyof typeof icons] : <Info className="h-4 w-4 text-gray-500" />;
   };
+
+  // Update KPIs when targets are saved
+  const handleSaveTargets = (updatedKpis: KPI[]) => {
+    setKpisState(updatedKpis);
+    setIsEditModalOpen(false);
+  };
   
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </div>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          onClick={() => setIsEditModalOpen(true)}
+          className="flex items-center gap-1"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+          Editar Metas
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {kpis.map((kpi, index) => (
+          {kpisState.map((kpi, index) => (
             <TooltipProvider key={index}>
               <Card className={`shadow-sm ${kpi.belowTarget ? 'border-orange-300' : ''}`}>
                 <CardHeader className="pb-2">
@@ -137,6 +159,13 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
           ))}
         </div>
       </CardContent>
+      
+      <KPIEditModal 
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        kpis={kpisState}
+        onSave={handleSaveTargets}
+      />
     </Card>
   );
 };
