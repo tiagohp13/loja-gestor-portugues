@@ -8,7 +8,7 @@ import { toast } from '@/components/ui/use-toast';
 
 export const useStockExit = (exitId?: string) => {
   const navigate = useNavigate();
-  const { clients, products, stockExits, addStockExit, updateStockExit, findStockExit } = useData();
+  const { clients, products, stockExits, addStockExit, updateStockExit } = useData();
   
   const initialExitDetails = {
     clientId: '',
@@ -39,7 +39,7 @@ export const useStockExit = (exitId?: string) => {
   // Load exit data if in edit mode
   useEffect(() => {
     if (exitId) {
-      const exitData = findStockExit(exitId);
+      const exitData = stockExits.find(exit => exit.id === exitId);
       
       if (exitData) {
         setExitDetails({
@@ -54,14 +54,14 @@ export const useStockExit = (exitId?: string) => {
         setExitDate(new Date(exitData.date));
       }
     }
-  }, [exitId, findStockExit]);
+  }, [exitId, stockExits]);
   
   // Filter products based on search term
   const filteredProducts = searchTerm.trim() === '' ? 
     products :
     products.filter(product => 
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+      product.code?.toLowerCase().includes(searchTerm.toLowerCase())
     );
   
   // Filter clients based on search term
@@ -69,7 +69,7 @@ export const useStockExit = (exitId?: string) => {
     clients :
     clients.filter(client =>
       client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
-      client.fiscalNumber?.toLowerCase().includes(clientSearchTerm.toLowerCase())
+      client.taxId?.toLowerCase().includes(clientSearchTerm.toLowerCase())
     );
   
   const handleExitDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -175,14 +175,17 @@ export const useStockExit = (exitId?: string) => {
     }
     
     try {
-      const exitData: Partial<StockExit> = {
+      const exitData: Omit<StockExit, "number" | "id" | "createdAt"> = {
         clientId: exitDetails.clientId,
         clientName: exitDetails.clientName,
         date: exitDate.toISOString().split('T')[0],
         invoiceNumber: exitDetails.invoiceNumber || undefined,
         notes: exitDetails.notes,
         discount: exitDetails.discount,
-        items
+        items,
+        fromOrderId: undefined,
+        fromOrderNumber: undefined,
+        updated_at: new Date().toISOString()
       };
       
       if (exitId) {

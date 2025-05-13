@@ -35,6 +35,7 @@ const StockExitNew = () => {
     handleClientSelect,
     addItemToExit,
     removeItem,
+    updateItem,
     getDiscountedPrice,
     totalValue,
     filteredProducts,
@@ -108,7 +109,10 @@ const StockExitNew = () => {
               handleSearch={handleSearch}
               handleProductSelect={handleProductSelect}
               selectedProductDisplay={selectedProductDisplay}
-              currentItem={currentItem}
+              currentItem={{
+                ...currentItem,
+                discountPercent: currentItem.discountPercent || 0
+              }}
               setCurrentItem={setCurrentItem}
               addItemToExit={addItemToExit}
               products={products}
@@ -118,6 +122,7 @@ const StockExitNew = () => {
               <ProductsTable
                 items={items}
                 removeItem={removeItem}
+                updateItem={updateItem}
                 getDiscountedPrice={getDiscountedPrice}
                 totalValue={totalValue}
               />
@@ -128,7 +133,7 @@ const StockExitNew = () => {
             <label className="block text-sm font-medium mb-1">Notas</label>
             <Textarea
               placeholder="Observações ou notas adicionais sobre esta venda..."
-              value={exitDetails.notes}
+              value={exitDetails.notes || ''}
               onChange={(e) => handleExitDetailsChange(e)}
               name="notes"
               className="h-24"

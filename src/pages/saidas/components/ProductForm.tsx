@@ -4,7 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
 import ProductSelector from './ProductSelector';
-import { Product } from '@/types';
+import { Product, StockExitItem } from '@/types';
 
 interface ProductFormProps {
   searchTerm: string;
@@ -22,13 +22,7 @@ interface ProductFormProps {
     salePrice: number;
     discountPercent: number;
   };
-  setCurrentItem: React.Dispatch<React.SetStateAction<{
-    productId: string;
-    productName: string;
-    quantity: number;
-    salePrice: number;
-    discountPercent: number;
-  }>>;
+  setCurrentItem: React.Dispatch<React.SetStateAction<StockExitItem>>;
   addItemToExit: () => void;
   products: Product[];
 }
