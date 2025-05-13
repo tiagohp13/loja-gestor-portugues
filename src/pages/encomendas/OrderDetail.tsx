@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -74,6 +74,17 @@ const OrderDetail = () => {
                   <p className="text-sm font-medium text-gestorApp-gray">Data</p>
                   <p>{format(new Date(order.date), 'dd/MM/yyyy', { locale: pt })}</p>
                 </div>
+                {order.convertedToStockExitId && order.convertedToStockExitNumber && (
+                  <div>
+                    <p className="text-sm font-medium text-gestorApp-gray">Nº Venda</p>
+                    <a 
+                      href={`/saidas/${order.convertedToStockExitId}`}
+                      className="text-gestorApp-blue hover:underline cursor-pointer"
+                    >
+                      {order.convertedToStockExitNumber}
+                    </a>
+                  </div>
+                )}
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-gestorApp-gray">Cliente</p>
                   <p className="font-medium">{order.clientName}</p>
@@ -92,18 +103,6 @@ const OrderDetail = () => {
                     )}
                   </div>
                 </div>
-                
-                {order.convertedToStockExitId && order.convertedToStockExitNumber && (
-                  <div className="col-span-2">
-                    <p className="text-sm font-medium text-gestorApp-gray">Nº Saída</p>
-                    <a 
-                      href={`/saidas/${order.convertedToStockExitId}`}
-                      className="text-gestorApp-blue hover:underline cursor-pointer"
-                    >
-                      {order.convertedToStockExitNumber}
-                    </a>
-                  </div>
-                )}
               </div>
             </div>
             

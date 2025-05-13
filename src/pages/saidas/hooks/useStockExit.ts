@@ -1,209 +1,219 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
-import { StockExitItem, Product, Client } from '@/types';
-import { toast } from 'sonner';
+import { StockExitItem, StockExit } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from '@/components/ui/use-toast';
 
-export const useStockExit = () => {
+export const useStockExit = (exitId?: string) => {
   const navigate = useNavigate();
-  const { addStockExit, products, clients } = useData();
+  const { clients, products, stockExits, addStockExit, updateStockExit, findStockExit } = useData();
   
-  const [exitDetails, setExitDetails] = useState({
+  const initialExitDetails = {
     clientId: '',
     clientName: '',
-    date: new Date().toISOString().split('T')[0],
     invoiceNumber: '',
-    notes: ''
-  });
+    notes: '',
+    discount: 0,
+  };
   
+  const [exitDetails, setExitDetails] = useState(initialExitDetails);
   const [items, setItems] = useState<StockExitItem[]>([]);
-  
-  const [currentItem, setCurrentItem] = useState<{
-    productId: string;
-    productName: string;
-    quantity: number;
-    salePrice: number;
-    discountPercent: number;
-  }>({
+  const [currentItem, setCurrentItem] = useState<StockExitItem>({
+    id: '',
     productId: '',
     productName: '',
     quantity: 1,
     salePrice: 0,
     discountPercent: 0
   });
-  
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [selectedProductDisplay, setSelectedProductDisplay] = useState('');
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
-  const [exitDate, setExitDate] = useState<Date>(new Date());
+  const [exitDate, setExitDate] = useState(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
-
-  const handleExitDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  
+  // Load exit data if in edit mode
+  useEffect(() => {
+    if (exitId) {
+      const exitData = findStockExit(exitId);
+      
+      if (exitData) {
+        setExitDetails({
+          clientId: exitData.clientId || '',
+          clientName: exitData.clientName || '',
+          invoiceNumber: exitData.invoiceNumber || '',
+          notes: exitData.notes || '',
+          discount: exitData.discount || 0,
+        });
+        
+        setItems(exitData.items || []);
+        setExitDate(new Date(exitData.date));
+      }
+    }
+  }, [exitId, findStockExit]);
+  
+  // Filter products based on search term
+  const filteredProducts = searchTerm.trim() === '' ? 
+    products :
+    products.filter(product => 
+      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      product.reference?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  
+  // Filter clients based on search term
+  const filteredClients = clientSearchTerm.trim() === '' ?
+    clients :
+    clients.filter(client =>
+      client.name.toLowerCase().includes(clientSearchTerm.toLowerCase()) ||
+      client.fiscalNumber?.toLowerCase().includes(clientSearchTerm.toLowerCase())
+    );
+  
+  const handleExitDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setExitDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setExitDetails(prev => ({ ...prev, [name]: value }));
   };
   
   const handleSearch = (value: string) => {
     setSearchTerm(value);
   };
-
+  
   const handleClientSearch = (value: string) => {
     setClientSearchTerm(value);
   };
-
-  const handleProductSelect = (productId: string) => {
-    const selectedProduct = products.find(p => p.id === productId);
-    if (selectedProduct) {
-      setCurrentItem({
-        productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        quantity: 1,
-        salePrice: selectedProduct.salePrice,
-        discountPercent: 0
-      });
-      setSelectedProductDisplay(`${selectedProduct.code} - ${selectedProduct.name}`);
-    }
+  
+  const handleProductSelect = (product: any) => {
+    setCurrentItem({
+      id: '',
+      productId: product.id,
+      productName: product.name,
+      quantity: 1,
+      salePrice: product.salePrice,
+      discountPercent: 0
+    });
+    
+    setSelectedProductDisplay(product.name);
+    setSearchTerm('');
     setIsProductSearchOpen(false);
   };
   
-  const handleClientSelect = (clientId: string) => {
-    const selectedClient = clients.find(c => c.id === clientId);
+  const handleClientSelect = (client: any) => {
     setExitDetails(prev => ({
       ...prev,
-      clientId,
-      clientName: selectedClient?.name || ''
+      clientId: client.id,
+      clientName: client.name
     }));
+    
+    setClientSearchTerm('');
     setIsClientSearchOpen(false);
   };
   
   const addItemToExit = () => {
-    if (!currentItem.productId || currentItem.quantity <= 0) {
-      toast.error('Selecione um produto e uma quantidade válida');
+    if (!currentItem.productId) {
+      toast({ title: "Erro", description: "Selecione um produto" });
       return;
     }
     
-    const product = products.find(p => p.id === currentItem.productId);
-    if (!product) {
-      toast.error('Produto não encontrado');
+    if (currentItem.quantity <= 0) {
+      toast({ title: "Erro", description: "A quantidade deve ser maior que zero" });
       return;
     }
     
-    if (product.currentStock < currentItem.quantity) {
-      toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades`);
+    if (currentItem.salePrice < 0) {
+      toast({ title: "Erro", description: "O preço não pode ser negativo" });
       return;
     }
     
-    // Always add as a new line item, not checking for existing items
-    setItems([...items, { 
-      id: crypto.randomUUID(),
-      ...currentItem 
-    }]);
+    setItems(prevItems => [...prevItems, { ...currentItem, id: uuidv4() }]);
     
     setCurrentItem({
+      id: '',
       productId: '',
       productName: '',
       quantity: 1,
       salePrice: 0,
       discountPercent: 0
     });
+    
     setSelectedProductDisplay('');
-    setSearchTerm('');
   };
   
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    setItems(prevItems => prevItems.filter((_, i) => i !== index));
   };
-
-  const getDiscountedPrice = (price: number, discountPercent: number) => {
-    if (!discountPercent) return price;
-    return price * (1 - discountPercent / 100);
-  };
-
-  const totalValue = items.reduce((total, item) => 
-    total + (item.quantity * getDiscountedPrice(item.salePrice, item.discountPercent || 0)), 0);
-
-  const filteredProducts = searchTerm
-    ? products.filter(product => 
-        (product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        product.currentStock > 0
-      )
-    : products.filter(product => product.currentStock > 0);
-
-  const filteredClients = clientSearchTerm
-    ? clients.filter(client => 
-        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
-      )
-    : clients;
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!exitDetails.clientId || items.length === 0) {
-      toast.error('Selecione um cliente e adicione pelo menos um produto');
-      return;
-    }
-    
-    const client = clients.find(c => c.id === exitDetails.clientId);
-    
-    if (!client) {
-      toast.error('Cliente não encontrado');
-      return;
-    }
-    
-    // Verify stock again before submission
-    let hasEnoughStock = true;
-    items.forEach(item => {
-      const product = products.find(p => p.id === item.productId);
-      if (!product || product.currentStock < item.quantity) {
-        hasEnoughStock = false;
-        toast.error(`Stock insuficiente para ${item.productName}. Disponível: ${product?.currentStock || 0} unidades`);
-      }
+  
+  const updateItem = (index: number, updatedItem: StockExitItem) => {
+    setItems(prevItems => {
+      const newItems = [...prevItems];
+      newItems[index] = updatedItem;
+      return newItems;
     });
+  };
+  
+  const getDiscountedPrice = (price: number, discountPercent?: number) => {
+    if (!discountPercent) return price;
+    return price * (1 - (discountPercent / 100));
+  };
+  
+  const totalValue = items.reduce((sum, item) => {
+    const discountedPrice = getDiscountedPrice(item.salePrice, item.discountPercent);
+    return sum + (item.quantity * discountedPrice);
+  }, 0);
+  
+  const handleSubmit = async () => {
+    if (!exitDetails.clientId) {
+      toast({ title: "Erro", description: "Selecione um cliente" });
+      return;
+    }
     
-    if (!hasEnoughStock) return;
-    
-    const loadingToast = toast.loading('Registando venda...');
+    if (items.length === 0) {
+      toast({ title: "Erro", description: "Adicione pelo menos um produto" });
+      return;
+    }
     
     try {
-      await addStockExit({
+      const exitData: Partial<StockExit> = {
         clientId: exitDetails.clientId,
-        clientName: client.name,
-        items: items,
-        date: exitDate.toISOString(),
-        invoiceNumber: exitDetails.invoiceNumber,
-        notes: exitDetails.notes
-      });
+        clientName: exitDetails.clientName,
+        date: exitDate.toISOString().split('T')[0],
+        invoiceNumber: exitDetails.invoiceNumber || undefined,
+        notes: exitDetails.notes,
+        discount: exitDetails.discount,
+        items
+      };
       
-      toast.dismiss(loadingToast);
-      toast.success('Venda registada com sucesso');
+      if (exitId) {
+        await updateStockExit(exitId, exitData);
+        toast({ title: "Sucesso", description: "Venda atualizada com sucesso" });
+      } else {
+        await addStockExit(exitData);
+        toast({ title: "Sucesso", description: "Venda criada com sucesso" });
+      }
+      
       navigate('/saidas/historico');
     } catch (error) {
-      toast.dismiss(loadingToast);
-      console.error("Erro ao registar venda:", error);
-      toast.error('Erro ao registar venda');
+      console.error("Error saving stock exit:", error);
+      toast({ 
+        title: "Erro", 
+        description: "Ocorreu um erro ao salvar a venda",
+        variant: "destructive"
+      });
     }
   };
-
+  
   const selectedClient = clients.find(c => c.id === exitDetails.clientId);
-
+  
   return {
     exitDetails,
-    setExitDetails,
     items,
-    setItems,
     currentItem,
     setCurrentItem,
     searchTerm,
     setSearchTerm,
     selectedProductDisplay,
-    setSelectedProductDisplay,
     isProductSearchOpen,
     setIsProductSearchOpen,
     clientSearchTerm,
@@ -221,6 +231,7 @@ export const useStockExit = () => {
     handleClientSelect,
     addItemToExit,
     removeItem,
+    updateItem,
     getDiscountedPrice,
     totalValue,
     filteredProducts,

@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Edit, Trash2, Plus, ArrowUpDown } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
@@ -12,13 +13,14 @@ import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
 import { StockExit } from '@/types';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
 
 const StockExitList = () => {
   const navigate = useNavigate();
   const { stockExits, deleteStockExit, setStockExits } = useData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
@@ -30,10 +32,54 @@ const StockExitList = () => {
   );
   
   const sortedExits = [...filteredExits].sort((a, b) => {
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    if (sortField === 'number') {
+      return sortOrder === 'asc' 
+        ? a.number.localeCompare(b.number) 
+        : b.number.localeCompare(a.number);
+    }
+    
+    if (sortField === 'date') {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    
+    if (sortField === 'clientName') {
+      return sortOrder === 'asc' 
+        ? (a.clientName || '').localeCompare(b.clientName || '') 
+        : (b.clientName || '').localeCompare(a.clientName || '');
+    }
+    
+    if (sortField === 'invoiceNumber') {
+      return sortOrder === 'asc' 
+        ? (a.invoiceNumber || '').localeCompare(b.invoiceNumber || '') 
+        : (b.invoiceNumber || '').localeCompare(a.invoiceNumber || '');
+    }
+    
+    if (sortField === 'value') {
+      const valueA = calculateExitTotal(a);
+      const valueB = calculateExitTotal(b);
+      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    }
+    
+    return 0;
   });
+  
+  const handleSortChange = (field: string) => {
+    if (sortField === field) {
+      // Toggle sort order if clicking on the same field
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort field and default to ascending order
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+  
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <ArrowUp className="inline h-4 w-4 ml-1" /> : <ArrowDown className="inline h-4 w-4 ml-1" />;
+  };
   
   const fetchAllExits = async () => {
     try {
@@ -49,7 +95,11 @@ const StockExitList = () => {
 
       if (error) {
         console.error("Error fetching stock exits:", error);
-        toast.error("Erro ao carregar saídas de stock");
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar vendas de stock",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -86,7 +136,11 @@ const StockExitList = () => {
       }
     } catch (error) {
       console.error("Error in fetchExits:", error);
-      toast.error("Erro ao carregar saídas de stock");
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar vendas de stock",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -130,10 +184,6 @@ const StockExitList = () => {
       supabase.removeChannel(itemsChannel);
     };
   }, []);
-
-  const toggleSortOrder = () => {
-    setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-  };
   
   const handleViewExit = (id: string) => {
     navigate(`/saidas/${id}`);
@@ -152,10 +202,17 @@ const StockExitList = () => {
       
       await deleteStockExit(id);
       
-      toast.success("Saída eliminada com sucesso");
+      toast({
+        title: "Sucesso",
+        description: "Venda eliminada com sucesso",
+      });
     } catch (error) {
       console.error("Error deleting exit:", error);
-      toast.error("Erro ao eliminar saída");
+      toast({
+        title: "Erro",
+        description: "Erro ao eliminar venda",
+        variant: "destructive",
+      });
     }
   };
   
@@ -167,11 +224,11 @@ const StockExitList = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <PageHeader 
-          title="Histórico de Saídas" 
+          title="Histórico de Vendas" 
           description="A carregar dados..." 
         />
         <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
-          Carregando saídas de stock...
+          Carregando vendas de stock...
         </div>
       </div>
     );
@@ -180,40 +237,36 @@ const StockExitList = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Histórico de Saídas" 
-        description="Consulte o histórico de saídas de stock"
-        actions={
-          <Button onClick={() => navigate('/saidas/nova')}>
-            <Plus className="mr-2 h-4 w-4" /> Nova Saída
-          </Button>
-        }
+        title="Histórico de Vendas" 
+        description="Consulte o histórico de vendas de stock"
+        actions={null}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
-          <div className="relative w-full md:w-2/3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-            <Input
-              className="pl-10"
-              placeholder="Pesquisar por cliente, número da saída ou fatura..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="relative w-full md:w-2/3 flex gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+              <Input
+                className="pl-10"
+                placeholder="Pesquisar por cliente, número da venda ou fatura..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button onClick={() => navigate('/saidas/nova')}>
+              <Plus className="mr-2 h-4 w-4" /> Nova Venda
+            </Button>
           </div>
-          
-          <Button variant="outline" onClick={toggleSortOrder} className="ml-auto flex items-center">
-            <ArrowUpDown className="mr-2 h-4 w-4" />
-            {sortOrder === 'asc' ? 'Mais antigo primeiro' : 'Mais recente primeiro'}
-          </Button>
         </div>
         
         {sortedExits.length === 0 ? (
           <EmptyState 
-            title="Nenhuma saída encontrada"
-            description="Não existem saídas de stock registadas ou que correspondam à pesquisa."
+            title="Nenhuma venda encontrada"
+            description="Não existem vendas de stock registadas ou que correspondam à pesquisa."
             action={
               <Button onClick={() => navigate('/saidas/nova')}>
-                <Plus className="mr-2 h-4 w-4" /> Nova Saída
+                <Plus className="mr-2 h-4 w-4" /> Nova Venda
               </Button>
             }
           />
@@ -222,20 +275,35 @@ const StockExitList = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Nº Saída
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('number')}
+                  >
+                    Nº Venda {getSortIcon('number')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Data
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('date')}
+                  >
+                    Data {getSortIcon('date')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Cliente
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('clientName')}
+                  >
+                    Cliente {getSortIcon('clientName')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Nº Fatura
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('invoiceNumber')}
+                  >
+                    Nº Fatura {getSortIcon('invoiceNumber')}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                    Valor
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('value')}
+                  >
+                    Valor {getSortIcon('value')}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                     Ações
@@ -274,8 +342,8 @@ const StockExitList = () => {
                           <Edit className="h-4 w-4" />
                         </Button>
                         <DeleteConfirmDialog
-                          title="Eliminar Saída"
-                          description="Tem a certeza que deseja eliminar esta saída? Esta ação é irreversível e poderá afetar o stock."
+                          title="Eliminar Venda"
+                          description="Tem a certeza que deseja eliminar esta venda? Esta ação é irreversível e poderá afetar o stock."
                           onDelete={() => handleDeleteExit(exit.id)}
                           trigger={
                             <Button variant="outline" size="sm">

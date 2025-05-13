@@ -103,7 +103,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                 {order.convertedToStockExitId ? (
                   <StatusBadge variant="success" icon={ShoppingCart}>
-                    Convertida em Saída
+                    Convertida em Venda
                   </StatusBadge>
                 ) : (
                   <StatusBadge variant="warning">
@@ -130,7 +130,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       </TooltipTrigger>
                       {order.convertedToStockExitId !== null && (
                         <TooltipContent>
-                          <p>Não pode editar encomendas já convertidas em saída.</p>
+                          <p>Não pode editar encomendas já convertidas em venda.</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
@@ -163,7 +163,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                       </TooltipTrigger>
                       {order.convertedToStockExitId !== null && (
                         <TooltipContent>
-                          <p>Não pode eliminar encomendas já convertidas em saída.</p>
+                          <p>Não pode eliminar encomendas já convertidas em venda.</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
