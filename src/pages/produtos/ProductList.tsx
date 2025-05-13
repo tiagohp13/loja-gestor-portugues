@@ -1,84 +1,19 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Edit, Trash2, History, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { formatCurrency } from '@/utils/formatting';
 import PageHeader from '@/components/ui/PageHeader';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import { toast } from 'sonner';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-
-type SortField = 'name' | 'code' | 'category' | 'currentStock' | 'salePrice';
-type SortDirection = 'asc' | 'desc';
-
-// Function to naturally sort strings containing numbers
-const naturalSort = (a: string, b: string, direction: SortDirection = 'asc') => {
-  // Function to convert a string part to number if possible
-  const chunk = (s: string) => {
-    return s.replace(/(\d+)/g, (match) => {
-      // Pad numbers with leading zeros to ensure proper sorting
-      // We pad to 10 digits which should be enough for most scenarios
-      return match.padStart(10, '0');
-    });
-  };
-  
-  // Apply the direction to the comparison
-  if (direction === 'asc') {
-    return chunk(a).localeCompare(chunk(b), undefined, { numeric: true });
-  } else {
-    return chunk(b).localeCompare(chunk(a), undefined, { numeric: true });
-  }
-};
+import { useProductSort, naturalSort } from './hooks/useProductSort';
+import ProductListHeader from './components/ProductListHeader';
+import ProductTable from './components/ProductTable';
+import { Plus } from 'lucide-react';
 
 const ProductList = () => {
   const navigate = useNavigate();
   const { products, deleteProduct } = useData();
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>(() => {
-    // Get sorting preference from localStorage or default to 'code'
-    return (localStorage.getItem('productSortField') as SortField) || 'code';
-  });
-  const [sortDirection, setSortDirection] = useState<SortDirection>(() => {
-    // Get direction preference from localStorage or default to 'asc'
-    return (localStorage.getItem('productSortDirection') as SortDirection) || 'asc';
-  });
-
-  // Save sort preferences to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('productSortField', sortField);
-    localStorage.setItem('productSortDirection', sortDirection);
-  }, [sortField, sortDirection]);
-
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      const newDirection = sortDirection === 'asc' ? 'desc' : 'asc';
-      setSortDirection(newDirection);
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-
-  const getSortIcon = (field: SortField) => {
-    if (sortField !== field) return null;
-    return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
-  };
+  const { sortField, sortDirection, handleSort, setSortField, setSortDirection } = useProductSort();
 
   const filteredProducts = products
     .filter(product => 
@@ -127,13 +62,17 @@ const ProductList = () => {
     deleteProduct(id);
   };
 
+  const handleAddProduct = () => {
+    navigate('/produtos/novo');
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Produtos" 
         description="Consultar e gerir todos os produtos" 
         actions={
-          <Button onClick={() => navigate('/produtos/novo')}>
+          <Button onClick={handleAddProduct}>
             <Plus className="w-4 h-4 mr-2" />
             Novo Produto
           </Button>
@@ -141,164 +80,26 @@ const ProductList = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-4 justify-between items-start">
-          <div className="relative w-full md:w-1/2">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-            <Input
-              className="pl-10"
-              placeholder="Pesquisar por nome ou código"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <div className="w-full md:w-1/4">
-            <Select 
-              value={sortField} 
-              onValueChange={(value) => setSortField(value as SortField)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Ordenar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="name">Nome</SelectItem>
-                <SelectItem value="code">Código</SelectItem>
-                <SelectItem value="category">Categoria</SelectItem>
-                <SelectItem value="currentStock">Stock</SelectItem>
-                <SelectItem value="salePrice">Preço</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <Button 
-            variant="outline" 
-            size="icon" 
-            onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
-          >
-            {sortDirection === 'asc' ? <ChevronUp /> : <ChevronDown />}
-          </Button>
-        </div>
+        <ProductListHeader
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          sortField={sortField}
+          setSortField={setSortField}
+          sortDirection={sortDirection}
+          setSortDirection={setSortDirection}
+          onAddProduct={handleAddProduct}
+        />
         
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer" 
-                  onClick={() => handleSort('code')}
-                >
-                  <div className="flex items-center">
-                    Código
-                    {getSortIcon('code')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort('name')}
-                >
-                  <div className="flex items-center">
-                    Produto
-                    {getSortIcon('name')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort('category')}
-                >
-                  <div className="flex items-center">
-                    Categoria
-                    {getSortIcon('category')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort('currentStock')}
-                >
-                  <div className="flex items-center">
-                    Stock
-                    {getSortIcon('currentStock')}
-                  </div>
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSort('salePrice')}
-                >
-                  <div className="flex items-center">
-                    Preço Sugerido
-                    {getSortIcon('salePrice')}
-                  </div>
-                </TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
-                    Nenhum produto encontrado
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredProducts.map((product) => (
-                  <TableRow 
-                    key={product.id} 
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => handleViewProduct(product.id)}
-                  >
-                    <TableCell className="font-medium">{product.code}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-3">
-                        {product.image && (
-                          <div className="w-10 h-10 rounded-md overflow-hidden bg-gestorApp-gray-light">
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                          </div>
-                        )}
-                        <span>{product.name}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell>
-                      <span className={`${product.currentStock <= (product.minStock || 0) ? 'text-red-500' : ''}`}>
-                        {product.currentStock} unidades
-                      </span>
-                    </TableCell>
-                    <TableCell>{formatCurrency(product.salePrice)}</TableCell>
-                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          title="Histórico"
-                          onClick={(e) => handleViewHistory(product.id, e)}
-                        >
-                          <History className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          title="Editar"
-                          onClick={(e) => handleEdit(product.id, e)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <DeleteConfirmDialog
-                          title="Eliminar Produto"
-                          description={`Tem a certeza que deseja eliminar o produto "${product.name}"?`}
-                          onDelete={() => handleDelete(product.id)}
-                          trigger={
-                            <Button variant="outline" size="sm" title="Eliminar">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <ProductTable
+          filteredProducts={filteredProducts}
+          sortField={sortField}
+          sortDirection={sortDirection}
+          handleSort={handleSort}
+          onViewProduct={handleViewProduct}
+          onViewHistory={handleViewHistory}
+          onEdit={handleEdit}
+          onDelete={handleDelete}
+        />
       </div>
     </div>
   );
