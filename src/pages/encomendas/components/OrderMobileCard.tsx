@@ -8,6 +8,12 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface OrderMobileCardProps {
   order: Order;
@@ -32,30 +38,61 @@ const OrderMobileCard: React.FC<OrderMobileCardProps> = ({
     <div className="flex justify-between items-start mb-2">
       <h3 className="font-medium text-gestorApp-blue">{order.number}</h3>
       <div className="flex space-x-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={(e) => onEdit(e, order.id)}
-          disabled={order.convertedToStockExitId !== null}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
-        <DeleteConfirmDialog
-          title="Eliminar Encomenda"
-          description="Tem a certeza que deseja eliminar esta encomenda?"
-          onDelete={() => onDelete(order.id)}
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-              }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          }
-        />
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={(e) => onEdit(e, order.id)}
+                  disabled={order.convertedToStockExitId !== null}
+                  className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              </span>
+            </TooltipTrigger>
+            {order.convertedToStockExitId !== null && (
+              <TooltipContent>
+                <p>Não pode editar encomendas já convertidas em saída.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+        
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span>
+                <DeleteConfirmDialog
+                  title="Eliminar Encomenda"
+                  description="Tem a certeza que deseja eliminar esta encomenda?"
+                  onDelete={() => onDelete(order.id)}
+                  trigger={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                      }}
+                      disabled={order.convertedToStockExitId !== null}
+                      className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  }
+                  disabled={order.convertedToStockExitId !== null}
+                />
+              </span>
+            </TooltipTrigger>
+            {order.convertedToStockExitId !== null && (
+              <TooltipContent>
+                <p>Não pode eliminar encomendas já convertidas em saída.</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
       </div>
     </div>
     

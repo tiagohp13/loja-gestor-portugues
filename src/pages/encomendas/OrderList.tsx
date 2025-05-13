@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Edit, Trash2, Plus, ArrowDownUp, ShoppingCart } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, ArrowUp, ArrowDown, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
@@ -12,11 +13,17 @@ import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
 import { Order } from '@/types';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
 import { useIsMobile } from '@/hooks/use-mobile';
 import OrderMobileCard from "./components/OrderMobileCard";
 import OrderTable from "./components/OrderTable";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const OrderList = () => {
   const navigate = useNavigate();
@@ -24,15 +31,10 @@ const OrderList = () => {
   const isMobile = useIsMobile();
   
   const [searchTerm, setSearchTerm] = useState('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(() => {
-    return (localStorage.getItem('orderSortDirection') as 'asc' | 'desc') || 'desc';
-  });
+  const [sortField, setSortField] = useState('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [isLoading, setIsLoading] = useState(true);
   const [localOrders, setLocalOrders] = useState<Order[]>([]);
-  
-  useEffect(() => {
-    localStorage.setItem('orderSortDirection', sortOrder);
-  }, [sortOrder]);
   
   const filteredOrders = localOrders.filter(order => 
     order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -40,15 +42,45 @@ const OrderList = () => {
   );
   
   const sortedOrders = [...filteredOrders].sort((a, b) => {
+    // Always prioritize pending orders at the top
     const aPending = !a.convertedToStockExitId;
     const bPending = !b.convertedToStockExitId;
     
     if (aPending && !bPending) return -1;
     if (!aPending && bPending) return 1;
     
-    const dateA = new Date(a.date).getTime();
-    const dateB = new Date(b.date).getTime();
-    return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    // Then sort by the selected field
+    if (sortField === 'number') {
+      return sortOrder === 'asc' 
+        ? a.number.localeCompare(b.number) 
+        : b.number.localeCompare(a.number);
+    }
+    
+    if (sortField === 'date') {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    }
+    
+    if (sortField === 'clientName') {
+      return sortOrder === 'asc' 
+        ? (a.clientName || '').localeCompare(b.clientName || '') 
+        : (b.clientName || '').localeCompare(a.clientName || '');
+    }
+    
+    if (sortField === 'value') {
+      const valueA = calculateOrderTotal(a);
+      const valueB = calculateOrderTotal(b);
+      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+    }
+    
+    if (sortField === 'status') {
+      const statusA = a.convertedToStockExitId ? 1 : 0;
+      const statusB = b.convertedToStockExitId ? 1 : 0;
+      return sortOrder === 'asc' ? statusA - statusB : statusB - statusA;
+    }
+    
+    return 0;
   });
   
   const fetchAllOrders = async () => {
@@ -65,7 +97,11 @@ const OrderList = () => {
 
       if (error) {
         console.error("Error fetching orders:", error);
-        toast.error("Erro ao carregar encomendas");
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar encomendas",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -99,7 +135,11 @@ const OrderList = () => {
       }
     } catch (error) {
       console.error("Error in fetchOrders:", error);
-      toast.error("Erro ao carregar encomendas");
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar encomendas",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -144,9 +184,20 @@ const OrderList = () => {
     };
   }, []);
 
-  const toggleSortOrder = () => {
-    const newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
-    setSortOrder(newSortOrder);
+  const handleSortChange = (field: string) => {
+    if (sortField === field) {
+      // Toggle sort order if clicking on the same field
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new sort field and default to ascending order
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+  
+  const getSortIcon = (field: string) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <ArrowUp className="inline h-4 w-4 ml-1" /> : <ArrowDown className="inline h-4 w-4 ml-1" />;
   };
   
   const handleViewOrder = (id: string) => {
@@ -169,10 +220,17 @@ const OrderList = () => {
       const result = await deleteOrder(id);
       console.log("Delete result:", result);
       
-      toast.success("Encomenda eliminada com sucesso");
+      toast({
+        title: "Sucesso",
+        description: "Encomenda eliminada com sucesso",
+      });
     } catch (error) {
       console.error("Error deleting order:", error);
-      toast.error("Erro ao eliminar encomenda");
+      toast({
+        title: "Erro",
+        description: "Erro ao eliminar encomenda",
+        variant: "destructive",
+      });
     }
   };
   
@@ -207,21 +265,14 @@ const OrderList = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 mt-4 sm:mt-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
-          <div className="relative w-full md:w-2/3">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-            <Input
-              className="pl-10"
-              placeholder="Pesquisar por cliente ou número da encomenda..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          
-          <Button variant="outline" onClick={toggleSortOrder} className="ml-auto flex items-center">
-            <ArrowDownUp className="mr-2 h-4 w-4" />
-            {sortOrder === 'asc' ? 'Mais antigo primeiro' : 'Mais recente primeiro'}
-          </Button>
+        <div className="relative w-full mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+          <Input
+            className="pl-10"
+            placeholder="Pesquisar por cliente ou número da encomenda..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
         
         {sortedOrders.length === 0 ? (
@@ -248,13 +299,139 @@ const OrderList = () => {
             ))}
           </div>
         ) : (
-          <OrderTable
-            orders={sortedOrders}
-            onView={handleViewOrder}
-            onEdit={handleEditOrder}
-            onDelete={handleDeleteOrder}
-            calculateOrderTotal={calculateOrderTotal}
-          />
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('number')}
+                  >
+                    Nº Encomenda {getSortIcon('number')}
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('date')}
+                  >
+                    Data {getSortIcon('date')}
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('clientName')}
+                  >
+                    Cliente {getSortIcon('clientName')}
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('value')}
+                  >
+                    Valor {getSortIcon('value')}
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider cursor-pointer"
+                    onClick={() => handleSortChange('status')}
+                  >
+                    Estado {getSortIcon('status')}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedOrders.map((order) => (
+                  <tr 
+                    key={order.id} 
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleViewOrder(order.id)}
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">
+                      {order.number}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {format(new Date(order.date), "dd/MM/yyyy", { locale: pt })}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {order.clientName}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {formatCurrency(calculateOrderTotal(order))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                      {order.convertedToStockExitId ? (
+                        <StatusBadge variant="success" icon={ShoppingCart}>
+                          Convertida em Saída
+                        </StatusBadge>
+                      ) : (
+                        <StatusBadge variant="warning">
+                          Pendente
+                        </StatusBadge>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <div onClick={(e) => e.stopPropagation()} className="flex justify-end space-x-2">
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <Button 
+                                  variant="outline" 
+                                  size="sm" 
+                                  onClick={(e) => handleEditOrder(e, order.id)}
+                                  disabled={order.convertedToStockExitId !== null}
+                                  className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </span>
+                            </TooltipTrigger>
+                            {order.convertedToStockExitId !== null && (
+                              <TooltipContent>
+                                <p>Não pode editar encomendas já convertidas em saída.</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span>
+                                <DeleteConfirmDialog
+                                  title="Eliminar Encomenda"
+                                  description="Tem a certeza que deseja eliminar esta encomenda?"
+                                  onDelete={() => handleDeleteOrder(order.id)}
+                                  trigger={
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                      disabled={order.convertedToStockExitId !== null}
+                                      className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  }
+                                  disabled={order.convertedToStockExitId !== null}
+                                />
+                              </span>
+                            </TooltipTrigger>
+                            {order.convertedToStockExitId !== null && (
+                              <TooltipContent>
+                                <p>Não pode eliminar encomendas já convertidas em saída.</p>
+                              </TooltipContent>
+                            )}
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>
