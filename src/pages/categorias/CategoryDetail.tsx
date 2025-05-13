@@ -1,18 +1,30 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import { Edit, Trash } from 'lucide-react';
+import { Edit, ChevronUp, ChevronDown } from 'lucide-react';
 import { formatDate } from '@/utils/formatting';
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { SortField, SortDirection } from '@/pages/produtos/hooks/useProductSort';
+import { naturalSort } from '@/pages/produtos/hooks/useProductSort';
 
 const CategoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCategory, deleteCategory, products } = useData();
+  const { getCategory, products } = useData();
   const [category, setCategory] = useState<any | null>(null);
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
+  const [sortField, setSortField] = useState<SortField>('code');
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
     if (id) {
@@ -26,6 +38,37 @@ const CategoryDetail: React.FC = () => {
       setCategoryProducts(filteredProducts);
     }
   }, [id, getCategory, products]);
+
+  useEffect(() => {
+    // Apply sorting to the products when sortField or sortDirection changes
+    if (categoryProducts.length > 0) {
+      const sortedProducts = [...categoryProducts].sort((a, b) => {
+        if (sortField === 'name' || sortField === 'code' || sortField === 'category') {
+          return naturalSort(String(a[sortField] || ''), String(b[sortField] || ''), sortDirection);
+        } else {
+          // For numeric fields
+          const aValue = a[sortField] || 0;
+          const bValue = b[sortField] || 0;
+          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+        }
+      });
+      setCategoryProducts(sortedProducts);
+    }
+  }, [sortField, sortDirection]);
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
+
+  const getSortIcon = (field: SortField) => {
+    if (sortField !== field) return null;
+    return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
+  };
 
   if (!category) {
     return (
@@ -41,11 +84,6 @@ const CategoryDetail: React.FC = () => {
     );
   }
 
-  const handleDelete = () => {
-    deleteCategory(id as string);
-    navigate('/categorias/consultar');
-  };
-
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
@@ -53,28 +91,16 @@ const CategoryDetail: React.FC = () => {
         description={`Detalhes da categoria`}
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/categorias/consultar')}>
-              Voltar à Lista
-            </Button>
             <Button 
-              variant="outline" 
               onClick={() => navigate(`/categorias/editar/${id}`)}
               className="flex items-center gap-2"
             >
               <Edit size={16} />
               Editar
             </Button>
-            <DeleteConfirmDialog
-              title="Eliminar Categoria"
-              description="Tem certeza que deseja eliminar esta categoria? Esta ação não pode ser desfeita."
-              onDelete={handleDelete}
-              trigger={
-                <Button variant="destructive" className="flex items-center gap-2">
-                  <Trash size={16} />
-                  Eliminar
-                </Button>
-              }
-            />
+            <Button variant="outline" onClick={() => navigate('/categorias/consultar')}>
+              Voltar à Lista
+            </Button>
           </div>
         }
       />
@@ -109,30 +135,62 @@ const CategoryDetail: React.FC = () => {
           
           {categoryProducts.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gestorApp-gray-dark">Código</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gestorApp-gray-dark">Nome</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gestorApp-gray-dark">Stock</th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gestorApp-gray-dark">Preço Venda</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead 
+                      className="cursor-pointer" 
+                      onClick={() => handleSort('code')}
+                    >
+                      <div className="flex items-center">
+                        Código
+                        {getSortIcon('code')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="cursor-pointer"
+                      onClick={() => handleSort('name')}
+                    >
+                      <div className="flex items-center">
+                        Nome
+                        {getSortIcon('name')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-right cursor-pointer"
+                      onClick={() => handleSort('currentStock')}
+                    >
+                      <div className="flex items-center justify-end">
+                        Stock
+                        {getSortIcon('currentStock')}
+                      </div>
+                    </TableHead>
+                    <TableHead 
+                      className="text-right cursor-pointer"
+                      onClick={() => handleSort('salePrice')}
+                    >
+                      <div className="flex items-center justify-end">
+                        Preço Venda
+                        {getSortIcon('salePrice')}
+                      </div>
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {categoryProducts.map(product => (
-                    <tr 
+                    <TableRow 
                       key={product.id} 
-                      className="border-b hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-gray-50 cursor-pointer"
                       onClick={() => navigate(`/produtos/${product.id}`)}
                     >
-                      <td className="px-4 py-3 text-sm">{product.code}</td>
-                      <td className="px-4 py-3 text-sm">{product.name}</td>
-                      <td className="px-4 py-3 text-sm text-right">{product.currentStock} unid.</td>
-                      <td className="px-4 py-3 text-sm text-right">{product.salePrice.toFixed(2)} €</td>
-                    </tr>
+                      <TableCell>{product.code}</TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell className="text-right">{product.currentStock} unid.</TableCell>
+                      <TableCell className="text-right">{product.salePrice.toFixed(2)} €</TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           ) : (
             <div className="text-center py-6 bg-gray-50 rounded-lg">

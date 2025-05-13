@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import PageHeader from '@/components/ui/PageHeader';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
@@ -30,8 +30,12 @@ const CategoryEdit: React.FC = () => {
           status: foundCategory.status || 'active'
         });
       } else {
-        toast.error('Categoria não encontrada');
-        navigate('/categorias');
+        toast({
+          title: "Erro",
+          description: "Categoria não encontrada",
+          variant: "destructive"
+        });
+        navigate('/categorias/consultar');
       }
     }
   }, [id, getCategory, navigate]);
@@ -56,18 +60,29 @@ const CategoryEdit: React.FC = () => {
     
     try {
       if (!category.name.trim()) {
-        toast.error('O nome da categoria é obrigatório');
+        toast({
+          title: "Erro",
+          description: "O nome da categoria é obrigatório",
+          variant: "destructive"
+        });
         return;
       }
       
       if (id) {
         await updateCategory(id, category);
-        toast.success('Categoria atualizada com sucesso');
-        navigate('/categorias'); // Ensure navigation happens after the update
+        toast({
+          title: "Sucesso",
+          description: "Categoria atualizada com sucesso"
+        });
+        navigate('/categorias/consultar'); // Corrected navigation path
       }
     } catch (error) {
       console.error('Error updating category:', error);
-      toast.error('Erro ao atualizar categoria');
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar categoria",
+        variant: "destructive"
+      });
     }
   };
 
@@ -77,7 +92,7 @@ const CategoryEdit: React.FC = () => {
         title="Editar Categoria"
         description="Atualize os detalhes da categoria"
         actions={
-          <Button variant="outline" onClick={() => navigate('/categorias')}>
+          <Button variant="outline" onClick={() => navigate('/categorias/consultar')}>
             Voltar à Lista
           </Button>
         }
@@ -125,7 +140,7 @@ const CategoryEdit: React.FC = () => {
           </div>
 
           <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/categorias')}>
+            <Button variant="outline" type="button" onClick={() => navigate('/categorias/consultar')}>
               Cancelar
             </Button>
             <Button type="submit">Guardar Alterações</Button>
