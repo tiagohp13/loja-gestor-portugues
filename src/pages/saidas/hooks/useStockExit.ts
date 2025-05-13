@@ -184,8 +184,7 @@ export const useStockExit = (exitId?: string) => {
         discount: exitDetails.discount,
         items,
         fromOrderId: undefined,
-        fromOrderNumber: undefined,
-        updated_at: new Date().toISOString()
+        fromOrderNumber: undefined
       };
       
       if (exitId) {
