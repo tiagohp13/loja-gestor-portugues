@@ -15,6 +15,15 @@ export const getPortugueseMonthName = (monthIndex: number): string => {
 };
 
 /**
+ * Gets the current month name in Portuguese
+ * @returns The current month name in Portuguese
+ */
+export const getCurrentMonthName = (): string => {
+  const date = new Date();
+  return getPortugueseMonthName(date.getMonth());
+};
+
+/**
  * Gets the previous month name in Portuguese
  * @returns The previous month name in Portuguese
  */

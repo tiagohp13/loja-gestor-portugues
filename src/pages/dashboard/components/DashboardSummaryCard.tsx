@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, ArrowUp, ArrowDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardCardData } from '@/types/dashboard';
+import { getCurrentMonthName } from '@/utils/dateUtils';
 
 interface DashboardSummaryCardProps {
   cardData: DashboardCardData;
@@ -12,6 +13,7 @@ interface DashboardSummaryCardProps {
 const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData }) => {
   const navigate = useNavigate();
   const { title, value, icon, variation, navigateTo, iconColor, iconBackground } = cardData;
+  const currentMonth = getCurrentMonthName();
   
   const handleNavigate = () => {
     navigate(navigateTo);
@@ -57,7 +59,7 @@ const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData })
                   : 'text-gray-500'
               }`}>
                 {variation.absoluteChange > 0 ? '+' : ''}
-                {variation.absoluteChange} desde {variation.previousMonth}
+                {variation.absoluteChange} este {currentMonth}
               </span>
             </div>
           )}

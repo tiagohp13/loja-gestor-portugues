@@ -5,6 +5,7 @@ import { formatCurrency } from '@/utils/formatting';
 import { Product, Client, Supplier } from '@/types/';
 import DashboardSummaryCard from './DashboardSummaryCard';
 import { DashboardCardData } from '@/types/dashboard';
+import { getCurrentMonthName } from '@/utils/dateUtils';
 
 interface DashboardSummaryCardsProps {
   products: Product[];
@@ -13,25 +14,18 @@ interface DashboardSummaryCardsProps {
   totalStockValue: number;
 }
 
-// Mock data for monthly variations
+// Generate variation data based on current data
 // In a real implementation, this would come from the API or be calculated
-const getMockVariationData = (current: number, entity: string): { 
+const getVariationData = (current: number): { 
   previousValue: number;
-  previousMonth: string;
 } => {
-  // Calculate previous month
-  const date = new Date();
-  date.setMonth(date.getMonth() - 1);
-  const previousMonth = date.toLocaleDateString('pt-PT', { month: 'long' });
-  
   // For demo purposes, generate a random previous value
   // In a real implementation, this would be actual historical data
   const variationPercent = Math.random() * 0.2 - 0.1; // Between -10% and +10%
   const previousValue = Math.round(current / (1 + variationPercent));
   
   return {
-    previousValue,
-    previousMonth
+    previousValue
   };
 };
 
@@ -42,10 +36,10 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
   totalStockValue
 }) => {
   // Create variation data for each metric
-  const productsVariation = getMockVariationData(products.length, 'products');
-  const clientsVariation = getMockVariationData(clients.length, 'clients');
-  const suppliersVariation = getMockVariationData(suppliers.length, 'suppliers');
-  const stockValueVariation = getMockVariationData(totalStockValue, 'stockValue');
+  const productsVariation = getVariationData(products.length);
+  const clientsVariation = getVariationData(clients.length);
+  const suppliersVariation = getVariationData(suppliers.length);
+  const stockValueVariation = getVariationData(totalStockValue);
   
   const cards: DashboardCardData[] = [
     {
@@ -57,7 +51,7 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
         previousValue: productsVariation.previousValue,
         percentChange: ((products.length - productsVariation.previousValue) / productsVariation.previousValue) * 100,
         absoluteChange: products.length - productsVariation.previousValue,
-        previousMonth: productsVariation.previousMonth
+        previousMonth: ''
       },
       navigateTo: '/produtos/consultar',
       iconColor: 'text-blue-500',
@@ -72,7 +66,7 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
         previousValue: clientsVariation.previousValue,
         percentChange: ((clients.length - clientsVariation.previousValue) / clientsVariation.previousValue) * 100,
         absoluteChange: clients.length - clientsVariation.previousValue,
-        previousMonth: clientsVariation.previousMonth
+        previousMonth: ''
       },
       navigateTo: '/clientes/consultar',
       iconColor: 'text-green-500',
@@ -87,7 +81,7 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
         previousValue: suppliersVariation.previousValue,
         percentChange: ((suppliers.length - suppliersVariation.previousValue) / suppliersVariation.previousValue) * 100,
         absoluteChange: suppliers.length - suppliersVariation.previousValue,
-        previousMonth: suppliersVariation.previousMonth
+        previousMonth: ''
       },
       navigateTo: '/fornecedores/consultar',
       iconColor: 'text-orange-500',
@@ -102,7 +96,7 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
         previousValue: stockValueVariation.previousValue,
         percentChange: ((totalStockValue - stockValueVariation.previousValue) / stockValueVariation.previousValue) * 100,
         absoluteChange: totalStockValue - stockValueVariation.previousValue,
-        previousMonth: stockValueVariation.previousMonth
+        previousMonth: ''
       },
       navigateTo: '/produtos/consultar',
       iconColor: 'text-purple-500',
