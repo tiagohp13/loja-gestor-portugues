@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -52,8 +51,8 @@ const ProductList = () => {
   const { products, deleteProduct } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>(() => {
-    // Get sorting preference from localStorage or default to 'name'
-    return (localStorage.getItem('productSortField') as SortField) || 'name';
+    // Get sorting preference from localStorage or default to 'code'
+    return (localStorage.getItem('productSortField') as SortField) || 'code';
   });
   const [sortDirection, setSortDirection] = useState<SortDirection>(() => {
     // Get direction preference from localStorage or default to 'asc'
