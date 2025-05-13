@@ -19,6 +19,7 @@ interface DeleteConfirmDialogProps {
   onDelete: () => void;
   open?: boolean;
   onClose?: () => void;
+  disabled?: boolean; // Added disabled prop
 }
 
 const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
@@ -28,6 +29,7 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   trigger,
   open,
   onClose,
+  disabled = false, // Set default value to false
 }) => {
   const [openState, setOpenState] = useState(false);
   
@@ -50,8 +52,8 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   };
   
   return (
-    <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogTrigger asChild>
+    <AlertDialog open={isOpen} onOpenChange={disabled ? () => {} : handleOpenChange}>
+      <AlertDialogTrigger asChild disabled={disabled}>
         {trigger}
       </AlertDialogTrigger>
       <AlertDialogContent>
