@@ -1,9 +1,10 @@
 
 import React from 'react';
 import { Package, Users, Truck, TrendingUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/formatting';
-import { Product, Client, Supplier } from '@/types';
+import { Product, Client, Supplier } from '@/types/';
+import DashboardSummaryCard from './DashboardSummaryCard';
+import { DashboardCardData } from '@/types/dashboard';
 
 interface DashboardSummaryCardsProps {
   products: Product[];
@@ -12,55 +13,108 @@ interface DashboardSummaryCardsProps {
   totalStockValue: number;
 }
 
+// Mock data for monthly variations
+// In a real implementation, this would come from the API or be calculated
+const getMockVariationData = (current: number, entity: string): { 
+  previousValue: number;
+  previousMonth: string;
+} => {
+  // Calculate previous month
+  const date = new Date();
+  date.setMonth(date.getMonth() - 1);
+  const previousMonth = date.toLocaleDateString('pt-PT', { month: 'long' });
+  
+  // For demo purposes, generate a random previous value
+  // In a real implementation, this would be actual historical data
+  const variationPercent = Math.random() * 0.2 - 0.1; // Between -10% and +10%
+  const previousValue = Math.round(current / (1 + variationPercent));
+  
+  return {
+    previousValue,
+    previousMonth
+  };
+};
+
 const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
   products,
   clients,
   suppliers,
   totalStockValue
 }) => {
+  // Create variation data for each metric
+  const productsVariation = getMockVariationData(products.length, 'products');
+  const clientsVariation = getMockVariationData(clients.length, 'clients');
+  const suppliersVariation = getMockVariationData(suppliers.length, 'suppliers');
+  const stockValueVariation = getMockVariationData(totalStockValue, 'stockValue');
+  
+  const cards: DashboardCardData[] = [
+    {
+      title: 'Total Produtos',
+      value: products.length,
+      icon: <Package className="h-6 w-6" />,
+      variation: {
+        currentValue: products.length,
+        previousValue: productsVariation.previousValue,
+        percentChange: ((products.length - productsVariation.previousValue) / productsVariation.previousValue) * 100,
+        absoluteChange: products.length - productsVariation.previousValue,
+        previousMonth: productsVariation.previousMonth
+      },
+      navigateTo: '/produtos/consultar',
+      iconColor: 'text-blue-500',
+      iconBackground: 'bg-blue-100'
+    },
+    {
+      title: 'Total Clientes',
+      value: clients.length,
+      icon: <Users className="h-6 w-6" />,
+      variation: {
+        currentValue: clients.length,
+        previousValue: clientsVariation.previousValue,
+        percentChange: ((clients.length - clientsVariation.previousValue) / clientsVariation.previousValue) * 100,
+        absoluteChange: clients.length - clientsVariation.previousValue,
+        previousMonth: clientsVariation.previousMonth
+      },
+      navigateTo: '/clientes/consultar',
+      iconColor: 'text-green-500',
+      iconBackground: 'bg-green-100'
+    },
+    {
+      title: 'Total Fornecedores',
+      value: suppliers.length,
+      icon: <Truck className="h-6 w-6" />,
+      variation: {
+        currentValue: suppliers.length,
+        previousValue: suppliersVariation.previousValue,
+        percentChange: ((suppliers.length - suppliersVariation.previousValue) / suppliersVariation.previousValue) * 100,
+        absoluteChange: suppliers.length - suppliersVariation.previousValue,
+        previousMonth: suppliersVariation.previousMonth
+      },
+      navigateTo: '/fornecedores/consultar',
+      iconColor: 'text-orange-500',
+      iconBackground: 'bg-orange-100'
+    },
+    {
+      title: 'Valor do Stock',
+      value: formatCurrency(totalStockValue),
+      icon: <TrendingUp className="h-6 w-6" />,
+      variation: {
+        currentValue: totalStockValue,
+        previousValue: stockValueVariation.previousValue,
+        percentChange: ((totalStockValue - stockValueVariation.previousValue) / stockValueVariation.previousValue) * 100,
+        absoluteChange: totalStockValue - stockValueVariation.previousValue,
+        previousMonth: stockValueVariation.previousMonth
+      },
+      navigateTo: '/produtos/consultar',
+      iconColor: 'text-purple-500',
+      iconBackground: 'bg-purple-100'
+    }
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      <Card className="stat-card">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-6">
-          <CardTitle className="text-sm font-medium text-gestorApp-gray">Total Produtos</CardTitle>
-          <Package className="h-4 w-4 text-gestorApp-blue" />
-        </CardHeader>
-        <CardContent className="px-6 pt-0">
-          <div className="text-2xl font-bold text-gestorApp-gray-dark">{products.length}</div>
-        </CardContent>
-      </Card>
-      
-      <Card className="stat-card">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-6">
-          <CardTitle className="text-sm font-medium text-gestorApp-gray">Total Clientes</CardTitle>
-          <Users className="h-4 w-4 text-gestorApp-blue" />
-        </CardHeader>
-        <CardContent className="px-6 pt-0">
-          <div className="text-2xl font-bold text-gestorApp-gray-dark">{clients.length}</div>
-        </CardContent>
-      </Card>
-      
-      <Card className="stat-card">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-6">
-          <CardTitle className="text-sm font-medium text-gestorApp-gray">Total Fornecedores</CardTitle>
-          <Truck className="h-4 w-4 text-gestorApp-blue" />
-        </CardHeader>
-        <CardContent className="px-6 pt-0">
-          <div className="text-2xl font-bold text-gestorApp-gray-dark">{suppliers.length}</div>
-        </CardContent>
-      </Card>
-      
-      <Card className="stat-card">
-        <CardHeader className="flex flex-row items-center justify-between pb-2 pt-4 px-6">
-          <CardTitle className="text-sm font-medium text-gestorApp-gray">Valor do Stock</CardTitle>
-          <TrendingUp className="h-4 w-4 text-gestorApp-blue" />
-        </CardHeader>
-        <CardContent className="px-6 pt-0">
-          <div className="text-2xl font-bold text-gestorApp-gray-dark">
-            {formatCurrency(totalStockValue)}
-          </div>
-        </CardContent>
-      </Card>
+      {cards.map((card, index) => (
+        <DashboardSummaryCard key={index} cardData={card} />
+      ))}
     </div>
   );
 };
