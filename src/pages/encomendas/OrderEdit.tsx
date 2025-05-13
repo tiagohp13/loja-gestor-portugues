@@ -1,10 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import {
   Command,
   CommandEmpty,
@@ -14,7 +15,15 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Check, Plus, Trash, ShoppingCart } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Search, Check, Plus, Trash, ShoppingCart, Pencil } from 'lucide-react';
 import { OrderItem } from '@/types';
 
 const OrderEdit = () => {
@@ -45,13 +54,28 @@ const OrderEdit = () => {
   const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
+  
+  // New state for item editing
+  const [isEditingItem, setIsEditingItem] = useState(false);
+  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<{
+    quantity: number;
+    salePrice: number;
+  }>({
+    quantity: 0,
+    salePrice: 0
+  });
 
   useEffect(() => {
     if (id) {
       const order = findOrder(id);
       if (order) {
         if (order.convertedToStockExitId) {
-          toast.error('Não é possível editar uma encomenda já convertida em saída de stock.');
+          toast({
+            title: "Erro",
+            description: "Não é possível editar uma encomenda já convertida em saída de stock.",
+            variant: "destructive"
+          });
           navigate(`/encomendas/${id}`);
           return;
         }
@@ -65,7 +89,11 @@ const OrderEdit = () => {
         
         setItems(order.items);
       } else {
-        toast.error('Encomenda não encontrada.');
+        toast({
+          title: "Erro",
+          description: "Encomenda não encontrada.",
+          variant: "destructive"
+        });
         navigate('/encomendas/consultar');
       }
     }
@@ -88,6 +116,14 @@ const OrderEdit = () => {
               : value
     }));
   };
+  
+  const handleEditingItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setEditingItem(prev => ({
+      ...prev,
+      [name]: parseFloat(value) || 0
+    }));
+  };
 
   const handleProductSearch = (value: string) => {
     setSearchTerm(value);
@@ -102,7 +138,7 @@ const OrderEdit = () => {
     if (selectedProduct) {
       setCurrentItem({
         productId: selectedProduct.id,
-        productName: selectedProduct.name,
+        productName: `${selectedProduct.code} - ${selectedProduct.name}`,
         quantity: 1,
         salePrice: selectedProduct.salePrice
       });
@@ -130,26 +166,16 @@ const OrderEdit = () => {
   
   const addItemToOrder = () => {
     if (!currentItem.productId || currentItem.quantity <= 0) {
-      toast.error('Selecione um produto e uma quantidade válida');
+      toast({
+        title: "Erro",
+        description: "Selecione um produto e uma quantidade válida",
+        variant: "destructive"
+      });
       return;
     }
     
-    // Check if the product is already in the order
-    const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
-    
-    if (existingItemIndex >= 0) {
-      // Update existing item
-      const updatedItems = [...items];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice // Update the price in case it changed
-      };
-      setItems(updatedItems);
-    } else {
-      // Add new item
-      setItems([...items, { ...currentItem }]);
-    }
+    // Always add as a new line - no longer check for existing items
+    setItems([...items, { ...currentItem }]);
     
     // Reset current item
     setCurrentItem({
@@ -163,6 +189,30 @@ const OrderEdit = () => {
   
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
+  };
+  
+  const openEditItemDialog = (index: number) => {
+    const item = items[index];
+    setEditingItem({
+      quantity: item.quantity,
+      salePrice: item.salePrice
+    });
+    setEditingItemIndex(index);
+    setIsEditingItem(true);
+  };
+  
+  const saveItemEdit = () => {
+    if (editingItemIndex !== null) {
+      const updatedItems = [...items];
+      updatedItems[editingItemIndex] = {
+        ...updatedItems[editingItemIndex],
+        quantity: editingItem.quantity,
+        salePrice: editingItem.salePrice
+      };
+      setItems(updatedItems);
+      setIsEditingItem(false);
+      setEditingItemIndex(null);
+    }
   };
 
   const filteredProducts = searchTerm
@@ -183,7 +233,11 @@ const OrderEdit = () => {
     
     // Validate form
     if (!orderDetails.clientId || items.length === 0) {
-      toast.error('Selecione um cliente e adicione pelo menos um produto');
+      toast({
+        title: "Erro",
+        description: "Selecione um cliente e adicione pelo menos um produto",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -191,7 +245,11 @@ const OrderEdit = () => {
     const client = clients.find(c => c.id === orderDetails.clientId);
     
     if (!client) {
-      toast.error('Cliente não encontrado');
+      toast({
+        title: "Erro",
+        description: "Cliente não encontrado",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -378,7 +436,7 @@ const OrderEdit = () => {
                         Produto Selecionado
                       </label>
                       <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                        <div className="font-medium">{products.find(p => p.id === currentItem.productId)?.name || ""}</div>
+                        <div className="font-medium">{currentItem.productName}</div>
                       </div>
                     </div>
                     
@@ -457,14 +515,24 @@ const OrderEdit = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeItem(index)}
-                            className="text-red-500 hover:text-red-700"
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => openEditItemDialog(index)}
+                              className="text-blue-500 hover:text-blue-700"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              onClick={() => removeItem(index)}
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -496,6 +564,60 @@ const OrderEdit = () => {
           </div>
         </form>
       </div>
+      
+      {/* Edit Item Dialog */}
+      <Dialog open={isEditingItem} onOpenChange={setIsEditingItem}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Item</DialogTitle>
+            <DialogDescription>
+              Modifique a quantidade ou preço do produto
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingItemIndex !== null && (
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <label htmlFor="edit-quantity" className="text-sm font-medium">
+                  Quantidade
+                </label>
+                <Input
+                  id="edit-quantity"
+                  name="quantity"
+                  type="number"
+                  min="1"
+                  value={editingItem.quantity}
+                  onChange={handleEditingItemChange}
+                />
+              </div>
+              
+              <div className="grid gap-2">
+                <label htmlFor="edit-price" className="text-sm font-medium">
+                  Preço Unitário (€)
+                </label>
+                <Input
+                  id="edit-price"
+                  name="salePrice"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={editingItem.salePrice}
+                  onChange={handleEditingItemChange}
+                />
+              </div>
+            </div>
+          )}
+          
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditingItem(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={saveItemEdit}>
+              Guardar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
