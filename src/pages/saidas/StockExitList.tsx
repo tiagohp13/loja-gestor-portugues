@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -15,6 +14,7 @@ import { StockExit } from '@/types';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
+import ClickableProductItem from '@/components/common/ClickableProductItem';
 
 const StockExitList = () => {
   const navigate = useNavigate();
@@ -243,8 +243,8 @@ const StockExitList = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
-          <div className="relative w-full md:w-2/3 flex gap-4 items-center">
+        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-center">
+          <div className="relative w-full flex gap-4 items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
               <Input
