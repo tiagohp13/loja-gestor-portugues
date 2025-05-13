@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/utils/formatting';
 import { TransactionItem } from '../hooks/utils/transactionUtils';
+import { useNavigate } from 'react-router-dom';
 
 interface RecentTransactionsProps {
   recentTransactions: TransactionItem[];
@@ -21,8 +22,10 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   navigateToSupplierDetail,
   ensureDate
 }) => {
-  // Limit the number of transactions to display to match DashboardStatistics height
-  const displayLimit = 5;
+  const navigate = useNavigate();
+  
+  // Limit the number of transactions to display
+  const displayLimit = 6;
   
   const limitTransactions = (transactions: TransactionItem[]) => {
     return transactions.slice(0, displayLimit);
@@ -32,10 +35,21 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   const filteredEntryTransactions = limitTransactions(recentTransactions.filter(t => t.type === 'entry'));
   const filteredExitTransactions = limitTransactions(recentTransactions.filter(t => t.type === 'exit'));
 
+  const handleViewAllTransactions = () => {
+    navigate('/transacoes');
+  };
+
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle>Transações Recentes</CardTitle>
+        <Button 
+          variant="link" 
+          onClick={handleViewAllTransactions}
+          className="text-gestorApp-blue h-auto p-0 text-sm"
+        >
+          Ver todas
+        </Button>
       </CardHeader>
       <CardContent className="pt-0">
         <Tabs defaultValue="all">
