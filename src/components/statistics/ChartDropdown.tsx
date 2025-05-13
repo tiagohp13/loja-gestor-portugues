@@ -9,10 +9,15 @@ export type ChartType =
   | 'compras' 
   | 'lucro' 
   | 'encomendas' 
-  | 'produtos' 
   | 'stockMinimo' 
-  | 'clientes' 
-  | 'fornecedores';
+  | 'roi'
+  | 'margemLucro'
+  | 'taxaConversao'
+  | 'valorMedioCompra'
+  | 'valorMedioVenda'
+  | 'lucroMedioVenda'
+  | 'lucroTotal'
+  | 'lucroPorCliente';
 
 interface ChartDropdownProps {
   currentType: ChartType;
@@ -24,15 +29,20 @@ const ChartDropdown: React.FC<ChartDropdownProps> = ({ currentType, title, onSel
   // Map chart types to display titles
   const getChartTitle = (type: ChartType): string => {
     const titles = {
-      resumo: 'Resumo Financeiro (6 meses)',
+      resumo: 'Resumo Financeiro',
       vendas: 'Vendas Mensais',
       compras: 'Compras Mensais',
       lucro: 'Lucro Mensal',
       encomendas: 'Encomendas Mensais',
-      produtos: 'Produtos com mais movimento',
       stockMinimo: 'Produtos Stock Mínimo',
-      clientes: 'Clientes com mais compras',
-      fornecedores: 'Fornecedores mais usados'
+      roi: 'ROI',
+      margemLucro: 'Margem de Lucro',
+      taxaConversao: 'Taxa de Conversão',
+      valorMedioCompra: 'Valor Médio de Compra',
+      valorMedioVenda: 'Valor Médio de Venda',
+      lucroMedioVenda: 'Lucro Médio por Venda',
+      lucroTotal: 'Lucro Total',
+      lucroPorCliente: 'Lucro por Cliente'
     };
     
     return titles[type] || title;
@@ -44,15 +54,20 @@ const ChartDropdown: React.FC<ChartDropdownProps> = ({ currentType, title, onSel
         {getChartTitle(currentType)} <ChevronDown className="ml-1 h-4 w-4" />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="bg-white z-50">
-        <DropdownMenuItem onSelect={() => onSelect('resumo')}>Resumo Financeiro (6 meses)</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('resumo')}>Resumo Financeiro</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('vendas')}>Vendas</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('compras')}>Compras</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('lucro')}>Lucro</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('encomendas')}>Encomendas</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onSelect('produtos')}>Produtos com mais movimento</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('stockMinimo')}>Produtos Stock Mínimo</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onSelect('clientes')}>Clientes com mais compras</DropdownMenuItem>
-        <DropdownMenuItem onSelect={() => onSelect('fornecedores')}>Fornecedores mais usados</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('roi')}>ROI</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('margemLucro')}>Margem de Lucro</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('taxaConversao')}>Taxa de Conversão</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('valorMedioCompra')}>Valor Médio de Compra</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('valorMedioVenda')}>Valor Médio de Venda</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('lucroMedioVenda')}>Lucro Médio por Venda</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('lucroTotal')}>Lucro Total</DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => onSelect('lucroPorCliente')}>Lucro por Cliente</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

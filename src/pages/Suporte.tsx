@@ -15,7 +15,7 @@ const Suporte = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [chartType, setChartType] = useState<ChartType>('resumo');
-  const { isLoading, stats, kpis } = useSupportData();
+  const { isLoading, stats, kpis, kpiMonthlyData } = useSupportData();
   
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -48,6 +48,7 @@ const Suporte = () => {
           }}
           isLoading={isLoading}
           navigateToProduct={navigateToProductDetail}
+          kpiMonthlyData={kpiMonthlyData}
         />
       </div>
       

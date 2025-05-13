@@ -1,4 +1,3 @@
-
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
 import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
@@ -45,8 +44,13 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     const clientsCount = await fetchClientsCount();
     const suppliersCount = await fetchSuppliersCount();
     const categoriesCount = await fetchCategoriesCount();
+    
+    // Fetch monthly data for charts
     const monthlyData = await fetchMonthlyData();
     const monthlyOrders = await fetchMonthlyOrders();
+    
+    // Enhance monthly data with entry counts for KPI calculations
+    const enhancedMonthlyData = await enhanceMonthlyDataWithEntryCounts(monthlyData);
     
     return {
       totalSales,
@@ -63,13 +67,43 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       suppliersCount,
       categoriesCount,
       monthlySales: [],
-      monthlyData,
+      monthlyData: enhancedMonthlyData,
       monthlyOrders
     };
   } catch (error) {
     console.error('Error fetching support stats:', error);
     throw error;
   }
+};
+
+// Helper function to add entry counts to monthly data
+const enhanceMonthlyDataWithEntryCounts = async (monthlyData: any[]) => {
+  // Get dates from monthly data to fetch entry counts for each month
+  for (const monthData of monthlyData) {
+    const date = new Date(monthData.month);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    
+    // Get first and last day of the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+    
+    // Format dates for query
+    const startDateStr = startDate.toISOString();
+    const endDateStr = endDate.toISOString();
+    
+    // Count entries for the month
+    const { count: entriesCount } = await supabase
+      .from('stock_entries')
+      .select('*', { count: 'exact', head: true })
+      .gte('date', startDateStr)
+      .lte('date', endDateStr);
+    
+    // Add entry count to month data
+    monthData.entriesCount = entriesCount || 0;
+  }
+  
+  return monthlyData;
 };
 
 const fetchTopProducts = async () => {
