@@ -4,7 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { ClipboardList, ArrowLeft, Edit, LogOut } from 'lucide-react';
+import { ClipboardList, ArrowLeft, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
@@ -82,17 +82,20 @@ const OrderDetail = () => {
                   <p className="text-sm font-medium text-gestorApp-gray">Estado</p>
                   <div className="mt-1">
                     {order.convertedToStockExitId ? (
-                      <div className="flex items-center">
-                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 mr-2">
+                      <div className="flex flex-col gap-1">
+                        <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 inline-block w-fit">
                           Convertida em Saída
                         </span>
-                        <button 
-                          onClick={() => navigate(`/saidas/editar/${order.convertedToStockExitId}`)}
-                          className="text-gestorApp-blue hover:underline flex items-center text-sm"
-                        >
-                          <LogOut className="w-3 h-3 mr-1" />
-                          {order.convertedToStockExitNumber}
-                        </button>
+                        {order.convertedToStockExitNumber && (
+                          <div className="text-gestorApp-blue hover:underline text-sm">
+                            <a 
+                              href={`/saidas/${order.convertedToStockExitId}`}
+                              className="text-gestorApp-blue hover:underline cursor-pointer"
+                            >
+                              {order.convertedToStockExitNumber}
+                            </a>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
@@ -154,7 +157,7 @@ const OrderDetail = () => {
                     <Edit className="mr-2 h-4 w-4" /> Editar Encomenda
                   </Button>
                   <Button onClick={handleConvertToStockExit}>
-                    <LogOut className="mr-2 h-4 w-4" /> Converter em Saída
+                    <ClipboardList className="mr-2 h-4 w-4" /> Converter em Saída
                   </Button>
                 </>
               )}

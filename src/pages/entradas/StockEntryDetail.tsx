@@ -9,17 +9,15 @@ import { SupplierWithAddress } from '@/types';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import StatusBadge from '@/components/common/StatusBadge';
 import ClickableProductItem from '@/components/common/ClickableProductItem';
 
 const StockEntryDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockEntries, deleteStockEntry, suppliers } = useData();
+  const { stockEntries, suppliers } = useData();
   const [stockEntry, setStockEntry] = useState<any | null>(null);
   const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [totalValue, setTotalValue] = useState(0);
 
   useEffect(() => {
@@ -51,23 +49,11 @@ const StockEntryDetail = () => {
           }
         }
       } else {
-        toast.error('Entrada não encontrada');
+        toast.error('Compra não encontrada');
         navigate('/entradas/historico');
       }
     }
   }, [id, stockEntries, navigate, suppliers]);
-
-  const handleDelete = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
-  const confirmDelete = () => {
-    if (id) {
-      deleteStockEntry(id);
-      toast.success('Entrada eliminada com sucesso');
-      navigate('/entradas/historico');
-    }
-  };
 
   if (!stockEntry) {
     return <div>Carregando...</div>;
@@ -76,26 +62,20 @@ const StockEntryDetail = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
-        title={`Entrada: ${stockEntry?.number || ''}`}
-        description="Detalhes da entrada de stock"
+        title={`Compra: ${stockEntry?.number || ''}`}
+        description="Detalhes da compra de stock"
         actions={
           <>
+            <Button
+              onClick={() => navigate(`/entradas/editar/${id}`)}
+            >
+              Editar
+            </Button>
             <Button
               variant="outline"
               onClick={() => navigate('/entradas/historico')}
             >
               Voltar à Lista
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-            >
-              Eliminar
-            </Button>
-            <Button
-              onClick={() => navigate(`/entradas/editar/${id}`)}
-            >
-              Editar
             </Button>
           </>
         }
@@ -105,7 +85,7 @@ const StockEntryDetail = () => {
         {/* Entry Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Informações da Entrada</CardTitle>
+            <CardTitle>Informações da Compra</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -142,7 +122,12 @@ const StockEntryDetail = () => {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-1">Nome</p>
-                <p>{supplier.name}</p>
+                <a 
+                  href={`/fornecedores/${supplier.id}`}
+                  className="text-gestorApp-blue hover:underline cursor-pointer"
+                >
+                  {supplier.name}
+                </a>
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Email</p>
@@ -168,7 +153,7 @@ const StockEntryDetail = () => {
       {/* Products Table Card */}
       <Card className="mt-6">
         <CardHeader>
-          <CardTitle>Produtos Recebidos</CardTitle>
+          <CardTitle>Produtos Comprados</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -195,22 +180,13 @@ const StockEntryDetail = () => {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={3} className="text-right font-semibold">Total da Entrada:</TableCell>
+                <TableCell colSpan={3} className="text-right font-semibold">Total da Compra:</TableCell>
                 <TableCell className="text-right font-semibold">{formatCurrency(totalValue)}</TableCell>
               </TableRow>
             </TableFooter>
           </Table>
         </CardContent>
       </Card>
-
-      <DeleteConfirmDialog
-        open={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onDelete={confirmDelete}
-        title="Eliminar Entrada"
-        description="Tem certeza que deseja eliminar esta entrada? Esta ação não pode ser desfeita."
-        trigger={<></>}
-      />
     </div>
   );
 };

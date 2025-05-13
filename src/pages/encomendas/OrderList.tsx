@@ -265,14 +265,21 @@ const OrderList = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 mt-4 sm:mt-6">
-        <div className="relative w-full mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-          <Input
-            className="pl-10"
-            placeholder="Pesquisar por cliente ou número da encomenda..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
+          <div className="relative w-full md:w-2/3 flex gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+              <Input
+                className="pl-10"
+                placeholder="Pesquisar por cliente ou número da encomenda..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <Button onClick={() => navigate('/encomendas/nova')}>
+              <Plus className="mr-2 h-4 w-4" /> Nova Encomenda
+            </Button>
+          </div>
         </div>
         
         {sortedOrders.length === 0 ? (
