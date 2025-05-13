@@ -8,18 +8,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithAddress } from '@/types';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { toast } from 'sonner';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
 import ClickableProductItem from '@/components/common/ClickableProductItem';
 
 const StockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockExits, deleteStockExit, clients } = useData();
+  const { stockExits, clients } = useData();
   const [stockExit, setStockExit] = useState<any | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [totalValue, setTotalValue] = useState(0);
 
   useEffect(() => {
@@ -51,21 +49,25 @@ const StockExitDetail = () => {
           }
         }
       } else {
-        toast.error('Venda não encontrada');
+        toast({
+          title: "Erro",
+          description: "Venda não encontrada",
+          variant: "destructive",
+        });
         navigate('/saidas/historico');
       }
     }
   }, [id, stockExits, navigate, clients]);
 
-  const handleDelete = () => {
-    setIsDeleteDialogOpen(true);
+  const handleViewClient = () => {
+    if (client) {
+      navigate(`/clientes/${client.id}`);
+    }
   };
 
-  const confirmDelete = () => {
-    if (id) {
-      deleteStockExit(id);
-      toast.success('Venda eliminada com sucesso');
-      navigate('/saidas/historico');
+  const handleViewOrder = () => {
+    if (stockExit && stockExit.fromOrderId) {
+      navigate(`/encomendas/${stockExit.fromOrderId}`);
     }
   };
 
@@ -81,21 +83,15 @@ const StockExitDetail = () => {
         actions={
           <>
             <Button
+              onClick={() => navigate(`/saidas/editar/${id}`)}
+            >
+              Editar
+            </Button>
+            <Button
               variant="outline"
               onClick={() => navigate('/saidas/historico')}
             >
               Voltar à Lista
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDelete}
-            >
-              Eliminar
-            </Button>
-            <Button
-              onClick={() => navigate(`/saidas/editar/${id}`)}
-            >
-              Editar
             </Button>
           </>
         }
@@ -116,6 +112,20 @@ const StockExitDetail = () => {
               <p className="text-sm font-medium mb-1">Data</p>
               <p>{formatDateString(stockExit.date)}</p>
             </div>
+            {stockExit.fromOrderId && stockExit.fromOrderNumber && (
+              <div className="col-span-1 md:col-span-2">
+                <p className="text-sm font-medium mb-1">Origem</p>
+                <p>
+                  Convertida da encomenda{' '}
+                  <a 
+                    className="text-blue-500 hover:underline cursor-pointer"
+                    onClick={handleViewOrder}
+                  >
+                    {stockExit.fromOrderNumber}
+                  </a>
+                </p>
+              </div>
+            )}
             <div>
               <p className="text-sm font-medium mb-1">Total</p>
               <p className="font-semibold">{formatCurrency(totalValue)}</p>
@@ -142,7 +152,14 @@ const StockExitDetail = () => {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-1">Nome</p>
-                <p>{client.name}</p>
+                <p>
+                  <a 
+                    className="text-blue-500 hover:underline cursor-pointer"
+                    onClick={handleViewClient}
+                  >
+                    {client.name}
+                  </a>
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Email</p>
@@ -202,15 +219,6 @@ const StockExitDetail = () => {
           </Table>
         </CardContent>
       </Card>
-
-      <DeleteConfirmDialog
-        open={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onDelete={confirmDelete}
-        title="Eliminar Venda"
-        description="Tem certeza que deseja eliminar esta venda? Esta ação não pode ser desfeita."
-        trigger={<></>}
-      />
     </div>
   );
 };

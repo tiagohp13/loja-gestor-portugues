@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ShoppingCart, ArrowRight } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
 import ClickableProductItem from '@/components/common/ClickableProductItem';
@@ -86,6 +86,12 @@ const OrderDetail = () => {
     }
   };
 
+  const handleViewClient = () => {
+    if (client) {
+      navigate(`/clientes/${client.id}`);
+    }
+  };
+
   if (!order) {
     return <div>Carregando...</div>;
   }
@@ -135,7 +141,7 @@ const OrderDetail = () => {
                 <p className="text-sm font-medium mb-1">Nº Venda</p>
                 <p>
                   <a 
-                    className="text-gestorApp-blue hover:underline cursor-pointer"
+                    className="text-blue-500 hover:underline cursor-pointer"
                     onClick={handleViewStockExit}
                   >
                     {order.convertedToStockExitNumber || relatedStockExit?.number}
@@ -147,8 +153,7 @@ const OrderDetail = () => {
               <p className="text-sm font-medium mb-1">Estado</p>
               {order.convertedToStockExitId ? (
                 <StatusBadge variant="success" icon={ShoppingCart}>
-                  Convertida em Saída 
-                  <ArrowRight className="ml-1 h-4 w-4" />
+                  Convertida em Saída
                 </StatusBadge>
               ) : (
                 <StatusBadge variant="warning">
@@ -174,7 +179,14 @@ const OrderDetail = () => {
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm font-medium mb-1">Nome</p>
-                <p>{client.name}</p>
+                <p>
+                  <a 
+                    className="text-blue-500 hover:underline cursor-pointer"
+                    onClick={handleViewClient}
+                  >
+                    {client.name}
+                  </a>
+                </p>
               </div>
               <div>
                 <p className="text-sm font-medium mb-1">Email</p>
