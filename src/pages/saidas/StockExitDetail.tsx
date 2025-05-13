@@ -59,6 +59,13 @@ const StockExitDetail = () => {
     }
   }, [id, stockExits, navigate, clients]);
 
+  // Function to clean notes from the English "Converted from order" text
+  const cleanNotes = (notes: string | undefined): string => {
+    if (!notes) return '';
+    // Remove the English text "Converted from order X" if present
+    return notes.replace(/Converted from order \d+\/\d+\s*/g, '');
+  };
+
   const handleViewClient = () => {
     if (client) {
       navigate(`/clientes/${client.id}`);
@@ -123,10 +130,10 @@ const StockExitDetail = () => {
             <div className="col-span-1 md:col-span-2">
               <p className="text-sm font-medium mb-1">Notas</p>
               <p className="whitespace-pre-wrap">
-                {stockExit.notes}
+                {cleanNotes(stockExit.notes)}
                 {stockExit.fromOrderId && stockExit.fromOrderNumber && (
                   <>
-                    {stockExit.notes && <br />}
+                    {cleanNotes(stockExit.notes) && <br />}
                     Convertida da encomenda{' '}
                     <a 
                       className="text-blue-500 hover:underline cursor-pointer"
