@@ -10,15 +10,20 @@ import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
 import { useToast } from '@/hooks/use-toast';
+import { TimeFilterPeriod } from '@/components/statistics/TimeFilter';
 
 const Suporte = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [chartType, setChartType] = useState<ChartType>('resumo');
-  const { isLoading, stats, kpis, kpiMonthlyData } = useSupportData();
+  const { isLoading, stats, kpis, availableYears, filterDataByTimePeriod } = useSupportData();
   
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
+  };
+
+  const handleTimeFilterChange = (period: TimeFilterPeriod, year?: number, month?: number) => {
+    filterDataByTimePeriod(period, year, month);
   };
 
   if (isLoading) {
@@ -48,7 +53,6 @@ const Suporte = () => {
           }}
           isLoading={isLoading}
           navigateToProduct={navigateToProductDetail}
-          kpiMonthlyData={kpiMonthlyData}
         />
       </div>
       
@@ -59,7 +63,9 @@ const Suporte = () => {
         <KPIPanel 
           title="Indicadores de Performance" 
           description="Principais KPIs do negócio" 
-          kpis={kpis} 
+          kpis={kpis}
+          onTimeFilterChange={handleTimeFilterChange}
+          availableYears={availableYears}
         />
       </div>
     </div>

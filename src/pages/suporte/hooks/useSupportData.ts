@@ -4,29 +4,17 @@ import { KPI } from '@/components/statistics/KPIPanel';
 import { fetchSupportStats } from './api/fetchSupportStats';
 import { generateKPIs } from './utils/kpiUtils';
 import { SupportStats } from '../types/supportTypes';
-import { useKpiCalculations } from './useKpiCalculations';
+import { TimeFilterPeriod } from '@/components/statistics/TimeFilter';
+import { supabase } from '@/integrations/supabase/client';
 
 export type { SupportStats } from '../types/supportTypes';
-
-export interface MonthlyKpiData {
-  month: Date;
-  value: number;
-}
 
 export interface SupportDataReturn {
   isLoading: boolean;
   stats: SupportStats;
   kpis: KPI[];
-  kpiMonthlyData: {
-    roi: MonthlyKpiData[];
-    margemLucro: MonthlyKpiData[];
-    taxaConversao: MonthlyKpiData[];
-    valorMedioCompra: MonthlyKpiData[];
-    valorMedioVenda: MonthlyKpiData[];
-    lucroMedioVenda: MonthlyKpiData[];
-    lucroTotal: MonthlyKpiData[];
-    lucroPorCliente: MonthlyKpiData[];
-  };
+  availableYears: number[];
+  filterDataByTimePeriod: (period: TimeFilterPeriod, year?: number, month?: number) => void;
 }
 
 export const useSupportData = (): SupportDataReturn => {
@@ -51,16 +39,11 @@ export const useSupportData = (): SupportDataReturn => {
   });
   
   const [kpis, setKpis] = useState<KPI[]>([]);
-  const [kpiMonthlyData, setKpiMonthlyData] = useState<SupportDataReturn['kpiMonthlyData']>({
-    roi: [],
-    margemLucro: [],
-    taxaConversao: [],
-    valorMedioCompra: [],
-    valorMedioVenda: [],
-    lucroMedioVenda: [],
-    lucroTotal: [],
-    lucroPorCliente: []
-  });
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  
+  // Original data storage for filtering
+  const [entriesData, setEntriesData] = useState<any[]>([]);
+  const [exitsData, setExitsData] = useState<any[]>([]);
   
   useEffect(() => {
     const loadData = async () => {
@@ -73,8 +56,8 @@ export const useSupportData = (): SupportDataReturn => {
         const calculatedKpis = generateKPIs(supportStats);
         setKpis(calculatedKpis);
         
-        // Generate monthly KPI data
-        generateMonthlyKpiData(supportStats);
+        // Load transaction data for filtering
+        await loadTransactionData();
       } catch (error) {
         console.error('Error fetching statistics:', error);
       } finally {
@@ -85,85 +68,83 @@ export const useSupportData = (): SupportDataReturn => {
     loadData();
   }, []);
   
-  // Function to generate monthly KPI data from the monthly stats
-  const generateMonthlyKpiData = (supportStats: SupportStats) => {
-    const { monthlyData } = supportStats;
-    
-    // Create arrays for each KPI
-    const roiData: MonthlyKpiData[] = [];
-    const margemLucroData: MonthlyKpiData[] = [];
-    const taxaConversaoData: MonthlyKpiData[] = [];
-    const valorMedioCompraData: MonthlyKpiData[] = [];
-    const valorMedioVendaData: MonthlyKpiData[] = [];
-    const lucroMedioVendaData: MonthlyKpiData[] = [];
-    const lucroTotalData: MonthlyKpiData[] = [];
-    const lucroPorClienteData: MonthlyKpiData[] = [];
-    
-    // Process each month's data
-    monthlyData.forEach(month => {
-      const date = new Date(month.month);
+  // Load transaction data for time filtering
+  const loadTransactionData = async () => {
+    try {
+      // Fetch entries data
+      const { data: entries } = await supabase
+        .from('stock_entries')
+        .select('id, date');
+        
+      if (entries) {
+        setEntriesData(entries);
+      }
       
-      // ROI = (Profit / Purchases) * 100
-      const roi = month.purchases > 0 ? (month.profit / month.purchases) * 100 : 0;
+      // Fetch exits data  
+      const { data: exits } = await supabase
+        .from('stock_exits')
+        .select('id, date');
+        
+      if (exits) {
+        setExitsData(exits);
+      }
       
-      // Profit Margin = (Profit / Sales) * 100
-      const profitMargin = month.sales > 0 ? (month.profit / month.sales) * 100 : 0;
+      // Calculate available years
+      const years = new Set<number>();
       
-      // Conversion Rate - Use the clientTransactions if available, otherwise use a default calculation
-      // For demonstration, we're using a ratio of completed orders to 2x the number of days in the month
-      // This is a placeholder and should be replaced with actual client transaction data
-      const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
-      const estimatedClientsInMonth = daysInMonth * 2; // Rough estimate
-      const taxaConversao = estimatedClientsInMonth > 0 ? 
-        (month.completedOrders / estimatedClientsInMonth) * 100 : 0;
+      [...(entries || []), ...(exits || [])].forEach(item => {
+        if (item.date) {
+          const date = new Date(item.date);
+          years.add(date.getFullYear());
+        }
+      });
       
-      // Average Purchase Value
-      const averagePurchaseValue = month.entriesCount > 0 ? 
-        month.purchases / month.entriesCount : 0;
+      setAvailableYears(Array.from(years).sort((a, b) => b - a)); // Sort descending
       
-      // Average Sale Value
-      const averageSaleValue = month.completedOrders > 0 ? 
-        month.sales / month.completedOrders : 0;
+    } catch (error) {
+      console.error('Error loading transaction data for filtering:', error);
+    }
+  };
+  
+  // Filter data by time period
+  const filterDataByTimePeriod = async (period: TimeFilterPeriod, year?: number, month?: number) => {
+    setIsLoading(true);
+    try {
+      let startDate: string | undefined;
+      let endDate: string | undefined;
       
-      // Average Profit per Sale
-      const averageProfitPerSale = month.completedOrders > 0 ? 
-        month.profit / month.completedOrders : 0;
+      if (period === 'year' && year) {
+        startDate = `${year}-01-01`;
+        endDate = `${year}-12-31`;
+      } else if (period === 'month' && year && month) {
+        // Create date for first day of selected month
+        const firstDay = new Date(year, month - 1, 1);
+        // Create date for last day of selected month
+        const lastDay = new Date(year, month, 0);
+        
+        startDate = firstDay.toISOString().split('T')[0];
+        endDate = lastDay.toISOString().split('T')[0];
+      }
       
-      // Total Profit (already calculated)
-      const totalProfit = month.profit;
+      // If all-time is selected or no valid date range is provided, fetch all data
+      const supportStats = await fetchSupportStats(startDate, endDate);
+      setStats(supportStats);
       
-      // Profit per Client 
-      const profitPerClient = estimatedClientsInMonth > 0 ? 
-        month.profit / estimatedClientsInMonth : 0;
-      
-      // Add the data points to their respective arrays
-      roiData.push({ month: date, value: roi });
-      margemLucroData.push({ month: date, value: profitMargin });
-      taxaConversaoData.push({ month: date, value: taxaConversao });
-      valorMedioCompraData.push({ month: date, value: averagePurchaseValue });
-      valorMedioVendaData.push({ month: date, value: averageSaleValue });
-      lucroMedioVendaData.push({ month: date, value: averageProfitPerSale });
-      lucroTotalData.push({ month: date, value: totalProfit });
-      lucroPorClienteData.push({ month: date, value: profitPerClient });
-    });
-    
-    // Set the monthly KPI data
-    setKpiMonthlyData({
-      roi: roiData,
-      margemLucro: margemLucroData,
-      taxaConversao: taxaConversaoData,
-      valorMedioCompra: valorMedioCompraData,
-      valorMedioVenda: valorMedioVendaData,
-      lucroMedioVenda: lucroMedioVendaData,
-      lucroTotal: lucroTotalData,
-      lucroPorCliente: lucroPorClienteData
-    });
+      // Generate KPIs based on the filtered stats
+      const calculatedKpis = generateKPIs(supportStats);
+      setKpis(calculatedKpis);
+    } catch (error) {
+      console.error('Error filtering data by time period:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
     isLoading,
     stats,
     kpis,
-    kpiMonthlyData
+    availableYears,
+    filterDataByTimePeriod
   };
 };

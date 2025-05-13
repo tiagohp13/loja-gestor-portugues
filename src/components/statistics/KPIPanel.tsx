@@ -12,6 +12,7 @@ import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import KPIEditModal from './KPIEditModal';
+import TimeFilter, { TimeFilterPeriod } from './TimeFilter';
 
 export interface KPI {
   name: string;
@@ -31,11 +32,46 @@ interface KPIPanelProps {
   kpis: KPI[];
   title?: string;
   description?: string;
+  onTimeFilterChange?: (period: TimeFilterPeriod, year?: number, month?: number) => void;
+  availableYears?: number[];
 }
 
-const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de desempenho" }: KPIPanelProps) => {
+const KPIPanel = ({ 
+  kpis, 
+  title = "KPIs", 
+  description = "Indicadores-chave de desempenho",
+  onTimeFilterChange,
+  availableYears = []
+}: KPIPanelProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [kpisState, setKpisState] = useState<KPI[]>(kpis);
+  
+  // Time filter state
+  const [period, setPeriod] = useState<TimeFilterPeriod>('all-time');
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1);
+  
+  // Handle time filter changes
+  const handlePeriodChange = (newPeriod: TimeFilterPeriod) => {
+    setPeriod(newPeriod);
+    if (onTimeFilterChange) {
+      onTimeFilterChange(newPeriod, newPeriod !== 'all-time' ? year : undefined, newPeriod === 'month' ? month : undefined);
+    }
+  };
+  
+  const handleYearChange = (newYear: number) => {
+    setYear(newYear);
+    if (onTimeFilterChange) {
+      onTimeFilterChange(period, newYear, period === 'month' ? month : undefined);
+    }
+  };
+  
+  const handleMonthChange = (newMonth: number) => {
+    setMonth(newMonth);
+    if (onTimeFilterChange && period === 'month') {
+      onTimeFilterChange(period, year, newMonth);
+    }
+  };
   
   // Helper function to get trend icon based on comparison with target
   const getTrendIcon = (value: number, target: number, isInverseKPI: boolean = false) => {
@@ -140,20 +176,35 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
   
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
+      <CardHeader className="space-y-4">
+        <div className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>{title}</CardTitle>
+            <CardDescription>{description}</CardDescription>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-1"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Editar Metas
+          </Button>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setIsEditModalOpen(true)}
-          className="flex items-center gap-1"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          Editar Metas
-        </Button>
+        
+        {/* Time Filter Component */}
+        {onTimeFilterChange && (
+          <TimeFilter 
+            period={period}
+            year={year}
+            month={month}
+            onPeriodChange={handlePeriodChange}
+            onYearChange={handleYearChange}
+            onMonthChange={handleMonthChange}
+            availableYears={availableYears}
+          />
+        )}
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

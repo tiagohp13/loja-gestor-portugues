@@ -1,13 +1,29 @@
 
 import { supabase } from '@/integrations/supabase/client';
 
-export const fetchMonthlyData = async () => {
+export const fetchMonthlyData = async (startDate?: string, endDate?: string) => {
   const today = new Date();
+  let startMonth = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+  let endMonth = today;
+  
+  // Apply date range filtering if provided
+  if (startDate) {
+    startMonth = new Date(startDate);
+  }
+  
+  if (endDate) {
+    endMonth = new Date(endDate);
+  }
+  
   const months = [];
   const data = [];
   
-  for (let i = 5; i >= 0; i--) {
-    const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+  // Calculate number of months to show
+  const monthDiff = (endMonth.getFullYear() - startMonth.getFullYear()) * 12 + (endMonth.getMonth() - startMonth.getMonth());
+  const monthsToShow = Math.min(Math.max(monthDiff + 1, 1), 12); // Show at least 1 month and at most 12 months
+  
+  for (let i = monthsToShow - 1; i >= 0; i--) {
+    const month = new Date(endMonth.getFullYear(), endMonth.getMonth() - i, 1);
     const monthName = month.toLocaleString('default', { month: 'short' });
     months.push({ month, monthName });
   }
@@ -86,13 +102,29 @@ export const fetchMonthlyData = async () => {
   return data;
 };
 
-export const fetchMonthlyOrders = async () => {
+export const fetchMonthlyOrders = async (startDate?: string, endDate?: string) => {
   const today = new Date();
+  let startMonth = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+  let endMonth = today;
+  
+  // Apply date range filtering if provided
+  if (startDate) {
+    startMonth = new Date(startDate);
+  }
+  
+  if (endDate) {
+    endMonth = new Date(endDate);
+  }
+  
   const months = [];
   const data = [];
   
-  for (let i = 5; i >= 0; i--) {
-    const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
+  // Calculate number of months to show
+  const monthDiff = (endMonth.getFullYear() - startMonth.getFullYear()) * 12 + (endMonth.getMonth() - startMonth.getMonth());
+  const monthsToShow = Math.min(Math.max(monthDiff + 1, 1), 12); // Show at least 1 month and at most 12 months
+  
+  for (let i = monthsToShow - 1; i >= 0; i--) {
+    const month = new Date(endMonth.getFullYear(), endMonth.getMonth() - i, 1);
     const monthName = month.toLocaleString('default', { month: 'short' });
     months.push({ month, monthName });
   }
