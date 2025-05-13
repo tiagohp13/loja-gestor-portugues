@@ -89,19 +89,25 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Adicionamos a Taxa de Conversão ao array de KPIs
   kpis.push(taxaConversao);
   
+  // Valor Médio de Compra com lógica inversa (menor é melhor)
+  const valorMedioCompra: KPI = {
+    name: "Valor Médio de Compra",
+    value: averagePurchaseValue,
+    target: 500,
+    unit: '€',
+    isPercentage: false,
+    previousValue: 450,
+    description: "Valor médio gasto em cada compra a fornecedores.",
+    formula: "Valor de Compras / Número de Compras",
+    belowTarget: averagePurchaseValue > 500, // Lógica inversa: acima da meta é ruim
+    isInverseKPI: true // Marcador para indicar que este KPI tem lógica inversa
+  };
+  
+  // Adicionamos o Valor Médio de Compra ao array de KPIs
+  kpis.push(valorMedioCompra);
+  
   // Adicionamos os KPIs restantes ao array
   kpis.push(
-    {
-      name: "Valor Médio de Compra",
-      value: averagePurchaseValue,
-      target: 500,
-      unit: '€',
-      isPercentage: false,
-      previousValue: 450,
-      description: "Valor médio gasto em cada compra a fornecedores.",
-      formula: "Valor de Compras / Número de Compras",
-      belowTarget: averagePurchaseValue < 500
-    },
     {
       name: "Valor Médio de Venda",
       value: averageSaleValue,

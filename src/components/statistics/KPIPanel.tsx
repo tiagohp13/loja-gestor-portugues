@@ -24,6 +24,7 @@ export interface KPI {
   previousValue?: number;
   tooltip?: string;
   belowTarget?: boolean;
+  isInverseKPI?: boolean;
 }
 
 interface KPIPanelProps {
@@ -37,11 +38,21 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
   const [kpisState, setKpisState] = useState<KPI[]>(kpis);
   
   // Helper function to get trend icon based on comparison with target
-  const getTrendIcon = (value: number, target: number) => {
-    if (value >= target) {
-      return <TrendingUp className="h-4 w-4 text-green-500" />;
+  const getTrendIcon = (value: number, target: number, isInverseKPI: boolean = false) => {
+    // Inversa a lógica para KPIs inversos (onde menor é melhor)
+    if (isInverseKPI) {
+      if (value <= target) {
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      } else {
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      }
     } else {
-      return <TrendingDown className="h-4 w-4 text-red-500" />;
+      // Lógica normal (maior é melhor)
+      if (value >= target) {
+        return <TrendingUp className="h-4 w-4 text-green-500" />;
+      } else {
+        return <TrendingDown className="h-4 w-4 text-red-500" />;
+      }
     }
   };
 
@@ -102,6 +113,30 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
     setKpisState(updatedKpis);
     setIsEditModalOpen(false);
   };
+
+  // Helper para obter a mensagem de alerta baseada no KPI
+  const getAlertMessage = (kpi: KPI) => {
+    // Mensagem especial para o Valor Médio de Compra
+    if (kpi.name.includes('Valor Médio de Compra')) {
+      return kpi.value <= kpi.target 
+        ? "O valor médio por compra está dentro do esperado." 
+        : "O valor médio por compra está acima do pretendido.";
+    }
+    
+    // Mensagem padrão para outros KPIs
+    return "Este KPI está abaixo da meta esperada";
+  };
+  
+  // Helper para verificar se um KPI está abaixo da sua meta
+  const checkIfBelowTarget = (kpi: KPI) => {
+    // Para o KPI Valor Médio de Compra, a lógica é inversa
+    if (kpi.name.includes('Valor Médio de Compra')) {
+      return kpi.value > kpi.target;
+    }
+    
+    // Para os outros KPIs, a lógica padrão
+    return kpi.value < kpi.target;
+  };
   
   return (
     <Card>
@@ -122,58 +157,64 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {kpisState.map((kpi, index) => (
-            <TooltipProvider key={index}>
-              <Card className={`shadow-sm ${kpi.belowTarget ? 'border-orange-300' : ''}`}>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-sm font-medium flex items-center gap-2">
-                    {getKPIIcon(kpi.name)}
-                    {kpi.name}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Info className="h-3.5 w-3.5 text-gray-400 cursor-help" />
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-xs">
-                        <p><strong>Descrição:</strong> {kpi.description}</p>
-                        <p className="mt-1"><strong>Fórmula:</strong> {kpi.formula}</p>
-                        {kpi.tooltip && <p className="mt-1">{kpi.tooltip}</p>}
-                      </TooltipContent>
-                    </Tooltip>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center justify-between">
-                    <div className="text-2xl font-bold">
-                      {kpi.unit === '€' && !kpi.isPercentage && '€ '}
-                      {formatValue(kpi.value, kpi.unit, kpi.isPercentage)}
-                      {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
+          {kpisState.map((kpi, index) => {
+            // Verifica se é o KPI Valor Médio de Compra
+            const isInverseKPI = kpi.name.includes('Valor Médio de Compra');
+            const belowTarget = checkIfBelowTarget(kpi);
+            
+            return (
+              <TooltipProvider key={index}>
+                <Card className={`shadow-sm ${belowTarget ? 'border-orange-300' : ''}`}>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
+                      {getKPIIcon(kpi.name)}
+                      {kpi.name}
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Info className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-xs">
+                          <p><strong>Descrição:</strong> {kpi.description}</p>
+                          <p className="mt-1"><strong>Fórmula:</strong> {kpi.formula}</p>
+                          {kpi.tooltip && <p className="mt-1">{kpi.tooltip}</p>}
+                        </TooltipContent>
+                      </Tooltip>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="text-2xl font-bold">
+                        {kpi.unit === '€' && !kpi.isPercentage && '€ '}
+                        {formatValue(kpi.value, kpi.unit, kpi.isPercentage)}
+                        {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
+                      </div>
+                      {getTrendIcon(kpi.value, kpi.target, isInverseKPI)}
                     </div>
-                    {getTrendIcon(kpi.value, kpi.target)}
-                  </div>
-                  
-                  <div className="mt-2">
-                    <div className="flex items-center justify-between text-xs mb-1">
-                      <span>Meta: {formatValue(kpi.target, kpi.unit, kpi.isPercentage)}</span>
-                      <span>{Math.round(calculateProgress(kpi.value, kpi.target))}%</span>
+                    
+                    <div className="mt-2">
+                      <div className="flex items-center justify-between text-xs mb-1">
+                        <span>Meta: {formatValue(kpi.target, kpi.unit, kpi.isPercentage)}</span>
+                        <span>{Math.round(calculateProgress(kpi.value, kpi.target))}%</span>
+                      </div>
+                      <Progress 
+                        value={calculateProgress(kpi.value, kpi.target)} 
+                        className={`h-2 ${belowTarget ? 'bg-orange-100' : 'bg-gray-100'}`}
+                      />
                     </div>
-                    <Progress 
-                      value={calculateProgress(kpi.value, kpi.target)} 
-                      className={`h-2 ${kpi.belowTarget ? 'bg-orange-100' : 'bg-gray-100'}`}
-                    />
-                  </div>
-                  
-                  {kpi.belowTarget && (
-                    <Alert className="mt-2 py-2 bg-orange-50 border-orange-200">
-                      <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
-                      <AlertDescription className="text-xs text-orange-700">
-                        Este KPI está abaixo da meta esperada
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                </CardContent>
-              </Card>
-            </TooltipProvider>
-          ))}
+                    
+                    {belowTarget && (
+                      <Alert className="mt-2 py-2 bg-orange-50 border-orange-200">
+                        <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
+                        <AlertDescription className="text-xs text-orange-700">
+                          {getAlertMessage(kpi)}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </TooltipProvider>
+            );
+          })}
         </div>
       </CardContent>
       
