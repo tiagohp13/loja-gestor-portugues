@@ -8,7 +8,6 @@ import PageHeader from '../components/ui/PageHeader';
 // Importar componentes do dashboard
 import DashboardSummaryCards from './dashboard/components/DashboardSummaryCards';
 import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
-import ProductCategoryChart from './dashboard/components/ProductCategoryChart';
 import LowStockProducts from './dashboard/components/LowStockProducts';
 import RecentTransactions from './dashboard/components/RecentTransactions';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
@@ -25,7 +24,6 @@ const DashboardPage: React.FC = () => {
     clients,
     ensureDate,
     monthlyData,
-    categoryData,
     lowStockProducts,
     recentTransactions,
     mostSoldProduct,
@@ -66,9 +64,8 @@ const DashboardPage: React.FC = () => {
         totalStockValue={totalStockValue}
       />
       
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+      <div className="grid grid-cols-1 gap-6 mb-8">
         <SalesAndPurchasesChart chartData={monthlyData} />
-        <ProductCategoryChart categoryData={categoryData} />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">

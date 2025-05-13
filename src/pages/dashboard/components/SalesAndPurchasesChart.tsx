@@ -16,12 +16,12 @@ interface SalesAndPurchasesChartProps {
 
 const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartData }) => {
   return (
-    <Card className="xl:col-span-2">
+    <Card>
       <CardHeader>
         <CardTitle>Vendas e Compras (últimos 6 meses)</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
+        <ResponsiveContainer width="100%" height={400}>
           <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
