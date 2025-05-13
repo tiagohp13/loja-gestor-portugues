@@ -12,10 +12,10 @@ interface FeaturedProductsProps {
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products, navigateToProductDetail }) => {
   // Sort products by value (stock * price) and get the top items
-  // Limiting to 6 products to match the height of the Statistics card
+  // Limiting to 7 products to better match the height of the Statistics card
   const sortedProducts = [...products].sort((a, b) => 
     (b.currentStock * b.salePrice) - (a.currentStock * a.salePrice)
-  ).slice(0, 6);
+  ).slice(0, 7);
 
   return (
     <Card className="lg:col-span-2 h-full">
