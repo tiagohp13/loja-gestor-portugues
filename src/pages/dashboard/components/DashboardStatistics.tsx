@@ -36,7 +36,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
   navigateToSupplierDetail
 }) => {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Estatísticas</CardTitle>
       </CardHeader>
@@ -110,7 +110,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
           </div>
           <div className="flex justify-between py-2 border-b">
             <dt className="flex items-center text-gestorApp-gray font-medium">
-              <Euro className="h-4 w-4 mr-1" /> ROI (€)
+              ROI (€)
             </dt>
             <dd className="font-semibold text-green-600">
               {formatCurrency(roiValue)}
@@ -118,7 +118,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
           </div>
           <div className="flex justify-between py-2">
             <dt className="flex items-center text-gestorApp-gray font-medium">
-              <Percent className="h-4 w-4 mr-1" /> ROI (%)
+              ROI (%)
             </dt>
             <dd className="font-semibold text-green-600">
               {roiPercent.toFixed(2)}%
