@@ -213,10 +213,10 @@ const OrderDetail = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {order.items && order.items.map((item) => (
+              {order.items && order.items.map((item, index) => (
                 <ClickableProductItem
-                  key={item.id}
-                  id={item.id}
+                  key={`order-item-${index}-${item.productId}`}
+                  id={`order-item-${index}`}
                   productId={item.productId}
                   name={item.productName}
                   quantity={item.quantity}
