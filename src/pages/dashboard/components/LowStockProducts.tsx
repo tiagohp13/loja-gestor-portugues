@@ -14,15 +14,18 @@ const LowStockProducts: React.FC<LowStockProductsProps> = ({
   lowStockProducts,
   navigateToProductDetail
 }) => {
+  // Limit to a maximum of 3 products to match with FeaturedProducts height
+  const displayProducts = lowStockProducts.slice(0, 3);
+  
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full">
+      <CardHeader className="pb-3">
         <CardTitle>Produtos com Stock Baixo</CardTitle>
       </CardHeader>
-      <CardContent>
-        {lowStockProducts.length > 0 ? (
+      <CardContent className="pt-0">
+        {displayProducts.length > 0 ? (
           <div className="space-y-4">
-            {lowStockProducts.map((product) => (
+            {displayProducts.map((product) => (
               <div key={product.id} className="flex justify-between items-center p-3 bg-red-50 rounded-md">
                 <div className="flex items-center">
                   <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />

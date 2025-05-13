@@ -21,12 +21,23 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   navigateToSupplierDetail,
   ensureDate
 }) => {
+  // Limit the number of transactions to display to match DashboardStatistics height
+  const displayLimit = 5;
+  
+  const limitTransactions = (transactions: TransactionItem[]) => {
+    return transactions.slice(0, displayLimit);
+  };
+  
+  const filteredAllTransactions = limitTransactions(recentTransactions);
+  const filteredEntryTransactions = limitTransactions(recentTransactions.filter(t => t.type === 'entry'));
+  const filteredExitTransactions = limitTransactions(recentTransactions.filter(t => t.type === 'exit'));
+
   return (
-    <Card>
-      <CardHeader>
+    <Card className="h-full">
+      <CardHeader className="pb-3">
         <CardTitle>Transações Recentes</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-0">
         <Tabs defaultValue="all">
           <TabsList className="mb-4">
             <TabsTrigger value="all">Todas</TabsTrigger>
@@ -36,8 +47,8 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
           
           <TabsContent value="all">
             <ul className="space-y-3">
-              {recentTransactions.length > 0 ? (
-                recentTransactions.map((transaction) => (
+              {filteredAllTransactions.length > 0 ? (
+                filteredAllTransactions.map((transaction) => (
                   <li key={`${transaction.id}-${transaction.productId}`} className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <div>
                       <Button 
@@ -83,9 +94,8 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
           
           <TabsContent value="entry">
             <ul className="space-y-3">
-              {recentTransactions
-                .filter(t => t.type === 'entry')
-                .map((transaction) => (
+              {filteredEntryTransactions.length > 0 ? (
+                filteredEntryTransactions.map((transaction) => (
                   <li key={`${transaction.id}-${transaction.productId}-entry`} className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <div>
                       <Button 
@@ -115,15 +125,19 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       </div>
                     </div>
                   </li>
-                ))}
+                ))
+              ) : (
+                <li className="text-center py-6 text-gestorApp-gray">
+                  Nenhuma entrada encontrada
+                </li>
+              )}
             </ul>
           </TabsContent>
           
           <TabsContent value="exit">
             <ul className="space-y-3">
-              {recentTransactions
-                .filter(t => t.type === 'exit')
-                .map((transaction) => (
+              {filteredExitTransactions.length > 0 ? (
+                filteredExitTransactions.map((transaction) => (
                   <li key={`${transaction.id}-${transaction.productId}-exit`} className="flex justify-between p-3 bg-gray-50 rounded-md">
                     <div>
                       <Button 
@@ -153,7 +167,12 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       </div>
                     </div>
                   </li>
-                ))}
+                ))
+              ) : (
+                <li className="text-center py-6 text-gestorApp-gray">
+                  Nenhuma saída encontrada
+                </li>
+              )}
             </ul>
           </TabsContent>
         </Tabs>

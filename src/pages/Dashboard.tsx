@@ -68,22 +68,22 @@ const DashboardPage: React.FC = () => {
         <SalesAndPurchasesChart chartData={monthlyData} />
       </div>
       
+      {/* LINHA SUPERIOR: Produtos com Stock Baixo + Produtos em Destaque */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <LowStockProducts 
           lowStockProducts={lowStockProducts}
           navigateToProductDetail={navigateToProductDetail}
         />
         
-        <RecentTransactions 
-          recentTransactions={recentTransactions as TransactionItem[]} 
+        <FeaturedProducts 
+          products={products}
           navigateToProductDetail={navigateToProductDetail}
-          navigateToClientDetail={navigateToClientDetail}
-          navigateToSupplierDetail={navigateToSupplierDetail}
-          ensureDate={ensureDate}
+          maxItems={3}
         />
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* LINHA INFERIOR: Estatísticas + Transações Recentes */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <DashboardStatistics 
           mostSoldProduct={mostSoldProduct}
           mostFrequentClient={mostFrequentClient}
@@ -99,9 +99,12 @@ const DashboardPage: React.FC = () => {
           navigateToSupplierDetail={navigateToSupplierDetail}
         />
         
-        <FeaturedProducts 
-          products={products}
+        <RecentTransactions 
+          recentTransactions={recentTransactions as TransactionItem[]} 
           navigateToProductDetail={navigateToProductDetail}
+          navigateToClientDetail={navigateToClientDetail}
+          navigateToSupplierDetail={navigateToSupplierDetail}
+          ensureDate={ensureDate}
         />
       </div>
     </div>
