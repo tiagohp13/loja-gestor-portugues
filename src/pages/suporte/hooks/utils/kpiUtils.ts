@@ -100,7 +100,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       previousValue: 450,
       description: "Valor médio gasto em cada compra a fornecedores.",
       formula: "Valor de Compras / Número de Compras",
-      belowTarget: false
+      belowTarget: averagePurchaseValue < 500
     },
     {
       name: "Valor Médio de Venda",

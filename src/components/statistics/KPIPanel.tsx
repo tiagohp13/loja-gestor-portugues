@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -32,15 +31,13 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [kpisState, setKpisState] = useState<KPI[]>(kpis);
   
-  // Helper function to get trend icon
-  const getTrendIcon = (current: number, previous?: number) => {
-    if (!previous) return null;
-    
-    return previous < current ? (
-      <TrendingUp className="h-4 w-4 text-green-500" />
-    ) : (
-      <TrendingDown className="h-4 w-4 text-red-500" />
-    );
+  // Helper function to get trend icon based on comparison with target
+  const getTrendIcon = (value: number, target: number) => {
+    if (value >= target) {
+      return <TrendingUp className="h-4 w-4 text-green-500" />;
+    } else {
+      return <TrendingDown className="h-4 w-4 text-red-500" />;
+    }
   };
 
   // Helper function to format value based on unit
@@ -131,7 +128,7 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
                       {formatValue(kpi.value, kpi.unit, kpi.isPercentage)}
                       {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
                     </div>
-                    {getTrendIcon(kpi.value, kpi.previousValue)}
+                    {getTrendIcon(kpi.value, kpi.target)}
                   </div>
                   
                   <div className="mt-2">
