@@ -48,3 +48,17 @@ export const calculateRoiValue = (totalProfit: number, totalPurchaseValue: numbe
 export const calculateRoiPercent = (totalProfit: number, totalPurchaseValue: number): number => {
   return totalPurchaseValue > 0 ? (totalProfit / totalPurchaseValue) * 100 : 0;
 };
+
+/**
+ * Calculate average sale value per sale
+ */
+export const calculateAverageSaleValue = (totalSalesValue: number, salesCount: number): number => {
+  return salesCount > 0 ? totalSalesValue / salesCount : 0;
+};
+
+/**
+ * Calculate average profit per sale
+ */
+export const calculateAverageProfitPerSale = (totalProfit: number, salesCount: number): number => {
+  return salesCount > 0 ? totalProfit / salesCount : 0;
+};

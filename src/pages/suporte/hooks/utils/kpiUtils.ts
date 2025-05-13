@@ -33,8 +33,15 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   
   // Outros cálculos de médias
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
+  
+  // Valor Médio de Venda = Valor de Vendas / Número de Vendas
+  // Correção: Usar o valor completo sem arredondamento para evitar imprecisões
   const averageSaleValue = salesCount > 0 ? stats.totalSales / salesCount : 0;
+  
+  // Lucro Médio por Venda = Lucro / Número de Vendas
+  // Correção: Usar o valor completo sem arredondamento para evitar imprecisões
   const averageProfitPerSale = salesCount > 0 ? stats.profit / salesCount : 0;
+  
   const profitPerClient = clientsCount > 0 ? stats.profit / clientsCount : 0;
   
   // Array de KPIs
