@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Search, Edit, Trash2, History, Plus } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { useToast } from '@/hooks/use-toast';
 import {
   Table,
   TableBody,
@@ -15,13 +16,48 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { getClientTotalSpent } from '@/integrations/supabase/client';
+import { formatCurrency } from '@/utils/formatting';
 
 const ClientList = () => {
   const navigate = useNavigate();
   const { clients, deleteClient } = useData();
   const [searchTerm, setSearchTerm] = useState('');
+  const [clientsWithSpent, setClientsWithSpent] = useState<Array<any>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
 
-  const filteredClients = clients.filter(client => 
+  useEffect(() => {
+    const fetchClientTotals = async () => {
+      setIsLoading(true);
+      try {
+        const clientsWithTotals = await Promise.all(
+          clients.map(async (client) => {
+            const totalSpent = await getClientTotalSpent(client.id);
+            return {
+              ...client,
+              totalSpent
+            };
+          })
+        );
+        setClientsWithSpent(clientsWithTotals);
+      } catch (error) {
+        console.error('Error fetching client totals:', error);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao carregar os valores gastos pelos clientes",
+          variant: "destructive",
+        });
+        setClientsWithSpent(clients.map(client => ({ ...client, totalSpent: 0 })));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchClientTotals();
+  }, [clients]);
+
+  const filteredClients = clientsWithSpent.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (client.phone && client.phone.includes(searchTerm))
@@ -77,13 +113,20 @@ const ClientList = () => {
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
                 <TableHead>Morada</TableHead>
+                <TableHead>Valor Gasto</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredClients.length === 0 ? (
+              {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
+                    A carregar dados...
+                  </TableCell>
+                </TableRow>
+              ) : filteredClients.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
@@ -98,6 +141,9 @@ const ClientList = () => {
                     <TableCell>{client.email || '-'}</TableCell>
                     <TableCell>{client.phone || '-'}</TableCell>
                     <TableCell>{client.address || '-'}</TableCell>
+                    <TableCell className="font-medium text-blue-600">
+                      {formatCurrency(client.totalSpent)}
+                    </TableCell>
                     <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                       <div className="flex justify-end space-x-2">
                         <Button 

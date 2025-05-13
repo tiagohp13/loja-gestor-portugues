@@ -66,11 +66,12 @@ const ClientDetail = () => {
         description="Detalhes do cliente"
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
-              Voltar à Lista
-            </Button>
+            {/* Changed order of buttons - Edit button first */}
             <Button onClick={() => navigate(`/clientes/editar/${id}`)}>
               Editar Cliente
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
+              Voltar à Lista
             </Button>
           </div>
         }
@@ -181,13 +182,19 @@ const ClientDetail = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {clientHistory.orders.map((order) => (
                   <tr key={order.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{order.number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button 
+                        className="text-blue-600 hover:underline font-medium focus:outline-none"
+                        onClick={() => navigate(`/encomendas/detalhe/${order.id}`)}
+                      >
+                        {order.number}
+                      </button>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(order.date)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {order.items.reduce((total, item) => 
@@ -197,9 +204,6 @@ const ClientDetail = () => {
                       <Badge variant={order.convertedToStockExitId ? "default" : "secondary"}>
                         {order.convertedToStockExitId ? "Convertida" : "Pendente"}
                       </Badge>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" onClick={() => navigate(`/encomendas/detalhe/${order.id}`)}>Ver</Button>
                     </td>
                   </tr>
                 ))}
@@ -222,21 +226,24 @@ const ClientDetail = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {clientHistory.exits.map((exit) => (
                   <tr key={exit.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exit.number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button 
+                        className="text-blue-600 hover:underline font-medium focus:outline-none"
+                        onClick={() => navigate(`/saidas/detalhe/${exit.id}`)}
+                      >
+                        {exit.number}
+                      </button>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(exit.date)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.invoiceNumber || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {exit.items.reduce((total, item) => 
                         total + (item.quantity * item.salePrice * (1 - (item.discountPercent || 0) / 100)), 0).toFixed(2)} €
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" onClick={() => navigate(`/saidas/detalhe/${exit.id}`)}>Ver</Button>
                     </td>
                   </tr>
                 ))}

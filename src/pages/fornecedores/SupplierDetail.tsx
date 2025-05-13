@@ -66,11 +66,11 @@ const SupplierDetail = () => {
         description="Detalhes do fornecedor"
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
-              Voltar à Lista
-            </Button>
             <Button onClick={() => navigate(`/fornecedores/editar/${id}`)}>
               Editar Fornecedor
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
+              Voltar à Lista
             </Button>
           </div>
         }
@@ -193,7 +193,6 @@ const SupplierDetail = () => {
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -203,20 +202,22 @@ const SupplierDetail = () => {
                     className="hover:bg-gray-50 cursor-pointer"
                     onClick={() => navigate(`/entradas/${entry.id}`)}
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">{entry.number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <button 
+                        className="text-blue-600 hover:underline font-medium focus:outline-none"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/entradas/${entry.id}`);
+                        }}
+                      >
+                        {entry.number}
+                      </button>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(entry.date)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.invoiceNumber || '-'}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatCurrency(entry.items.reduce((total, item) => 
                         total + (item.quantity * item.purchasePrice * (1 - (item.discountPercent || 0) / 100)), 0))}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <Button variant="ghost" onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/entradas/${entry.id}`);
-                      }}>
-                        Ver
-                      </Button>
                     </td>
                   </tr>
                 ))}
