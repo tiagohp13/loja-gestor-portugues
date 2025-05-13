@@ -23,7 +23,7 @@ interface StockEntryProductSelectorProps {
   searchTerm: string;
   selectedProductDisplay: string;
   isProductSearchOpen: boolean;
-  setSearchTerm: (value: string) => void;
+  setSearchTerm: (value: string) => void; // This prop is used but was missing in the implementation
   setIsProductSearchOpen: (isOpen: boolean) => void;
   handleSearch: (value: string) => void;
   filteredProducts: Product[];
@@ -34,6 +34,7 @@ const StockEntryProductSelector: React.FC<StockEntryProductSelectorProps> = ({
   searchTerm,
   selectedProductDisplay,
   isProductSearchOpen,
+  setSearchTerm, // Adding this to the destructuring of props
   setIsProductSearchOpen,
   handleSearch,
   filteredProducts,
