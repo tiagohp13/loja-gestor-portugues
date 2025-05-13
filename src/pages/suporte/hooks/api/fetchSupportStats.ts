@@ -4,11 +4,38 @@ import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashb
 import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
 import { SupportStats } from '../../types/supportTypes';
 
-export const fetchSupportStats = async (): Promise<SupportStats> => {
+export const fetchSupportStats = async (startDate?: string, endDate?: string): Promise<SupportStats> => {
   try {
-    const { data: exitItems, error: exitError } = await supabase
+    // Build query for exit items with optional date filtering
+    let exitItemsQuery = supabase
       .from('stock_exit_items')
-      .select('quantity, sale_price, discount_percent');
+      .select('quantity, sale_price, discount_percent, exit_id');
+    
+    // Add date filtering if provided
+    if (startDate || endDate) {
+      // First get the exit IDs that match the date range
+      let exitIdsQuery = supabase.from('stock_exits').select('id');
+      
+      if (startDate) {
+        exitIdsQuery = exitIdsQuery.gte('date', `${startDate}T00:00:00`);
+      }
+      
+      if (endDate) {
+        exitIdsQuery = exitIdsQuery.lte('date', `${endDate}T23:59:59`);
+      }
+      
+      const { data: exitIds } = await exitIdsQuery;
+      
+      if (exitIds && exitIds.length > 0) {
+        const exitIdValues = exitIds.map(exit => exit.id);
+        exitItemsQuery = exitItemsQuery.in('exit_id', exitIdValues);
+      } else {
+        // No exits in the date range
+        return getEmptyStats();
+      }
+    }
+    
+    const { data: exitItems, error: exitError } = await exitItemsQuery;
       
     let totalSales = 0;
     if (exitItems && !exitError) {
@@ -18,9 +45,33 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       }, 0);
     }
     
-    const { data: entryItems, error: entryError } = await supabase
+    // Build query for entry items with optional date filtering
+    let entryItemsQuery = supabase
       .from('stock_entry_items')
-      .select('quantity, purchase_price, discount_percent');
+      .select('quantity, purchase_price, discount_percent, entry_id');
+    
+    // Add date filtering if provided
+    if (startDate || endDate) {
+      // First get the entry IDs that match the date range
+      let entryIdsQuery = supabase.from('stock_entries').select('id');
+      
+      if (startDate) {
+        entryIdsQuery = entryIdsQuery.gte('date', `${startDate}T00:00:00`);
+      }
+      
+      if (endDate) {
+        entryIdsQuery = entryIdsQuery.lte('date', `${endDate}T23:59:59`);
+      }
+      
+      const { data: entryIds } = await entryIdsQuery;
+      
+      if (entryIds && entryIds.length > 0) {
+        const entryIdValues = entryIds.map(entry => entry.id);
+        entryItemsQuery = entryItemsQuery.in('entry_id', entryIdValues);
+      }
+    }
+    
+    const { data: entryItems, error: entryError } = await entryItemsQuery;
       
     let totalSpent = 0;
     if (entryItems && !entryError) {
@@ -35,18 +86,24 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     // Calculate profit margin using real data
     const profitMargin = calculateProfitMarginPercent(profit, totalSales);
     
-    const topProducts = await fetchTopProducts();
-    const topClients = await fetchTopClients();
-    const topSuppliers = await fetchTopSuppliers();
+    // Apply date filters to other data queries
+    const topProducts = await fetchTopProducts(startDate, endDate);
+    const topClients = await fetchTopClients(startDate, endDate);
+    const topSuppliers = await fetchTopSuppliers(startDate, endDate);
     
     const lowStockProducts = await getLowStockProducts();
-    const pendingOrders = await countPendingOrders();
-    const completedCount = await fetchCompletedOrdersCount();
+    
+    // Use date filtering for orders counts as well
+    const pendingOrders = await countPendingOrders(startDate, endDate);
+    const completedCount = await fetchCompletedOrdersCount(startDate, endDate);
+    
+    // These counts don't need date filtering as they show current state
     const clientsCount = await fetchClientsCount();
     const suppliersCount = await fetchSuppliersCount();
     const categoriesCount = await fetchCategoriesCount();
-    const monthlyData = await fetchMonthlyData();
-    const monthlyOrders = await fetchMonthlyOrders();
+    
+    const monthlyData = await fetchMonthlyData(startDate, endDate);
+    const monthlyOrders = await fetchMonthlyOrders(startDate, endDate);
     
     return {
       totalSales,
@@ -72,31 +129,100 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
   }
 };
 
-const fetchTopProducts = async () => {
-  const { data: topProductsData, error: productsError } = await supabase
+// Helper function to return empty stats when no data is available
+const getEmptyStats = (): SupportStats => {
+  return {
+    totalSales: 0,
+    totalSpent: 0,
+    profit: 0,
+    profitMargin: 0,
+    topProducts: [],
+    topClients: [],
+    topSuppliers: [],
+    lowStockProducts: [],
+    pendingOrders: 0,
+    completedOrders: 0,
+    clientsCount: 0,
+    suppliersCount: 0,
+    categoriesCount: 0,
+    monthlySales: [],
+    monthlyData: [],
+    monthlyOrders: []
+  };
+};
+
+const fetchTopProducts = async (startDate?: string, endDate?: string) => {
+  let query = supabase
     .from('stock_exit_items')
-    .select('product_name, product_id, quantity')
-    .order('quantity', { ascending: false })
-    .limit(5);
+    .select('product_name, product_id, quantity, exit_id');
+    
+  // Apply date filtering if needed
+  if (startDate || endDate) {
+    // Get exit IDs within the date range
+    let exitIdsQuery = supabase.from('stock_exits').select('id');
+    
+    if (startDate) {
+      exitIdsQuery = exitIdsQuery.gte('date', `${startDate}T00:00:00`);
+    }
+    
+    if (endDate) {
+      exitIdsQuery = exitIdsQuery.lte('date', `${endDate}T23:59:59`);
+    }
+    
+    const { data: exitIds } = await exitIdsQuery;
+    
+    if (exitIds && exitIds.length > 0) {
+      const exitIdValues = exitIds.map(exit => exit.id);
+      query = query.in('exit_id', exitIdValues);
+    } else {
+      return []; // No exits in date range
+    }
+  }
   
-  if (productsError) {
-    console.error('Error fetching top products:', productsError);
+  const { data: itemsData, error: itemsError } = await query;
+  
+  if (itemsError || !itemsData) {
+    console.error('Error fetching top products:', itemsError);
     return [];
   }
   
-  return topProductsData?.map((product) => ({
-    name: product.product_name,
-    quantity: product.quantity,
-    productId: product.product_id
-  })) || [];
+  // Group by product and sum quantities
+  const productMap = new Map();
+  
+  itemsData.forEach(item => {
+    const key = item.product_id;
+    if (!productMap.has(key)) {
+      productMap.set(key, {
+        name: item.product_name,
+        quantity: 0,
+        productId: item.product_id
+      });
+    }
+    
+    const product = productMap.get(key);
+    product.quantity += item.quantity;
+  });
+  
+  // Convert to array and sort
+  return Array.from(productMap.values())
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 5);
 };
 
-const fetchTopClients = async () => {
+const fetchTopClients = async (startDate?: string, endDate?: string) => {
   try {
-    const { data: clients, error: clientsError } = await supabase
-      .from('stock_exits')
-      .select('client_name, id')
-      .order('client_name');
+    let query = supabase.from('stock_exits').select('client_name, id');
+    
+    // Apply date filtering if needed
+    if (startDate) {
+      query = query.gte('date', `${startDate}T00:00:00`);
+    }
+    
+    if (endDate) {
+      query = query.lte('date', `${endDate}T23:59:59`);
+    }
+    
+    const { data: clients, error: clientsError } = await query;
     
     if (clientsError || !clients) {
       console.error('Error fetching clients:', clientsError);
@@ -149,12 +275,20 @@ const fetchTopClients = async () => {
   }
 };
 
-const fetchTopSuppliers = async () => {
+const fetchTopSuppliers = async (startDate?: string, endDate?: string) => {
   try {
-    const { data: suppliers, error: suppliersError } = await supabase
-      .from('stock_entries')
-      .select('supplier_name, id')
-      .order('supplier_name');
+    let query = supabase.from('stock_entries').select('supplier_name, id');
+    
+    // Apply date filtering if needed
+    if (startDate) {
+      query = query.gte('date', `${startDate}T00:00:00`);
+    }
+    
+    if (endDate) {
+      query = query.lte('date', `${endDate}T23:59:59`);
+    }
+    
+    const { data: suppliers, error: suppliersError } = await query;
     
     if (suppliersError || !suppliers) {
       console.error('Error fetching suppliers:', suppliersError);
@@ -176,11 +310,22 @@ const fetchTopSuppliers = async () => {
   }
 };
 
-const fetchCompletedOrdersCount = async () => {
-  const { count } = await supabase
+const fetchCompletedOrdersCount = async (startDate?: string, endDate?: string) => {
+  let query = supabase
     .from('orders')
     .select('*', { count: 'exact', head: true })
     .not('converted_to_stock_exit_id', 'is', null);
+  
+  // Apply date filtering if needed
+  if (startDate) {
+    query = query.gte('date', `${startDate}T00:00:00`);
+  }
+  
+  if (endDate) {
+    query = query.lte('date', `${endDate}T23:59:59`);
+  }
+  
+  const { count } = await query;
     
   return count || 0;
 };

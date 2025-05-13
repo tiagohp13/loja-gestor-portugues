@@ -4,13 +4,24 @@ import { supabase } from '../client';
 /**
  * Count pending orders
  */
-export const countPendingOrders = async (): Promise<number> => {
+export const countPendingOrders = async (startDate?: string, endDate?: string): Promise<number> => {
   try {
     // Consulta direta em vez de função RPC
-    const { data, error, count } = await supabase
+    let query = supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
       .is('converted_to_stock_exit_id', null);
+    
+    // Apply date filtering if needed
+    if (startDate) {
+      query = query.gte('date', `${startDate}T00:00:00`);
+    }
+    
+    if (endDate) {
+      query = query.lte('date', `${endDate}T23:59:59`);
+    }
+    
+    const { error, count } = await query;
     
     if (error) {
       console.error('Error counting pending orders:', error);
