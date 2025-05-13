@@ -243,16 +243,11 @@ const StockEntryList = () => {
       <PageHeader 
         title="Histórico de Compras" 
         description="Consulte o histórico de compras de stock"
-        actions={
-          <Button onClick={() => navigate('/entradas/nova')}>
-            <Plus className="mr-2 h-4 w-4" /> Nova Compra
-          </Button>
-        }
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <div className="flex flex-col md:flex-row gap-4 mb-6 justify-between items-start">
-          <div className="relative w-full md:w-2/3 flex gap-4 items-center">
+          <div className="relative w-full flex gap-4 items-center">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
               <Input
@@ -262,9 +257,11 @@ const StockEntryList = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <Button onClick={() => navigate('/entradas/nova')}>
-              <Plus className="mr-2 h-4 w-4" /> Nova Compra
-            </Button>
+            <div className="flex-none">
+              <Button onClick={() => navigate('/entradas/nova')}>
+                <Plus className="mr-2 h-4 w-4" /> Nova Compra
+              </Button>
+            </div>
           </div>
         </div>
         
