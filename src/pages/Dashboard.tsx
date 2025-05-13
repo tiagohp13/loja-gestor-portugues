@@ -35,7 +35,8 @@ const DashboardPage: React.FC = () => {
     totalProfit,
     profitMarginPercent,
     roiValue,
-    roiPercent
+    roiPercent,
+    productSales
   } = useDashboardData();
 
   const navigateToProductDetail = (id: string) => {
@@ -77,6 +78,7 @@ const DashboardPage: React.FC = () => {
         
         <FeaturedProducts 
           products={products}
+          productSales={productSales}
           navigateToProductDetail={navigateToProductDetail}
           maxItems={3}
         />

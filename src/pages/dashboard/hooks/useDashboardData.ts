@@ -129,6 +129,7 @@ export const useDashboardData = () => {
     totalProfit,
     profitMarginPercent,
     roiValue,
-    roiPercent
+    roiPercent,
+    productSales
   };
 };

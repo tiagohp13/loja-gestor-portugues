@@ -46,7 +46,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
         <Button 
           variant="link" 
           onClick={handleViewAllTransactions}
-          className="text-gestorApp-blue h-auto p-0 text-sm"
+          className="text-blue-500 h-auto p-0 text-sm"
         >
           Ver todas
         </Button>
@@ -67,7 +67,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div>
                       <Button 
                         variant="link" 
-                        className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -76,7 +76,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                         {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
+                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors"
                           onClick={() => transaction.entityId && (
                             transaction.type === 'entry' 
                               ? navigateToSupplierDetail(transaction.entityId)
@@ -114,7 +114,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div>
                       <Button 
                         variant="link" 
-                        className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -123,7 +123,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                         Fornecedor: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
+                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors"
                           onClick={() => transaction.entityId && navigateToSupplierDetail(transaction.entityId)}
                         >
                           {transaction.entity}
@@ -156,7 +156,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div>
                       <Button 
                         variant="link" 
-                        className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -165,7 +165,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                         Cliente: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
+                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors"
                           onClick={() => transaction.entityId && navigateToClientDetail(transaction.entityId)}
                         >
                           {transaction.entity}
