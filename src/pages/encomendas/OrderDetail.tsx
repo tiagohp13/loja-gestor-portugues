@@ -80,23 +80,21 @@ const OrderDetail = () => {
                 </div>
                 <div className="col-span-2">
                   <p className="text-sm font-medium text-gestorApp-gray">Estado</p>
-                  <div className="mt-1">
+                  <div className="mt-1 flex items-center flex-wrap gap-2">
                     {order.convertedToStockExitId ? (
-                      <div className="flex flex-col gap-1">
+                      <>
                         <span className="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800 inline-block w-fit">
                           Convertida em Saída
                         </span>
                         {order.convertedToStockExitNumber && (
-                          <div className="text-gestorApp-blue hover:underline text-sm">
-                            <a 
-                              href={`/saidas/${order.convertedToStockExitId}`}
-                              className="text-gestorApp-blue hover:underline cursor-pointer"
-                            >
-                              {order.convertedToStockExitNumber}
-                            </a>
-                          </div>
+                          <a 
+                            href={`/saidas/${order.convertedToStockExitId}`}
+                            className="text-gestorApp-blue hover:underline cursor-pointer text-sm ml-1"
+                          >
+                            {order.convertedToStockExitNumber}
+                          </a>
                         )}
-                      </div>
+                      </>
                     ) : (
                       <span className="px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
                         Pendente
