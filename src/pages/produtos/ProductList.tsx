@@ -71,12 +71,6 @@ const ProductList = () => {
       <PageHeader 
         title="Produtos" 
         description="Consultar e gerir todos os produtos" 
-        actions={
-          <Button onClick={handleAddProduct}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Produto
-          </Button>
-        }
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">

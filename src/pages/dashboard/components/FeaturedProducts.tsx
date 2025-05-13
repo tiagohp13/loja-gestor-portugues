@@ -21,12 +21,10 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
 }) => {
   const navigate = useNavigate();
   
-  // Sort products by total sales value and get the top items
+  // Sort products by total sales quantity in descending order and get the top items
   const sortedProducts = [...products]
     .filter(product => productSales[product.id] > 0)
-    .sort((a, b) => 
-      (productSales[b.id] * b.salePrice) - (productSales[a.id] * a.salePrice)
-    )
+    .sort((a, b) => (productSales[b.id]) - (productSales[a.id]))
     .slice(0, maxItems);
 
   const handleViewAllProducts = () => {
