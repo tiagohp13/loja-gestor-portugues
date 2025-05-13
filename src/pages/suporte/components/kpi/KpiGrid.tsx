@@ -1,102 +1,93 @@
 
 import React from 'react';
-import { 
-  TrendingUp, 
-  BarChart, 
-  PieChart, 
-  DollarSign,
-  Percent,
-  Users,
-  ShoppingCart,
-  Coins
-} from 'lucide-react';
-import KpiCard from './KpiCard';
 import { SupportStats } from '../../hooks/useSupportData';
+import KpiCard from './KpiCard';
 import { useKpiCalculations } from '../../hooks/useKpiCalculations';
+import { BadgeDollarSign, BadgePercent, Coins, Wallet, Users, Euro, Tag } from 'lucide-react';
 
 interface KpiGridProps {
   stats: SupportStats;
 }
 
 const KpiGrid: React.FC<KpiGridProps> = ({ stats }) => {
-  // Use our new hook to get all the calculated KPIs
-  const kpis = useKpiCalculations(stats);
-
-  const kpiData = [
-    {
-      title: "ROI",
-      value: kpis.roi,
-      icon: <TrendingUp />,
-      tooltipText: "(Lucro / Valor de Compras) × 100",
-      isPercentage: true,
-      iconColor: "text-green-500"
-    },
-    {
-      title: "Margem de Lucro",
-      value: kpis.profitMargin,
-      icon: <Percent />,
-      tooltipText: "(Lucro / Valor de Vendas) × 100",
-      isPercentage: true,
-      iconColor: "text-blue-500"
-    },
-    {
-      title: "Taxa de Conversão",
-      value: kpis.salesConversionRate,
-      icon: <PieChart />,
-      tooltipText: "(Vendas / Clientes) × 100",
-      isPercentage: true,
-      iconColor: "text-purple-500"
-    },
-    {
-      title: "Valor Médio de Compra",
-      value: kpis.averagePurchaseValue,
-      icon: <ShoppingCart />,
-      tooltipText: "Valor de Compras / Número de Compras",
-      iconColor: "text-orange-500"
-    },
-    {
-      title: "Valor Médio de Venda",
-      value: kpis.averageSaleValue,
-      icon: <DollarSign />,
-      tooltipText: "Valor de Vendas / Número de Vendas",
-      iconColor: "text-green-500"
-    },
-    {
-      title: "Lucro Total",
-      value: kpis.totalProfit,
-      icon: <Coins />,
-      tooltipText: "Valor de Vendas - Valor de Compras",
-      iconColor: "text-green-500"
-    },
-    {
-      title: "Lucro Médio por Venda",
-      value: kpis.averageProfitPerSale,
-      icon: <BarChart />,
-      tooltipText: "Lucro / Número de Vendas",
-      iconColor: "text-blue-500"
-    },
-    {
-      title: "Lucro por Cliente",
-      value: kpis.profitPerClient,
-      icon: <Users />,
-      tooltipText: "Lucro / Número de Clientes",
-      iconColor: "text-indigo-500"
-    }
-  ];
-
+  const kpiMetrics = useKpiCalculations(stats);
+  
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-      {kpiData.map((kpi, index) => (
-        <KpiCard 
-          key={index}
-          title={kpi.title}
-          value={kpi.value}
-          icon={kpi.icon}
-          tooltipText={kpi.tooltipText}
-          isPercentage={kpi.isPercentage}
-          iconColor={kpi.iconColor}
-        />
-      ))}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <KpiCard
+        title="ROI"
+        value={kpiMetrics.roi}
+        icon={<BadgePercent className="h-5 w-5" />}
+        tooltipText="Retorno sobre o investimento"
+        isPercentage={true}
+        iconColor="text-purple-500"
+        iconBackground="bg-purple-100"
+      />
+      
+      <KpiCard
+        title="Margem de Lucro"
+        value={kpiMetrics.profitMargin}
+        icon={<Tag className="h-5 w-5" />}
+        tooltipText="Margem de lucro sobre as vendas"
+        isPercentage={true}
+        iconColor="text-green-500"
+        iconBackground="bg-green-100"
+      />
+      
+      <KpiCard
+        title="Taxa de Conversão"
+        value={kpiMetrics.salesConversionRate}
+        icon={<BadgeDollarSign className="h-5 w-5" />}
+        tooltipText="Taxa de conversão de clientes em vendas"
+        isPercentage={true}
+        iconColor="text-orange-500"
+        iconBackground="bg-orange-100"
+      />
+      
+      <KpiCard
+        title="Valor Médio de Compra"
+        value={kpiMetrics.averagePurchaseValue}
+        icon={<Wallet className="h-5 w-5" />}
+        tooltipText="Valor médio gasto em cada compra"
+        iconColor="text-indigo-500"
+        iconBackground="bg-indigo-100"
+      />
+      
+      <KpiCard
+        title="Valor Médio de Venda"
+        value={kpiMetrics.averageSaleValue}
+        icon={<Coins className="h-5 w-5" />}
+        tooltipText="Valor médio recebido em cada venda"
+        iconColor="text-blue-500"
+        iconBackground="bg-blue-100"
+      />
+      
+      <KpiCard
+        title="Lucro Médio por Venda"
+        value={kpiMetrics.averageProfitPerSale}
+        icon={<Euro className="h-5 w-5" />}
+        tooltipText="Lucro médio gerado em cada venda"
+        iconColor="text-emerald-500"
+        iconBackground="bg-emerald-100"
+      />
+      
+      <KpiCard
+        title="Lucro Total"
+        value={kpiMetrics.totalProfit}
+        icon={<Coins className="h-5 w-5" />}
+        tooltipText="Lucro total gerado no período"
+        iconColor="text-amber-500"
+        iconBackground="bg-amber-100"
+      />
+      
+      <KpiCard
+        title="Lucro por Cliente"
+        value={kpiMetrics.profitPerClient}
+        icon={<Users className="h-5 w-5" />}
+        tooltipText="Lucro médio gerado por cada cliente"
+        iconColor="text-rose-500"
+        iconBackground="bg-rose-100"
+      />
     </div>
   );
 };
