@@ -112,20 +112,6 @@ const StockExitDetail = () => {
               <p className="text-sm font-medium mb-1">Data</p>
               <p>{formatDateString(stockExit.date)}</p>
             </div>
-            {stockExit.fromOrderId && stockExit.fromOrderNumber && (
-              <div className="col-span-1 md:col-span-2">
-                <p className="text-sm font-medium mb-1">Origem</p>
-                <p>
-                  Convertida da encomenda{' '}
-                  <a 
-                    className="text-blue-500 hover:underline cursor-pointer"
-                    onClick={handleViewOrder}
-                  >
-                    {stockExit.fromOrderNumber}
-                  </a>
-                </p>
-              </div>
-            )}
             <div>
               <p className="text-sm font-medium mb-1">Total</p>
               <p className="font-semibold">{formatCurrency(totalValue)}</p>
@@ -134,12 +120,24 @@ const StockExitDetail = () => {
               <p className="text-sm font-medium mb-1">Estado</p>
               <StatusBadge status={stockExit.status} />
             </div>
-            {stockExit.notes && (
-              <div className="col-span-1 md:col-span-2">
-                <p className="text-sm font-medium mb-1">Notas</p>
-                <p className="whitespace-pre-wrap">{stockExit.notes}</p>
-              </div>
-            )}
+            <div className="col-span-1 md:col-span-2">
+              <p className="text-sm font-medium mb-1">Notas</p>
+              <p className="whitespace-pre-wrap">
+                {stockExit.notes}
+                {stockExit.fromOrderId && stockExit.fromOrderNumber && (
+                  <>
+                    {stockExit.notes && <br />}
+                    Convertida da encomenda{' '}
+                    <a 
+                      className="text-blue-500 hover:underline cursor-pointer"
+                      onClick={handleViewOrder}
+                    >
+                      {stockExit.fromOrderNumber}
+                    </a>
+                  </>
+                )}
+              </p>
+            </div>
           </CardContent>
         </Card>
 
