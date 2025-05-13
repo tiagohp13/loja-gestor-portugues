@@ -11,19 +11,21 @@ interface FeaturedProductsProps {
 }
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products, navigateToProductDetail }) => {
+  // Sort products by value (stock * price) and get the top items
+  // Previously only taking top 5, now taking up to 10 for better space utilization
   const sortedProducts = [...products].sort((a, b) => 
     (b.currentStock * b.salePrice) - (a.currentStock * a.salePrice)
-  ).slice(0, 5);
+  ).slice(0, 10);
 
   return (
     <Card className="lg:col-span-2">
       <CardHeader>
         <CardTitle>Produtos em Destaque</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="overflow-x-auto">
+      <CardContent className="h-[calc(100%-80px)] flex flex-col">
+        <div className="overflow-auto flex-grow">
           <table className="w-full">
-            <thead>
+            <thead className="sticky top-0 bg-white">
               <tr className="border-b">
                 <th className="text-left pb-2 text-gestorApp-gray font-medium">Produto</th>
                 <th className="text-right pb-2 text-gestorApp-gray font-medium">Stock</th>

@@ -113,7 +113,14 @@ const AppSidebar: React.FC = () => {
   return (
     <Sidebar variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="p-4 flex items-center justify-between border-b">
-        <h2 className="text-lg font-bold text-gestorApp-blue">Gestor de Stock</h2>
+        <div className="flex items-center space-x-2">
+          <img 
+            src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
+            alt="Aqua Paraíso Logo" 
+            className="h-8 w-auto"
+          />
+          <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
+        </div>
       </SidebarHeader>
       
       <SidebarContent>
