@@ -174,7 +174,7 @@ const OrderEdit = () => {
       return;
     }
     
-    // Always add as a new line - no longer check for existing items
+    // Always add as a new line - allow duplicate products
     setItems([...items, { ...currentItem }]);
     
     // Reset current item
