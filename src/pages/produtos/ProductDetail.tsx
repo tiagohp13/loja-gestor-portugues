@@ -12,13 +12,21 @@ import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
 import { StockEntryItem, StockExitItem } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Image } from 'lucide-react';
+import { Image as ImageIcon, ZoomIn } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+import { useToast } from '@/components/ui/use-toast';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getProduct, getProductHistory, isLoading } = useData();
   const [productHistory, setProductHistory] = useState<{ entries: any[], exits: any[] }>({ entries: [], exits: [] });
+  const { toast } = useToast();
   
   useEffect(() => {
     if (id) {
@@ -68,12 +76,34 @@ const ProductDetail = () => {
         date: exit.date,
         number: exit.number,
         document: exit.invoiceNumber || '-',
+        clientId: exit.clientId,
         clientName: exit.clientName,
         quantity: item.quantity,
         unitPrice: item.salePrice,
-        total: item.quantity * item.salePrice
+        total: item.quantity * item.salePrice,
+        exitId: exit.id
       }))
     );
+
+  // Calculate total units sold
+  const totalUnitsSold = exitsForProduct.reduce((total, exit) => total + exit.quantity, 0);
+  
+  // Calculate totals for entries
+  const totalUnitsPurchased = entriesForProduct.reduce((total, entry) => total + entry.quantity, 0);
+  const totalAmountSpent = entriesForProduct.reduce((total, entry) => total + entry.total, 0);
+  
+  // Calculate totals for exits
+  const totalAmountSold = exitsForProduct.reduce((total, exit) => total + exit.total, 0);
+
+  const handleNavigateToClient = (clientId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/clientes/${clientId}`);
+  };
+
+  const handleNavigateToExit = (exitId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/saidas/${exitId}`);
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -82,11 +112,11 @@ const ProductDetail = () => {
         description={`Código: ${product.code}`}
         actions={
           <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
-              Voltar ao Catálogo
-            </Button>
             <Button onClick={() => navigate(`/produtos/editar/${id}`)}>
               Editar Produto
+            </Button>
+            <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
+              Voltar ao Catálogo
             </Button>
           </div>
         }
@@ -100,11 +130,31 @@ const ProductDetail = () => {
               <CardTitle>Imagem do Produto</CardTitle>
             </CardHeader>
             <CardContent className="flex justify-center">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="max-h-48 object-contain rounded-md"
-              />
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="relative group cursor-pointer">
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="max-h-48 object-contain rounded-md transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="bg-black bg-opacity-40 rounded-full p-2">
+                        <ZoomIn className="w-6 h-6 text-white" />
+                      </div>
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl">
+                  <AspectRatio ratio={16 / 9} className="bg-muted">
+                    <img 
+                      src={product.image} 
+                      alt={product.name} 
+                      className="object-contain w-full h-full"
+                    />
+                  </AspectRatio>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         )}
@@ -145,9 +195,16 @@ const ProductDetail = () => {
             
             <Separator />
             
-            <div>
-              <p className="text-sm font-medium text-gray-500">Data de Criação</p>
-              <p>{formatDateString(product.createdAt)}</p>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Data de Criação</p>
+                <p>{formatDateString(product.createdAt)}</p>
+              </div>
+              
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total de Unidades Vendidas</p>
+                <p className="text-lg font-semibold">{totalUnitsSold}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -207,6 +264,22 @@ const ProductDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(entry.total)}</td>
                   </tr>
                 ))}
+                {entriesForProduct.length > 0 && (
+                  <tr className="bg-gray-50">
+                    <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                      Total de Unidades Compradas:
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      {totalUnitsPurchased}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                      Total Gasto:
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      {formatCurrency(totalAmountSpent)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>
@@ -235,14 +308,48 @@ const ProductDetail = () => {
                 {exitsForProduct.map((exit, index) => (
                   <tr key={index}>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(exit.date)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{exit.number}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <button 
+                        onClick={(e) => handleNavigateToExit(exit.exitId, e)}
+                        className="text-blue-500 hover:underline cursor-pointer"
+                      >
+                        {exit.number}
+                      </button>
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.document}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.clientName}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      {exit.clientId ? (
+                        <button 
+                          onClick={(e) => handleNavigateToClient(exit.clientId, e)}
+                          className="text-blue-500 hover:underline cursor-pointer"
+                        >
+                          {exit.clientName}
+                        </button>
+                      ) : (
+                        <span className="text-gray-500">{exit.clientName}</span>
+                      )}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.quantity}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(exit.unitPrice)}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(exit.total)}</td>
                   </tr>
                 ))}
+                {exitsForProduct.length > 0 && (
+                  <tr className="bg-gray-50">
+                    <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                      Total de Unidades Vendidas:
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      {totalUnitsSold}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
+                      Total Vendido:
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
+                      {formatCurrency(totalAmountSold)}
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

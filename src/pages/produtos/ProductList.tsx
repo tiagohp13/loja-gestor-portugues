@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,11 @@ const ProductList = () => {
   const { products, deleteProduct } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const { sortField, sortDirection, handleSort, setSortField, setSortDirection } = useProductSort();
+
+  // Scroll to top when component mounts or route changes
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   const filteredProducts = products
     .filter(product => 
