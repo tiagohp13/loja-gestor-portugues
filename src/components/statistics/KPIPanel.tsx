@@ -1,7 +1,12 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingUp, TrendingDown, AlertTriangle, Euro, BadgeDollarSign, Users, BadgePercent, Info, CalendarDays, Pencil } from 'lucide-react';
+import { 
+  TrendingUp, TrendingDown, AlertTriangle, Euro, 
+  BadgeDollarSign, Users, BadgePercent, Info, 
+  ShoppingCart, Tag, ChartBar, PiggyBank, UserCheck, Pencil 
+} from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -62,19 +67,34 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
 
   // Get icon based on KPI name
   const getKPIIcon = (name: string) => {
-    const icons = {
-      'ROI': <Euro className="h-4 w-4 text-blue-500" />,
-      'Margem de Lucro': <BadgeDollarSign className="h-4 w-4 text-green-500" />,
-      'Ponto de Equilíbrio': <Info className="h-4 w-4 text-orange-500" />,
-      'Taxa de Conversão': <BadgePercent className="h-4 w-4 text-purple-500" />,
-      'Churn Rate': <Users className="h-4 w-4 text-red-500" />,
-      'Lifetime Value': <Euro className="h-4 w-4 text-green-500" />,
-      'NPS': <Users className="h-4 w-4 text-blue-500" />,
-    };
+    // Map KPI names to their respective icons with appropriate colors
+    if (name.includes('ROI')) {
+      return <Euro className="h-4 w-4 text-blue-500" />;
+    }
+    if (name.includes('Margem de Lucro')) {
+      return <BadgeDollarSign className="h-4 w-4 text-green-500" />;
+    }
+    if (name.includes('Taxa de Conversão')) {
+      return <BadgePercent className="h-4 w-4 text-purple-500" />;
+    }
+    if (name.includes('Valor Médio de Compra')) {
+      return <ShoppingCart className="h-4 w-4 text-orange-500" />;
+    }
+    if (name.includes('Valor Médio de Venda')) {
+      return <Tag className="h-4 w-4 text-blue-400" />;
+    }
+    if (name.includes('Lucro Médio por Venda')) {
+      return <ChartBar className="h-4 w-4 text-teal-500" />;
+    }
+    if (name.includes('Lucro Total')) {
+      return <PiggyBank className="h-4 w-4 text-amber-500" />;
+    }
+    if (name.includes('Lucro por Cliente')) {
+      return <UserCheck className="h-4 w-4 text-indigo-500" />;
+    }
     
-    // Find the closest match or return default icon
-    const key = Object.keys(icons).find(k => name.includes(k));
-    return key ? icons[key as keyof typeof icons] : <Info className="h-4 w-4 text-gray-500" />;
+    // Default fallback
+    return <Info className="h-4 w-4 text-gray-500" />;
   };
 
   // Update KPIs when targets are saved
