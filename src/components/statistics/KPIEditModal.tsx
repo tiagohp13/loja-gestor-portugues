@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { KPI } from '@/components/statistics/KPIPanel';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface KPIEditModalProps {
   isOpen: boolean;
@@ -60,45 +61,47 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85vh]">
         <DialogHeader>
           <DialogTitle>Editar Metas dos KPIs</DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          {kpis.map((kpi, index) => (
-            <div key={index} className="grid grid-cols-1 gap-2">
-              <Label htmlFor={`kpi-${index}`} className="font-medium">
-                {kpi.name}
-                <span className="text-xs text-gray-500 block">
-                  Valor atual: {kpi.isPercentage ? formatPercentage(kpi.value) : (kpi.unit === '€' ? formatCurrency(kpi.value) : kpi.value)}
-                </span>
-              </Label>
-              <div className="flex items-center">
-                {kpi.unit === '€' && !kpi.isPercentage && (
-                  <span className="mr-2 text-gray-500">€</span>
-                )}
-                <Input
-                  id={`kpi-${index}`}
-                  type="number"
-                  step={kpi.isPercentage ? "0.01" : "1"}
-                  value={targets[kpi.name]}
-                  onChange={(e) => handleInputChange(kpi.name, e.target.value)}
-                  className="w-full"
-                />
-                {kpi.isPercentage && (
-                  <span className="ml-2 text-gray-500">%</span>
-                )}
-                {!kpi.isPercentage && kpi.unit !== '€' && (
-                  <span className="ml-2 text-gray-500">{kpi.unit}</span>
-                )}
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-4 py-4">
+            {kpis.map((kpi, index) => (
+              <div key={index} className="grid grid-cols-1 gap-2">
+                <Label htmlFor={`kpi-${index}`} className="font-medium">
+                  {kpi.name}
+                  <span className="text-xs text-gray-500 block">
+                    Valor atual: {kpi.isPercentage ? formatPercentage(kpi.value) : (kpi.unit === '€' ? formatCurrency(kpi.value) : kpi.value)}
+                  </span>
+                </Label>
+                <div className="flex items-center">
+                  {kpi.unit === '€' && !kpi.isPercentage && (
+                    <span className="mr-2 text-gray-500">€</span>
+                  )}
+                  <Input
+                    id={`kpi-${index}`}
+                    type="number"
+                    step={kpi.isPercentage ? "0.01" : "1"}
+                    value={targets[kpi.name]}
+                    onChange={(e) => handleInputChange(kpi.name, e.target.value)}
+                    className="w-full"
+                  />
+                  {kpi.isPercentage && (
+                    <span className="ml-2 text-gray-500">%</span>
+                  )}
+                  {!kpi.isPercentage && kpi.unit !== '€' && (
+                    <span className="ml-2 text-gray-500">{kpi.unit}</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Nova meta: {formatDisplayValue(kpi)}
+                </div>
               </div>
-              <div className="text-xs text-gray-500">
-                Nova meta: {formatDisplayValue(kpi)}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </ScrollArea>
         
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
