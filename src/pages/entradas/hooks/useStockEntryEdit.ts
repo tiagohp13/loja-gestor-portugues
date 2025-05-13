@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
@@ -167,6 +166,15 @@ export const useStockEntryEdit = (id?: string) => {
       
       if (id) {
         // Update the stock entry
+        // Fix: Get the existing entry to get its 'number' field
+        const existingEntry = stockEntries.find(e => e.id === id);
+        
+        if (!existingEntry) {
+          toast.error('Entrada não encontrada');
+          setIsSubmitting(false);
+          return;
+        }
+        
         const { error: entryError } = await supabase
           .from('stock_entries')
           .update({
@@ -174,7 +182,9 @@ export const useStockEntryEdit = (id?: string) => {
             supplier_name: supplier.name,
             date: entry.date,
             invoice_number: entry.invoiceNumber,
-            notes: entry.notes
+            notes: entry.notes,
+            // Include the number field from the existing entry
+            number: existingEntry.number
           })
           .eq('id', id);
         
@@ -244,6 +254,20 @@ export const useStockEntryEdit = (id?: string) => {
         toast.success('Entrada atualizada com sucesso');
       } else {
         // This is a new entry, create it
+        // Generate a new entry number (this would typically come from a sequence or counter)
+        // We'll use the get_next_counter database function
+        const { data: counterData, error: counterError } = await supabase
+          .rpc('get_next_counter', { counter_id: 'stock_entries' });
+          
+        if (counterError) {
+          console.error("Error generating entry number:", counterError);
+          toast.error("Erro ao gerar número da entrada");
+          setIsSubmitting(false);
+          return;
+        }
+        
+        const entryNumber = counterData || `${new Date().getFullYear()}/${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+
         const { data: entryData, error: entryError } = await supabase
           .from('stock_entries')
           .insert({
@@ -251,7 +275,8 @@ export const useStockEntryEdit = (id?: string) => {
             supplier_name: supplier.name,
             date: entry.date,
             invoice_number: entry.invoiceNumber,
-            notes: entry.notes
+            notes: entry.notes,
+            number: entryNumber // Include the generated number
           })
           .select('id')
           .single();
