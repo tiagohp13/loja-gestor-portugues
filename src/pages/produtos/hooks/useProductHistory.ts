@@ -2,6 +2,7 @@
 import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { StockEntryItem, StockExitItem } from '@/types';
+import { EntryItem, ExitItem } from '../types/productHistoryTypes';
 
 export const useProductHistory = (productId: string | undefined) => {
   const { getProductHistory } = useData();
