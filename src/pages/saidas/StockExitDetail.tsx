@@ -22,12 +22,17 @@ const StockExitDetail = () => {
     return <div>Carregando...</div>;
   }
 
+  // Create a wrapper function that accepts a path and calls navigate with it
+  const handleNavigate = (path: string) => {
+    navigate(path);
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <StockExitDetailHeader
         exitNumber={stockExit.number || ''}
         id={id || ''}
-        onNavigateBack={navigate}
+        onNavigateBack={handleNavigate}
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

@@ -6,7 +6,7 @@ import PageHeader from '@/components/ui/PageHeader';
 type StockExitDetailHeaderProps = {
   exitNumber: string;
   id: string;
-  onNavigateBack: () => void;
+  onNavigateBack: (path: string) => void;
 };
 
 const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({ 
