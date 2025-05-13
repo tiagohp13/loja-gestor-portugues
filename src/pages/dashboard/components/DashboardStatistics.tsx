@@ -3,7 +3,6 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/formatting';
-import { Percent, Euro } from 'lucide-react';
 import { Client, Supplier, Product } from '@/types';
 
 interface DashboardStatisticsProps {
@@ -43,12 +42,12 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
       <CardContent>
         <dl className="space-y-4">
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Produto Mais Vendido</dt>
-            <dd className="font-semibold text-gestorApp-gray-dark">
+            <dt className="text-gray-500 font-medium">Produto Mais Vendido</dt>
+            <dd className="text-gray-800">
               {mostSoldProduct ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto font-semibold text-gestorApp-gray-dark hover:text-blue-600"
+                  className="p-0 h-auto text-green-600 hover:text-blue-600 hover:underline transition-colors"
                   onClick={() => mostSoldProduct && navigateToProductDetail(mostSoldProduct.id)}
                 >
                   {mostSoldProduct.name}
@@ -57,12 +56,12 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Cliente Mais Frequente</dt>
-            <dd className="font-semibold text-gestorApp-gray-dark">
+            <dt className="text-gray-500 font-medium">Cliente Mais Frequente</dt>
+            <dd className="text-gray-800">
               {mostFrequentClient ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto font-semibold text-gestorApp-gray-dark hover:text-blue-600"
+                  className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                   onClick={() => mostFrequentClient && navigateToClientDetail(mostFrequentClient.id)}
                 >
                   {mostFrequentClient.name}
@@ -71,12 +70,12 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Fornecedor Mais Usado</dt>
-            <dd className="font-semibold text-gestorApp-gray-dark">
+            <dt className="text-gray-500 font-medium">Fornecedor Mais Usado</dt>
+            <dd className="text-gray-800">
               {mostUsedSupplier ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto font-semibold text-gestorApp-gray-dark hover:text-blue-600"
+                  className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                   onClick={() => mostUsedSupplier && navigateToSupplierDetail(mostUsedSupplier.id)}
                 >
                   {mostUsedSupplier.name}
@@ -85,31 +84,31 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Total Compras</dt>
-            <dd className="font-semibold text-purple-600">
+            <dt className="text-gray-500 font-medium">Total Compras</dt>
+            <dd className="font-semibold text-red-500">
               {formatCurrency(totalPurchaseValue)}
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Total Vendas</dt>
-            <dd className="font-semibold text-gestorApp-blue">
+            <dt className="text-gray-500 font-medium">Total Vendas</dt>
+            <dd className="font-semibold text-green-600">
               {formatCurrency(totalSalesValue)}
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Lucro</dt>
+            <dt className="text-gray-500 font-medium">Lucro</dt>
             <dd className="font-semibold text-green-600">
               {formatCurrency(totalProfit)}
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="text-gestorApp-gray font-medium">Margem de Lucro</dt>
+            <dt className="text-gray-500 font-medium">Margem de Lucro</dt>
             <dd className="font-semibold text-green-600">
               {profitMarginPercent.toFixed(2)}%
             </dd>
           </div>
           <div className="flex justify-between py-2 border-b">
-            <dt className="flex items-center text-gestorApp-gray font-medium">
+            <dt className="flex items-center text-gray-500 font-medium">
               ROI (€)
             </dt>
             <dd className="font-semibold text-green-600">
@@ -117,7 +116,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
             </dd>
           </div>
           <div className="flex justify-between py-2">
-            <dt className="flex items-center text-gestorApp-gray font-medium">
+            <dt className="flex items-center text-gray-500 font-medium">
               ROI (%)
             </dt>
             <dd className="font-semibold text-green-600">

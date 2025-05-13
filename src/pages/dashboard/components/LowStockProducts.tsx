@@ -28,27 +28,27 @@ const LowStockProducts: React.FC<LowStockProductsProps> = ({
             {displayProducts.map((product) => (
               <div key={product.id} className="flex justify-between items-center p-3 bg-red-50 rounded-md">
                 <div className="flex items-center">
-                  <AlertTriangle className="h-5 w-5 text-red-600 mr-2" />
+                  <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
                   <div>
                     <Button 
                       variant="link" 
-                      className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                      className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                       onClick={() => navigateToProductDetail(product.id)}
                     >
                       {product.name}
                     </Button>
-                    <div className="text-sm text-gestorApp-gray">Código: {product.code}</div>
+                    <div className="text-sm text-gray-500">Código: {product.code}</div>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-red-600 font-medium">{product.currentStock} unidades</div>
-                  <div className="text-sm text-gestorApp-gray">Mínimo: {product.minStock} unidades</div>
+                  <div className="text-red-500 font-medium">{product.currentStock} unidades</div>
+                  <div className="text-sm text-gray-500">Mínimo: {product.minStock} unidades</div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-gestorApp-gray">
+          <div className="text-center py-8 text-gray-500">
             Não existem produtos com stock baixo.
           </div>
         )}

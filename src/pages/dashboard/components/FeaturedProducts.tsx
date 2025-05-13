@@ -31,10 +31,10 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
           <table className="w-full">
             <thead>
               <tr className="border-b">
-                <th className="text-left pb-2 text-gestorApp-gray font-medium">Produto</th>
-                <th className="text-right pb-2 text-gestorApp-gray font-medium">Stock</th>
-                <th className="text-right pb-2 text-gestorApp-gray font-medium">Preço</th>
-                <th className="text-right pb-2 text-gestorApp-gray font-medium">Total</th>
+                <th className="text-left pb-2 text-gray-500 font-medium">Produto</th>
+                <th className="text-right pb-2 text-gray-500 font-medium">Stock</th>
+                <th className="text-right pb-2 text-gray-500 font-medium">Preço</th>
+                <th className="text-right pb-2 text-gray-500 font-medium">Total</th>
               </tr>
             </thead>
             <tbody>
@@ -43,16 +43,16 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
                   <td className="py-3">
                     <Button 
                       variant="link" 
-                      className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                      className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                       onClick={() => navigateToProductDetail(product.id)}
                     >
                       {product.name}
                     </Button>
-                    <div className="text-sm text-gestorApp-gray">{product.category}</div>
+                    <div className="text-sm text-gray-500">{product.category}</div>
                   </td>
                   <td className="py-3 text-right">{product.currentStock} un.</td>
                   <td className="py-3 text-right">{formatCurrency(product.salePrice)}</td>
-                  <td className="py-3 text-right font-medium">
+                  <td className="py-3 text-right font-medium text-green-600">
                     {formatCurrency(product.currentStock * product.salePrice)}
                   </td>
                 </tr>

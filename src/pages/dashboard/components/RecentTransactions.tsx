@@ -53,16 +53,16 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div>
                       <Button 
                         variant="link" 
-                        className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                        className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
                       </Button>
-                      <div className="text-sm text-gestorApp-gray">
+                      <div className="text-sm text-gray-500">
                         {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto text-gestorApp-gray hover:text-blue-600"
+                          className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
                           onClick={() => transaction.entityId && (
                             transaction.type === 'entry' 
                               ? navigateToSupplierDetail(transaction.entityId)
@@ -74,18 +74,18 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className={transaction.type === 'entry' ? 'text-purple-600' : 'text-gestorApp-blue'}>
+                      <div className={transaction.type === 'entry' ? 'text-red-500' : 'text-green-600'}>
                         {transaction.type === 'entry' ? '+ ' : '- '}
                         {transaction.quantity} unidades
                       </div>
-                      <div className="text-sm text-gestorApp-gray">
+                      <div className="text-sm text-gray-500">
                         {formatDate(ensureDate(transaction.date))}
                       </div>
                     </div>
                   </li>
                 ))
               ) : (
-                <li className="text-center py-6 text-gestorApp-gray">
+                <li className="text-center py-6 text-gray-500">
                   Nenhuma transação encontrada
                 </li>
               )}
@@ -100,16 +100,16 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div>
                       <Button 
                         variant="link" 
-                        className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                        className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
                       </Button>
-                      <div className="text-sm text-gestorApp-gray">
+                      <div className="text-sm text-gray-500">
                         Fornecedor: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto text-gestorApp-gray hover:text-blue-600"
+                          className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
                           onClick={() => transaction.entityId && navigateToSupplierDetail(transaction.entityId)}
                         >
                           {transaction.entity}
@@ -117,17 +117,17 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-purple-600">
+                      <div className="text-red-500">
                         + {transaction.quantity} unidades
                       </div>
-                      <div className="text-sm text-gestorApp-gray">
+                      <div className="text-sm text-gray-500">
                         {formatDate(ensureDate(transaction.date))}
                       </div>
                     </div>
                   </li>
                 ))
               ) : (
-                <li className="text-center py-6 text-gestorApp-gray">
+                <li className="text-center py-6 text-gray-500">
                   Nenhuma entrada encontrada
                 </li>
               )}
@@ -142,16 +142,16 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div>
                       <Button 
                         variant="link" 
-                        className="font-medium p-0 h-auto text-gray-900 hover:text-blue-600"
+                        className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
                       </Button>
-                      <div className="text-sm text-gestorApp-gray">
+                      <div className="text-sm text-gray-500">
                         Cliente: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto text-gestorApp-gray hover:text-blue-600"
+                          className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
                           onClick={() => transaction.entityId && navigateToClientDetail(transaction.entityId)}
                         >
                           {transaction.entity}
@@ -159,17 +159,17 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-gestorApp-blue">
+                      <div className="text-green-600">
                         - {transaction.quantity} unidades
                       </div>
-                      <div className="text-sm text-gestorApp-gray">
+                      <div className="text-sm text-gray-500">
                         {formatDate(ensureDate(transaction.date))}
                       </div>
                     </div>
                   </li>
                 ))
               ) : (
-                <li className="text-center py-6 text-gestorApp-gray">
+                <li className="text-center py-6 text-gray-500">
                   Nenhuma saída encontrada
                 </li>
               )}
