@@ -1,362 +1,81 @@
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import PageHeader from '@/components/ui/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { formatDateString, formatCurrency } from '@/utils/formatting';
-import StatusBadge from '@/components/common/StatusBadge';
-import { StockEntryItem, StockExitItem } from '@/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Image as ImageIcon, ZoomIn } from 'lucide-react';
-import { 
-  Dialog,
-  DialogContent,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { AspectRatio } from "@/components/ui/aspect-ratio";
-import { useToast } from '@/components/ui/use-toast';
+import ProductDetailHeader from './components/ProductDetailHeader';
+import ProductImageCard from './components/ProductImageCard';
+import ProductDetailCard from './components/ProductDetailCard';
+import ProductStockCard from './components/ProductStockCard';
+import ProductNotFound from './components/ProductNotFound';
+import HistoryTables from './components/HistoryTables';
+import { useProductHistory } from './hooks/useProductHistory';
 
-const ProductDetail = () => {
+const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { getProduct, isLoading } = useData();
   const navigate = useNavigate();
-  const { getProduct, getProductHistory, isLoading } = useData();
-  const [productHistory, setProductHistory] = useState<{ entries: any[], exits: any[] }>({ entries: [], exits: [] });
-  const { toast } = useToast();
   
+  // Get product history
+  const {
+    entriesForProduct,
+    exitsForProduct,
+    totalUnitsSold,
+    totalUnitsPurchased,
+    totalAmountSpent,
+    totalAmountSold
+  } = useProductHistory(id);
+  
+  // Scroll to top on component mount
   useEffect(() => {
-    if (id) {
-      const history = getProductHistory(id);
-      if (history) {
-        setProductHistory(history);
-      }
-    }
-  }, [id, getProductHistory]);
+    window.scrollTo(0, 0);
+  }, []);
   
   if (isLoading) return <LoadingSpinner />;
   
   const product = id ? getProduct(id) : null;
   
   if (!product) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <h1 className="text-2xl font-bold">Produto não encontrado</h1>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/produtos/consultar')}>
-          Voltar ao Catálogo
-        </Button>
-      </div>
-    );
+    return <ProductNotFound />;
   }
   
-  const stockPercentage = Math.min(100, Math.max(0, (product.currentStock / (product.minStock * 2)) * 100));
-  
-  // Get stock movement for this product from entries and exits
-  const entriesForProduct = productHistory.entries
-    .flatMap(entry => entry.items
-      .filter((item: StockEntryItem) => item.productId === id)
-      .map((item: StockEntryItem) => ({
-        date: entry.date,
-        number: entry.number,
-        document: entry.invoiceNumber || '-',
-        supplierName: entry.supplierName,
-        quantity: item.quantity,
-        unitPrice: item.purchasePrice,
-        total: item.quantity * item.purchasePrice
-      }))
-    );
-  
-  const exitsForProduct = productHistory.exits
-    .flatMap(exit => exit.items
-      .filter((item: StockExitItem) => item.productId === id)
-      .map((item: StockExitItem) => ({
-        date: exit.date,
-        number: exit.number,
-        document: exit.invoiceNumber || '-',
-        clientId: exit.clientId,
-        clientName: exit.clientName,
-        quantity: item.quantity,
-        unitPrice: item.salePrice,
-        total: item.quantity * item.salePrice,
-        exitId: exit.id
-      }))
-    );
-
-  // Calculate total units sold
-  const totalUnitsSold = exitsForProduct.reduce((total, exit) => total + exit.quantity, 0);
-  
-  // Calculate totals for entries
-  const totalUnitsPurchased = entriesForProduct.reduce((total, entry) => total + entry.quantity, 0);
-  const totalAmountSpent = entriesForProduct.reduce((total, entry) => total + entry.total, 0);
-  
-  // Calculate totals for exits
-  const totalAmountSold = exitsForProduct.reduce((total, exit) => total + exit.total, 0);
-
-  const handleNavigateToClient = (clientId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/clientes/${clientId}`);
-  };
-
-  const handleNavigateToExit = (exitId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate(`/saidas/${exitId}`);
-  };
-
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title={product.name} 
-        description={`Código: ${product.code}`}
-        actions={
-          <div className="flex space-x-2">
-            <Button onClick={() => navigate(`/produtos/editar/${id}`)}>
-              Editar Produto
-            </Button>
-            <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
-              Voltar ao Catálogo
-            </Button>
-          </div>
-        }
+      <ProductDetailHeader 
+        productName={product.name} 
+        productCode={product.code}
+        productId={id}
       />
       
       <div className="grid md:grid-cols-3 gap-6 mt-6">
         {/* Product Image Card */}
         {product.image && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Imagem do Produto</CardTitle>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <div className="relative group cursor-pointer">
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="max-h-48 object-contain rounded-md transition-transform group-hover:scale-105"
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="bg-black bg-opacity-40 rounded-full p-2">
-                        <ZoomIn className="w-6 h-6 text-white" />
-                      </div>
-                    </div>
-                  </div>
-                </DialogTrigger>
-                <DialogContent className="max-w-3xl">
-                  <AspectRatio ratio={16 / 9} className="bg-muted">
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="object-contain w-full h-full"
-                    />
-                  </AspectRatio>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+          <ProductImageCard image={product.image} name={product.name} />
         )}
         
-        <Card className={`${product.image ? 'md:col-span-2' : 'md:col-span-2'}`}>
-          <CardHeader>
-            <CardTitle className="flex justify-between items-center">
-              <span>Detalhes do Produto</span>
-              <StatusBadge status={product.status || 'active'} />
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Descrição</p>
-                <p>{product.description || '-'}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Categoria</p>
-                <p>{product.category || '-'}</p>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Preço de Compra</p>
-                <p className="text-lg font-semibold">{formatCurrency(product.purchasePrice)}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Preço de Venda</p>
-                <p className="text-lg font-semibold">{formatCurrency(product.salePrice)}</p>
-              </div>
-            </div>
-            
-            <Separator />
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-gray-500">Data de Criação</p>
-                <p>{formatDateString(product.createdAt)}</p>
-              </div>
-              
-              <div>
-                <p className="text-sm font-medium text-gray-500">Total de Unidades Vendidas</p>
-                <p className="text-lg font-semibold">{totalUnitsSold}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Product Details Card */}
+        <ProductDetailCard 
+          product={product} 
+          totalUnitsSold={totalUnitsSold}
+        />
         
-        <Card className={product.image ? 'md:col-span-3' : ''}>
-          <CardHeader>
-            <CardTitle>Stock</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold">{product.currentStock}</p>
-              <p className="text-sm text-gray-500">Unidades em Stock</p>
-            </div>
-            
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Stock Mínimo: {product.minStock}</span>
-                <span className="font-medium">
-                  {product.currentStock < product.minStock ? (
-                    <Badge variant="destructive">Abaixo do Mínimo</Badge>
-                  ) : (
-                    <Badge variant="default">OK</Badge>
-                  )}
-                </span>
-              </div>
-              <Progress value={stockPercentage} className={`h-2 ${stockPercentage < 50 ? 'bg-red-200' : 'bg-green-200'}`} />
-            </div>
-          </CardContent>
-        </Card>
+        {/* Stock Card */}
+        <ProductStockCard 
+          currentStock={product.currentStock} 
+          minStock={product.minStock}
+          hasImage={!!product.image} 
+        />
       </div>
       
-      <div className="mt-10">
-        <h3 className="text-xl font-semibold mb-4">Histórico de Entradas</h3>
-        {entriesForProduct.length > 0 ? (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Entrada</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fornecedor</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {entriesForProduct.map((entry, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(entry.date)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{entry.number}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.document}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.supplierName}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(entry.unitPrice)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(entry.total)}</td>
-                  </tr>
-                ))}
-                {entriesForProduct.length > 0 && (
-                  <tr className="bg-gray-50">
-                    <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                      Total de Unidades Compradas:
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {totalUnitsPurchased}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                      Total Gasto:
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {formatCurrency(totalAmountSpent)}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-500">Sem entradas registadas para este produto.</p>
-        )}
-      </div>
-      
-      <div className="mt-10">
-        <h3 className="text-xl font-semibold mb-4">Histórico de Saídas</h3>
-        {exitsForProduct.length > 0 ? (
-          <div className="bg-white rounded-lg shadow overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Saída</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {exitsForProduct.map((exit, index) => (
-                  <tr key={index}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(exit.date)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button 
-                        onClick={(e) => handleNavigateToExit(exit.exitId, e)}
-                        className="text-blue-500 hover:underline cursor-pointer"
-                      >
-                        {exit.number}
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.document}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {exit.clientId ? (
-                        <button 
-                          onClick={(e) => handleNavigateToClient(exit.clientId, e)}
-                          className="text-blue-500 hover:underline cursor-pointer"
-                        >
-                          {exit.clientName}
-                        </button>
-                      ) : (
-                        <span className="text-gray-500">{exit.clientName}</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.quantity}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(exit.unitPrice)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(exit.total)}</td>
-                  </tr>
-                ))}
-                {exitsForProduct.length > 0 && (
-                  <tr className="bg-gray-50">
-                    <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                      Total de Unidades Vendidas:
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {totalUnitsSold}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                      Total Vendido:
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                      {formatCurrency(totalAmountSold)}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <p className="text-gray-500">Sem saídas registadas para este produto.</p>
-        )}
-      </div>
+      {/* History Tables */}
+      <HistoryTables 
+        entriesForProduct={entriesForProduct} 
+        exitsForProduct={exitsForProduct}
+        totalUnitsPurchased={totalUnitsPurchased}
+        totalAmountSpent={totalAmountSpent}
+        totalUnitsSold={totalUnitsSold}
+        totalAmountSold={totalAmountSold}
+      />
     </div>
   );
 };

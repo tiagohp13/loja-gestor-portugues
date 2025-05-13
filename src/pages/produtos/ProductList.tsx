@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -8,6 +7,7 @@ import { useProductSort, naturalSort } from './hooks/useProductSort';
 import ProductListHeader from './components/ProductListHeader';
 import ProductTable from './components/ProductTable';
 import { Plus } from 'lucide-react';
+import { useScrollToTop } from './hooks/useScrollToTop';
 
 const ProductList = () => {
   const navigate = useNavigate();
@@ -15,10 +15,8 @@ const ProductList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { sortField, sortDirection, handleSort, setSortField, setSortDirection } = useProductSort();
 
-  // Scroll to top when component mounts or route changes
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Add useScrollToTop hook to ensure page starts at the top
+  useScrollToTop();
 
   const filteredProducts = products
     .filter(product => 
