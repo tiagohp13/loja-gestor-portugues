@@ -51,7 +51,7 @@ const StockExitDetail = () => {
           }
         }
       } else {
-        toast.error('Saída não encontrada');
+        toast.error('Venda não encontrada');
         navigate('/saidas/historico');
       }
     }
@@ -64,7 +64,7 @@ const StockExitDetail = () => {
   const confirmDelete = () => {
     if (id) {
       deleteStockExit(id);
-      toast.success('Saída eliminada com sucesso');
+      toast.success('Venda eliminada com sucesso');
       navigate('/saidas/historico');
     }
   };
@@ -76,8 +76,8 @@ const StockExitDetail = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
-        title={`Saída: ${stockExit?.number || ''}`}
-        description="Detalhes da saída de stock"
+        title={`Venda: ${stockExit?.number || ''}`}
+        description="Detalhes da venda"
         actions={
           <>
             <Button
@@ -105,7 +105,7 @@ const StockExitDetail = () => {
         {/* Exit Information Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Informações da Saída</CardTitle>
+            <CardTitle>Informações da Venda</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -195,7 +195,7 @@ const StockExitDetail = () => {
             </TableBody>
             <TableFooter>
               <TableRow>
-                <TableCell colSpan={3} className="text-right font-semibold">Total da Saída:</TableCell>
+                <TableCell colSpan={3} className="text-right font-semibold">Total da Venda:</TableCell>
                 <TableCell className="text-right font-semibold">{formatCurrency(totalValue)}</TableCell>
               </TableRow>
             </TableFooter>
@@ -207,8 +207,8 @@ const StockExitDetail = () => {
         open={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
         onDelete={confirmDelete}
-        title="Eliminar Saída"
-        description="Tem certeza que deseja eliminar esta saída? Esta ação não pode ser desfeita."
+        title="Eliminar Venda"
+        description="Tem certeza que deseja eliminar esta venda? Esta ação não pode ser desfeita."
         trigger={<></>}
       />
     </div>

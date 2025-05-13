@@ -118,33 +118,16 @@ const StockExitNew = () => {
       return;
     }
     
-    const existingItem = items.find(item => item.productId === currentItem.productId);
-    const totalNeededQuantity = existingItem 
-      ? existingItem.quantity + currentItem.quantity 
-      : currentItem.quantity;
-    
-    if (product.currentStock < totalNeededQuantity) {
+    if (product.currentStock < currentItem.quantity) {
       toast.error(`Stock insuficiente. Disponível: ${product.currentStock} unidades`);
       return;
     }
     
-    const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...items];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        salePrice: currentItem.salePrice,
-        discountPercent: currentItem.discountPercent
-      };
-      setItems(updatedItems);
-    } else {
-      setItems([...items, { 
-        id: crypto.randomUUID(),
-        ...currentItem 
-      }]);
-    }
+    // Always add as a new line item, not checking for existing items
+    setItems([...items, { 
+      id: crypto.randomUUID(),
+      ...currentItem 
+    }]);
     
     setCurrentItem({
       productId: '',
@@ -202,7 +185,7 @@ const StockExitNew = () => {
     
     if (!hasEnoughStock) return;
     
-    const loadingToast = toast.loading('Registando saída...');
+    const loadingToast = toast.loading('Registando venda...');
     
     try {
       await addStockExit({
@@ -215,12 +198,12 @@ const StockExitNew = () => {
       });
       
       toast.dismiss(loadingToast);
-      toast.success('Saída registada com sucesso');
+      toast.success('Venda registada com sucesso');
       navigate('/saidas/historico');
     } catch (error) {
       toast.dismiss(loadingToast);
-      console.error("Erro ao registar saída:", error);
-      toast.error('Erro ao registar saída');
+      console.error("Erro ao registar venda:", error);
+      toast.error('Erro ao registar venda');
     }
   };
 
@@ -236,8 +219,8 @@ const StockExitNew = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <div className="flex flex-col space-y-1">
-          <h1 className="text-2xl font-bold">Nova Saída</h1>
-          <p className="text-gray-500">Registar uma nova saída de stock</p>
+          <h1 className="text-2xl font-bold">Nova Venda</h1>
+          <p className="text-gray-500">Registar uma nova venda de stock</p>
         </div>
       </div>
 
@@ -256,7 +239,7 @@ const StockExitNew = () => {
           className="flex items-center gap-2"
         >
           <Save className="h-4 w-4" />
-          Guardar Saída
+          Guardar Venda
         </Button>
       </div>
       
@@ -312,7 +295,7 @@ const StockExitNew = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Data da Saída</label>
+              <label className="block text-sm font-medium mb-1">Data da Venda</label>
               <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                 <PopoverTrigger asChild>
                   <Button 
@@ -502,7 +485,7 @@ const StockExitNew = () => {
           <div>
             <label className="block text-sm font-medium mb-1">Notas</label>
             <Textarea
-              placeholder="Observações ou notas adicionais sobre esta saída..."
+              placeholder="Observações ou notas adicionais sobre esta venda..."
               value={exitDetails.notes}
               onChange={(e) => setExitDetails(prev => ({...prev, notes: e.target.value}))}
               className="h-24"
