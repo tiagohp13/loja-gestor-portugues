@@ -72,11 +72,11 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       >
                         {transaction.product?.name || "Produto removido"}
                       </Button>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 flex">
                         {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors"
+                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors justify-start"
                           onClick={() => transaction.entityId && (
                             transaction.type === 'entry' 
                               ? navigateToSupplierDetail(transaction.entityId)
@@ -119,11 +119,11 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       >
                         {transaction.product?.name || "Produto removido"}
                       </Button>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 flex">
                         Fornecedor: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors"
+                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors justify-start"
                           onClick={() => transaction.entityId && navigateToSupplierDetail(transaction.entityId)}
                         >
                           {transaction.entity}
@@ -161,11 +161,11 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                       >
                         {transaction.product?.name || "Produto removido"}
                       </Button>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-gray-500 flex">
                         Cliente: 
                         <Button 
                           variant="link" 
-                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors"
+                          className="p-0 h-auto ml-1 font-normal text-blue-500 hover:underline transition-colors justify-start"
                           onClick={() => transaction.entityId && navigateToClientDetail(transaction.entityId)}
                         >
                           {transaction.entity}

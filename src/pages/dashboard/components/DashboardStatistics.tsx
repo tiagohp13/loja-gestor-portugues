@@ -47,7 +47,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               {mostSoldProduct ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors"
+                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right"
                   onClick={() => mostSoldProduct && navigateToProductDetail(mostSoldProduct.id)}
                 >
                   {mostSoldProduct.name}
@@ -61,7 +61,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               {mostFrequentClient ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors"
+                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right"
                   onClick={() => mostFrequentClient && navigateToClientDetail(mostFrequentClient.id)}
                 >
                   {mostFrequentClient.name}
@@ -75,7 +75,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               {mostUsedSupplier ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors"
+                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right"
                   onClick={() => mostUsedSupplier && navigateToSupplierDetail(mostUsedSupplier.id)}
                 >
                   {mostUsedSupplier.name}
