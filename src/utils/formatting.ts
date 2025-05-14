@@ -38,15 +38,15 @@ export const formatPercentage = (value: number): string => {
 
 export const generateFormattedOrderNumber = (counter: number): string => {
   const year = new Date().getFullYear();
-  return `C${year}${counter.toString().padStart(3, '0')}`;
+  return `ENC-${year}/${counter.toString().padStart(3, '0')}`;
 };
 
 export const generateFormattedStockExitNumber = (counter: number): string => {
   const year = new Date().getFullYear();
-  return `S${year}${counter.toString().padStart(3, '0')}`;
+  return `VEN-${year}/${counter.toString().padStart(3, '0')}`;
 };
 
 export const generateFormattedStockEntryNumber = (counter: number): string => {
   const year = new Date().getFullYear();
-  return `E${year}${counter.toString().padStart(3, '0')}`;
+  return `COMP-${year}/${counter.toString().padStart(3, '0')}`;
 };

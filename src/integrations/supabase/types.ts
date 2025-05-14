@@ -272,6 +272,7 @@ export type Database = {
           id: string
           notes: string | null
           number: string
+          reference_old: string | null
           updated_at: string
         }
         Insert: {
@@ -285,6 +286,7 @@ export type Database = {
           id?: string
           notes?: string | null
           number: string
+          reference_old?: string | null
           updated_at?: string
         }
         Update: {
@@ -298,6 +300,7 @@ export type Database = {
           id?: string
           notes?: string | null
           number?: string
+          reference_old?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -411,6 +414,7 @@ export type Database = {
           invoice_number: string | null
           notes: string | null
           number: string
+          reference_old: string | null
           supplier_id: string | null
           supplier_name: string
           updated_at: string
@@ -422,6 +426,7 @@ export type Database = {
           invoice_number?: string | null
           notes?: string | null
           number: string
+          reference_old?: string | null
           supplier_id?: string | null
           supplier_name: string
           updated_at?: string
@@ -433,6 +438,7 @@ export type Database = {
           invoice_number?: string | null
           notes?: string | null
           number?: string
+          reference_old?: string | null
           supplier_id?: string | null
           supplier_name?: string
           updated_at?: string
@@ -562,6 +568,7 @@ export type Database = {
           invoice_number: string | null
           notes: string | null
           number: string
+          reference_old: string | null
           updated_at: string
         }
         Insert: {
@@ -576,6 +583,7 @@ export type Database = {
           invoice_number?: string | null
           notes?: string | null
           number: string
+          reference_old?: string | null
           updated_at?: string
         }
         Update: {
@@ -590,6 +598,7 @@ export type Database = {
           invoice_number?: string | null
           notes?: string | null
           number?: string
+          reference_old?: string | null
           updated_at?: string
         }
         Relationships: [

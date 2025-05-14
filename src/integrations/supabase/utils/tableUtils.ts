@@ -19,6 +19,26 @@ export type TableName =
  */
 export const insertIntoTable = async (table: TableName, data: any) => {
   try {
+    // For documents that need sequential numbering, get a number from the counters table
+    if (table === 'orders' || table === 'stock_entries' || table === 'stock_exits') {
+      // Get the counter ID based on the table name
+      const counterId = table === 'orders' ? 'order' : 
+                        table === 'stock_entries' ? 'stock_entry' : 'stock_exit';
+      
+      // Call the database function to get the next formatted number
+      const { data: counterData, error: counterError } = await supabase
+        .rpc('get_next_counter', { counter_id: counterId });
+        
+      if (counterError) {
+        console.error(`Error getting next counter for ${table}:`, counterError);
+        // Fallback to a timestamp-based number if needed
+        data.number = `${table.toUpperCase()}-${Date.now()}`;
+      } else {
+        // Use the formatted number from the counter
+        data.number = counterData;
+      }
+    }
+    
     const snakeCaseData = camelToSnake(data);
     
     const { data: result, error } = await supabase
