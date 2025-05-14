@@ -49,6 +49,8 @@ export const findInsufficientStockOrders = (
     });
   });
   
-  // Sort by missing quantity (highest first)
-  return insufficientItems.sort((a, b) => b.missingQuantity - a.missingQuantity);
+  // Sort by date (newest first)
+  return insufficientItems.sort((a, b) => 
+    new Date(b.order.date).getTime() - new Date(a.order.date).getTime()
+  );
 };

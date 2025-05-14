@@ -934,19 +934,19 @@ export type Database = {
       get_stock_exit: {
         Args: { p_exit_id: number } | { p_exit_id: string }
         Returns: {
-          id: string
-          client_id: string
-          client_name: string
+          id: number
+          clientid: number
+          clientname: string
           reason: string
-          exit_number: string
+          exitnumber: string
           date: string
-          invoice_number: string
+          invoicenumber: string
           notes: string
           status: string
           discount: number
-          from_order_id: string
-          created_at: string
-          updated_at: string
+          fromorderid: number
+          createdat: string
+          updatedat: string
         }[]
       }
       get_stock_exit_items: {
