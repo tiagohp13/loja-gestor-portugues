@@ -39,9 +39,8 @@ export const useStockExit = (exitId?: string) => {
   };
   
   const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
-    // Cast the result to Promise<StockExit> to match the expected type
-    // The actual implementation returns void, but useSubmit now accepts void as well
-    return updateStockExit(id, exit as any) as Promise<StockExit>;
+    // First cast to unknown, then to Promise<StockExit | void> to avoid direct casting error
+    return updateStockExit(id, exit as any) as unknown as Promise<StockExit | void>;
   };
   
   const submit = useSubmit({
