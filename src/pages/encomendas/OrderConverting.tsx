@@ -5,7 +5,7 @@ import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const OrderConverting = () => {
@@ -22,14 +22,22 @@ const OrderConverting = () => {
       if (orderData) {
         // Check if order is already converted
         if (orderData.convertedToStockExitId) {
-          toast.error('Esta encomenda já foi convertida em saída de stock');
+          toast({
+            title: "Erro",
+            description: 'Esta encomenda já foi convertida em saída de stock',
+            variant: "destructive"
+          });
           navigate('/encomendas/consultar');
           return;
         }
         
         setOrder(orderData);
       } else {
-        toast.error('Encomenda não encontrada');
+        toast({
+          title: "Erro",
+          description: 'Encomenda não encontrada',
+          variant: "destructive"
+        });
         navigate('/encomendas/consultar');
       }
     }
@@ -37,7 +45,11 @@ const OrderConverting = () => {
 
   const handleConvert = async () => {
     if (!order) {
-      toast.error('Dados da encomenda não encontrados');
+      toast({
+        title: "Erro",
+        description: 'Dados da encomenda não encontrados',
+        variant: "destructive"
+      });
       return;
     }
     
@@ -46,11 +58,18 @@ const OrderConverting = () => {
       // Use the context function to convert order to stock exit
       await convertOrderToStockExit(id as string, invoiceNumber);
       
-      toast.success('Encomenda convertida em saída de stock!');
+      toast({
+        title: "Sucesso",
+        description: 'Encomenda convertida em saída de stock!'
+      });
       navigate('/saidas/historico');
     } catch (error) {
       console.error('Erro ao converter encomenda:', error);
-      toast.error('Erro ao converter encomenda');
+      toast({
+        title: "Erro",
+        description: 'Erro ao converter encomenda',
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
