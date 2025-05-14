@@ -41,13 +41,13 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
       </CardHeader>
       <CardContent>
         <dl className="space-y-4">
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Produto Mais Vendido</dt>
-            <dd className="text-gray-800 text-right">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Produto Mais Vendido</dt>
+            <dd className="text-gray-800 text-right w-auto">
               {mostSoldProduct ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right"
+                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
                   onClick={() => mostSoldProduct && navigateToProductDetail(mostSoldProduct.id)}
                 >
                   {mostSoldProduct.name}
@@ -55,13 +55,13 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               ) : 'N/A'}
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Cliente Mais Frequente</dt>
-            <dd className="text-gray-800 text-right">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Cliente Mais Frequente</dt>
+            <dd className="text-gray-800 text-right w-auto">
               {mostFrequentClient ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right"
+                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
                   onClick={() => mostFrequentClient && navigateToClientDetail(mostFrequentClient.id)}
                 >
                   {mostFrequentClient.name}
@@ -69,13 +69,13 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               ) : 'N/A'}
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Fornecedor Mais Usado</dt>
-            <dd className="text-gray-800 text-right">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Fornecedor Mais Usado</dt>
+            <dd className="text-gray-800 text-right w-auto">
               {mostUsedSupplier ? (
                 <Button 
                   variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right"
+                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
                   onClick={() => mostUsedSupplier && navigateToSupplierDetail(mostUsedSupplier.id)}
                 >
                   {mostUsedSupplier.name}
@@ -83,43 +83,43 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               ) : 'N/A'}
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Total Compras</dt>
-            <dd className="font-semibold text-red-500">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Total Compras</dt>
+            <dd className="font-semibold text-red-500 text-right">
               {formatCurrency(totalPurchaseValue)}
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Total Vendas</dt>
-            <dd className="font-semibold text-green-600">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Total Vendas</dt>
+            <dd className="font-semibold text-green-600 text-right">
               {formatCurrency(totalSalesValue)}
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Lucro</dt>
-            <dd className="font-semibold text-green-600">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Lucro</dt>
+            <dd className="font-semibold text-green-600 text-right">
               {formatCurrency(totalProfit)}
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="text-gray-500 font-medium">Margem de Lucro</dt>
-            <dd className="font-semibold text-green-600">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="text-gray-500 font-medium text-left">Margem de Lucro</dt>
+            <dd className="font-semibold text-green-600 text-right">
               {profitMarginPercent.toFixed(2)}%
             </dd>
           </div>
-          <div className="flex justify-between py-2 border-b">
-            <dt className="flex items-center text-gray-500 font-medium">
+          <div className="flex justify-between items-center py-2 border-b">
+            <dt className="flex items-center text-gray-500 font-medium text-left">
               ROI (€)
             </dt>
-            <dd className="font-semibold text-green-600">
+            <dd className="font-semibold text-green-600 text-right">
               {formatCurrency(roiValue)}
             </dd>
           </div>
-          <div className="flex justify-between py-2">
-            <dt className="flex items-center text-gray-500 font-medium">
+          <div className="flex justify-between items-center py-2">
+            <dt className="flex items-center text-gray-500 font-medium text-left">
               ROI (%)
             </dt>
-            <dd className="font-semibold text-green-600">
+            <dd className="font-semibold text-green-600 text-right">
               {roiPercent.toFixed(2)}%
             </dd>
           </div>
