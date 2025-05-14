@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -8,7 +7,7 @@ import { useProductSort, naturalSort } from './hooks/useProductSort';
 import ProductListHeader from './components/ProductListHeader';
 import ProductTable from './components/ProductTable';
 import { Plus } from 'lucide-react';
-import { useScrollToTop } from './hooks/useScrollToTop';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const ProductList = () => {
   const navigate = useNavigate();
