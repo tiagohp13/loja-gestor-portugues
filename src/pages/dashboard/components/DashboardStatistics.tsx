@@ -43,7 +43,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
         <dl className="space-y-4">
           <div className="flex justify-between py-2 border-b">
             <dt className="text-gray-500 font-medium">Produto Mais Vendido</dt>
-            <dd className="text-gray-800">
+            <dd className="text-gray-800 text-right">
               {mostSoldProduct ? (
                 <Button 
                   variant="link" 
@@ -57,7 +57,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
           </div>
           <div className="flex justify-between py-2 border-b">
             <dt className="text-gray-500 font-medium">Cliente Mais Frequente</dt>
-            <dd className="text-gray-800">
+            <dd className="text-gray-800 text-right">
               {mostFrequentClient ? (
                 <Button 
                   variant="link" 
@@ -71,7 +71,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
           </div>
           <div className="flex justify-between py-2 border-b">
             <dt className="text-gray-500 font-medium">Fornecedor Mais Usado</dt>
-            <dd className="text-gray-800">
+            <dd className="text-gray-800 text-right">
               {mostUsedSupplier ? (
                 <Button 
                   variant="link" 

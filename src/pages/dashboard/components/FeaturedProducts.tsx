@@ -58,19 +58,21 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
               {sortedProducts.length > 0 ? (
                 sortedProducts.map((product) => (
                   <tr key={product.id} className="border-b">
-                    <td className="py-3">
-                      <Button 
-                        variant="link" 
-                        className="font-medium p-0 h-auto text-blue-500 hover:underline transition-colors"
-                        onClick={() => navigateToProductDetail(product.id)}
-                      >
-                        {product.name}
-                      </Button>
-                      <div className="text-sm text-gray-500">{product.category}</div>
+                    <td className="py-3 align-middle">
+                      <div className="flex flex-col">
+                        <Button 
+                          variant="link" 
+                          className="font-medium p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
+                          onClick={() => navigateToProductDetail(product.id)}
+                        >
+                          {product.name}
+                        </Button>
+                        <div className="text-sm text-gray-500">{product.category}</div>
+                      </div>
                     </td>
-                    <td className="py-3 text-right">{productSales[product.id] || 0} un.</td>
-                    <td className="py-3 text-right">{formatCurrency(product.salePrice)}</td>
-                    <td className="py-3 text-right font-medium text-green-600">
+                    <td className="py-3 text-right align-middle">{productSales[product.id] || 0} un.</td>
+                    <td className="py-3 text-right align-middle">{formatCurrency(product.salePrice)}</td>
+                    <td className="py-3 text-right align-middle font-medium text-green-600">
                       {formatCurrency((productSales[product.id] || 0) * product.salePrice)}
                     </td>
                   </tr>

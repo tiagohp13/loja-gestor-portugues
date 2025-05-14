@@ -64,10 +64,10 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
               {filteredAllTransactions.length > 0 ? (
                 filteredAllTransactions.map((transaction) => (
                   <li key={`${transaction.id}-${transaction.productId}`} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                    <div>
+                    <div className="flex flex-col">
                       <Button 
                         variant="link" 
-                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -111,10 +111,10 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
               {filteredEntryTransactions.length > 0 ? (
                 filteredEntryTransactions.map((transaction) => (
                   <li key={`${transaction.id}-${transaction.productId}-entry`} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                    <div>
+                    <div className="flex flex-col">
                       <Button 
                         variant="link" 
-                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -153,10 +153,10 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
               {filteredExitTransactions.length > 0 ? (
                 filteredExitTransactions.map((transaction) => (
                   <li key={`${transaction.id}-${transaction.productId}-exit`} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                    <div>
+                    <div className="flex flex-col">
                       <Button 
                         variant="link" 
-                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
