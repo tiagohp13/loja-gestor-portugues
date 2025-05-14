@@ -1,6 +1,6 @@
 
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 import { StockEntry, StockEntryItem } from '@/types';
 import { EntryDetails } from './types';
 
@@ -35,20 +35,31 @@ export const useSubmit = ({
     e.preventDefault();
     
     if (!entryDetails.supplierId || items.length === 0) {
-      toast.error('Selecione um fornecedor e adicione pelo menos um produto');
+      toast({
+        title: "Erro",
+        description: "Selecione um fornecedor e adicione pelo menos um produto",
+        variant: "destructive"
+      });
       return;
     }
     
     const supplier = suppliers.find(s => s.id === entryDetails.supplierId);
     
     if (!supplier) {
-      toast.error('Fornecedor não encontrado');
+      toast({
+        title: "Erro",
+        description: "Fornecedor não encontrado",
+        variant: "destructive"
+      });
       return;
     }
     
-    const loadingToast = toast.loading('Registando entrada...');
-    
     try {
+      toast({
+        title: "Informação",
+        description: "Registando entrada..."
+      });
+      
       await addStockEntry({
         supplierId: entryDetails.supplierId,
         supplierName: supplier.name,
@@ -58,13 +69,18 @@ export const useSubmit = ({
         notes: entryDetails.notes
       });
       
-      toast.dismiss(loadingToast);
-      toast.success('Entrada registada com sucesso');
+      toast({
+        title: "Sucesso",
+        description: "Entrada registada com sucesso"
+      });
       navigate('/entradas/historico');
     } catch (error) {
-      toast.dismiss(loadingToast);
       console.error("Erro ao registar entrada:", error);
-      toast.error('Erro ao registar entrada');
+      toast({
+        title: "Erro",
+        description: "Erro ao registar entrada",
+        variant: "destructive"
+      });
     }
   };
 

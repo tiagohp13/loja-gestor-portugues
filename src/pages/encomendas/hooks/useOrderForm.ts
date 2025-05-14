@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
-import { toast } from 'sonner';
+import { toast } from '@/components/ui/use-toast';
 
 export type OrderItem = {
   productId: string;
@@ -63,12 +63,20 @@ export const useOrderForm = () => {
   
   const handleAddProduct = () => {
     if (!currentProduct) {
-      toast.error("Selecione um produto primeiro");
+      toast({
+        title: "Erro",
+        description: "Selecione um produto primeiro",
+        variant: "destructive"
+      });
       return;
     }
     
     if (currentQuantity <= 0) {
-      toast.error("A quantidade deve ser maior que zero");
+      toast({
+        title: "Erro",
+        description: "A quantidade deve ser maior que zero",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -91,7 +99,10 @@ export const useOrderForm = () => {
     setProductSearchTerm('');
     setCurrentQuantity(1);
     
-    toast.success("Produto adicionado à encomenda");
+    toast({
+      title: "Sucesso",
+      description: "Produto adicionado à encomenda"
+    });
   };
   
   const handleRemoveProduct = (index: number) => {
@@ -106,12 +117,20 @@ export const useOrderForm = () => {
   
   const handleSaveOrder = async () => {
     if (!selectedClientId) {
-      toast.error("Selecione um cliente para a encomenda");
+      toast({
+        title: "Erro",
+        description: "Selecione um cliente para a encomenda",
+        variant: "destructive"
+      });
       return;
     }
     
     if (orderItems.length === 0) {
-      toast.error("Adicione pelo menos um produto à encomenda");
+      toast({
+        title: "Erro",
+        description: "Adicione pelo menos um produto à encomenda",
+        variant: "destructive"
+      });
       return;
     }
     
@@ -130,10 +149,18 @@ export const useOrderForm = () => {
       };
       
       await addOrder(newOrder);
+      toast({
+        title: "Sucesso",
+        description: "Encomenda guardada com sucesso"
+      });
       navigate('/encomendas/consultar');
     } catch (error) {
       console.error("Error saving order:", error);
-      toast.error("Erro ao salvar a encomenda");
+      toast({
+        title: "Erro",
+        description: "Erro ao guardar a encomenda",
+        variant: "destructive"
+      });
     }
   };
 
