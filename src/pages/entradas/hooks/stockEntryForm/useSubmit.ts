@@ -1,7 +1,7 @@
 
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { StockEntryItem } from '@/types';
+import { StockEntry, StockEntryItem } from '@/types';
 import { EntryDetails } from './types';
 
 interface UseSubmitProps {
@@ -19,7 +19,7 @@ interface UseSubmitProps {
     date: string;
     invoiceNumber: string;
     notes: string;
-  }) => Promise<void>;
+  }) => Promise<StockEntry>;  // Changed from Promise<void> to Promise<StockEntry>
 }
 
 export const useSubmit = ({
