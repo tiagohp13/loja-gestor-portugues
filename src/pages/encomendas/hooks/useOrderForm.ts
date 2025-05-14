@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export type OrderItem = {
   productId: string;
@@ -31,6 +31,7 @@ export const useOrderForm = () => {
   const [currentQuantity, setCurrentQuantity] = useState(1);
   
   const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const filteredClients = clientSearchTerm 
     ? clients.filter(client => 
@@ -135,6 +136,7 @@ export const useOrderForm = () => {
     }
     
     try {
+      setIsSubmitting(true);
       const total = calculateTotal();
       const newOrder = {
         clientId: selectedClientId,
@@ -160,9 +162,11 @@ export const useOrderForm = () => {
       console.error("Error saving order:", error);
       toast({
         title: "Erro",
-        description: "Erro ao guardar a encomenda",
+        description: "Erro ao guardar a encomenda: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -199,6 +203,7 @@ export const useOrderForm = () => {
     setNotes,
     
     handleSaveOrder,
-    navigate
+    navigate,
+    isSubmitting
   };
 };

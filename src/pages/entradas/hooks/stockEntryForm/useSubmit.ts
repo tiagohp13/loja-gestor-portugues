@@ -1,18 +1,19 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { StockEntry, StockEntryItem } from '@/types';
-import { EntryDetails } from './types';
 
 interface UseSubmitProps {
-  entryDetails: EntryDetails;
+  entryDetails: {
+    supplierId: string;
+    supplierName: string;
+    invoiceNumber: string;
+    notes: string;
+  };
   items: StockEntryItem[];
   entryDate: Date;
-  suppliers: Array<{
-    id: string;
-    name: string;
-  }>;
+  suppliers: any[];
   addStockEntry: (entry: {
     supplierId: string;
     supplierName: string;
@@ -20,7 +21,7 @@ interface UseSubmitProps {
     date: string;
     invoiceNumber: string;
     notes: string;
-    total?: number;
+    total: number;
   }) => Promise<StockEntry>;
 }
 
@@ -34,61 +35,61 @@ export const useSubmit = ({
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!entryDetails.supplierId || items.length === 0) {
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+
+    if (!entryDetails.supplierId) {
       toast({
         title: "Erro",
-        description: "Selecione um fornecedor e adicione pelo menos um produto",
+        description: "Selecione um fornecedor",
         variant: "destructive"
       });
       return;
     }
-    
-    const supplier = suppliers.find(s => s.id === entryDetails.supplierId);
-    
-    if (!supplier) {
+
+    if (items.length === 0) {
       toast({
         title: "Erro",
-        description: "Fornecedor não encontrado",
+        description: "Adicione pelo menos um produto",
         variant: "destructive"
       });
       return;
     }
-    
+
     try {
       setIsSubmitting(true);
-      toast({
-        title: "Informação",
-        description: "Registando entrada..."
-      });
       
       // Calculate total value
-      const total = items.reduce((sum, item) => {
-        return sum + (item.quantity * item.purchasePrice);
-      }, 0);
+      const total = items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
       
-      await addStockEntry({
+      // Get supplier details
+      const supplier = suppliers.find(s => s.id === entryDetails.supplierId);
+      
+      const stockEntry = {
         supplierId: entryDetails.supplierId,
-        supplierName: supplier.name,
-        items: items,
+        supplierName: supplier ? supplier.name : entryDetails.supplierName,
+        items,
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
         notes: entryDetails.notes,
-        total // Add total value to stock entry
-      });
+        total: total  // Add total value
+      };
+
+      await addStockEntry(stockEntry);
       
       toast({
         title: "Sucesso",
-        description: "Entrada registada com sucesso"
+        description: "Entrada de stock guardada com sucesso"
       });
+      
       navigate('/entradas/historico');
     } catch (error) {
-      console.error("Erro ao registar entrada:", error);
+      console.error("Error during stock entry submission:", error);
       toast({
         title: "Erro",
-        description: "Erro ao registar entrada: " + (error instanceof Error ? error.message : "Erro desconhecido"),
+        description: "Ocorreu um erro ao guardar a entrada de stock: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
     } finally {
@@ -96,5 +97,8 @@ export const useSubmit = ({
     }
   };
 
-  return { handleSubmit, isSubmitting };
+  return {
+    handleSubmit,
+    isSubmitting
+  };
 };

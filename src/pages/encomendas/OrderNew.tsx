@@ -10,6 +10,7 @@ import OrderDatePicker from './components/OrderDatePicker';
 import ProductSelector from './components/ProductSelector';
 import OrderProductsTable from './components/OrderProductsTable';
 import { useOrderForm } from './hooks/useOrderForm';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const OrderNew = () => {
   const {
@@ -45,7 +46,8 @@ const OrderNew = () => {
     setNotes,
     
     handleSaveOrder,
-    navigate
+    navigate,
+    isSubmitting
   } = useOrderForm();
   
   return (
@@ -59,9 +61,18 @@ const OrderNew = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
-            <Button onClick={handleSaveOrder}>
-              <Save className="mr-2 h-4 w-4" />
-              Guardar Encomenda
+            <Button onClick={handleSaveOrder} disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <LoadingSpinner className="mr-2 h-4 w-4" />
+                  A guardar...
+                </>
+              ) : (
+                <>
+                  <Save className="mr-2 h-4 w-4" />
+                  Guardar Encomenda
+                </>
+              )}
             </Button>
           </div>
         }

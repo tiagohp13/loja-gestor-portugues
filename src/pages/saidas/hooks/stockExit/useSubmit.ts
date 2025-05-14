@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StockExit, StockExitItem } from '@/types';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { ExitDetails } from './types';
 
 interface UseSubmitProps {
@@ -62,7 +62,7 @@ export const useSubmit = ({
         items,
         fromOrderId: undefined,
         fromOrderNumber: undefined,
-        total // Add total value to stock exit
+        total  // Add total value to stock exit
       };
       
       if (exitId) {

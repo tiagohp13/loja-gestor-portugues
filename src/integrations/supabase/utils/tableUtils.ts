@@ -37,7 +37,7 @@ export const insertIntoTable = async (table: TableName, data: any) => {
         const timestamp = Date.now();
         const prefix = table === 'orders' ? 'ENC' : 
                       table === 'stock_entries' ? 'COMP' : 'VEN';
-        data.number = `${prefix}-${year}/${timestamp.toString().substr(-3)}`;
+        data.number = `${prefix}-${year}/${timestamp.toString().slice(-3)}`;
       } else {
         // Use the formatted number from the counter with proper prefix
         const prefix = table === 'orders' ? 'ENC' : 
@@ -57,13 +57,13 @@ export const insertIntoTable = async (table: TableName, data: any) => {
     
     if (error) {
       console.error(`Error inserting into ${table}:`, error);
-      return null;
+      throw new Error(`Error inserting into ${table}: ${error.message}`);
     }
     
     return snakeToCamel(result);
   } catch (err) {
     console.error(`Exception inserting into ${table}:`, err);
-    return null;
+    throw err;
   }
 };
 
@@ -82,13 +82,13 @@ export const updateTable = async (table: TableName, id: string, data: any) => {
     
     if (error) {
       console.error(`Error updating ${table}:`, error);
-      return null;
+      throw new Error(`Error updating ${table}: ${error.message}`);
     }
     
     return snakeToCamel(result);
   } catch (err) {
     console.error(`Exception updating ${table}:`, err);
-    return null;
+    throw err;
   }
 };
 
@@ -125,6 +125,7 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
       
       if (insertError) {
         console.error(`Error inserting batch into ${table}:`, insertError);
+        throw new Error(`Error inserting batch into ${table}: ${insertError.message}`);
       } else if (insertedData) {
         results.push(...insertedData);
       }
@@ -145,6 +146,7 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
       
       if (updateError) {
         console.error(`Error updating record in ${table}:`, updateError);
+        throw new Error(`Error updating record in ${table}: ${updateError.message}`);
       } else if (updatedData && updatedData.length > 0) {
         results.push(...updatedData);
       }
@@ -153,6 +155,6 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
     return snakeToCamel(results);
   } catch (err) {
     console.error(`Exception in batchSaveToTable for ${table}:`, err);
-    return [];
+    throw err;
   }
 };

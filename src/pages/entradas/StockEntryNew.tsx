@@ -9,7 +9,8 @@ import SupplierSelector from './components/SupplierSelector';
 import StockEntryDatePicker from './components/StockEntryDatePicker';
 import StockEntryProductForm from './components/StockEntryProductForm';
 import StockEntryProductsTable from './components/StockEntryProductsTable';
-import { useData } from '../../contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const StockEntryNew = () => {
   const navigate = useNavigate();
@@ -41,7 +42,8 @@ const StockEntryNew = () => {
     handleSupplierSelect,
     addItemToEntry,
     removeItem,
-    handleSubmit
+    handleSubmit,
+    isSubmitting
   } = useStockEntryForm();
 
   const selectedSupplier = suppliers.find(s => s.id === entryDetails.supplierId);
@@ -66,16 +68,25 @@ const StockEntryNew = () => {
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={items.length === 0 || !entryDetails.supplierId}
+          disabled={items.length === 0 || !entryDetails.supplierId || isSubmitting}
           className="flex items-center gap-2"
         >
-          <Save className="h-4 w-4" />
-          Guardar Entrada
+          {isSubmitting ? (
+            <>
+              <LoadingSpinner className="h-4 w-4" />
+              A guardar...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4" />
+              Guardar Entrada
+            </>
+          )}
         </Button>
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-2 gap-6">
             <SupplierSelector
               supplierSearchTerm={supplierSearchTerm}
