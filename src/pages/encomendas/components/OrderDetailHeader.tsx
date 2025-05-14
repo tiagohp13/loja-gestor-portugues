@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { FilePdf, ShoppingCart, Pencil } from 'lucide-react';
+import { FileText, ShoppingCart, Pencil } from 'lucide-react';
 import { Order, StockExit } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 
@@ -44,7 +44,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             variant="outline" 
             onClick={handleExportToPdf}
           >
-            <FilePdf className="h-4 w-4 text-red-500" />
+            <FileText className="h-4 w-4 text-red-500" />
             Exportar para PDF
           </Button>
           
