@@ -56,18 +56,22 @@ const OrderConverting = () => {
     try {
       setIsLoading(true);
       // Use the context function to convert order to stock exit
-      await convertOrderToStockExit(id as string, invoiceNumber);
+      const result = await convertOrderToStockExit(id as string, invoiceNumber);
       
-      toast({
-        title: "Sucesso",
-        description: 'Encomenda convertida em saída de stock!'
-      });
-      navigate('/saidas/historico');
+      if (result) {
+        toast({
+          title: "Sucesso",
+          description: 'Encomenda convertida em saída de stock!'
+        });
+        navigate('/saidas/historico');
+      } else {
+        throw new Error('Falha na conversão da encomenda');
+      }
     } catch (error) {
       console.error('Erro ao converter encomenda:', error);
       toast({
         title: "Erro",
-        description: 'Erro ao converter encomenda',
+        description: 'Erro ao converter encomenda: ' + (error instanceof Error ? error.message : 'Erro desconhecido'),
         variant: "destructive"
       });
     } finally {

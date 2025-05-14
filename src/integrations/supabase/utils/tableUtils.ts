@@ -32,10 +32,17 @@ export const insertIntoTable = async (table: TableName, data: any) => {
       if (counterError) {
         console.error(`Error getting next counter for ${table}:`, counterError);
         // Fallback to a timestamp-based number if needed
-        data.number = `${table.toUpperCase()}-${Date.now()}`;
+        const date = new Date();
+        const year = date.getFullYear();
+        const timestamp = Date.now();
+        const prefix = table === 'orders' ? 'ENC' : 
+                      table === 'stock_entries' ? 'COMP' : 'VEN';
+        data.number = `${prefix}-${year}/${timestamp.toString().substr(-3)}`;
       } else {
-        // Use the formatted number from the counter
-        data.number = counterData;
+        // Use the formatted number from the counter with proper prefix
+        const prefix = table === 'orders' ? 'ENC' : 
+                      table === 'stock_entries' ? 'COMP' : 'VEN';
+        data.number = `${prefix}-${counterData}`;
       }
     }
     

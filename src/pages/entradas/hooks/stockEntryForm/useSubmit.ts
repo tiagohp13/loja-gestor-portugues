@@ -1,4 +1,5 @@
 
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/components/ui/use-toast';
 import { StockEntry, StockEntryItem } from '@/types';
@@ -19,7 +20,7 @@ interface UseSubmitProps {
     date: string;
     invoiceNumber: string;
     notes: string;
-  }) => Promise<StockEntry>;  // Changed from Promise<void> to Promise<StockEntry>
+  }) => Promise<StockEntry>;
 }
 
 export const useSubmit = ({
@@ -30,6 +31,7 @@ export const useSubmit = ({
   addStockEntry
 }: UseSubmitProps) => {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,10 +57,16 @@ export const useSubmit = ({
     }
     
     try {
+      setIsSubmitting(true);
       toast({
         title: "Informação",
         description: "Registando entrada..."
       });
+      
+      // Calculate total value
+      const total = items.reduce((sum, item) => {
+        return sum + (item.quantity * item.purchasePrice);
+      }, 0);
       
       await addStockEntry({
         supplierId: entryDetails.supplierId,
@@ -66,7 +74,8 @@ export const useSubmit = ({
         items: items,
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
-        notes: entryDetails.notes
+        notes: entryDetails.notes,
+        total // Add total value to stock entry
       });
       
       toast({
@@ -78,11 +87,13 @@ export const useSubmit = ({
       console.error("Erro ao registar entrada:", error);
       toast({
         title: "Erro",
-        description: "Erro ao registar entrada",
+        description: "Erro ao registar entrada: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  return { handleSubmit };
+  return { handleSubmit, isSubmitting };
 };

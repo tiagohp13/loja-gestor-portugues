@@ -135,6 +135,7 @@ export const useOrderForm = () => {
     }
     
     try {
+      const total = calculateTotal();
       const newOrder = {
         clientId: selectedClientId,
         clientName: selectedClient.name,
@@ -145,7 +146,8 @@ export const useOrderForm = () => {
           quantity: item.quantity,
           salePrice: item.salePrice
         })),
-        notes
+        notes,
+        total  // Adding total value to the order
       };
       
       await addOrder(newOrder);
