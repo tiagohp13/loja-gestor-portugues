@@ -11,7 +11,7 @@ interface UseSubmitProps {
   items: StockExitItem[];
   exitDate: Date;
   addStockExit: (exit: Omit<StockExit, 'number' | 'id' | 'createdAt'>) => Promise<StockExit>;
-  updateStockExit: (id: string, exit: Omit<StockExit, 'number' | 'id' | 'createdAt'>) => Promise<StockExit>;
+  updateStockExit: (id: string, exit: Omit<StockExit, 'number' | 'id' | 'createdAt'>) => Promise<StockExit | void>;
 }
 
 export const useSubmit = ({
