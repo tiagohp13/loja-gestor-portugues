@@ -932,7 +932,7 @@ export type Database = {
         }[]
       }
       get_stock_exit: {
-        Args: { p_exit_id: string }
+        Args: { p_exit_id: number } | { p_exit_id: string }
         Returns: {
           id: string
           client_id: string
@@ -950,7 +950,7 @@ export type Database = {
         }[]
       }
       get_stock_exit_items: {
-        Args: { p_exit_id: string }
+        Args: { p_exit_id: number } | { p_exit_id: string }
         Returns: {
           id: string
           exit_id: string

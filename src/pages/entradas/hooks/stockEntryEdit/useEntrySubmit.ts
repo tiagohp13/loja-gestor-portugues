@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StockEntryFormState } from './types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, withUserData } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 import { StockEntryItem } from '@/types';
 
@@ -107,17 +107,22 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
       throw new Error('Entrada não encontrada');
     }
     
+    const entryData = {
+      supplier_id: entry.supplierId,
+      supplier_name: supplier.name,
+      date: entry.date,
+      invoice_number: entry.invoiceNumber,
+      notes: entry.notes,
+      // Include the number field from the existing entry
+      number: existingEntry.number
+    };
+    
+    // Add user_id to maintain ownership with RLS
+    const securedEntryData = await withUserData(entryData);
+    
     const { error: entryError } = await supabase
       .from('stock_entries')
-      .update({
-        supplier_id: entry.supplierId,
-        supplier_name: supplier.name,
-        date: entry.date,
-        invoice_number: entry.invoiceNumber,
-        notes: entry.notes,
-        // Include the number field from the existing entry
-        number: existingEntry.number
-      })
+      .update(securedEntryData)
       .eq('id', entryId);
     
     if (entryError) {
@@ -129,16 +134,18 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
     for (const item of entry.items) {
       if (item.id.toString().startsWith('temp-')) {
         // This is a new item, create it
+        const newItemData = {
+          entry_id: entryId,
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          purchase_price: item.purchasePrice,
+          discount_percent: item.discountPercent || 0
+        };
+        
         const { error: newItemError } = await supabase
           .from('stock_entry_items')
-          .insert({
-            entry_id: entryId,
-            product_id: item.productId,
-            product_name: item.productName,
-            quantity: item.quantity,
-            purchase_price: item.purchasePrice,
-            discount_percent: item.discountPercent || 0
-          });
+          .insert(newItemData);
         
         if (newItemError) {
           console.error("Error creating new item:", newItemError);
@@ -146,15 +153,17 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
         }
       } else {
         // This is an existing item, update it
+        const updateItemData = {
+          product_id: item.productId,
+          product_name: item.productName,
+          quantity: item.quantity,
+          purchase_price: item.purchasePrice,
+          discount_percent: item.discountPercent || 0
+        };
+        
         const { error: updateItemError } = await supabase
           .from('stock_entry_items')
-          .update({
-            product_id: item.productId,
-            product_name: item.productName,
-            quantity: item.quantity,
-            purchase_price: item.purchasePrice,
-            discount_percent: item.discountPercent || 0
-          })
+          .update(updateItemData)
           .eq('id', item.id);
         
         if (updateItemError) {
@@ -167,7 +176,7 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
     // Delete any items that were removed
     const originalItems = stockEntries?.find(e => e.id === entryId)?.items || [];
     const keepItemIds = entry.items.filter(item => !item.id.toString().startsWith('temp-')).map(item => item.id);
-    const itemsToDelete = originalItems.filter(item => !keepItemIds.includes(item.id));
+    const itemsToDelete = originalItems.filter((item: StockEntryItem) => !keepItemIds.includes(item.id));
     
     for (const item of itemsToDelete) {
       const { error: deleteError } = await supabase
@@ -186,7 +195,7 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
     // Generate a new entry number (this would typically come from a sequence or counter)
     // We'll use the get_next_counter database function
     const { data: counterData, error: counterError } = await supabase
-      .rpc('get_next_counter', { counter_id: 'stock_entries' });
+      .rpc('get_next_counter', { counter_id: 'stock_entry' });
       
     if (counterError) {
       console.error("Error generating entry number:", counterError);
@@ -195,36 +204,43 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
     
     const entryNumber = counterData || `${new Date().getFullYear()}/${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
 
-    const { data: entryData, error: entryError } = await supabase
+    const entryData = {
+      supplier_id: entry.supplierId,
+      supplier_name: supplier.name,
+      date: entry.date,
+      invoice_number: entry.invoiceNumber,
+      notes: entry.notes,
+      number: entryNumber
+    };
+    
+    // Add user_id to the entry data for RLS
+    const securedEntryData = await withUserData(entryData);
+    
+    const { data: entryData2, error: entryError } = await supabase
       .from('stock_entries')
-      .insert({
-        supplier_id: entry.supplierId,
-        supplier_name: supplier.name,
-        date: entry.date,
-        invoice_number: entry.invoiceNumber,
-        notes: entry.notes,
-        number: entryNumber // Include the generated number
-      })
+      .insert(securedEntryData)
       .select('id')
       .single();
     
-    if (entryError || !entryData) {
+    if (entryError || !entryData2) {
       console.error("Error creating stock entry:", entryError);
       throw new Error("Erro ao criar entrada de stock");
     }
     
     // Now create the items
     for (const item of entry.items) {
+      const newItemData = {
+        entry_id: entryData2.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        purchase_price: item.purchasePrice,
+        discount_percent: item.discountPercent || 0
+      };
+      
       const { error: itemError } = await supabase
         .from('stock_entry_items')
-        .insert({
-          entry_id: entryData.id,
-          product_id: item.productId,
-          product_name: item.productName,
-          quantity: item.quantity,
-          purchase_price: item.purchasePrice,
-          discount_percent: item.discountPercent || 0
-        });
+        .insert(newItemData);
       
       if (itemError) {
         console.error("Error creating item:", itemError);
