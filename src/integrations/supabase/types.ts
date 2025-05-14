@@ -18,6 +18,7 @@ export type Database = {
           product_count: number | null
           status: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -27,6 +28,7 @@ export type Database = {
           product_count?: number | null
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -36,6 +38,7 @@ export type Database = {
           product_count?: number | null
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -84,6 +87,7 @@ export type Database = {
           status: string | null
           tax_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -96,6 +100,7 @@ export type Database = {
           status?: string | null
           tax_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -108,6 +113,7 @@ export type Database = {
           status?: string | null
           tax_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -274,6 +280,7 @@ export type Database = {
           number: string
           reference_old: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           client_id?: string | null
@@ -288,6 +295,7 @@ export type Database = {
           number: string
           reference_old?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           client_id?: string | null
@@ -302,6 +310,7 @@ export type Database = {
           number?: string
           reference_old?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -328,6 +337,7 @@ export type Database = {
           sale_price: number
           status: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           category?: string | null
@@ -343,6 +353,7 @@ export type Database = {
           sale_price?: number
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           category?: string | null
@@ -358,6 +369,7 @@ export type Database = {
           sale_price?: number
           status?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -418,6 +430,7 @@ export type Database = {
           supplier_id: string | null
           supplier_name: string
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -430,6 +443,7 @@ export type Database = {
           supplier_id?: string | null
           supplier_name: string
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -442,6 +456,7 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -570,6 +585,7 @@ export type Database = {
           number: string
           reference_old: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           client_id?: string | null
@@ -585,6 +601,7 @@ export type Database = {
           number: string
           reference_old?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           client_id?: string | null
@@ -600,6 +617,7 @@ export type Database = {
           number?: string
           reference_old?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -797,6 +815,7 @@ export type Database = {
           status: string | null
           tax_id: string | null
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -810,6 +829,7 @@ export type Database = {
           status?: string | null
           tax_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -823,6 +843,7 @@ export type Database = {
           status?: string | null
           tax_id?: string | null
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -956,6 +977,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
       }
     }
     Enums: {

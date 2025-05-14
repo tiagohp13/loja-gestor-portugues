@@ -17,6 +17,21 @@ export const supabase = createClient<Database>(
   getClientOptions()
 );
 
+// Helper function to get current authenticated user ID safely
+export const getCurrentUserId = async (): Promise<string | null> => {
+  const { data } = await supabase.auth.getSession();
+  return data.session?.user?.id || null;
+};
+
+// Helper to add user_id to data objects automatically
+export const withUserData = async <T extends object>(data: T): Promise<T & { user_id?: string }> => {
+  const userId = await getCurrentUserId();
+  if (userId) {
+    return { ...data, user_id: userId };
+  }
+  return data;
+};
+
 // Re-export utility functions from separate modules
 export { 
   snakeToCamel, 

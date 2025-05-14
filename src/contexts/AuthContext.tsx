@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { loginUser, registerUser, logoutUser, getCurrentUser } from '../services/authService';
@@ -46,7 +47,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
         navigate('/login');
-      } else {
+      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        // When a user signs in or token refreshes, update auth state
         setState(prevState => ({
           ...prevState,
           user: session?.user || null,
@@ -57,6 +59,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
     });
 
+    // Initial session check
     getCurrentUser().then((data) => {
       if (data) {
         setState(prevState => ({

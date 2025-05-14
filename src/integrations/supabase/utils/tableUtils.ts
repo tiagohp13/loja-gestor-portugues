@@ -1,5 +1,5 @@
 
-import { supabase } from '../client';
+import { supabase, withUserData } from '../client';
 import { camelToSnake, snakeToCamel } from './formatUtils';
 
 export type TableName = 
@@ -39,7 +39,9 @@ export const insertIntoTable = async (table: TableName, data: any) => {
       }
     }
     
-    const snakeCaseData = camelToSnake(data);
+    // Add user_id to data for RLS compatibility
+    const securedData = await withUserData(data);
+    const snakeCaseData = camelToSnake(securedData);
     
     const { data: result, error } = await supabase
       .from(table)
@@ -92,7 +94,14 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
       return [];
     }
     
-    const snakeCaseRecords = records.map(record => camelToSnake(record));
+    // Process records one by one to add user_id
+    const securedRecords = [];
+    for (const record of records) {
+      const securedRecord = await withUserData(record);
+      securedRecords.push(securedRecord);
+    }
+    
+    const snakeCaseRecords = securedRecords.map(record => camelToSnake(record));
     
     // Split into those with IDs (to update) and those without (to insert)
     const toInsert = snakeCaseRecords.filter(record => !record.id);
