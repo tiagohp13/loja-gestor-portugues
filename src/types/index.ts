@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -120,6 +121,7 @@ export interface StockExit {
   fromOrderNumber?: string;
   createdAt: string;
   discount?: number;
+  total?: number;
 }
 
 export interface StockExitItem {
@@ -141,6 +143,7 @@ export interface StockEntry {
   notes?: string;
   date: string;
   createdAt: string;
+  total?: number;
 }
 
 export interface Order {
@@ -154,6 +157,7 @@ export interface Order {
   convertedToStockExitId?: string;
   convertedToStockExitNumber?: string;
   discount?: number;
+  total?: number;
 }
 
 export interface OrderItem {

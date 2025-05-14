@@ -20,6 +20,7 @@ interface UseSubmitProps {
     date: string;
     invoiceNumber: string;
     notes: string;
+    total?: number;
   }) => Promise<StockEntry>;
 }
 
