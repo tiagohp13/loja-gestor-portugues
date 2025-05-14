@@ -1,25 +1,26 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChartType } from '@/components/statistics/ChartDropdown';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageHeader from '@/components/ui/PageHeader';
-import KPIPanel from '@/components/statistics/KPIPanel';
+import KPIPanel, { KPI } from '@/components/statistics/KPIPanel';
 import { useSupportData } from './suporte/hooks/useSupportData';
 import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const Suporte = () => {
+  useScrollToTop();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [chartType, setChartType] = useState<ChartType>('resumo');
   const { isLoading, stats, kpis } = useSupportData();
   
-  const navigateToProductDetail = (id: string) => {
+  const navigateToProductDetail = useCallback((id: string) => {
     navigate(`/produtos/${id}`);
-  };
+  }, [navigate]);
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -53,7 +54,7 @@ const Suporte = () => {
       
       <MetricsCards stats={stats} />
       
-      {/* KPI Panel moved to the bottom of the page */}
+      {/* KPI Panel na parte inferior da página */}
       <div className="mb-6">
         <KPIPanel 
           title="Indicadores de Performance" 

@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { KPI } from '@/components/statistics/KPIPanel';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { toast } from '@/components/ui/use-toast';
+import { saveKpiTargets } from '@/services/kpiService';
 
 interface KPIEditModalProps {
   isOpen: boolean;
@@ -22,6 +24,7 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
       [kpi.name]: kpi.target
     }), {})
   );
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleInputChange = (kpiName: string, value: string) => {
     // Convert to number and validate
@@ -35,16 +38,39 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
     }
   };
 
-  const handleSave = () => {
-    // Update all KPIs with new target values
-    const updatedKpis = kpis.map(kpi => ({
-      ...kpi,
-      target: targets[kpi.name],
-      // Check if value is below the new target to update the belowTarget property
-      belowTarget: kpi.value < targets[kpi.name]
-    }));
+  const handleSave = async () => {
+    setIsSaving(true);
     
-    onSave(updatedKpis);
+    try {
+      // Update all KPIs with new target values
+      const updatedKpis = kpis.map(kpi => ({
+        ...kpi,
+        target: targets[kpi.name],
+        // Check if value is below the new target to update the belowTarget property
+        belowTarget: kpi.value < targets[kpi.name]
+      }));
+      
+      // Persistir as metas no banco de dados
+      await saveKpiTargets(updatedKpis);
+      
+      // Atualizar o estado local
+      onSave(updatedKpis);
+      
+      // Notificar o usuário
+      toast({
+        title: "Metas atualizadas",
+        description: "As metas dos KPIs foram salvas com sucesso.",
+      });
+    } catch (error) {
+      console.error('Erro ao salvar metas:', error);
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível salvar as metas dos KPIs.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const formatDisplayValue = (kpi: KPI) => {
@@ -104,11 +130,11 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
         </ScrollArea>
         
         <DialogFooter>
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSaving}>
             Cancelar
           </Button>
-          <Button onClick={handleSave}>
-            Guardar
+          <Button onClick={handleSave} disabled={isSaving}>
+            {isSaving ? 'A guardar...' : 'Guardar'}
           </Button>
         </DialogFooter>
       </DialogContent>

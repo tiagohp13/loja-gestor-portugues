@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { 
@@ -12,6 +11,8 @@ import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import KPIEditModal from './KPIEditModal';
+import { loadKpiTargets } from '@/services/kpiService';
+import { toast } from '@/components/ui/use-toast';
 
 export interface KPI {
   name: string;
@@ -36,6 +37,41 @@ interface KPIPanelProps {
 const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de desempenho" }: KPIPanelProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [kpisState, setKpisState] = useState<KPI[]>(kpis);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Carregar metas personalizadas ao inicializar o componente
+  useEffect(() => {
+    const fetchTargets = async () => {
+      try {
+        setIsLoading(true);
+        const savedTargets = await loadKpiTargets();
+        
+        if (Object.keys(savedTargets).length > 0) {
+          // Atualizar as metas dos KPIs com os valores salvos
+          setKpisState(prev => prev.map(kpi => ({
+            ...kpi,
+            target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
+            belowTarget: kpi.isInverseKPI 
+              ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) 
+              : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
+          })));
+        } else {
+          setKpisState(kpis);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar metas dos KPIs:', error);
+        toast({
+          title: "Erro ao carregar metas",
+          description: "Não foi possível carregar as metas personalizadas dos KPIs.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchTargets();
+  }, [kpis]);
   
   // Helper function to get trend icon based on comparison with target
   const getTrendIcon = (value: number, target: number, isInverseKPI: boolean = false) => {
@@ -137,6 +173,26 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
     // Para os outros KPIs, a lógica padrão
     return kpi.value < kpi.target;
   };
+  
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{description}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-pulse flex space-x-2">
+              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
   
   return (
     <Card>
