@@ -28,14 +28,14 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
             variant="outline"
             onClick={onExportPdf}
           >
-            <FileText className="mr-2 h-4 w-4 text-red-500" />
+            <FileText className="h-4 w-4 text-red-500" />
             Exportar para PDF
           </Button>
           <Button
             variant="secondary"
             onClick={() => navigate(`/entradas/editar/${id}`)}
           >
-            <Pencil className="mr-2 h-4 w-4" />
+            <Pencil className="h-4 w-4" />
             Editar
           </Button>
           <Button

@@ -37,7 +37,7 @@ const ProductListHeader = ({
       </div>
       
       <Button onClick={onAddProduct}>
-        <Plus className="w-4 h-4 mr-2" />
+        <Plus className="h-4 w-4" />
         Novo Produto
       </Button>
     </div>

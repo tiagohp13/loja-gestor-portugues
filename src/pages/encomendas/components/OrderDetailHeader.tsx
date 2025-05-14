@@ -40,38 +40,34 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
       description="Detalhes da encomenda"
       actions={
         <>
-          {/* Button 1: Export to PDF (always visible) */}
           <Button 
             variant="outline" 
             onClick={handleExportToPdf}
           >
-            <FileText className="mr-2 h-4 w-4 text-red-500" />
+            <FileText className="h-4 w-4" />
             Exportar para PDF
           </Button>
           
-          {/* Button 2: Convert to Sale (only visible if pending) */}
           {isPending && (
             <Button
               onClick={handleConvertToStockExit}
               className="text-white bg-blue-500 hover:bg-blue-600"
             >
-              <ShoppingCart className="mr-2 h-4 w-4" />
+              <ShoppingCart className="h-4 w-4" />
               Converter para Venda
             </Button>
           )}
           
-          {/* Button 3: Edit (only visible if pending) */}
           {isPending && (
             <Button
               variant="secondary"
               onClick={handleEditOrder}
             >
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil className="h-4 w-4" />
               Editar
             </Button>
           )}
           
-          {/* Button 4: Back to List (always visible) */}
           <Button
             variant="outline"
             onClick={() => navigate('/encomendas/consultar')}
