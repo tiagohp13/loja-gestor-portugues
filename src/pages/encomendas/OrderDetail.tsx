@@ -1,5 +1,4 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
@@ -8,10 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { ShoppingCart } from 'lucide-react';
+import { FilePdf, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
 import ClickableProductItem from '@/components/common/ClickableProductItem';
+import { exportToPdf } from '@/utils/pdfExport';
 
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -21,6 +21,7 @@ const OrderDetail = () => {
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
   const [relatedStockExit, setRelatedStockExit] = useState<StockExit | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (id) {
@@ -91,6 +92,16 @@ const OrderDetail = () => {
       navigate(`/clientes/${client.id}`);
     }
   };
+  
+  const handleExportToPdf = async () => {
+    if (order && order.number) {
+      await exportToPdf({
+        filename: order.number.replace('/', '-'),
+        contentSelector: '.pdf-content',
+        margin: 10
+      });
+    }
+  };
 
   if (!order) {
     return <div>Carregando...</div>;
@@ -103,6 +114,13 @@ const OrderDetail = () => {
         description="Detalhes da encomenda"
         actions={
           <>
+            <Button 
+              variant="outline" 
+              onClick={handleExportToPdf}
+            >
+              <FilePdf className="mr-2 h-4 w-4" />
+              Exportar para PDF
+            </Button>
             <Button
               variant="outline"
               onClick={() => navigate('/encomendas/consultar')}
@@ -121,131 +139,133 @@ const OrderDetail = () => {
         }
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        {/* Order Information Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Informações da Encomenda</CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-medium mb-1">Número</p>
-              <p>{order.number}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Data</p>
-              <p>{formatDateString(order.date)}</p>
-            </div>
-            {order.convertedToStockExitId && (
-              <div>
-                <p className="text-sm font-medium mb-1">Nº Venda</p>
-                <p>
-                  <a 
-                    className="text-blue-500 hover:underline cursor-pointer"
-                    onClick={handleViewStockExit}
-                  >
-                    {order.convertedToStockExitNumber || relatedStockExit?.number}
-                  </a>
-                </p>
-              </div>
-            )}
-            <div className="col-span-1 md:col-span-2">
-              <p className="text-sm font-medium mb-1">Estado</p>
-              {order.convertedToStockExitId ? (
-                <StatusBadge variant="success" icon={ShoppingCart}>
-                  Convertida em Saída
-                </StatusBadge>
-              ) : (
-                <StatusBadge variant="warning">
-                  Pendente
-                </StatusBadge>
-              )}
-            </div>
-            {order.notes && (
-              <div className="col-span-1 md:col-span-2">
-                <p className="text-sm font-medium mb-1">Notas</p>
-                <p className="whitespace-pre-wrap">{order.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Client Information Card */}
-        {client && (
+      <div className="pdf-content" ref={contentRef}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {/* Order Information Card */}
           <Card>
             <CardHeader>
-              <CardTitle>Informações do Cliente</CardTitle>
+              <CardTitle>Informações da Encomenda</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium mb-1">Nome</p>
-                <p>
-                  <a 
-                    className="text-blue-500 hover:underline cursor-pointer"
-                    onClick={handleViewClient}
-                  >
-                    {client.name}
-                  </a>
-                </p>
+                <p className="text-sm font-medium mb-1">Número</p>
+                <p>{order.number}</p>
               </div>
               <div>
-                <p className="text-sm font-medium mb-1">Email</p>
-                <p>{client.email || 'N/A'}</p>
+                <p className="text-sm font-medium mb-1">Data</p>
+                <p>{formatDateString(order.date)}</p>
               </div>
-              <div>
-                <p className="text-sm font-medium mb-1">Telefone</p>
-                <p>{client.phone || 'N/A'}</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium mb-1">NIF</p>
-                <p>{client.taxId || 'N/A'}</p>
-              </div>
+              {order.convertedToStockExitId && (
+                <div>
+                  <p className="text-sm font-medium mb-1">Nº Venda</p>
+                  <p>
+                    <a 
+                      className="text-blue-500 hover:underline cursor-pointer"
+                      onClick={handleViewStockExit}
+                    >
+                      {order.convertedToStockExitNumber || relatedStockExit?.number}
+                    </a>
+                  </p>
+                </div>
+              )}
               <div className="col-span-1 md:col-span-2">
-                <p className="text-sm font-medium mb-1">Morada</p>
-                <p>{client.address ? client.address.street : 'N/A'}</p>
+                <p className="text-sm font-medium mb-1">Estado</p>
+                {order.convertedToStockExitId ? (
+                  <StatusBadge variant="success" icon={ShoppingCart}>
+                    Convertida em Saída
+                  </StatusBadge>
+                ) : (
+                  <StatusBadge variant="warning">
+                    Pendente
+                  </StatusBadge>
+                )}
               </div>
+              {order.notes && (
+                <div className="col-span-1 md:col-span-2">
+                  <p className="text-sm font-medium mb-1">Notas</p>
+                  <p className="whitespace-pre-wrap">{order.notes}</p>
+                </div>
+              )}
             </CardContent>
           </Card>
-        )}
-      </div>
 
-      {/* Products Table Card */}
-      <Card className="mt-6">
-        <CardHeader>
-          <CardTitle>Produtos Encomendados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produto</TableHead>
-                <TableHead className="text-center">Quantidade</TableHead>
-                <TableHead className="text-right">Preço Unit.</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {order.items && order.items.map((item, index) => (
-                <ClickableProductItem
-                  key={`order-item-${index}-${item.productId}`}
-                  id={`order-item-${index}`}
-                  productId={item.productId}
-                  name={item.productName}
-                  quantity={item.quantity}
-                  price={item.salePrice}
-                  total={item.quantity * item.salePrice}
-                />
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={3} className="text-right font-semibold">Total da Encomenda:</TableCell>
-                <TableCell className="text-right font-semibold">{formatCurrency(totalValue)}</TableCell>
-              </TableRow>
-            </TableFooter>
-          </Table>
-        </CardContent>
-      </Card>
+          {/* Client Information Card */}
+          {client && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Informações do Cliente</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium mb-1">Nome</p>
+                  <p>
+                    <a 
+                      className="text-blue-500 hover:underline cursor-pointer"
+                      onClick={handleViewClient}
+                    >
+                      {client.name}
+                    </a>
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Email</p>
+                  <p>{client.email || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">Telefone</p>
+                  <p>{client.phone || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium mb-1">NIF</p>
+                  <p>{client.taxId || 'N/A'}</p>
+                </div>
+                <div className="col-span-1 md:col-span-2">
+                  <p className="text-sm font-medium mb-1">Morada</p>
+                  <p>{client.address ? client.address.street : 'N/A'}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Products Table Card */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Produtos Encomendados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produto</TableHead>
+                  <TableHead className="text-center">Quantidade</TableHead>
+                  <TableHead className="text-right">Preço Unit.</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {order.items && order.items.map((item, index) => (
+                  <ClickableProductItem
+                    key={`order-item-${index}-${item.productId}`}
+                    id={`order-item-${index}`}
+                    productId={item.productId}
+                    name={item.productName}
+                    quantity={item.quantity}
+                    price={item.salePrice}
+                    total={item.quantity * item.salePrice}
+                  />
+                ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell colSpan={3} className="text-right font-semibold">Total da Encomenda:</TableCell>
+                  <TableCell className="text-right font-semibold">{formatCurrency(totalValue)}</TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

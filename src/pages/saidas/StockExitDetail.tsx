@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useStockExitDetail } from './hooks/useStockExitDetail';
 import StockExitDetailHeader from './components/StockExitDetailHeader';
 import ExitInformationCard from './components/ExitInformationCard';
 import ClientInformationCard from './components/ClientInformationCard';
 import ProductsSoldTable from './components/ProductsSoldTable';
+import { exportToPdf } from '@/utils/pdfExport';
 
 const StockExitDetail = () => {
   const { 
@@ -17,6 +18,8 @@ const StockExitDetail = () => {
     navigate,
     id
   } = useStockExitDetail();
+  
+  const contentRef = useRef<HTMLDivElement>(null);
 
   if (!stockExit) {
     return <div>Carregando...</div>;
@@ -26,6 +29,17 @@ const StockExitDetail = () => {
   const handleNavigate = (path: string) => {
     navigate(path);
   };
+  
+  // Handle PDF export
+  const handleExportToPdf = async () => {
+    if (stockExit && stockExit.number) {
+      await exportToPdf({
+        filename: stockExit.number.replace('/', '-'),
+        contentSelector: '.pdf-content',
+        margin: 10
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -33,28 +47,31 @@ const StockExitDetail = () => {
         exitNumber={stockExit.number || ''}
         id={id || ''}
         onNavigateBack={handleNavigate}
+        onExportPdf={handleExportToPdf}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-        <ExitInformationCard
-          stockExit={stockExit}
-          totalValue={totalValue}
-          cleanNotes={cleanNotes}
-          onViewOrder={handleViewOrder}
-        />
-
-        {client && (
-          <ClientInformationCard
-            client={client}
-            onViewClient={handleViewClient}
+      <div className="pdf-content" ref={contentRef}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          <ExitInformationCard
+            stockExit={stockExit}
+            totalValue={totalValue}
+            cleanNotes={cleanNotes}
+            onViewOrder={handleViewOrder}
           />
-        )}
-      </div>
 
-      <ProductsSoldTable 
-        items={stockExit.items || []} 
-        totalValue={totalValue} 
-      />
+          {client && (
+            <ClientInformationCard
+              client={client}
+              onViewClient={handleViewClient}
+            />
+          )}
+        </div>
+
+        <ProductsSoldTable 
+          items={stockExit.items || []} 
+          totalValue={totalValue} 
+        />
+      </div>
     </div>
   );
 };
