@@ -64,8 +64,8 @@ const OrderNew = () => {
             <Button onClick={handleSaveOrder} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <LoadingSpinner className="mr-2 h-4 w-4" />
-                  A guardar...
+                  <LoadingSpinner size={16} />
+                  <span className="ml-2">A guardar...</span>
                 </>
               ) : (
                 <>

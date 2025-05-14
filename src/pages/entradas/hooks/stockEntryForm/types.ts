@@ -38,6 +38,7 @@ export interface UseStockEntryFormReturn {
     name: string;
   }>;
   totalValue: number;
+  isSubmitting: boolean; // Add isSubmitting property
   setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
   setCurrentItem: React.Dispatch<React.SetStateAction<CurrentItem>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;

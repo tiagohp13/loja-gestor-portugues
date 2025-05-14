@@ -29,6 +29,7 @@ const StockEntryNew = () => {
     filteredProducts,
     filteredSuppliers,
     totalValue,
+    isSubmitting,
     setEntryDetails,
     setCurrentItem,
     setSearchTerm,
@@ -42,8 +43,7 @@ const StockEntryNew = () => {
     handleSupplierSelect,
     addItemToEntry,
     removeItem,
-    handleSubmit,
-    isSubmitting
+    handleSubmit
   } = useStockEntryForm();
 
   const selectedSupplier = suppliers.find(s => s.id === entryDetails.supplierId);
@@ -73,8 +73,8 @@ const StockEntryNew = () => {
         >
           {isSubmitting ? (
             <>
-              <LoadingSpinner className="h-4 w-4" />
-              A guardar...
+              <LoadingSpinner size={16} />
+              <span className="ml-2">A guardar...</span>
             </>
           ) : (
             <>

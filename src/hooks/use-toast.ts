@@ -1,7 +1,6 @@
 
 import * as React from "react";
 import {
-  Toast,
   ToastActionElement,
   ToastProps,
 } from "@/components/ui/toast";
@@ -9,12 +8,15 @@ import {
 const TOAST_LIMIT = 20;
 const TOAST_REMOVE_DELAY = 1000000;
 
-type ToasterToast = Toast & {
+type ToasterToastProps = ToastProps & {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
 };
+
+// Using ToasterToastProps instead of self-referencing ToasterToast
+type ToasterToast = ToasterToastProps;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -138,9 +140,10 @@ function dispatch(action: Action) {
   });
 }
 
-type Toast = Omit<ToasterToast, "id">;
+// Fix circular reference by using props directly
+type ToastProps = Omit<ToasterToastProps, "id">;
 
-function toast({ ...props }: Toast) {
+function toast({ ...props }: ToastProps) {
   const id = genId();
 
   const update = (props: ToasterToast) =>

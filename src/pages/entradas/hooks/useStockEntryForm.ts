@@ -71,7 +71,7 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
   
   const { totalValue } = useCalculations(items);
   
-  const { handleSubmit } = useSubmit({
+  const { handleSubmit, isSubmitting } = useSubmit({
     entryDetails,
     items,
     entryDate,
@@ -93,6 +93,7 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
     filteredProducts,
     filteredSuppliers,
     totalValue,
+    isSubmitting, // Add isSubmitting to the return object
     setEntryDetails,
     setCurrentItem,
     setSearchTerm,
