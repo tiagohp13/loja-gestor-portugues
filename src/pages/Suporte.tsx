@@ -9,7 +9,6 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
-import { toast } from '@/components/ui/use-toast';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const Suporte = () => {

@@ -4,6 +4,7 @@ import { KPI } from '@/components/statistics/KPIPanel';
 import { fetchSupportStats } from './api/fetchSupportStats';
 import { generateKPIs } from './utils/kpiUtils';
 import { SupportStats } from '../types/supportTypes';
+import { loadKpiTargets } from '@/services/kpiService';
 
 export type { SupportStats } from '../types/supportTypes';
 
@@ -40,12 +41,29 @@ export const useSupportData = (): SupportDataReturn => {
     const loadData = async () => {
       setIsLoading(true);
       try {
+        // Primeiro carregamos as estatísticas gerais
         const supportStats = await fetchSupportStats();
         setStats(supportStats);
         
-        // Generate KPIs based on the stats
+        // Depois geramos os KPIs base
         const calculatedKpis = generateKPIs(supportStats);
-        setKpis(calculatedKpis);
+        
+        // Em seguida carregamos as metas personalizadas da base de dados
+        const savedTargets = await loadKpiTargets();
+        
+        // Atualizamos os KPIs com as metas personalizadas da DB
+        if (Object.keys(savedTargets).length > 0) {
+          const updatedKpis = calculatedKpis.map(kpi => ({
+            ...kpi,
+            target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
+            belowTarget: kpi.isInverseKPI 
+              ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) 
+              : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
+          }));
+          setKpis(updatedKpis);
+        } else {
+          setKpis(calculatedKpis);
+        }
       } catch (error) {
         console.error('Error fetching statistics:', error);
       } finally {

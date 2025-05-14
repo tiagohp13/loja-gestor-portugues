@@ -17,8 +17,11 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
     const userId = await getCurrentUserId();
     if (!userId) {
       console.error('Usuário não autenticado');
-      return;
+      throw new Error('Usuário não autenticado');
     }
+
+    console.log('Salvando KPIs para o usuário:', userId);
+    console.log('KPIs a serem salvos:', kpis.map(k => ({ nome: k.name, meta: k.target })));
 
     // Para cada KPI, inserimos ou atualizamos sua meta
     for (const kpi of kpis) {
@@ -30,24 +33,28 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
         .maybeSingle();
 
       if (fetchError) {
-        console.error('Erro ao verificar metas existentes:', fetchError);
+        console.error(`Erro ao verificar metas existentes para ${kpi.name}:`, fetchError);
         continue;
       }
 
       if (existingTargets) {
         // Atualizar meta existente
+        console.log(`Atualizando meta existente para ${kpi.name}:`, existingTargets.id, kpi.target);
         const { error } = await supabase
           .from('kpi_targets')
           .update({
-            target_value: kpi.target
+            target_value: kpi.target,
+            updated_at: new Date().toISOString()
           })
           .eq('id', existingTargets.id);
 
         if (error) {
           console.error(`Erro ao atualizar meta para ${kpi.name}:`, error);
+          throw error;
         }
       } else {
         // Inserir nova meta
+        console.log(`Inserindo nova meta para ${kpi.name}:`, kpi.target);
         const { error } = await supabase
           .from('kpi_targets')
           .insert({
@@ -58,11 +65,15 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
 
         if (error) {
           console.error(`Erro ao inserir meta para ${kpi.name}:`, error);
+          throw error;
         }
       }
     }
+    
+    console.log('Todas as metas foram salvas com sucesso');
   } catch (error) {
     console.error('Erro ao salvar metas dos KPIs:', error);
+    throw error;
   }
 };
 
@@ -79,6 +90,8 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
       return targets;
     }
 
+    console.log('Carregando KPIs para o usuário:', userId);
+
     const { data, error } = await supabase
       .from('kpi_targets')
       .select('kpi_name, target_value')
@@ -90,10 +103,13 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
     }
 
     // Transformar os dados em um objeto de metas
-    if (data) {
+    if (data && data.length > 0) {
+      console.log('Metas carregadas da base de dados:', data);
       data.forEach(target => {
         targets[target.kpi_name] = target.target_value;
       });
+    } else {
+      console.log('Nenhuma meta encontrada para o usuário');
     }
   } catch (error) {
     console.error('Erro ao carregar metas dos KPIs:', error);

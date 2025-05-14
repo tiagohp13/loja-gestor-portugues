@@ -29,9 +29,9 @@ interface KPIPanelProps {
   description?: string;
 }
 
-const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de desempenho" }: KPIPanelProps) => {
+const KPIPanel = ({ kpis: initialKpis, title = "KPIs", description = "Indicadores-chave de desempenho" }: KPIPanelProps) => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [kpisState, setKpisState] = useState<KPI[]>(kpis);
+  const [kpisState, setKpisState] = useState<KPI[]>(initialKpis);
   const [isLoading, setIsLoading] = useState(true);
   
   // Carregar metas personalizadas ao inicializar o componente
@@ -50,8 +50,11 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
               ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) 
               : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
           })));
+          
+          console.log('KPIs atualizados com metas da BD:', savedTargets);
         } else {
-          setKpisState(kpis);
+          console.log('Nenhuma meta personalizada encontrada, usando valores padrão');
+          setKpisState(initialKpis);
         }
       } catch (error) {
         console.error('Erro ao carregar metas dos KPIs:', error);
@@ -66,7 +69,7 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
     };
     
     fetchTargets();
-  }, [kpis]);
+  }, [initialKpis]);
   
   // Update KPIs when targets are saved
   const handleSaveTargets = (updatedKpis: KPI[]) => {

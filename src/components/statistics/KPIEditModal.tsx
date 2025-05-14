@@ -47,7 +47,9 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
         ...kpi,
         target: targets[kpi.name],
         // Check if value is below the new target to update the belowTarget property
-        belowTarget: kpi.value < targets[kpi.name]
+        belowTarget: kpi.isInverseKPI
+          ? kpi.value > targets[kpi.name]
+          : kpi.value < targets[kpi.name]
       }));
       
       // Persistir as metas no banco de dados
@@ -65,7 +67,7 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
       console.error('Erro ao salvar metas:', error);
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível salvar as metas dos KPIs.",
+        description: "Não foi possível salvar as metas dos KPIs. Tente novamente.",
         variant: "destructive"
       });
     } finally {
