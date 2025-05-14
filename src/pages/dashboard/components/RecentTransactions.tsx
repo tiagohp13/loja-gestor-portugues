@@ -67,7 +67,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div className="flex flex-col">
                       <Button 
                         variant="link" 
-                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left justify-start"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -114,7 +114,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div className="flex flex-col">
                       <Button 
                         variant="link" 
-                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left justify-start"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
@@ -156,7 +156,7 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
                     <div className="flex flex-col">
                       <Button 
                         variant="link" 
-                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
+                        className="font-normal p-0 h-auto text-blue-500 hover:underline transition-colors text-left justify-start"
                         onClick={() => transaction.product && navigateToProductDetail(transaction.product.id)}
                       >
                         {transaction.product?.name || "Produto removido"}
