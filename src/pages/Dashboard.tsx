@@ -12,7 +12,9 @@ import LowStockProducts from './dashboard/components/LowStockProducts';
 import RecentTransactions from './dashboard/components/RecentTransactions';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
 import FeaturedProducts from './dashboard/components/FeaturedProducts';
+import InsufficientStockOrders from './dashboard/components/InsufficientStockOrders';
 import { TransactionItem } from './dashboard/hooks/utils/transactionUtils';
+import { findInsufficientStockOrders } from './dashboard/hooks/utils/orderUtils';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +24,7 @@ const DashboardPage: React.FC = () => {
     products,
     suppliers,
     clients,
+    orders,
     ensureDate,
     monthlyData,
     lowStockProducts,
@@ -38,6 +41,9 @@ const DashboardPage: React.FC = () => {
     roiPercent,
     productSales
   } = useDashboardData();
+  
+  // Find orders with insufficient stock
+  const insufficientStockItems = findInsufficientStockOrders(orders, products);
 
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -49,6 +55,10 @@ const DashboardPage: React.FC = () => {
 
   const navigateToSupplierDetail = (id: string) => {
     navigate(`/fornecedores/${id}`);
+  };
+  
+  const navigateToOrderDetail = (id: string) => {
+    navigate(`/encomendas/${id}`);
   };
 
   return (
@@ -81,6 +91,16 @@ const DashboardPage: React.FC = () => {
           productSales={productSales}
           navigateToProductDetail={navigateToProductDetail}
           maxItems={3}
+        />
+      </div>
+      
+      {/* NOVA LINHA: Encomendas com Stock Insuficiente */}
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <InsufficientStockOrders 
+          insufficientItems={insufficientStockItems}
+          navigateToProductDetail={navigateToProductDetail}
+          navigateToOrderDetail={navigateToOrderDetail}
+          navigateToClientDetail={navigateToClientDetail}
         />
       </div>
       

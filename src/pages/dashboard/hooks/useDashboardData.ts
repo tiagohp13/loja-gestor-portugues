@@ -1,4 +1,3 @@
-
 import { useData } from '@/contexts/DataContext';
 import { useMemo } from 'react';
 import { 
@@ -32,7 +31,7 @@ import {
 } from './utils/transactionUtils';
 
 export const useDashboardData = () => {
-  const { products, suppliers, clients, stockEntries, stockExits } = useData();
+  const { products, suppliers, clients, stockEntries, stockExits, orders } = useData();
 
   // Prepare monthly data for charts
   const monthlyData = useMemo(() => {
@@ -130,6 +129,7 @@ export const useDashboardData = () => {
     profitMarginPercent,
     roiValue,
     roiPercent,
-    productSales
+    productSales,
+    orders
   };
 };
