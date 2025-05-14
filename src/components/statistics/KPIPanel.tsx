@@ -1,16 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { 
-  TrendingUp, TrendingDown, AlertTriangle, Euro, 
-  BadgeDollarSign, Users, BadgePercent, Info, 
-  ShoppingCart, Tag, ChartBar, PiggyBank, UserCheck, Pencil 
-} from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
-import { formatCurrency, formatPercentage } from '@/utils/formatting';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
+import { Pencil } from 'lucide-react';
 import KPIEditModal from './KPIEditModal';
+import KPIGrid from './KPIGrid';
+import KPIPanelSkeleton from './KPIPanelSkeleton';
 import { loadKpiTargets } from '@/services/kpiService';
 import { toast } from '@/components/ui/use-toast';
 
@@ -73,125 +68,14 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
     fetchTargets();
   }, [kpis]);
   
-  // Helper function to get trend icon based on comparison with target
-  const getTrendIcon = (value: number, target: number, isInverseKPI: boolean = false) => {
-    // Inversa a lógica para KPIs inversos (onde menor é melhor)
-    if (isInverseKPI) {
-      if (value <= target) {
-        return <TrendingUp className="h-4 w-4 text-green-500" />;
-      } else {
-        return <TrendingDown className="h-4 w-4 text-red-500" />;
-      }
-    } else {
-      // Lógica normal (maior é melhor)
-      if (value >= target) {
-        return <TrendingUp className="h-4 w-4 text-green-500" />;
-      } else {
-        return <TrendingDown className="h-4 w-4 text-red-500" />;
-      }
-    }
-  };
-
-  // Helper function to format value based on unit
-  const formatValue = (value: number, unit: string, isPercentage?: boolean) => {
-    // Ensure the value is a valid number before formatting
-    if (isNaN(value) || value === undefined || value === null) {
-      return isPercentage ? "0,00%" : "0";
-    }
-    
-    if (isPercentage) return formatPercentage(value);
-    if (unit === '€') return formatCurrency(value);
-    return value.toLocaleString();
-  };
-  
-  // Calculate progress percentage for the progress bar
-  const calculateProgress = (value: number, target: number) => {
-    if (target === 0) return 0;
-    if (isNaN(value) || value === undefined || value === null) return 0; // Handle invalid values
-    const progress = (value / target) * 100;
-    return progress > 100 ? 100 : progress;
-  };
-
-  // Get icon based on KPI name
-  const getKPIIcon = (name: string) => {
-    // Map KPI names to their respective icons with appropriate colors
-    if (name.includes('ROI')) {
-      return <Euro className="h-4 w-4 text-blue-500" />;
-    }
-    if (name.includes('Margem de Lucro')) {
-      return <BadgeDollarSign className="h-4 w-4 text-green-500" />;
-    }
-    if (name.includes('Taxa de Conversão')) {
-      return <BadgePercent className="h-4 w-4 text-purple-500" />;
-    }
-    if (name.includes('Valor Médio de Compra')) {
-      return <ShoppingCart className="h-4 w-4 text-orange-500" />;
-    }
-    if (name.includes('Valor Médio de Venda')) {
-      return <Tag className="h-4 w-4 text-blue-400" />;
-    }
-    if (name.includes('Lucro Médio por Venda')) {
-      return <ChartBar className="h-4 w-4 text-teal-500" />;
-    }
-    if (name.includes('Lucro Total')) {
-      return <PiggyBank className="h-4 w-4 text-amber-500" />;
-    }
-    if (name.includes('Lucro por Cliente')) {
-      return <UserCheck className="h-4 w-4 text-indigo-500" />;
-    }
-    
-    // Default fallback
-    return <Info className="h-4 w-4 text-gray-500" />;
-  };
-
   // Update KPIs when targets are saved
   const handleSaveTargets = (updatedKpis: KPI[]) => {
     setKpisState(updatedKpis);
     setIsEditModalOpen(false);
   };
-
-  // Helper para obter a mensagem de alerta baseada no KPI
-  const getAlertMessage = (kpi: KPI) => {
-    // Mensagem especial para o Valor Médio de Compra
-    if (kpi.name.includes('Valor Médio de Compra')) {
-      return kpi.value <= kpi.target 
-        ? "O valor médio por compra está dentro do esperado." 
-        : "O valor médio por compra está acima do pretendido.";
-    }
-    
-    // Mensagem padrão para outros KPIs
-    return "Este KPI está abaixo da meta esperada";
-  };
-  
-  // Helper para verificar se um KPI está abaixo da sua meta
-  const checkIfBelowTarget = (kpi: KPI) => {
-    // Para o KPI Valor Médio de Compra, a lógica é inversa
-    if (kpi.name.includes('Valor Médio de Compra')) {
-      return kpi.value > kpi.target;
-    }
-    
-    // Para os outros KPIs, a lógica padrão
-    return kpi.value < kpi.target;
-  };
   
   if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-pulse flex space-x-2">
-              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <KPIPanelSkeleton title={title} description={description} />;
   }
   
   return (
@@ -212,66 +96,7 @@ const KPIPanel = ({ kpis, title = "KPIs", description = "Indicadores-chave de de
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {kpisState.map((kpi, index) => {
-            // Verifica se é o KPI Valor Médio de Compra
-            const isInverseKPI = kpi.name.includes('Valor Médio de Compra');
-            const belowTarget = checkIfBelowTarget(kpi);
-            
-            return (
-              <TooltipProvider key={index}>
-                <Card className={`shadow-sm ${belowTarget ? 'border-orange-300' : ''}`}>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      {getKPIIcon(kpi.name)}
-                      {kpi.name}
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Info className="h-3.5 w-3.5 text-gray-400 cursor-help" />
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-xs">
-                          <p><strong>Descrição:</strong> {kpi.description}</p>
-                          <p className="mt-1"><strong>Fórmula:</strong> {kpi.formula}</p>
-                          {kpi.tooltip && <p className="mt-1">{kpi.tooltip}</p>}
-                        </TooltipContent>
-                      </Tooltip>
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="text-2xl font-bold">
-                        {kpi.unit === '€' && !kpi.isPercentage && '€ '}
-                        {formatValue(kpi.value, kpi.unit, kpi.isPercentage)}
-                        {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
-                      </div>
-                      {getTrendIcon(kpi.value, kpi.target, isInverseKPI)}
-                    </div>
-                    
-                    <div className="mt-2">
-                      <div className="flex items-center justify-between text-xs mb-1">
-                        <span>Meta: {formatValue(kpi.target, kpi.unit, kpi.isPercentage)}</span>
-                        <span>{Math.round(calculateProgress(kpi.value, kpi.target))}%</span>
-                      </div>
-                      <Progress 
-                        value={calculateProgress(kpi.value, kpi.target)} 
-                        className={`h-2 ${belowTarget ? 'bg-orange-100' : 'bg-gray-100'}`}
-                      />
-                    </div>
-                    
-                    {belowTarget && (
-                      <Alert className="mt-2 py-2 bg-orange-50 border-orange-200">
-                        <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
-                        <AlertDescription className="text-xs text-orange-700">
-                          {getAlertMessage(kpi)}
-                        </AlertDescription>
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-              </TooltipProvider>
-            );
-          })}
-        </div>
+        <KPIGrid kpis={kpisState} />
       </CardContent>
       
       <KPIEditModal 
