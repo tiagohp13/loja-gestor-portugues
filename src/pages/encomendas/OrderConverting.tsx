@@ -6,13 +6,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const OrderConverting = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { findOrder, findProduct, findClient, addStockExit, deleteOrder, convertOrderToStockExit } = useData();
+  const { findOrder, findProduct, findClient, convertOrderToStockExit } = useData();
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [order, setOrder] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -33,23 +35,34 @@ const OrderConverting = () => {
     }
   }, [id, findOrder, navigate]);
 
-  const handleConvert = () => {
+  const handleConvert = async () => {
     if (!order) {
       toast.error('Dados da encomenda não encontrados');
       return;
     }
     
     try {
+      setIsLoading(true);
       // Use the context function to convert order to stock exit
-      convertOrderToStockExit(id as string);
+      await convertOrderToStockExit(id as string, invoiceNumber);
       
       toast.success('Encomenda convertida em saída de stock!');
       navigate('/saidas/historico');
     } catch (error) {
-      console.error(error);
+      console.error('Erro ao converter encomenda:', error);
       toast.error('Erro ao converter encomenda');
+    } finally {
+      setIsLoading(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6 flex justify-center items-center min-h-[50vh]">
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   if (!order) {
     return (

@@ -17,7 +17,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
   const isPending = !order.convertedToStockExitId;
 
   const handleConvertToStockExit = () => {
-    navigate(`/encomendas/${order.id}/converter`);
+    navigate(`/encomendas/converter/${order.id}`);
   };
 
   const handleEditOrder = () => {
