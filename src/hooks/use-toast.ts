@@ -2,21 +2,27 @@
 import * as React from "react";
 import {
   ToastActionElement,
-  ToastProps,
 } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 20;
 const TOAST_REMOVE_DELAY = 1000000;
 
-type ToasterToastProps = ToastProps & {
+// Define base toast props to avoid circular references
+interface BaseToastProps {
   id: string;
   title?: React.ReactNode;
   description?: React.ReactNode;
   action?: ToastActionElement;
-};
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  variant?: "default" | "destructive";
+}
 
-// Using ToasterToastProps instead of self-referencing ToasterToast
-type ToasterToast = ToasterToastProps;
+// Import type from toast.tsx but rename to avoid conflicts
+type ToastBaseProps = React.ComponentPropsWithoutRef<typeof import("@/components/ui/toast").Toast>;
+
+// Combine the types
+type ToasterToast = BaseToastProps;
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -140,10 +146,10 @@ function dispatch(action: Action) {
   });
 }
 
-// Fix circular reference by using props directly
-type ToastProps = Omit<ToasterToastProps, "id">;
+// Create a new type for the toast function arguments
+type ToastInputProps = Omit<BaseToastProps, "id">;
 
-function toast({ ...props }: ToastProps) {
+function toast(props: ToastInputProps) {
   const id = genId();
 
   const update = (props: ToasterToast) =>

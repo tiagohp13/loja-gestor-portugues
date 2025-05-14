@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -64,7 +63,7 @@ const OrderNew = () => {
             <Button onClick={handleSaveOrder} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <LoadingSpinner size={16} />
+                  <LoadingSpinner />
                   <span className="ml-2">A guardar...</span>
                 </>
               ) : (

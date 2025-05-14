@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -73,7 +72,7 @@ const StockEntryNew = () => {
         >
           {isSubmitting ? (
             <>
-              <LoadingSpinner size={16} />
+              <LoadingSpinner />
               <span className="ml-2">A guardar...</span>
             </>
           ) : (
