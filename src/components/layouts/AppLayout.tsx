@@ -3,8 +3,11 @@ import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import Sidebar from '@/components/navigation/Sidebar';
-import { Menu } from 'lucide-react';
 
+/**
+ * Main application layout with sidebar and content area
+ * Provides consistent layout structure across the application
+ */
 const AppLayout = () => {
   return (
     <SidebarProvider defaultOpen={true}>

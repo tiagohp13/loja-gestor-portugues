@@ -5,6 +5,10 @@ import { useData } from '@/contexts/DataContext';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 
+/**
+ * Hook for fetching and managing order detail data
+ * @param id - The order ID to fetch details for
+ */
 export const useOrderDetail = (id: string | undefined) => {
   const navigate = useNavigate();
   const { orders, clients, stockExits } = useData();

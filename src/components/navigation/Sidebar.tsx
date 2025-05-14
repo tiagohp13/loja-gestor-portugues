@@ -1,23 +1,25 @@
 
 import React from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Menu
+  UserIcon, Settings, Tag, BarChart, ClipboardList
 } from 'lucide-react';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
-  SidebarMenuItem, SidebarTrigger, useSidebar
+  SidebarMenuItem, useSidebar
 } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Button } from '@/components/ui/button';
 import { toast } from "sonner";
 
+/**
+ * Main navigation sidebar component 
+ * Provides consistent navigation across the application
+ */
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();

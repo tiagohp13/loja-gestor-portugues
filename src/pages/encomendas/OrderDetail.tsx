@@ -7,8 +7,12 @@ import OrderDetailHeader from './components/OrderDetailHeader';
 import OrderInformationCard from './components/OrderInformationCard';
 import OrderClientCard from './components/OrderClientCard';
 import OrderProductsTableDetail from './components/OrderProductsTableDetail';
-import { useScrollToTop } from '../produtos/hooks/useScrollToTop';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
+/**
+ * Order detail page component
+ * Displays comprehensive information about a specific order
+ */
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const contentRef = useRef<HTMLDivElement>(null);

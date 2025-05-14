@@ -8,6 +8,10 @@ interface PageHeaderProps {
   actions?: React.ReactNode;
 }
 
+/**
+ * PageHeader component renders a consistent header with title, description, and action buttons
+ * with proper spacing and responsive behavior across different screen sizes.
+ */
 const PageHeader: React.FC<PageHeaderProps> = ({ title, description, actions }) => {
   const isMobile = useIsMobile();
   
