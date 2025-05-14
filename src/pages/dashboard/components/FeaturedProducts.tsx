@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/formatting';
 import { Product } from '@/types';
 import { useNavigate } from 'react-router-dom';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from "@/components/ui/table";
 
 interface FeaturedProductsProps {
   products: Product[];
@@ -45,47 +53,47 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
       </CardHeader>
       <CardContent className="pt-0">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left pb-2 text-gray-500 font-medium">Produto</th>
-                <th className="text-right pb-2 text-gray-500 font-medium">Quantidade Vendida</th>
-                <th className="text-right pb-2 text-gray-500 font-medium">Preço Unitário</th>
-                <th className="text-right pb-2 text-gray-500 font-medium">Valor Total</th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Produto</TableHead>
+                <TableHead className="text-right">Quantidade Vendida</TableHead>
+                <TableHead className="text-right">Preço Unitário</TableHead>
+                <TableHead className="text-right">Valor Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {sortedProducts.length > 0 ? (
                 sortedProducts.map((product) => (
-                  <tr key={product.id} className="border-b">
-                    <td className="py-3 align-middle">
+                  <TableRow key={product.id}>
+                    <TableCell className="align-middle">
                       <div className="flex flex-col">
                         <Button 
                           variant="link" 
-                          className="font-medium p-0 h-auto text-blue-500 hover:underline transition-colors text-left"
+                          className="font-medium p-0 h-auto text-blue-500 hover:underline transition-colors text-left justify-start"
                           onClick={() => navigateToProductDetail(product.id)}
                         >
                           {product.name}
                         </Button>
-                        <div className="text-sm text-gray-500">{product.category}</div>
+                        <span className="text-sm text-gray-500">{product.category}</span>
                       </div>
-                    </td>
-                    <td className="py-3 text-right align-middle">{productSales[product.id] || 0} un.</td>
-                    <td className="py-3 text-right align-middle">{formatCurrency(product.salePrice)}</td>
-                    <td className="py-3 text-right align-middle font-medium text-green-600">
+                    </TableCell>
+                    <TableCell className="text-right align-middle">{productSales[product.id] || 0} un.</TableCell>
+                    <TableCell className="text-right align-middle">{formatCurrency(product.salePrice)}</TableCell>
+                    <TableCell className="text-right align-middle font-medium text-green-600">
                       {formatCurrency((productSales[product.id] || 0) * product.salePrice)}
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               ) : (
-                <tr>
-                  <td colSpan={4} className="text-center py-4 text-gray-500">
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-4 text-gray-500">
                     Nenhum produto com vendas encontrado
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
         </div>
       </CardContent>
     </Card>
