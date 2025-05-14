@@ -5,6 +5,7 @@ import { useFilters } from './stockExit/useFilters';
 import { useHandlers } from './stockExit/useHandlers';
 import { useCalculations } from './stockExit/useCalculations';
 import { useSubmit } from './stockExit/useSubmit';
+import { StockExit } from '@/types';
 
 export const useStockExit = (exitId?: string) => {
   const { clients, products, addStockExit, updateStockExit } = useData();
@@ -32,13 +33,22 @@ export const useStockExit = (exitId?: string) => {
   
   const calculations = useCalculations(state.items);
   
+  // Here we ensure that addStockExit and updateStockExit match the types expected by useSubmit
+  const typedAddStockExit = (exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
+    return addStockExit(exit);
+  };
+  
+  const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
+    return updateStockExit(id, exit as any);
+  };
+  
   const submit = useSubmit({
     exitId,
     exitDetails: state.exitDetails,
     items: state.items,
     exitDate: state.exitDate,
-    addStockExit,
-    updateStockExit
+    addStockExit: typedAddStockExit,
+    updateStockExit: typedUpdateStockExit
   });
   
   const selectedClient = clients.find(c => c.id === state.exitDetails.clientId);
