@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { FileText, Pencil, ArrowLeft } from 'lucide-react';
+import { FileText, Pencil } from 'lucide-react';
 
 type StockExitDetailHeaderProps = {
   exitNumber: string;
@@ -38,7 +38,6 @@ const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({
             variant="outline"
             onClick={() => onNavigateBack('/saidas/historico')}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar à Lista
           </Button>
         </>

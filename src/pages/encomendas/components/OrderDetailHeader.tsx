@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { FileText, ShoppingCart, Pencil, ArrowLeft } from 'lucide-react';
+import { FileText, ShoppingCart, Pencil } from 'lucide-react';
 import { Order, StockExit } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 
@@ -76,7 +76,6 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             variant="outline"
             onClick={() => navigate('/encomendas/consultar')}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar à Lista
           </Button>
         </>

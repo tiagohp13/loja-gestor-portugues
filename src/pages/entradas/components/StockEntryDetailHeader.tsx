@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { FileText, Pencil, ArrowLeft } from 'lucide-react';
+import { FileText, Pencil } from 'lucide-react';
 
 type StockEntryDetailHeaderProps = {
   entryNumber: string;
@@ -42,7 +42,6 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
             variant="outline"
             onClick={() => navigate('/entradas/historico')}
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar à Lista
           </Button>
         </>
