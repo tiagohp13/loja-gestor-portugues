@@ -1,4 +1,5 @@
 
+// Re-export from the hooks folder to maintain compatibility
 import { useToast as useToastHook } from "@/hooks/use-toast";
 import { toast as toastFunction } from "@/hooks/use-toast";
 
