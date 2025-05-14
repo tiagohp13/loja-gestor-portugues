@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -7,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { formatCurrency, formatDateString } from '@/utils/formatting';
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FilePdf, ShoppingCart } from 'lucide-react';
+import { FileText, ShoppingCart } from 'lucide-react';
 import { toast } from '@/components/ui/use-toast';
 import StatusBadge from '@/components/common/StatusBadge';
 import ClickableProductItem from '@/components/common/ClickableProductItem';
@@ -118,7 +119,7 @@ const OrderDetail = () => {
               variant="outline" 
               onClick={handleExportToPdf}
             >
-              <FilePdf className="mr-2 h-4 w-4" />
+              <FileText className="mr-2 h-4 w-4" />
               Exportar para PDF
             </Button>
             <Button

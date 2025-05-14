@@ -2,7 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { FilePdf } from 'lucide-react';
+import { FileText } from 'lucide-react';
 
 type StockExitDetailHeaderProps = {
   exitNumber: string;
@@ -24,7 +24,7 @@ const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({
       actions={
         <>
           <Button onClick={onExportPdf} variant="outline">
-            <FilePdf className="mr-2 h-4 w-4" />
+            <FileText className="mr-2 h-4 w-4" />
             Exportar para PDF
           </Button>
           <Button onClick={() => onNavigateBack(`/saidas/editar/${id}`)}>

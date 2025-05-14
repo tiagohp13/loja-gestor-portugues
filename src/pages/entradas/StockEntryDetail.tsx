@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -10,7 +11,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { toast } from 'sonner';
 import StatusBadge from '@/components/common/StatusBadge';
 import ClickableProductItem from '@/components/common/ClickableProductItem';
-import { FilePdf } from 'lucide-react';
+import { FileText } from 'lucide-react';
 import { exportToPdf } from '@/utils/pdfExport';
 
 const StockEntryDetail = () => {
@@ -82,7 +83,7 @@ const StockEntryDetail = () => {
               variant="outline"
               onClick={handleExportToPdf}
             >
-              <FilePdf className="mr-2 h-4 w-4" />
+              <FileText className="mr-2 h-4 w-4" />
               Exportar para PDF
             </Button>
             <Button
