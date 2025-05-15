@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -49,6 +50,9 @@ const OrderNew = () => {
     isSubmitting
   } = useOrderForm();
   
+  // Calculate order validity for button disabling
+  const isOrderInvalid = !selectedClientId || orderItems.length === 0;
+  
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -56,11 +60,18 @@ const OrderNew = () => {
         description="Criar uma nova encomenda"
         actions={
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            <Button 
+              variant="outline" 
+              onClick={() => navigate('/encomendas/consultar')}
+              disabled={isSubmitting}
+            >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Cancelar
             </Button>
-            <Button onClick={handleSaveOrder} disabled={isSubmitting}>
+            <Button 
+              onClick={handleSaveOrder} 
+              disabled={isSubmitting || isOrderInvalid}
+            >
               {isSubmitting ? (
                 <>
                   <LoadingSpinner />
@@ -112,11 +123,17 @@ const OrderNew = () => {
             handleAddProduct={handleAddProduct}
           />
           
-          <OrderProductsTable 
-            orderItems={orderItems}
-            handleRemoveProduct={handleRemoveProduct}
-            calculateTotal={calculateTotal}
-          />
+          {orderItems.length === 0 ? (
+            <div className="mt-4 p-6 border border-dashed rounded-md text-center text-gray-500">
+              Nenhum produto adicionado. Adicione pelo menos um produto para criar a encomenda.
+            </div>
+          ) : (
+            <OrderProductsTable 
+              orderItems={orderItems}
+              handleRemoveProduct={handleRemoveProduct}
+              calculateTotal={calculateTotal}
+            />
+          )}
           
           <div className="mt-6">
             <Label htmlFor="notes">Notas</Label>

@@ -17,23 +17,23 @@ export const useOrderSubmit = (
   setIsSubmitting: (isSubmitting: boolean) => void
 ) => {
   const navigate = useNavigate();
-  const { validateOrder } = useOrderValidation();
+  const { validateOrder, displayValidationError } = useOrderValidation();
   
   const handleSaveOrder = async () => {
     // Validate the order
-    const validation = validateOrder(selectedClientId, orderItems);
+    const validation = validateOrder(selectedClientId, orderItems, orderDate);
     if (!validation.valid) {
-      toast({
-        title: "Erro",
-        description: validation.message,
-        variant: "destructive"
-      });
+      displayValidationError(validation.message || "Dados da encomenda inválidos");
       return;
     }
     
     try {
       setIsSubmitting(true);
+      
+      // Calculate total value
       const total = orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
+      
+      // Create order object with all required data
       const newOrder = {
         clientId: selectedClientId,
         clientName: selectedClient.name,
@@ -48,11 +48,16 @@ export const useOrderSubmit = (
         total  // Adding total value to the order
       };
       
-      await addOrder(newOrder);
+      // Submit the order
+      const savedOrder = await addOrder(newOrder);
+      
+      // Show success message
       toast({
         title: "Sucesso",
-        description: "Encomenda guardada com sucesso"
+        description: `Encomenda ${savedOrder.number || ''} guardada com sucesso`
       });
+      
+      // Navigate back to order list
       navigate('/encomendas/consultar');
     } catch (error) {
       console.error("Error saving order:", error);

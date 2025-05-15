@@ -1,8 +1,14 @@
 
 import { OrderItem } from './types';
+import { toast } from '@/hooks/use-toast';
 
 export const useOrderValidation = () => {
-  const validateOrder = (selectedClientId: string, orderItems: OrderItem[]): { valid: boolean; message?: string } => {
+  const validateOrder = (
+    selectedClientId: string, 
+    orderItems: OrderItem[],
+    orderDate?: Date
+  ): { valid: boolean; message?: string } => {
+    // Verify client is selected
     if (!selectedClientId) {
       return {
         valid: false,
@@ -10,6 +16,15 @@ export const useOrderValidation = () => {
       };
     }
     
+    // Verify order date is selected
+    if (!orderDate) {
+      return {
+        valid: false,
+        message: "Selecione uma data para a encomenda"
+      };
+    }
+    
+    // Verify at least one product is added
     if (orderItems.length === 0) {
       return {
         valid: false,
@@ -19,14 +34,14 @@ export const useOrderValidation = () => {
     
     // Check if all products have valid quantities and prices
     for (const item of orderItems) {
-      if (item.quantity <= 0) {
+      if (!item.quantity || item.quantity <= 0) {
         return {
           valid: false,
           message: `Produto "${item.productName}" tem quantidade inválida`
         };
       }
       
-      if (item.salePrice <= 0) {
+      if (!item.salePrice || item.salePrice <= 0) {
         return {
           valid: false,
           message: `Produto "${item.productName}" tem preço inválido`
@@ -37,7 +52,16 @@ export const useOrderValidation = () => {
     return { valid: true };
   };
   
+  const displayValidationError = (message: string) => {
+    toast({
+      title: "Erro de Validação",
+      description: message,
+      variant: "destructive"
+    });
+  };
+  
   return {
-    validateOrder
+    validateOrder,
+    displayValidationError
   };
 };
