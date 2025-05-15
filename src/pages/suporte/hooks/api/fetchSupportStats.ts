@@ -149,42 +149,42 @@ const fetchTopProducts = async () => {
   }
 };
 
-// Otimizando a função para usar uma única consulta para os principais clientes
+// Modificando a função para não usar RPC e retornar o formato correto
 const fetchTopClients = async () => {
   try {
-    // Agregando dados de saídas de estoque por cliente
-    const { data, error } = await supabase
-      .rpc('get_top_clients', { limit_count: 5 });
+    // Usar abordagem direta ao invés de RPC
+    const { data: clientExits, error: exitError } = await supabase
+      .from('stock_exits')
+      .select('client_name, client_id')
+      .limit(100);
     
-    if (error) {
-      console.error('Error calling get_top_clients function:', error);
-      
-      // Fallback para a implementação original caso o RPC falhe
-      const { data: exits, error: exitsError } = await supabase
-        .from('stock_exits')
-        .select('client_name, client_id');
-      
-      if (exitsError || !exits) {
-        console.error('Error fetching clients:', exitsError);
-        return [];
-      }
-      
-      const clientCounts = exits.reduce((acc: Record<string, number>, current) => {
-        if (current.client_name) {
-          acc[current.client_name] = (acc[current.client_name] || 0) + 1;
-        }
-        return acc;
-      }, {});
-      
-      return Object.entries(clientCounts)
-        .map(([name, orders]) => ({ name, orders, spending: 0 }))
-        .sort((a, b) => b.orders - a.orders)
-        .slice(0, 5);
+    if (exitError) {
+      console.error('Error fetching client exits:', exitError);
+      return [];
     }
     
-    return data || [];
+    // Contar as ordens por cliente
+    const clientCounts: Record<string, { name: string, orders: number, spending: number }> = {};
+    
+    clientExits?.forEach(exit => {
+      if (exit.client_name) {
+        if (!clientCounts[exit.client_name]) {
+          clientCounts[exit.client_name] = {
+            name: exit.client_name,
+            orders: 0,
+            spending: 0
+          };
+        }
+        clientCounts[exit.client_name].orders += 1;
+      }
+    });
+    
+    // Converter para array, ordenar e limitar a 5
+    return Object.values(clientCounts)
+      .sort((a, b) => b.orders - a.orders)
+      .slice(0, 5);
   } catch (error) {
-    console.error('Error fetching top clients:', error);
+    console.error('Error in fetchTopClients:', error);
     return [];
   }
 };
