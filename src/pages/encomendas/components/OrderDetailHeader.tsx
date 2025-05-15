@@ -152,7 +152,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             >
               {isConverting ? (
                 <>
-                  <LoadingSpinner />
+                  <LoadingSpinner size={16} />
                   <span className="ml-2">A converter...</span>
                 </>
               ) : (
