@@ -25,25 +25,33 @@ export const insertIntoTable = async (table: TableName, data: any) => {
       const counterId = table === 'orders' ? 'order' : 
                         table === 'stock_entries' ? 'entry' : 'exit';
       
-      // Call the database function to get the next formatted number
+      // Determine the year from the document date
+      let targetYear;
+      if (data.date) {
+        targetYear = new Date(data.date).getFullYear();
+      } else {
+        targetYear = new Date().getFullYear();
+      }
+      
+      // Call the database function to get the next number for that specific year
       const { data: counterData, error: counterError } = await supabase
-        .rpc('get_next_counter', { counter_id: counterId });
+        .rpc('get_next_counter_by_year', { 
+          counter_id: counterId,
+          target_year: targetYear
+        });
         
       if (counterError) {
         console.error(`Error getting next counter for ${table}:`, counterError);
         // Fallback to a timestamp-based number if needed
-        const date = new Date();
-        const year = date.getFullYear();
+        const year = targetYear;
         const timestamp = Date.now();
         // Use the correct prefix based on table type
         const prefix = table === 'orders' ? 'ENC' : 
                       table === 'stock_entries' ? 'COMP' : 'VEN';
         data.number = `${prefix}-${year}/${timestamp.toString().slice(-3)}`;
       } else {
-        // Format the number with the correct prefix
-        const prefix = table === 'orders' ? 'ENC' : 
-                      table === 'stock_entries' ? 'COMP' : 'VEN';
-        data.number = `${prefix}-${counterData}`;
+        // The counter function already returns the properly formatted number
+        data.number = counterData;
         
         // If there's a reference_old field in the schema, and we're generating a new number
         // and the data doesn't already have a reference_old value, save the old number format
