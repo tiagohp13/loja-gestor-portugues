@@ -33,7 +33,21 @@ export const useOrderSubmit = (
       // Calculate total value
       const total = orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
       
-      console.log("Submitting order with total:", total);
+      // Get the year from the order date
+      const orderYear = orderDate.getFullYear();
+      
+      // Generate order number using the counter by year function
+      const { data: orderNumber, error: numberError } = await supabase.rpc('get_next_counter_by_year', {
+        counter_id: 'order',
+        target_year: orderYear
+      });
+      
+      if (numberError) {
+        console.error("Error generating order number:", numberError);
+        throw new Error("Não foi possível gerar o número da encomenda");
+      }
+      
+      console.log("Generated order number:", orderNumber);
       
       // Create order object with all required data
       const newOrder = {
@@ -47,7 +61,8 @@ export const useOrderSubmit = (
           salePrice: item.salePrice
         })),
         notes,
-        total  // Adding total value to the order
+        total,
+        number: orderNumber
       };
       
       console.log("Order data being submitted:", JSON.stringify(newOrder));

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { ExitDetails, ExitItem } from './types';
-import { supabase, camelToSnake } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 interface UseSubmitProps {
   exitId?: string;
@@ -79,7 +79,7 @@ export const useSubmit = ({
           navigate(`/saidas/${exitId}`);
         }
       } else {
-        // Nova venda - usar a nova função que considera o ano da venda
+        // Nova venda - usar a função que considera o ano da venda
         let exitNumber;
         
         // Obter número de saída baseado no ano da data da venda, não no ano atual
