@@ -1,10 +1,9 @@
 
-import React, { useState, useCallback } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChartType } from '@/components/statistics/ChartDropdown';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageHeader from '@/components/ui/PageHeader';
-import KPIPanel, { KPI } from '@/components/statistics/KPIPanel';
+import KPIPanel from '@/components/statistics/KPIPanel';
 import { useSupportData } from './suporte/hooks/useSupportData';
 import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
@@ -14,12 +13,11 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 const Suporte = () => {
   useScrollToTop();
   const navigate = useNavigate();
-  const [chartType, setChartType] = useState<ChartType>('resumo');
   const { isLoading, stats, kpis } = useSupportData();
   
-  const navigateToProductDetail = useCallback((id: string) => {
+  const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
-  }, [navigate]);
+  };
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -36,8 +34,7 @@ const Suporte = () => {
       
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <SupportChart 
-          chartType={chartType}
-          setChartType={setChartType}
+          chartType="resumo"
           data={{
             monthlyData: stats.monthlyData,
             topProducts: stats.topProducts,
