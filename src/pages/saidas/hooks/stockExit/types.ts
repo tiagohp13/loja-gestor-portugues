@@ -1,6 +1,4 @@
 
-import { StockExitItem } from '@/types';
-
 export interface ExitDetails {
   clientId: string;
   clientName: string;
@@ -9,10 +7,19 @@ export interface ExitDetails {
   discount: number;
 }
 
+export interface ExitItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
+  discountPercent?: number;
+}
+
 export interface UseExitStateReturn {
   exitDetails: ExitDetails;
-  items: StockExitItem[];
-  currentItem: StockExitItem;
+  items: ExitItem[];
+  currentItem: ExitItem;
   searchTerm: string;
   clientSearchTerm: string;
   selectedProductDisplay: string;
@@ -21,8 +28,8 @@ export interface UseExitStateReturn {
   exitDate: Date;
   calendarOpen: boolean;
   setExitDetails: React.Dispatch<React.SetStateAction<ExitDetails>>;
-  setItems: React.Dispatch<React.SetStateAction<StockExitItem[]>>;
-  setCurrentItem: React.Dispatch<React.SetStateAction<StockExitItem>>;
+  setItems: React.Dispatch<React.SetStateAction<ExitItem[]>>;
+  setCurrentItem: React.Dispatch<React.SetStateAction<ExitItem>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setClientSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setSelectedProductDisplay: React.Dispatch<React.SetStateAction<string>>;
