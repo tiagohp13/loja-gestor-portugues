@@ -8,6 +8,7 @@ export interface ExitDetails {
 }
 
 export interface ExitItem {
+  id: string;
   productId: string;
   productName: string;
   quantity: number;

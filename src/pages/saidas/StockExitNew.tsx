@@ -9,6 +9,7 @@ import DatePicker from './components/DatePicker';
 import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
 import { toast } from '@/hooks/use-toast';
+import { ExitItem } from './hooks/stockExit/types';
 
 const StockExitNew = () => {
   const {

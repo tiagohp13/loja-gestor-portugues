@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { StockExitItem, StockExit } from '@/types';
-import { ExitDetails, UseExitStateReturn } from './types';
+import { StockExit } from '@/types';
+import { ExitDetails, ExitItem, UseExitStateReturn } from './types';
 import { useData } from '@/contexts/DataContext';
+import { v4 as uuidv4 } from 'uuid';
 
 export const useExitState = (exitId?: string): UseExitStateReturn => {
   const { stockExits } = useData();
@@ -16,9 +17,9 @@ export const useExitState = (exitId?: string): UseExitStateReturn => {
   };
   
   const [exitDetails, setExitDetails] = useState<ExitDetails>(initialExitDetails);
-  const [items, setItems] = useState<StockExitItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<StockExitItem>({
-    id: '',
+  const [items, setItems] = useState<ExitItem[]>([]);
+  const [currentItem, setCurrentItem] = useState<ExitItem>({
+    id: uuidv4(),
     productId: '',
     productName: '',
     quantity: 1,
@@ -47,7 +48,13 @@ export const useExitState = (exitId?: string): UseExitStateReturn => {
           discount: exitData.discount || 0,
         });
         
-        setItems(exitData.items || []);
+        // Ensure we have an id in each item
+        const itemsWithId = exitData.items.map(item => ({
+          ...item,
+          id: item.id || uuidv4()
+        }));
+        
+        setItems(itemsWithId);
         setExitDate(new Date(exitData.date));
       }
     }
