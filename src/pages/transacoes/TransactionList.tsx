@@ -1,220 +1,217 @@
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { formatDate } from '@/utils/formatting';
-import { TransactionItem } from '../dashboard/hooks/utils/transactionUtils';
-import { useData } from '@/contexts/DataContext';
-import { Search, ArrowLeft } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import PageHeader from '@/components/ui/PageHeader';
-import { createAllTransactions } from '../dashboard/hooks/utils/transactionUtils';
-import { ensureDate } from '../dashboard/hooks/utils/dateUtils';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { formatCurrency } from '@/utils/formatting';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ListFilter, RefreshCcw, Plus, Receipt } from 'lucide-react';
 
-const TransactionList = () => {
+// Definindo o tipo Transaction baseado na estrutura da tabela que criamos
+interface Transaction {
+  id: string;
+  date: string;
+  type: 'income' | 'expense';
+  amount: number;
+  description: string | null;
+  reference_type: string | null;
+  reference_number: string | null;
+  payment_method: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+const TransactionList: React.FC = () => {
   const navigate = useNavigate();
-  const { products, suppliers, clients, stockEntries, stockExits } = useData();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterType, setFilterType] = useState<string | null>(null);
 
-  // Create all transactions
-  const allTransactions = createAllTransactions(stockEntries, stockExits, products, suppliers, clients);
-  
-  // Sort by date (most recent first)
-  const sortedTransactions = [...allTransactions].sort((a, b) => 
-    new Date(b.date).getTime() - new Date(a.date).getTime()
-  );
+  useEffect(() => {
+    fetchTransactions();
+  }, [filterType]);
 
-  // Filter transactions based on search term
-  const filteredTransactions = sortedTransactions.filter(transaction => {
-    const productName = transaction.product?.name?.toLowerCase() || '';
-    const entityName = transaction.entity?.toLowerCase() || '';
-    
-    return productName.includes(searchTerm.toLowerCase()) || 
-           entityName.includes(searchTerm.toLowerCase());
-  });
+  const fetchTransactions = async () => {
+    setLoading(true);
+    setError(null);
 
-  // Filtered by type
-  const entryTransactions = filteredTransactions.filter(t => t.type === 'entry');
-  const exitTransactions = filteredTransactions.filter(t => t.type === 'exit');
+    try {
+      let query = supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
 
-  const handleProductClick = (productId: string) => {
-    navigate(`/produtos/${productId}`);
-  };
+      // Aplicar filtro por tipo se estiver definido
+      if (filterType) {
+        query = query.eq('type', filterType);
+      }
 
-  const handleEntityClick = (entityId: string, type: 'entry' | 'exit') => {
-    if (type === 'entry') {
-      navigate(`/fornecedores/${entityId}`);
-    } else {
-      navigate(`/clientes/${entityId}`);
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      setTransactions(data || []);
+    } catch (err: any) {
+      console.error('Erro ao buscar transações:', err.message);
+      setError('Não foi possível carregar as transações. Por favor, tente novamente.');
+      toast({
+        title: 'Erro',
+        description: 'Falha ao carregar transações',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
-  
-  const handleBackClick = () => {
-    navigate('/dashboard');
+
+  const handleFilterChange = (type: string | null) => {
+    setFilterType(type === filterType ? null : type);
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-8">
       <PageHeader
-        title="Histórico de Transações"
-        description="Lista de todas as entradas e saídas de stock"
+        title="Transações"
+        description="Gestão de movimentos financeiros"
         actions={
-          <Button variant="outline" onClick={handleBackClick}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Voltar ao Dashboard
-          </Button>
+          <>
+            <Button
+              variant="outline"
+              onClick={() => handleFilterChange('income')}
+              className={filterType === 'income' ? 'bg-green-100' : ''}
+            >
+              Entradas
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => handleFilterChange('expense')}
+              className={filterType === 'expense' ? 'bg-red-100' : ''}
+            >
+              Saídas
+            </Button>
+            <Button variant="outline" onClick={fetchTransactions}>
+              <RefreshCcw className="h-4 w-4 mr-2" />
+              Atualizar
+            </Button>
+            <Button
+              onClick={() => navigate('/transacoes/nova')}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Transação
+            </Button>
+          </>
         }
       />
 
       <Card className="mt-6">
-        <CardHeader className="pb-3">
-          <CardTitle>Todas as Transações</CardTitle>
-          <div className="relative w-full md:w-1/2 mt-4">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-            <Input
-              className="pl-10"
-              placeholder="Pesquisar por produto ou entidade..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="all">
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">Todas ({filteredTransactions.length})</TabsTrigger>
-              <TabsTrigger value="entry">Entradas ({entryTransactions.length})</TabsTrigger>
-              <TabsTrigger value="exit">Saídas ({exitTransactions.length})</TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="all">
-              <ul className="space-y-3">
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => (
-                    <li key={`${transaction.id}-${transaction.productId}`} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <div>
-                        <Button 
-                          variant="link" 
-                          className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
-                          onClick={() => transaction.product && handleProductClick(transaction.product.id)}
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-4">
+              <div className="flex items-center justify-center py-8">
+                <LoadingSpinner size={40} />
+                <span className="ml-2 text-lg">A carregar transações...</span>
+              </div>
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-12 w-full" />
+                ))}
+              </div>
+            </div>
+          ) : error ? (
+            <div className="p-8 text-center">
+              <p className="text-red-500 mb-4">{error}</p>
+              <Button variant="outline" onClick={fetchTransactions}>
+                Tentar Novamente
+              </Button>
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="p-8 text-center">
+              <Receipt className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium mb-2">Sem transações</h3>
+              <p className="text-gray-500 mb-4">
+                {filterType
+                  ? `Não existem transações do tipo ${
+                      filterType === 'income' ? 'entrada' : 'saída'
+                    }.`
+                  : 'Não existem transações registadas.'}
+              </p>
+              <Button
+                onClick={() => navigate('/transacoes/nova')}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Transação
+              </Button>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Referência</TableHead>
+                    <TableHead>Forma Pagamento</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((transaction) => (
+                    <TableRow key={transaction.id}>
+                      <TableCell>
+                        {new Date(transaction.date).toLocaleDateString('pt-PT')}
+                      </TableCell>
+                      <TableCell>{transaction.description || '-'}</TableCell>
+                      <TableCell>{transaction.reference_number || '-'}</TableCell>
+                      <TableCell>{transaction.payment_method || '-'}</TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(transaction.amount)}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            transaction.type === 'income'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}
                         >
-                          {transaction.product?.name || "Produto removido"}
-                        </Button>
-                        <div className="text-sm text-gray-500">
-                          {transaction.type === 'entry' ? 'Fornecedor' : 'Cliente'}: 
-                          <Button 
-                            variant="link" 
-                            className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
-                            onClick={() => transaction.entityId && handleEntityClick(transaction.entityId, transaction.type)}
-                          >
-                            {transaction.entity}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className={transaction.type === 'entry' ? 'text-red-500' : 'text-green-600'}>
-                          {transaction.type === 'entry' ? '+ ' : '- '}
-                          {transaction.quantity} unidades
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {formatDate(ensureDate(transaction.date))}
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-center py-6 text-gray-500">
-                    Nenhuma transação encontrada
-                  </li>
-                )}
-              </ul>
-            </TabsContent>
-
-            <TabsContent value="entry">
-              <ul className="space-y-3">
-                {entryTransactions.length > 0 ? (
-                  entryTransactions.map((transaction) => (
-                    <li key={`${transaction.id}-${transaction.productId}-entry`} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <div>
-                        <Button 
-                          variant="link" 
-                          className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
-                          onClick={() => transaction.product && handleProductClick(transaction.product.id)}
+                          {transaction.type === 'income' ? 'Entrada' : 'Saída'}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/transacoes/${transaction.id}`)}
                         >
-                          {transaction.product?.name || "Produto removido"}
+                          Detalhes
                         </Button>
-                        <div className="text-sm text-gray-500">
-                          Fornecedor: 
-                          <Button 
-                            variant="link" 
-                            className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
-                            onClick={() => transaction.entityId && handleEntityClick(transaction.entityId, 'entry')}
-                          >
-                            {transaction.entity}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-red-500">
-                          + {transaction.quantity} unidades
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {formatDate(ensureDate(transaction.date))}
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-center py-6 text-gray-500">
-                    Nenhuma entrada encontrada
-                  </li>
-                )}
-              </ul>
-            </TabsContent>
-
-            <TabsContent value="exit">
-              <ul className="space-y-3">
-                {exitTransactions.length > 0 ? (
-                  exitTransactions.map((transaction) => (
-                    <li key={`${transaction.id}-${transaction.productId}-exit`} className="flex justify-between p-3 bg-gray-50 rounded-md">
-                      <div>
-                        <Button 
-                          variant="link" 
-                          className="font-medium p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
-                          onClick={() => transaction.product && handleProductClick(transaction.product.id)}
-                        >
-                          {transaction.product?.name || "Produto removido"}
-                        </Button>
-                        <div className="text-sm text-gray-500">
-                          Cliente: 
-                          <Button 
-                            variant="link" 
-                            className="p-0 h-auto ml-1 text-gray-500 hover:text-blue-600 hover:underline transition-colors"
-                            onClick={() => transaction.entityId && handleEntityClick(transaction.entityId, 'exit')}
-                          >
-                            {transaction.entity}
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-green-600">
-                          - {transaction.quantity} unidades
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {formatDate(ensureDate(transaction.date))}
-                        </div>
-                      </div>
-                    </li>
-                  ))
-                ) : (
-                  <li className="text-center py-6 text-gray-500">
-                    Nenhuma saída encontrada
-                  </li>
-                )}
-              </ul>
-            </TabsContent>
-          </Tabs>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

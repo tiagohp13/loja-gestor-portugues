@@ -303,6 +303,7 @@ export type Database = {
           date: string
           discount: number | null
           id: string
+          migrated_at: string | null
           notes: string | null
           number: string
           reference_old: string | null
@@ -318,6 +319,7 @@ export type Database = {
           date?: string
           discount?: number | null
           id?: string
+          migrated_at?: string | null
           notes?: string | null
           number: string
           reference_old?: string | null
@@ -333,6 +335,7 @@ export type Database = {
           date?: string
           discount?: number | null
           id?: string
+          migrated_at?: string | null
           notes?: string | null
           number?: string
           reference_old?: string | null
@@ -451,6 +454,7 @@ export type Database = {
           date: string
           id: string
           invoice_number: string | null
+          migrated_at: string | null
           notes: string | null
           number: string
           reference_old: string | null
@@ -464,6 +468,7 @@ export type Database = {
           date?: string
           id?: string
           invoice_number?: string | null
+          migrated_at?: string | null
           notes?: string | null
           number: string
           reference_old?: string | null
@@ -477,6 +482,7 @@ export type Database = {
           date?: string
           id?: string
           invoice_number?: string | null
+          migrated_at?: string | null
           notes?: string | null
           number?: string
           reference_old?: string | null
@@ -608,6 +614,7 @@ export type Database = {
           from_order_number: string | null
           id: string
           invoice_number: string | null
+          migrated_at: string | null
           notes: string | null
           number: string
           reference_old: string | null
@@ -624,6 +631,7 @@ export type Database = {
           from_order_number?: string | null
           id?: string
           invoice_number?: string | null
+          migrated_at?: string | null
           notes?: string | null
           number: string
           reference_old?: string | null
@@ -640,6 +648,7 @@ export type Database = {
           from_order_number?: string | null
           id?: string
           invoice_number?: string | null
+          migrated_at?: string | null
           notes?: string | null
           number?: string
           reference_old?: string | null
@@ -874,6 +883,54 @@ export type Database = {
         }
         Relationships: []
       }
+      transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          date: string
+          description: string | null
+          id: string
+          notes: string | null
+          payment_method: string | null
+          reference_id: string | null
+          reference_number: string | null
+          reference_type: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          reference_id?: string | null
+          reference_number?: string | null
+          reference_type?: string | null
+          type: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          date?: string
+          description?: string | null
+          id?: string
+          notes?: string | null
+          payment_method?: string | null
+          reference_id?: string | null
+          reference_number?: string | null
+          reference_type?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           created_at: string
@@ -1007,6 +1064,10 @@ export type Database = {
       }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      table_exists: {
+        Args: { schema_name: string; table_name: string }
         Returns: boolean
       }
     }
