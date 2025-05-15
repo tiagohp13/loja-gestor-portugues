@@ -18,7 +18,7 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Vendas e Compras (últimos 6 meses)</CardTitle>
+        <CardTitle>Resumo Financeiro</CardTitle>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={400}>

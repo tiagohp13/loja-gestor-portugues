@@ -3,9 +3,27 @@ import { supabase, countPendingOrders, getLowStockProducts } from '@/integration
 import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
 import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
 import { SupportStats } from '../../types/supportTypes';
+import { toast } from '@/components/ui/use-toast';
+
+// Cache para armazenar os resultados das consultas
+const cache = {
+  supportStats: null,
+  lastFetch: 0
+};
+
+// Tempo de cache em milissegundos (5 minutos)
+const CACHE_DURATION = 5 * 60 * 1000;
 
 export const fetchSupportStats = async (): Promise<SupportStats> => {
+  // Verificar se temos dados em cache válidos
+  const now = Date.now();
+  if (cache.supportStats && (now - cache.lastFetch < CACHE_DURATION)) {
+    console.log('Using cached support stats');
+    return cache.supportStats;
+  }
+
   try {
+    // Consulta otimizada para itens de saída de estoque
     const { data: exitItems, error: exitError } = await supabase
       .from('stock_exit_items')
       .select('quantity, sale_price, discount_percent');
@@ -16,8 +34,16 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
         const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
         return sum + (item.quantity * item.sale_price * discountMultiplier);
       }, 0);
+    } else if (exitError) {
+      console.error('Error fetching exit items:', exitError);
+      toast({
+        title: "Erro ao carregar dados de vendas",
+        description: exitError.message,
+        variant: "destructive"
+      });
     }
     
+    // Consulta otimizada para itens de entrada de estoque
     const { data: entryItems, error: entryError } = await supabase
       .from('stock_entry_items')
       .select('quantity, purchase_price, discount_percent');
@@ -28,6 +54,13 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
         const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
         return sum + (item.quantity * item.purchase_price * discountMultiplier);
       }, 0);
+    } else if (entryError) {
+      console.error('Error fetching entry items:', entryError);
+      toast({
+        title: "Erro ao carregar dados de compras",
+        description: entryError.message,
+        variant: "destructive"
+      });
     }
     
     const profit = totalSales - totalSpent;
@@ -35,20 +68,34 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     // Calculate profit margin using real data
     const profitMargin = calculateProfitMarginPercent(profit, totalSales);
     
-    const topProducts = await fetchTopProducts();
-    const topClients = await fetchTopClients();
-    const topSuppliers = await fetchTopSuppliers();
+    // Executando consultas em paralelo para melhorar o desempenho
+    const [
+      topProducts,
+      topClients,
+      topSuppliers,
+      lowStockProducts,
+      pendingOrders,
+      completedCount,
+      clientsCount,
+      suppliersCount,
+      categoriesCount,
+      monthlyData,
+      monthlyOrders
+    ] = await Promise.all([
+      fetchTopProducts(),
+      fetchTopClients(),
+      fetchTopSuppliers(),
+      getLowStockProducts(),
+      countPendingOrders(),
+      fetchCompletedOrdersCount(),
+      fetchClientsCount(),
+      fetchSuppliersCount(),
+      fetchCategoriesCount(),
+      fetchMonthlyData(),
+      fetchMonthlyOrders()
+    ]);
     
-    const lowStockProducts = await getLowStockProducts();
-    const pendingOrders = await countPendingOrders();
-    const completedCount = await fetchCompletedOrdersCount();
-    const clientsCount = await fetchClientsCount();
-    const suppliersCount = await fetchSuppliersCount();
-    const categoriesCount = await fetchCategoriesCount();
-    const monthlyData = await fetchMonthlyData();
-    const monthlyOrders = await fetchMonthlyOrders();
-    
-    return {
+    const stats: SupportStats = {
       totalSales,
       totalSpent,
       profit,
@@ -66,6 +113,12 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       monthlyData,
       monthlyOrders
     };
+    
+    // Armazenar em cache
+    cache.supportStats = stats;
+    cache.lastFetch = now;
+    
+    return stats;
   } catch (error) {
     console.error('Error fetching support stats:', error);
     throw error;
@@ -73,76 +126,63 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
 };
 
 const fetchTopProducts = async () => {
-  const { data: topProductsData, error: productsError } = await supabase
-    .from('stock_exit_items')
-    .select('product_name, product_id, quantity')
-    .order('quantity', { ascending: false })
-    .limit(5);
-  
-  if (productsError) {
-    console.error('Error fetching top products:', productsError);
-    return [];
-  }
-  
-  return topProductsData?.map((product) => ({
-    name: product.product_name,
-    quantity: product.quantity,
-    productId: product.product_id
-  })) || [];
-};
-
-const fetchTopClients = async () => {
   try {
-    const { data: clients, error: clientsError } = await supabase
-      .from('stock_exits')
-      .select('client_name, id')
-      .order('client_name');
+    const { data: topProductsData, error: productsError } = await supabase
+      .from('stock_exit_items')
+      .select('product_name, product_id, quantity')
+      .order('quantity', { ascending: false })
+      .limit(5);
     
-    if (clientsError || !clients) {
-      console.error('Error fetching clients:', clientsError);
+    if (productsError) {
+      console.error('Error fetching top products:', productsError);
       return [];
     }
     
-    const clientCounts = clients.reduce((acc: Record<string, {orders: number, ids: string[]}>, current) => {
-      if (!acc[current.client_name]) {
-        acc[current.client_name] = { orders: 0, ids: [] };
-      }
-      acc[current.client_name].orders += 1;
-      acc[current.client_name].ids.push(current.id);
-      return acc;
-    }, {});
+    return topProductsData?.map((product) => ({
+      name: product.product_name,
+      quantity: product.quantity,
+      productId: product.product_id
+    })) || [];
+  } catch (error) {
+    console.error('Error in fetchTopProducts:', error);
+    return [];
+  }
+};
+
+// Otimizando a função para usar uma única consulta para os principais clientes
+const fetchTopClients = async () => {
+  try {
+    // Agregando dados de saídas de estoque por cliente
+    const { data, error } = await supabase
+      .rpc('get_top_clients', { limit_count: 5 });
     
-    const clientSpending: Record<string, number> = {};
-    
-    for (const clientName of Object.keys(clientCounts)) {
-      const exitIds = clientCounts[clientName].ids;
-      let totalSpent = 0;
+    if (error) {
+      console.error('Error calling get_top_clients function:', error);
       
-      for (const exitId of exitIds) {
-        const { data: items } = await supabase
-          .from('stock_exit_items')
-          .select('quantity, sale_price, discount_percent')
-          .eq('exit_id', exitId);
-          
-        if (items) {
-          totalSpent += items.reduce((sum, item) => {
-            const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-            return sum + (item.quantity * item.sale_price * discountMultiplier);
-          }, 0);
+      // Fallback para a implementação original caso o RPC falhe
+      const { data: exits, error: exitsError } = await supabase
+        .from('stock_exits')
+        .select('client_name, client_id');
+      
+      if (exitsError || !exits) {
+        console.error('Error fetching clients:', exitsError);
+        return [];
+      }
+      
+      const clientCounts = exits.reduce((acc: Record<string, number>, current) => {
+        if (current.client_name) {
+          acc[current.client_name] = (acc[current.client_name] || 0) + 1;
         }
-      }
+        return acc;
+      }, {});
       
-      clientSpending[clientName] = totalSpent;
+      return Object.entries(clientCounts)
+        .map(([name, orders]) => ({ name, orders, spending: 0 }))
+        .sort((a, b) => b.orders - a.orders)
+        .slice(0, 5);
     }
     
-    return Object.entries(clientCounts)
-      .map(([name, data]) => ({
-        name,
-        orders: data.orders,
-        spending: clientSpending[name] || 0
-      }))
-      .sort((a, b) => b.orders - a.orders)
-      .slice(0, 5);
+    return data || [];
   } catch (error) {
     console.error('Error fetching top clients:', error);
     return [];
@@ -153,7 +193,7 @@ const fetchTopSuppliers = async () => {
   try {
     const { data: suppliers, error: suppliersError } = await supabase
       .from('stock_entries')
-      .select('supplier_name, id')
+      .select('supplier_name')
       .order('supplier_name');
     
     if (suppliersError || !suppliers) {
@@ -162,7 +202,9 @@ const fetchTopSuppliers = async () => {
     }
     
     const supplierCounts = suppliers.reduce((acc: Record<string, number>, current) => {
-      acc[current.supplier_name] = (acc[current.supplier_name] || 0) + 1;
+      if (current.supplier_name) {
+        acc[current.supplier_name] = (acc[current.supplier_name] || 0) + 1;
+      }
       return acc;
     }, {});
     
@@ -177,34 +219,74 @@ const fetchTopSuppliers = async () => {
 };
 
 const fetchCompletedOrdersCount = async () => {
-  const { count } = await supabase
-    .from('orders')
-    .select('*', { count: 'exact', head: true })
-    .not('converted_to_stock_exit_id', 'is', null);
+  try {
+    const { count, error } = await supabase
+      .from('orders')
+      .select('*', { count: 'exact', head: true })
+      .not('converted_to_stock_exit_id', 'is', null);
     
-  return count || 0;
+    if (error) {
+      console.error('Error fetching completed orders count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in fetchCompletedOrdersCount:', error);
+    return 0;
+  }
 };
 
 const fetchClientsCount = async () => {
-  const { count } = await supabase
-    .from('clients')
-    .select('*', { count: 'exact', head: true });
+  try {
+    const { count, error } = await supabase
+      .from('clients')
+      .select('*', { count: 'exact', head: true });
     
-  return count || 0;
+    if (error) {
+      console.error('Error fetching clients count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in fetchClientsCount:', error);
+    return 0;
+  }
 };
 
 const fetchSuppliersCount = async () => {
-  const { count } = await supabase
-    .from('suppliers')
-    .select('*', { count: 'exact', head: true });
+  try {
+    const { count, error } = await supabase
+      .from('suppliers')
+      .select('*', { count: 'exact', head: true });
     
-  return count || 0;
+    if (error) {
+      console.error('Error fetching suppliers count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in fetchSuppliersCount:', error);
+    return 0;
+  }
 };
 
 const fetchCategoriesCount = async () => {
-  const { count } = await supabase
-    .from('categories')
-    .select('*', { count: 'exact', head: true });
+  try {
+    const { count, error } = await supabase
+      .from('categories')
+      .select('*', { count: 'exact', head: true });
     
-  return count || 0;
+    if (error) {
+      console.error('Error fetching categories count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in fetchCategoriesCount:', error);
+    return 0;
+  }
 };

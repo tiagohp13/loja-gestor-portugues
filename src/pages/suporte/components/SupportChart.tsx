@@ -32,7 +32,7 @@ const SupportChart: React.FC<SupportChartProps> = ({
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          Resumo Financeiro (6 meses)
+          Resumo Financeiro
         </CardTitle>
         <CardDescription>Comparação entre vendas, gastos e lucro dos últimos 6 meses</CardDescription>
       </CardHeader>
