@@ -958,7 +958,7 @@ export type Database = {
     }
     Functions: {
       generate_padded_sequence: {
-        Args: { items: Json; prefix: string }
+        Args: { items: Json; prefix: string } | { items: Json; prefix?: string }
         Returns: {
           id: string
           new_number: string
@@ -966,6 +966,10 @@ export type Database = {
       }
       get_next_counter: {
         Args: { counter_id: string }
+        Returns: string
+      }
+      get_next_counter_by_year: {
+        Args: { counter_id: string; target_year: number }
         Returns: string
       }
       get_order_items: {
