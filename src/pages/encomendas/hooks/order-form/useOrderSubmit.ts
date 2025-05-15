@@ -51,6 +51,10 @@ export const useOrderSubmit = (
       // Submit the order
       const savedOrder = await addOrder(newOrder);
       
+      if (!savedOrder || !savedOrder.id) {
+        throw new Error("A criação da encomenda falhou");
+      }
+      
       // Show success message
       toast({
         title: "Sucesso",
@@ -66,7 +70,7 @@ export const useOrderSubmit = (
         description: "Erro ao guardar a encomenda: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
-    } finally {
+      // Make sure we're not redirecting on error and isSubmitting is reset
       setIsSubmitting(false);
     }
   };

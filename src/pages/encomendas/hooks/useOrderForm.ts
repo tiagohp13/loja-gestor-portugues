@@ -68,7 +68,7 @@ export const useOrderForm = () => {
     baseHandleAddProduct(currentProduct, currentQuantity);
   };
   
-  // Submission - passing the addOrder function without type casting
+  // Submission
   const { handleSaveOrder } = useOrderSubmit(
     addOrder,
     selectedClientId,

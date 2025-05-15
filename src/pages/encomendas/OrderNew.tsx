@@ -51,7 +51,8 @@ const OrderNew = () => {
   } = useOrderForm();
   
   // Calculate order validity for button disabling
-  const isOrderInvalid = !selectedClientId || orderItems.length === 0;
+  const isOrderInvalid = !selectedClientId || orderItems.length === 0 || 
+    orderItems.some(item => !item.quantity || item.quantity <= 0 || !item.salePrice || item.salePrice <= 0);
   
   return (
     <div className="container mx-auto px-4 py-6">

@@ -1,10 +1,10 @@
-
 import * as React from "react";
 import {
   ToastActionElement,
+  ToastProps,
 } from "@/components/ui/toast";
 
-const TOAST_LIMIT = 20;
+const TOAST_LIMIT = 5;
 const TOAST_REMOVE_DELAY = 1000000;
 
 // Define base toast props to avoid circular references
@@ -22,7 +22,12 @@ interface BaseToastProps {
 type ToastBaseProps = React.ComponentPropsWithoutRef<typeof import("@/components/ui/toast").Toast>;
 
 // Combine the types
-type ToasterToast = BaseToastProps;
+type ToasterToast = ToastProps & {
+  id: string;
+  title?: React.ReactNode;
+  description?: React.ReactNode;
+  action?: ToastActionElement;
+};
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -34,7 +39,7 @@ const actionTypes = {
 let count = 0;
 
 function genId() {
-  count = (count + 1) % Number.MAX_VALUE;
+  count = (count + 1) % Number.MAX_SAFE_INTEGER;
   return count.toString();
 }
 
@@ -51,11 +56,11 @@ type Action =
     }
   | {
       type: ActionType["DISMISS_TOAST"];
-      toastId?: string;
+      toastId?: ToasterToast["id"];
     }
   | {
       type: ActionType["REMOVE_TOAST"];
-      toastId?: string;
+      toastId?: ToasterToast["id"];
     };
 
 interface State {
@@ -147,9 +152,9 @@ function dispatch(action: Action) {
 }
 
 // Create a new type for the toast function arguments
-type ToastInputProps = Omit<BaseToastProps, "id">;
+type Toast = Omit<ToasterToast, "id">;
 
-function toast(props: ToastInputProps) {
+function toast({ ...props }: Toast) {
   const id = genId();
 
   const update = (props: ToasterToast) =>
