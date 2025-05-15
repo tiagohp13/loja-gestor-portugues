@@ -1,6 +1,6 @@
 
 import { OrderItem } from './types';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 
 export const useOrderValidation = () => {
   const validateOrder = (
