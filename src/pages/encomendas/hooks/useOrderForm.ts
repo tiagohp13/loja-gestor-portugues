@@ -70,7 +70,8 @@ export const useOrderForm = () => {
   
   // Submission
   const { handleSaveOrder } = useOrderSubmit(
-    addOrder,
+    // Use type assertion to match the expected function signature
+    addOrder as (order: any) => Promise<void>,
     selectedClientId,
     selectedClient,
     orderDate,

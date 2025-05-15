@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { OrderFormState } from './types';
+import { OrderFormState, OrderItem } from './types';
 
 export const useOrderFormState = (): OrderFormState => {
   const [selectedClientId, setSelectedClientId] = useState<string>('');
