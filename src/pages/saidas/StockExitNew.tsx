@@ -8,6 +8,7 @@ import ClientSelector from './components/ClientSelector';
 import DatePicker from './components/DatePicker';
 import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
+import { toast } from '@/hooks/use-toast';
 
 const StockExitNew = () => {
   const {
@@ -42,17 +43,11 @@ const StockExitNew = () => {
     filteredClients,
     handleSubmit,
     selectedClient,
-    selectedProduct, // Usando o produto selecionado
+    selectedProduct,
     products,
     navigate,
-    isSubmitting // Adicionado caso esteja disponível no hook
+    isSubmitting
   } = useStockExit();
-
-  // Adiciona console.log para debug dos dados críticos
-  console.log('Selected Client:', selectedClient);
-  console.log('Selected Product:', selectedProduct);
-  console.log('Current Item:', currentItem);
-  console.log('Exit Details:', exitDetails);
 
   return (
     <div className="container mx-auto px-4 py-6">
