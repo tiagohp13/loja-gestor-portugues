@@ -4,9 +4,11 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { OrderItem } from './types';
 import { useOrderValidation } from './useOrderValidation';
+import { Order } from '@/types';
 
+// Updated the addOrder parameter type to match what's provided from DataContext
 export const useOrderSubmit = (
-  addOrder: (order: any) => Promise<void>,
+  addOrder: (order: any) => Promise<Order>,
   selectedClientId: string,
   selectedClient: any,
   orderDate: Date,

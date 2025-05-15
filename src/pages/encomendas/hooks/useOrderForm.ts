@@ -68,10 +68,9 @@ export const useOrderForm = () => {
     baseHandleAddProduct(currentProduct, currentQuantity);
   };
   
-  // Submission
+  // Submission - passing the addOrder function without type casting
   const { handleSaveOrder } = useOrderSubmit(
-    // Use type assertion to match the expected function signature
-    addOrder as (order: any) => Promise<void>,
+    addOrder,
     selectedClientId,
     selectedClient,
     orderDate,
