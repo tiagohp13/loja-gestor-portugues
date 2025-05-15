@@ -19,19 +19,22 @@ import { formatCurrency } from '@/utils/formatting';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ListFilter, RefreshCcw, Plus, Receipt } from 'lucide-react';
 
-// Definindo o tipo Transaction baseado na estrutura da tabela que criamos
+// Alteramos a interface para aceitar string no type e adicionamos user_id
+// que vem do banco de dados mas estava faltando na interface
 interface Transaction {
   id: string;
   date: string;
-  type: 'income' | 'expense';
+  type: string; // Mudamos de 'income' | 'expense' para string
   amount: number;
   description: string | null;
   reference_type: string | null;
+  reference_id: string | null;
   reference_number: string | null;
   payment_method: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
+  user_id: string;
 }
 
 const TransactionList: React.FC = () => {
@@ -82,6 +85,11 @@ const TransactionList: React.FC = () => {
 
   const handleFilterChange = (type: string | null) => {
     setFilterType(type === filterType ? null : type);
+  };
+
+  // Função helper para verificar se o tipo é válido
+  const isValidType = (type: string): boolean => {
+    return type === 'income' || type === 'expense';
   };
 
   return (
