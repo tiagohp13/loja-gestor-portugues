@@ -1,3 +1,4 @@
+
 import * as React from "react";
 import {
   Toast,
@@ -11,7 +12,7 @@ import {
 } from "@/components/ui/toast";
 
 const TOAST_LIMIT = 5;
-const TOAST_REMOVE_DELAY = 1000000;
+const TOAST_REMOVE_DELAY = 5000; // Adjusted to 5 seconds for better UX
 
 type ToasterToast = ToastProps & {
   id: string;
@@ -79,8 +80,6 @@ const reducer = (state: State, action: Action): State => {
     case actionTypes.DISMISS_TOAST: {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() function,
-      // but I'll keep it here for simplicity
       if (toastId) {
         setToastTimeout(toastId);
       } else {

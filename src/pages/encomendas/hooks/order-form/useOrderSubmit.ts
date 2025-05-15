@@ -33,6 +33,8 @@ export const useOrderSubmit = (
       // Calculate total value
       const total = orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
       
+      console.log("Submitting order with total:", total);
+      
       // Create order object with all required data
       const newOrder = {
         clientId: selectedClientId,
@@ -48,21 +50,23 @@ export const useOrderSubmit = (
         total  // Adding total value to the order
       };
       
-      // Use a transaction to ensure all operations succeed or fail together
-      let savedOrder = null;
+      console.log("Order data being submitted:", JSON.stringify(newOrder));
       
       // Submit the order using the provided addOrder function
       try {
-        savedOrder = await addOrder(newOrder);
+        const savedOrder = await addOrder(newOrder);
         
         if (!savedOrder || !savedOrder.id) {
           throw new Error("A criação da encomenda falhou");
         }
         
+        console.log("Order saved successfully:", savedOrder);
+        
         // Show success message
         toast({
           title: "Sucesso",
-          description: `Encomenda ${savedOrder.number || ''} guardada com sucesso`
+          description: `Encomenda ${savedOrder.number || ''} guardada com sucesso`,
+          variant: "default"
         });
         
         // Navigate back to order list

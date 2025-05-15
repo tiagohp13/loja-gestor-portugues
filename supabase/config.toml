@@ -4,3 +4,4 @@ project_id = "ptkqosrcopnsclgyrjqh"
 [api]
   # Enable additional logging for RLS and SQL errors
   debug_logging = true
+  enable_rls_debug = true

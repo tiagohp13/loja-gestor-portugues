@@ -24,6 +24,16 @@ export const useOrderValidation = () => {
       };
     }
     
+    // Check if date is valid (not in the future)
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    if (orderDate > today) {
+      return {
+        valid: false,
+        message: "A data da encomenda não pode ser no futuro"
+      };
+    }
+    
     // Verify at least one product is added
     if (orderItems.length === 0) {
       return {

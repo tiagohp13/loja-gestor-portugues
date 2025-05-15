@@ -104,6 +104,7 @@ export const updateTable = async (table: TableName, id: string, data: any) => {
 
 /**
  * Batch save (insert or update) records to a table
+ * and ensure user_id is properly set for RLS
  */
 export const batchSaveToTable = async (table: TableName, records: any[]) => {
   try {
