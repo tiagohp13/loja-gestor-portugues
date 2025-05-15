@@ -23,7 +23,7 @@ export const insertIntoTable = async (table: TableName, data: any) => {
     if (table === 'orders' || table === 'stock_entries' || table === 'stock_exits') {
       // Get the counter ID based on the table name
       const counterId = table === 'orders' ? 'order' : 
-                        table === 'stock_entries' ? 'stock_entry' : 'stock_exit';
+                        table === 'stock_entries' ? 'entry' : 'exit';
       
       // Call the database function to get the next formatted number
       const { data: counterData, error: counterError } = await supabase
@@ -35,6 +35,7 @@ export const insertIntoTable = async (table: TableName, data: any) => {
         const date = new Date();
         const year = date.getFullYear();
         const timestamp = Date.now();
+        // Use the correct prefix based on table type
         const prefix = table === 'orders' ? 'ENC' : 
                       table === 'stock_entries' ? 'COMP' : 'VEN';
         data.number = `${prefix}-${year}/${timestamp.toString().slice(-3)}`;
