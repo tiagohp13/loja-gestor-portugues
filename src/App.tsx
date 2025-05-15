@@ -1,3 +1,4 @@
+
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -41,7 +42,6 @@ import OrderList from './pages/encomendas/OrderList';
 import OrderDetail from './pages/encomendas/OrderDetail';
 import OrderNew from './pages/encomendas/OrderNew';
 import OrderEdit from './pages/encomendas/OrderEdit';
-import OrderConverting from './pages/encomendas/OrderConverting';
 
 // Purchases (Previously Stock Entries)
 import StockEntryList from './pages/entradas/StockEntryList';
@@ -121,7 +121,6 @@ function App() {
                   <Route path="/encomendas/nova" element={<OrderNew />} />
                   <Route path="/encomendas/:id" element={<OrderDetail />} />
                   <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
-                  <Route path="/encomendas/converter/:id" element={<OrderConverting />} />
                   
                   <Route path="/entradas/historico" element={<StockEntryList />} />
                   <Route path="/entradas/nova" element={<StockEntryNew />} />
