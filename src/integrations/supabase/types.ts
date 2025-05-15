@@ -957,6 +957,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_padded_sequence: {
+        Args: { items: Json; prefix: string }
+        Returns: {
+          id: string
+          new_number: string
+        }[]
+      }
       get_next_counter: {
         Args: { counter_id: string }
         Returns: string

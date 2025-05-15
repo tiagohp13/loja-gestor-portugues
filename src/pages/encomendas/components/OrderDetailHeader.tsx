@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -141,10 +140,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             </DialogDescription>
           </DialogHeader>
           
-          <DialogFooter className="mt-4 flex flex-row-reverse justify-between sm:justify-between">
-            <Button variant="outline" onClick={() => setIsConvertDialogOpen(false)}>
-              Não
-            </Button>
+          <DialogFooter className="mt-4 flex justify-between sm:justify-between">
             <Button 
               className="bg-blue-500 hover:bg-blue-600" 
               onClick={handleConvertToStockExit}
@@ -158,6 +154,10 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               ) : (
                 <>Sim</>
               )}
+            </Button>
+            
+            <Button variant="outline" onClick={() => setIsConvertDialogOpen(false)}>
+              Não
             </Button>
           </DialogFooter>
         </DialogContent>
