@@ -80,6 +80,15 @@ export const useOrderForm = () => {
       });
       return;
     }
+
+    if (currentProduct.salePrice <= 0) {
+      toast({
+        title: "Erro",
+        description: "O produto deve ter um preço de venda válido",
+        variant: "destructive"
+      });
+      return;
+    }
     
     const existingItemIndex = orderItems.findIndex(item => item.productId === currentProduct.id);
     
@@ -116,20 +125,53 @@ export const useOrderForm = () => {
     return orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
   };
   
-  const handleSaveOrder = async () => {
+  const validateOrder = (): { valid: boolean; message?: string } => {
     if (!selectedClientId) {
-      toast({
-        title: "Erro",
-        description: "Selecione um cliente para a encomenda",
-        variant: "destructive"
-      });
-      return;
+      return {
+        valid: false,
+        message: "Selecione um cliente para a encomenda"
+      };
     }
     
     if (orderItems.length === 0) {
+      return {
+        valid: false,
+        message: "Adicione pelo menos um produto à encomenda"
+      };
+    }
+    
+    // Check if all products have valid quantities and prices
+    for (const item of orderItems) {
+      if (item.quantity <= 0) {
+        return {
+          valid: false,
+          message: `Produto "${item.productName}" tem quantidade inválida`
+        };
+      }
+      
+      if (item.salePrice <= 0) {
+        return {
+          valid: false,
+          message: `Produto "${item.productName}" tem preço inválido`
+        };
+      }
+    }
+    
+    return { valid: true };
+  };
+  
+  const handleSaveOrder = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting) {
+      return;
+    }
+    
+    // Validate the order
+    const validation = validateOrder();
+    if (!validation.valid) {
       toast({
         title: "Erro",
-        description: "Adicione pelo menos um produto à encomenda",
+        description: validation.message,
         variant: "destructive"
       });
       return;

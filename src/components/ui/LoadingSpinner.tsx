@@ -6,17 +6,13 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 12, className }) => {
-  const spinnerSize = size || 12;
-  
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 16, className = '' }) => {
   return (
-    <div className={`flex items-center justify-center ${className || ''}`}>
-      <div className="flex flex-col items-center">
-        <div 
-          className="border-t-4 border-b-4 border-blue-500 rounded-full animate-spin"
-          style={{ width: `${spinnerSize}px`, height: `${spinnerSize}px` }}
-        ></div>
-      </div>
+    <div className={`inline-flex ${className}`}>
+      <div 
+        className="border-t-4 border-b-4 border-blue-500 rounded-full animate-spin"
+        style={{ width: `${size}px`, height: `${size}px` }}
+      ></div>
     </div>
   );
 };
