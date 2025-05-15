@@ -141,7 +141,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             </DialogDescription>
           </DialogHeader>
           
-          <DialogFooter className="mt-4 flex justify-between sm:justify-between">
+          <DialogFooter className="mt-4 flex flex-row-reverse justify-between sm:justify-between">
             <Button variant="outline" onClick={() => setIsConvertDialogOpen(false)}>
               Não
             </Button>
