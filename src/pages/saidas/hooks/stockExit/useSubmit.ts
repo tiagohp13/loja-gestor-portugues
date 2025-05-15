@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { ExitDetails, ExitItem } from './types';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase, camelToSnake } from '@/integrations/supabase/client';
 
 interface UseSubmitProps {
   exitId?: string;

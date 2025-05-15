@@ -6,7 +6,6 @@ import { useHandlers } from './stockExit/useHandlers';
 import { useCalculations } from './stockExit/useCalculations';
 import { useSubmit } from './stockExit/useSubmit';
 import { StockExit } from '@/types';
-import { ExitItem } from './stockExit/types';
 
 export const useStockExit = (exitId?: string) => {
   const { clients, products, addStockExit, updateStockExit } = useData();
@@ -30,11 +29,10 @@ export const useStockExit = (exitId?: string) => {
     setIsProductSearchOpen: state.setIsProductSearchOpen,
     setClientSearchTerm: state.setClientSearchTerm,
     setIsClientSearchOpen: state.setIsClientSearchOpen,
-    products,
-    clients
+    products, // Passamos a lista de produtos
+    clients   // Passamos a lista de clientes
   });
   
-  // Make sure we're passing items from state correctly to the calculations hook
   const calculations = useCalculations(state.items);
   
   // Here we ensure that addStockExit and updateStockExit match the types expected by useSubmit
@@ -67,8 +65,8 @@ export const useStockExit = (exitId?: string) => {
     ...calculations,
     ...submit,
     selectedClient,
-    selectedProduct,
+    selectedProduct, // Adicionado produto selecionado
     products,
-    clients
+    clients // Expor a lista completa de clientes
   };
 };
