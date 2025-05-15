@@ -40,10 +40,18 @@ export const insertIntoTable = async (table: TableName, data: any) => {
                       table === 'stock_entries' ? 'COMP' : 'VEN';
         data.number = `${prefix}-${year}/${timestamp.toString().slice(-3)}`;
       } else {
-        // Use the formatted number from the counter with proper prefix
+        // Format the number with the correct prefix
         const prefix = table === 'orders' ? 'ENC' : 
                       table === 'stock_entries' ? 'COMP' : 'VEN';
         data.number = `${prefix}-${counterData}`;
+        
+        // If there's a reference_old field in the schema, and we're generating a new number
+        // and the data doesn't already have a reference_old value, save the old number format
+        // if it exists in the data object
+        if (data.number && !data.reference_old && data.reference) {
+          data.reference_old = data.reference;
+          delete data.reference; // Remove the old reference field
+        }
       }
     }
     
