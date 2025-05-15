@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
@@ -13,11 +12,13 @@ export const useStockExitDetail = () => {
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
 
-  // Function to clean notes from the English "Converted from order" text
+  // Função para limpar notas da frase em inglês "Converted from order"
   const cleanNotes = (notes: string | undefined): string => {
     if (!notes) return '';
-    // Remove the English text "Converted from order X" if present
-    return notes.replace(/Converted from order \d+\/\d+\s*/g, '');
+    
+    // Remove o texto em inglês "Converted from order X" se presente
+    // Este padrão irá capturar variações como "Converted from order ENC-2025/001"
+    return notes.replace(/Converted from order .+?\s*/g, '');
   };
 
   useEffect(() => {
