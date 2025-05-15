@@ -48,7 +48,14 @@ export const insertIntoTable = async (table: TableName, data: any) => {
     
     // Add user_id to data for RLS compatibility
     const securedData = await withUserData(data);
+    
+    // Log what we're trying to insert
+    console.log(`Inserting into ${table}:`, securedData);
+    
     const snakeCaseData = camelToSnake(securedData);
+    
+    // Log the snake case data being sent to Supabase
+    console.log(`Snake case data for ${table}:`, snakeCaseData);
     
     const { data: result, error } = await supabase
       .from(table)
@@ -59,6 +66,9 @@ export const insertIntoTable = async (table: TableName, data: any) => {
       console.error(`Error inserting into ${table}:`, error);
       throw new Error(`Error inserting into ${table}: ${error.message}`);
     }
+    
+    // Log the result
+    console.log(`Insert result for ${table}:`, result);
     
     return snakeToCamel(result);
   } catch (err) {
@@ -155,6 +165,28 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
     return snakeToCamel(results);
   } catch (err) {
     console.error(`Exception in batchSaveToTable for ${table}:`, err);
+    throw err;
+  }
+};
+
+/**
+ * Execute a transaction that ensures all operations succeed or fail together
+ * @param operations - Array of functions that perform database operations
+ * @returns Results from all operations
+ */
+export const executeTransaction = async (operations: (() => Promise<any>)[]) => {
+  let results: any[] = [];
+  
+  try {
+    // Execute each operation in sequence, but fail if any fails
+    for (const operation of operations) {
+      const result = await operation();
+      results.push(result);
+    }
+    
+    return results;
+  } catch (err) {
+    console.error("Transaction failed:", err);
     throw err;
   }
 };

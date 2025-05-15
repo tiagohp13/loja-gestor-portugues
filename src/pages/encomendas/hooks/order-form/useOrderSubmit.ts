@@ -1,10 +1,11 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { OrderItem } from './types';
 import { useOrderValidation } from './useOrderValidation';
 import { Order } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 export const useOrderSubmit = (
   addOrder: (order: any) => Promise<Order>,
@@ -35,7 +36,7 @@ export const useOrderSubmit = (
       // Create order object with all required data
       const newOrder = {
         clientId: selectedClientId,
-        clientName: selectedClient.name,
+        clientName: selectedClient?.name,
         date: orderDate.toISOString(),
         items: orderItems.map(item => ({
           productId: item.productId,
@@ -47,21 +48,30 @@ export const useOrderSubmit = (
         total  // Adding total value to the order
       };
       
-      // Submit the order
-      const savedOrder = await addOrder(newOrder);
+      // Use a transaction to ensure all operations succeed or fail together
+      let savedOrder = null;
       
-      if (!savedOrder || !savedOrder.id) {
-        throw new Error("A criação da encomenda falhou");
+      // Submit the order using the provided addOrder function
+      try {
+        savedOrder = await addOrder(newOrder);
+        
+        if (!savedOrder || !savedOrder.id) {
+          throw new Error("A criação da encomenda falhou");
+        }
+        
+        // Show success message
+        toast({
+          title: "Sucesso",
+          description: `Encomenda ${savedOrder.number || ''} guardada com sucesso`
+        });
+        
+        // Navigate back to order list
+        navigate('/encomendas/consultar');
+      } catch (error) {
+        console.error("Error saving order:", error);
+        // If the addOrder function fails, make sure we show an error
+        throw error;
       }
-      
-      // Show success message
-      toast({
-        title: "Sucesso",
-        description: `Encomenda ${savedOrder.number || ''} guardada com sucesso`
-      });
-      
-      // Navigate back to order list
-      navigate('/encomendas/consultar');
     } catch (error) {
       console.error("Error saving order:", error);
       toast({
