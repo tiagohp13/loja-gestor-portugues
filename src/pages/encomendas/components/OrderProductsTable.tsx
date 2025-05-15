@@ -3,7 +3,7 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
-import { OrderItem } from '../hooks/useOrderForm';
+import { OrderItem } from '../hooks/order-form/types';
 
 interface OrderProductsTableProps {
   orderItems: OrderItem[];
