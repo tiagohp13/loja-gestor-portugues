@@ -22,6 +22,7 @@ interface ProductSelectorProps {
   handleSearch: (value: string) => void;
   handleProductSelect: (productId: string) => void;
   selectedProductDisplay: string;
+  selectedProduct?: Product; // Adicionamos esta propriedade
 }
 
 const ProductSelector: React.FC<ProductSelectorProps> = ({
@@ -32,7 +33,8 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   filteredProducts,
   handleSearch,
   handleProductSelect,
-  selectedProductDisplay
+  selectedProductDisplay,
+  selectedProduct // Adicionamos esta propriedade
 }) => {
   return (
     <div className="md:col-span-1">

@@ -28,7 +28,9 @@ export const useStockExit = (exitId?: string) => {
     setSelectedProductDisplay: state.setSelectedProductDisplay,
     setIsProductSearchOpen: state.setIsProductSearchOpen,
     setClientSearchTerm: state.setClientSearchTerm,
-    setIsClientSearchOpen: state.setIsClientSearchOpen
+    setIsClientSearchOpen: state.setIsClientSearchOpen,
+    products, // Passamos a lista de produtos
+    clients   // Passamos a lista de clientes
   });
   
   const calculations = useCalculations(state.items);
@@ -53,6 +55,8 @@ export const useStockExit = (exitId?: string) => {
   });
   
   const selectedClient = clients.find(c => c.id === state.exitDetails.clientId);
+  // Adicionar selectedProduct baseado no currentItem.productId
+  const selectedProduct = products.find(p => p.id === state.currentItem.productId);
   
   return {
     ...state,
@@ -61,6 +65,8 @@ export const useStockExit = (exitId?: string) => {
     ...calculations,
     ...submit,
     selectedClient,
-    products
+    selectedProduct, // Adicionado produto selecionado
+    products,
+    clients // Expor a lista completa de clientes
   };
 };

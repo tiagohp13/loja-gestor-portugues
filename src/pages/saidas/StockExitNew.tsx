@@ -42,9 +42,17 @@ const StockExitNew = () => {
     filteredClients,
     handleSubmit,
     selectedClient,
+    selectedProduct, // Usando o produto selecionado
     products,
-    navigate
+    navigate,
+    isSubmitting // Adicionado caso esteja disponível no hook
   } = useStockExit();
+
+  // Adiciona console.log para debug dos dados críticos
+  console.log('Selected Client:', selectedClient);
+  console.log('Selected Product:', selectedProduct);
+  console.log('Current Item:', currentItem);
+  console.log('Exit Details:', exitDetails);
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -60,17 +68,27 @@ const StockExitNew = () => {
           variant="outline" 
           onClick={() => navigate('/saidas/historico')}
           className="flex items-center gap-2"
+          disabled={isSubmitting}
         >
           <ArrowLeft className="h-4 w-4" />
           Cancelar
         </Button>
         <Button 
           onClick={handleSubmit}
-          disabled={items.length === 0 || !exitDetails.clientId}
+          disabled={items.length === 0 || !exitDetails.clientId || isSubmitting}
           className="flex items-center gap-2"
         >
-          <Save className="h-4 w-4" />
-          Guardar Venda
+          {isSubmitting ? (
+            <>
+              <span className="animate-spin mr-2">◌</span>
+              A guardar...
+            </>
+          ) : (
+            <>
+              <Save className="h-4 w-4 mr-2" />
+              Guardar Venda
+            </>
+          )}
         </Button>
       </div>
       
@@ -116,6 +134,7 @@ const StockExitNew = () => {
               setCurrentItem={setCurrentItem}
               addItemToExit={addItemToExit}
               products={products}
+              selectedProduct={selectedProduct}
             />
             
             <div className="mt-6">

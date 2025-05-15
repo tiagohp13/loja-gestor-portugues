@@ -17,6 +17,8 @@ interface UseHandlersProps {
   setIsProductSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setClientSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setIsClientSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  products: any[]; // Adicionado para acesso direto aos produtos
+  clients: any[]; // Adicionado para acesso direto aos clientes
 }
 
 export const useHandlers = ({
@@ -30,7 +32,9 @@ export const useHandlers = ({
   setSelectedProductDisplay,
   setIsProductSearchOpen,
   setClientSearchTerm,
-  setIsClientSearchOpen
+  setIsClientSearchOpen,
+  products, // Adicionado
+  clients // Adicionado
 }: UseHandlersProps) => {
   
   const handleExitDetailsChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -46,30 +50,59 @@ export const useHandlers = ({
     setClientSearchTerm(value);
   };
   
-  const handleProductSelect = (product: any) => {
-    setCurrentItem({
-      id: '',
-      productId: product.id,
-      productName: product.name,
-      quantity: 1,
-      salePrice: product.salePrice,
-      discountPercent: 0
-    });
+  const handleProductSelect = (productId: string) => {
+    // Procurar o produto pelo ID nos produtos disponíveis
+    const selectedProduct = products.find(p => p.id === productId);
     
-    setSelectedProductDisplay(product.name);
-    setSearchTerm('');
-    setIsProductSearchOpen(false);
+    if (selectedProduct) {
+      setCurrentItem({
+        id: '',
+        productId: selectedProduct.id,
+        productName: selectedProduct.name,
+        quantity: 1,
+        salePrice: selectedProduct.salePrice || 0,
+        discountPercent: 0
+      });
+      
+      // Definir o display para código + nome ou apenas nome
+      const displayText = selectedProduct.code 
+        ? `${selectedProduct.code} - ${selectedProduct.name}`
+        : selectedProduct.name;
+        
+      setSelectedProductDisplay(displayText);
+      setSearchTerm('');
+      setIsProductSearchOpen(false);
+    } else {
+      console.error("Produto não encontrado com ID:", productId);
+      toast({
+        title: "Erro",
+        description: "Não foi possível selecionar o produto. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
   
-  const handleClientSelect = (client: any) => {
-    setExitDetails(prev => ({
-      ...prev,
-      clientId: client.id,
-      clientName: client.name
-    }));
+  const handleClientSelect = (clientId: string) => {
+    // Procurar o cliente pelo ID nos clientes disponíveis
+    const selectedClient = clients.find(c => c.id === clientId);
     
-    setClientSearchTerm('');
-    setIsClientSearchOpen(false);
+    if (selectedClient) {
+      setExitDetails(prev => ({
+        ...prev,
+        clientId: selectedClient.id,
+        clientName: selectedClient.name
+      }));
+      
+      setClientSearchTerm('');
+      setIsClientSearchOpen(false);
+    } else {
+      console.error("Cliente não encontrado com ID:", clientId);
+      toast({
+        title: "Erro",
+        description: "Não foi possível selecionar o cliente. Tente novamente.",
+        variant: "destructive"
+      });
+    }
   };
   
   const addItemToExit = () => {
@@ -85,6 +118,16 @@ export const useHandlers = ({
     
     if (currentItem.salePrice < 0) {
       toast({ title: "Erro", description: "O preço não pode ser negativo" });
+      return;
+    }
+    
+    // Verificar se o produto tem stock suficiente
+    const selectedProduct = products.find(p => p.id === currentItem.productId);
+    if (selectedProduct && selectedProduct.currentStock < currentItem.quantity) {
+      toast({ 
+        title: "Stock insuficiente", 
+        description: `O stock disponível (${selectedProduct.currentStock}) é menor que a quantidade solicitada (${currentItem.quantity}).`
+      });
       return;
     }
     

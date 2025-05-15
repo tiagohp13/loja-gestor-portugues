@@ -42,7 +42,7 @@ const ClientSelector: React.FC<ClientSelectorProps> = ({
           <div className="relative">
             <Input
               placeholder="Pesquisar cliente por nome ou NIF"
-              value={clientSearchTerm}
+              value={selectedClient ? selectedClient.name : clientSearchTerm}
               onChange={(e) => setClientSearchTerm(e.target.value)}
               className="pl-10"
               onClick={() => setIsClientSearchOpen(true)}
@@ -79,6 +79,11 @@ const ClientSelector: React.FC<ClientSelectorProps> = ({
           <div className="font-medium">
             {selectedClient.name}
           </div>
+          {selectedClient.taxId && (
+            <div className="text-sm text-gray-500">
+              NIF: {selectedClient.taxId}
+            </div>
+          )}
         </div>
       )}
     </div>

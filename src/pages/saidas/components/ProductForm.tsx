@@ -25,6 +25,7 @@ interface ProductFormProps {
   setCurrentItem: React.Dispatch<React.SetStateAction<StockExitItem>>;
   addItemToExit: () => void;
   products: Product[];
+  selectedProduct?: Product; // Adicionamos esta propriedade
 }
 
 const ProductForm: React.FC<ProductFormProps> = ({
@@ -39,8 +40,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
   currentItem,
   setCurrentItem,
   addItemToExit,
-  products
+  products,
+  selectedProduct // Adicionamos esta propriedade
 }) => {
+  // Encontrar o produto atual pelo ID para ter acesso aos seus detalhes
+  const currentProductInStock = products.find(p => p.id === currentItem.productId);
+  const maxStock = currentProductInStock?.currentStock || 0;
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
@@ -53,6 +59,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           handleSearch={handleSearch}
           handleProductSelect={handleProductSelect}
           selectedProductDisplay={selectedProductDisplay}
+          selectedProduct={selectedProduct}
         />
         
         <div>
@@ -60,7 +67,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           <Input
             type="number"
             min="1"
-            max={products.find(p => p.id === currentItem.productId)?.currentStock || 0}
+            max={maxStock}
             value={currentItem.quantity}
             onChange={(e) => setCurrentItem(prev => ({...prev, quantity: parseInt(e.target.value) || 1}))}
           />
@@ -96,7 +103,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
           disabled={
             !currentItem.productId || 
             currentItem.quantity <= 0 || 
-            (products.find(p => p.id === currentItem.productId)?.currentStock || 0) < currentItem.quantity
+            maxStock < currentItem.quantity
           }
           className="bg-blue-500 hover:bg-blue-600 text-white w-full md:w-auto"
         >
