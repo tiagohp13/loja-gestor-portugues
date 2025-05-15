@@ -1067,7 +1067,9 @@ export type Database = {
         Returns: boolean
       }
       table_exists: {
-        Args: { schema_name: string; table_name: string }
+        Args:
+          | { schema_name: string; table_name: string }
+          | { table_name: string }
         Returns: boolean
       }
     }

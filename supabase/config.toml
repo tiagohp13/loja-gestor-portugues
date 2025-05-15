@@ -5,3 +5,9 @@ project_id = "ptkqosrcopnsclgyrjqh"
   # Enable additional logging for RLS and SQL errors
   debug_logging = true
   enable_rls_debug = true
+
+# Add this security setting to prevent search_path related issues
+[db]
+  extra_search_path = ["public", "extensions"]
+  # Recommended setting to force explicit schema qualification
+  default_search_path_schema = "public" 
