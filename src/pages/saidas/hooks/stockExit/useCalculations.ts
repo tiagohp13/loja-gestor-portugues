@@ -1,19 +1,19 @@
 
+import { useMemo } from 'react';
 import { StockExitItem } from '@/types';
 
 export const useCalculations = (items: StockExitItem[]) => {
-  const getDiscountedPrice = (price: number, discountPercent?: number) => {
-    if (!discountPercent) return price;
-    return price * (1 - (discountPercent / 100));
-  };
+  const totalValue = useMemo(() => {
+    return items.reduce((total, item) => {
+      const price = item.salePrice;
+      const discountPercent = item.discountPercent || 0;
+      const discountedPrice = price - (price * discountPercent / 100);
+      
+      return total + (item.quantity * discountedPrice);
+    }, 0);
+  }, [items]);
   
-  const totalValue = items.reduce((sum, item) => {
-    const discountedPrice = getDiscountedPrice(item.salePrice, item.discountPercent);
-    return sum + (item.quantity * discountedPrice);
-  }, 0);
-
-  return {
-    getDiscountedPrice,
+  return { 
     totalValue
   };
 };

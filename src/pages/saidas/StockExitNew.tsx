@@ -10,9 +10,9 @@ import DatePicker from './components/DatePicker';
 import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { useData } from '@/contexts/DataContext';
 
 const StockExitNew = () => {
-  // Usar useNavigate para navegação manual se necessário
   const navigate = useNavigate();
   
   const {
@@ -50,7 +50,6 @@ const StockExitNew = () => {
     selectedProduct,
     products,
     isSubmitting
-    // navigate está disponível do useStockExit, mas estamos usando o local
   } = useStockExit();
 
   return (
