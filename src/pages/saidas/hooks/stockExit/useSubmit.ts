@@ -6,19 +6,25 @@ import { ExitDetails, ExitItem } from './types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SubmitProps {
+  exitId?: string; // Added this property to fix the error
   exitDetails: ExitDetails;
   items: ExitItem[];
   exitDate: Date;
-  saveStockExit: (exit: any) => Promise<any>;
-  clients: any[];
-  products: any[];
-  totalValue: number;
+  saveStockExit?: (exit: any) => Promise<any>; // Made optional
+  addStockExit?: (exit: any) => Promise<any>; // Added this property
+  updateStockExit?: (id: string, exit: any) => Promise<any>; // Added this property
+  clients?: any[];
+  products?: any[];
+  totalValue?: number;
 }
 
 export const useSubmit = ({ 
+  exitId,
   exitDetails,
   items,
   exitDate,
+  addStockExit,
+  updateStockExit,
   saveStockExit,
   clients,
   products,
@@ -56,8 +62,8 @@ export const useSubmit = ({
       setIsSubmitting(true);
       console.log("Starting stock exit submission process");
 
-      // Find client name
-      const client = clients.find(c => c.id === exitDetails.clientId);
+      // Find client name if clients array is provided
+      const client = clients?.find(c => c.id === exitDetails.clientId);
       
       // Get the year from the exit date
       const exitYear = exitDate.getFullYear();
@@ -112,15 +118,29 @@ export const useSubmit = ({
       console.log("Stock exit data to save:", stockExit);
 
       try {
-        // Save the stock exit
-        const savedExit = await saveStockExit(stockExit);
+        // Save the stock exit based on whether it's a new exit or an update
+        let savedExit;
         
-        console.log("Stock exit saved successfully:", savedExit);
+        if (exitId && updateStockExit) {
+          // Update existing exit
+          savedExit = await updateStockExit(exitId, stockExit);
+          console.log("Stock exit updated successfully:", savedExit);
+        } else if (addStockExit) {
+          // Create new exit
+          savedExit = await addStockExit(stockExit);
+          console.log("Stock exit created successfully:", savedExit);
+        } else if (saveStockExit) {
+          // Use legacy saveStockExit if provided
+          savedExit = await saveStockExit(stockExit);
+          console.log("Stock exit saved successfully:", savedExit);
+        } else {
+          throw new Error("No save method provided");
+        }
         
         // Show success message
         toast({
           title: "Sucesso",
-          description: `Venda ${savedExit.number || ''} guardada com sucesso`,
+          description: `Venda ${savedExit?.number || ''} guardada com sucesso`,
           variant: "default"
         });
         
@@ -148,6 +168,7 @@ export const useSubmit = ({
 
   return {
     handleSubmit,
-    isSubmitting
+    isSubmitting,
+    navigate // Export navigate so it can be used in StockExitNew.tsx
   };
 };

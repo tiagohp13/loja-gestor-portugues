@@ -48,12 +48,14 @@ export const useStockExit = (exitId?: string) => {
   };
   
   const submit = useSubmit({
-    exitId,
+    exitId, // This is now defined in the SubmitProps interface
     exitDetails: state.exitDetails,
     items: state.items,
     exitDate: state.exitDate,
     addStockExit: typedAddStockExit,
-    updateStockExit: typedUpdateStockExit
+    updateStockExit: typedUpdateStockExit,
+    clients, // Pass the clients array
+    products // Pass the products array
   });
   
   const selectedClient = clients.find(c => c.id === state.exitDetails.clientId);
@@ -65,7 +67,7 @@ export const useStockExit = (exitId?: string) => {
     ...handlers,
     ...filters,
     ...calculations,
-    ...submit,
+    ...submit, // This now includes navigate
     selectedClient,
     selectedProduct,
     products,

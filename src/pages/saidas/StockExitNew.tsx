@@ -3,16 +3,18 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useStockExit } from './hooks/useStockExit';
 import ClientSelector from './components/ClientSelector';
 import DatePicker from './components/DatePicker';
 import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
-import { toast } from '@/hooks/use-toast';
-import { ExitItem } from './hooks/stockExit/types';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const StockExitNew = () => {
+  // Add useNavigate to handle navigation manually if needed
+  const navigate = useNavigate();
+  
   const {
     exitDetails,
     items,
@@ -47,8 +49,8 @@ const StockExitNew = () => {
     selectedClient,
     selectedProduct,
     products,
-    navigate,
     isSubmitting
+    // navigate is now available from useStockExit but we're using the local one
   } = useStockExit();
 
   return (
