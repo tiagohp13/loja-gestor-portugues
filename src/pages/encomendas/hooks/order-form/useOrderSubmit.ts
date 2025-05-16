@@ -44,7 +44,24 @@ export const useOrderSubmit = (
       
       if (numberError) {
         console.error("Error generating order number:", numberError);
-        throw new Error("Não foi possível gerar o número da encomenda");
+        toast({
+          title: "Erro",
+          description: "Não foi possível gerar o número da encomenda",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!orderNumber) {
+        console.error("No order number returned");
+        toast({
+          title: "Erro",
+          description: "Não foi possível gerar o número da encomenda",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
       }
       
       console.log("Generated order number:", orderNumber);
@@ -88,8 +105,13 @@ export const useOrderSubmit = (
         navigate('/encomendas/consultar');
       } catch (error) {
         console.error("Error saving order:", error);
-        // If the addOrder function fails, make sure we show an error
-        throw error;
+        toast({
+          title: "Erro",
+          description: "Erro ao guardar a encomenda: " + (error instanceof Error ? error.message : "Erro desconhecido"),
+          variant: "destructive"
+        });
+        // Make sure we're not redirecting on error and isSubmitting is reset
+        setIsSubmitting(false);
       }
     } catch (error) {
       console.error("Error saving order:", error);

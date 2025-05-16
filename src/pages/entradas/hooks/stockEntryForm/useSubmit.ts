@@ -99,14 +99,27 @@ export const useSubmit = ({
         number: generatedNumber  // Use the generated number
       };
 
-      await addStockEntry(stockEntry);
-      
-      toast({
-        title: "Sucesso",
-        description: "Entrada de stock guardada com sucesso"
-      });
-      
-      navigate('/entradas/historico');
+      console.log("Sending stockEntry data:", stockEntry);
+
+      try {
+        const savedEntry = await addStockEntry(stockEntry);
+        console.log("Stock entry saved successfully:", savedEntry);
+        
+        toast({
+          title: "Sucesso",
+          description: `Entrada de stock ${savedEntry.number || ''} guardada com sucesso`
+        });
+        
+        navigate('/entradas/historico');
+      } catch (saveError) {
+        console.error("Error saving stock entry:", saveError);
+        toast({
+          title: "Erro",
+          description: "Ocorreu um erro ao guardar a entrada de stock: " + (saveError instanceof Error ? saveError.message : "Erro desconhecido"),
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+      }
     } catch (error) {
       console.error("Error during stock entry submission:", error);
       toast({
@@ -114,7 +127,6 @@ export const useSubmit = ({
         description: "Ocorreu um erro ao guardar a entrada de stock: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
-    } finally {
       setIsSubmitting(false);
     }
   };

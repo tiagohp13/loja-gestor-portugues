@@ -10,6 +10,7 @@ import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
 import { toast } from '@/hooks/use-toast';
 import { ExitItem } from './hooks/stockExit/types';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const StockExitNew = () => {
   const {
@@ -76,8 +77,8 @@ const StockExitNew = () => {
         >
           {isSubmitting ? (
             <>
-              <span className="animate-spin mr-2">◌</span>
-              A guardar...
+              <LoadingSpinner />
+              <span className="ml-2">A guardar...</span>
             </>
           ) : (
             <>

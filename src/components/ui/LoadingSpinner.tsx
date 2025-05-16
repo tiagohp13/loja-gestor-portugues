@@ -1,18 +1,24 @@
 
 import React from 'react';
-import { Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-export interface LoadingSpinnerProps {
+interface LoadingSpinnerProps {
   size?: number;
   className?: string;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 24, className }) => {
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+  size = 16,
+  className = "" 
+}) => {
   return (
-    <Loader2 
-      className={cn('animate-spin text-primary', className)}
-      size={size} 
+    <div className={`animate-spin rounded-full border-2 border-t-transparent ${className}`} 
+      style={{ 
+        width: `${size}px`, 
+        height: `${size}px`, 
+        borderColor: 'currentColor',
+        borderTopColor: 'transparent' 
+      }} 
+      aria-label="Carregando..."
     />
   );
 };
