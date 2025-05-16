@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
-import { StockExit } from '@/types';
-import { ExitDetails, ExitItem, UseExitStateReturn } from './types';
+import { StockExit, StockExitItem } from '@/types';
+import { ExitDetails, UseExitStateReturn } from './types';
 import { useData } from '@/contexts/DataContext';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -17,8 +17,8 @@ export const useExitState = (exitId?: string): UseExitStateReturn => {
   };
   
   const [exitDetails, setExitDetails] = useState<ExitDetails>(initialExitDetails);
-  const [items, setItems] = useState<ExitItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<ExitItem>({
+  const [items, setItems] = useState<StockExitItem[]>([]);
+  const [currentItem, setCurrentItem] = useState<StockExitItem>({
     id: uuidv4(),
     productId: '',
     productName: '',
