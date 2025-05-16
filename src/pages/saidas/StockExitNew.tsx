@@ -12,7 +12,7 @@ import ProductsTable from './components/ProductsTable';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 const StockExitNew = () => {
-  // Add useNavigate to handle navigation manually if needed
+  // Usar useNavigate para navegação manual se necessário
   const navigate = useNavigate();
   
   const {
@@ -50,7 +50,7 @@ const StockExitNew = () => {
     selectedProduct,
     products,
     isSubmitting
-    // navigate is now available from useStockExit but we're using the local one
+    // navigate está disponível do useStockExit, mas estamos usando o local
   } = useStockExit();
 
   return (

@@ -50,7 +50,7 @@ const OrderNew = () => {
     isSubmitting
   } = useOrderForm();
   
-  // Calculate order validity for button disabling
+  // Calcular validade da encomenda para desativação do botão
   const isOrderInvalid = !selectedClientId || orderItems.length === 0 || 
     orderItems.some(item => !item.quantity || item.quantity <= 0 || !item.salePrice || item.salePrice <= 0);
   

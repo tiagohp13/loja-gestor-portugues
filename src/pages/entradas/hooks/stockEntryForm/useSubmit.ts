@@ -2,52 +2,36 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { StockEntry, StockEntryItem } from '@/types';
+import { EntryDetails, EntryItem } from './types';
 import { supabase } from '@/integrations/supabase/client';
+import { StockEntry } from '@/types';
 
-interface UseSubmitProps {
-  entryDetails: {
-    supplierId: string;
-    supplierName: string;
-    invoiceNumber: string;
-    notes: string;
-  };
-  items: StockEntryItem[];
+interface SubmitProps {
+  entryDetails: EntryDetails;
+  items: EntryItem[];
   entryDate: Date;
-  suppliers: any[];
-  addStockEntry: (entry: {
-    supplierId: string;
-    supplierName: string;
-    items: StockEntryItem[];
-    date: string;
-    invoiceNumber: string;
-    notes: string;
-    total: number;
-  }) => Promise<StockEntry>;
+  addStockEntry: (entry: any) => Promise<StockEntry>;
+  suppliers?: any[];
 }
 
 export const useSubmit = ({
   entryDetails,
   items,
   entryDate,
-  suppliers,
-  addStockEntry
-}: UseSubmitProps) => {
+  addStockEntry,
+  suppliers
+}: SubmitProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-    }
-
+  const validateEntry = () => {
     if (!entryDetails.supplierId) {
       toast({
         title: "Erro",
         description: "Selecione um fornecedor",
         variant: "destructive"
       });
-      return;
+      return false;
     }
 
     if (items.length === 0) {
@@ -56,29 +40,33 @@ export const useSubmit = ({
         description: "Adicione pelo menos um produto",
         variant: "destructive"
       });
-      return;
+      return false;
     }
+
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validateEntry()) return;
 
     try {
       setIsSubmitting(true);
+      console.log("Iniciando processo de salvamento de entrada de stock");
+
+      // Encontrar nome do fornecedor se o array de fornecedores for fornecido
+      const supplier = suppliers?.find(s => s.id === entryDetails.supplierId);
       
-      // Calculate total value
-      const total = items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
-      
-      // Get supplier details
-      const supplier = suppliers.find(s => s.id === entryDetails.supplierId);
-      
-      // Get the year from the entry date
+      // Obter o ano da data de entrada
       const entryYear = entryDate.getFullYear();
       
-      // Generate entry number based on the entry date year
-      const { data: generatedNumber, error: numberError } = await supabase.rpc('get_next_counter_by_year', {
+      // Gerar número de entrada usando a função de contador por ano
+      const { data: entryNumber, error: numberError } = await supabase.rpc('get_next_counter_by_year', {
         counter_id: 'entry',
         target_year: entryYear
       });
       
       if (numberError) {
-        console.error("Error generating entry number:", numberError);
+        console.error("Erro ao gerar número de entrada:", numberError);
         toast({
           title: "Erro",
           description: "Não foi possível gerar o número da entrada",
@@ -88,43 +76,72 @@ export const useSubmit = ({
         return;
       }
       
+      if (!entryNumber) {
+        console.error("Nenhum número de entrada retornado");
+        toast({
+          title: "Erro",
+          description: "Não foi possível gerar o número da entrada",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Mapear itens para um formato adequado para salvar
+      const stockEntryItems = items.map(item => ({
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        purchasePrice: item.purchasePrice,
+        discountPercent: item.discountPercent || 0
+      }));
+
+      // Criar objeto de entrada de stock
       const stockEntry = {
         supplierId: entryDetails.supplierId,
         supplierName: supplier ? supplier.name : entryDetails.supplierName,
-        items,
         date: entryDate.toISOString(),
-        invoiceNumber: entryDetails.invoiceNumber,
+        invoiceNumber: entryDetails.invoiceNumber || null,
         notes: entryDetails.notes,
-        total,
-        number: generatedNumber  // Use the generated number
+        items: stockEntryItems,
+        number: entryNumber
       };
 
-      console.log("Sending stockEntry data:", stockEntry);
+      console.log("Dados da entrada a serem salvos:", stockEntry);
 
       try {
+        // Submeter a entrada usando a função addStockEntry fornecida
         const savedEntry = await addStockEntry(stockEntry);
-        console.log("Stock entry saved successfully:", savedEntry);
         
+        if (!savedEntry || !savedEntry.id) {
+          throw new Error("A criação da entrada falhou");
+        }
+        
+        console.log("Entrada guardada com sucesso:", savedEntry);
+        
+        // Mostrar mensagem de sucesso
         toast({
           title: "Sucesso",
-          description: `Entrada de stock ${savedEntry.number || ''} guardada com sucesso`
+          description: `Entrada ${savedEntry.number || ''} guardada com sucesso`,
+          variant: "default"
         });
         
+        // Navegar para a lista de entradas
         navigate('/entradas/historico');
-      } catch (saveError) {
-        console.error("Error saving stock entry:", saveError);
+      } catch (error) {
+        console.error("Erro ao salvar entrada:", error);
         toast({
           title: "Erro",
-          description: "Ocorreu um erro ao guardar a entrada de stock: " + (saveError instanceof Error ? saveError.message : "Erro desconhecido"),
+          description: "Erro ao guardar a entrada: " + (error instanceof Error ? error.message : "Erro desconhecido"),
           variant: "destructive"
         });
         setIsSubmitting(false);
       }
     } catch (error) {
-      console.error("Error during stock entry submission:", error);
+      console.error("Erro ao processar entrada:", error);
       toast({
         title: "Erro",
-        description: "Ocorreu um erro ao guardar a entrada de stock: " + (error instanceof Error ? error.message : "Erro desconhecido"),
+        description: "Erro ao guardar a entrada: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
       setIsSubmitting(false);
@@ -133,6 +150,7 @@ export const useSubmit = ({
 
   return {
     handleSubmit,
-    isSubmitting
+    isSubmitting,
+    navigate
   };
 };

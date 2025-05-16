@@ -3,19 +3,18 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { ExitDetails, ExitItem } from './types';
+import { StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SubmitProps {
-  exitId?: string; // Added this property to fix the error
+  exitId?: string;
   exitDetails: ExitDetails;
   items: ExitItem[];
   exitDate: Date;
-  saveStockExit?: (exit: any) => Promise<any>; // Made optional
-  addStockExit?: (exit: any) => Promise<any>; // Added this property
-  updateStockExit?: (id: string, exit: any) => Promise<any>; // Added this property
+  addStockExit?: (exit: any) => Promise<StockExit>;
+  updateStockExit?: (id: string, exit: any) => Promise<StockExit>;
   clients?: any[];
   products?: any[];
-  totalValue?: number;
 }
 
 export const useSubmit = ({ 
@@ -25,10 +24,7 @@ export const useSubmit = ({
   exitDate,
   addStockExit,
   updateStockExit,
-  saveStockExit,
-  clients,
-  products,
-  totalValue
+  clients
 }: SubmitProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -60,22 +56,22 @@ export const useSubmit = ({
 
     try {
       setIsSubmitting(true);
-      console.log("Starting stock exit submission process");
+      console.log("Iniciando processo de salvamento de venda");
 
-      // Find client name if clients array is provided
+      // Encontrar nome do cliente se o array de clientes for fornecido
       const client = clients?.find(c => c.id === exitDetails.clientId);
       
-      // Get the year from the exit date
+      // Obter o ano da data de venda
       const exitYear = exitDate.getFullYear();
       
-      // Generate exit number using the counter by year function
+      // Gerar número de venda usando a função de contador por ano
       const { data: exitNumber, error: numberError } = await supabase.rpc('get_next_counter_by_year', {
         counter_id: 'exit',
         target_year: exitYear
       });
       
       if (numberError) {
-        console.error("Error generating exit number:", numberError);
+        console.error("Erro ao gerar número de venda:", numberError);
         toast({
           title: "Erro",
           description: "Não foi possível gerar o número da venda",
@@ -86,7 +82,7 @@ export const useSubmit = ({
       }
       
       if (!exitNumber) {
-        console.error("No exit number returned");
+        console.error("Nenhum número de venda retornado");
         toast({
           title: "Erro",
           description: "Não foi possível gerar o número da venda",
@@ -96,7 +92,7 @@ export const useSubmit = ({
         return;
       }
 
-      // Map items to a format suitable for saving
+      // Mapear itens para um formato adequado para salvar
       const stockExitItems = items.map(item => ({
         productId: item.productId,
         productName: item.productName,
@@ -105,7 +101,7 @@ export const useSubmit = ({
         discountPercent: item.discountPercent || 0
       }));
 
-      // Create stock exit object
+      // Criar objeto de venda
       const stockExit = {
         clientId: exitDetails.clientId,
         clientName: client ? client.name : exitDetails.clientName,
@@ -115,39 +111,35 @@ export const useSubmit = ({
         number: exitNumber
       };
 
-      console.log("Stock exit data to save:", stockExit);
+      console.log("Dados da venda a serem salvos:", stockExit);
 
       try {
-        // Save the stock exit based on whether it's a new exit or an update
+        // Salvar a venda com base em se é uma nova venda ou uma atualização
         let savedExit;
         
         if (exitId && updateStockExit) {
-          // Update existing exit
+          // Atualizar venda existente
           savedExit = await updateStockExit(exitId, stockExit);
-          console.log("Stock exit updated successfully:", savedExit);
+          console.log("Venda atualizada com sucesso:", savedExit);
         } else if (addStockExit) {
-          // Create new exit
+          // Criar nova venda
           savedExit = await addStockExit(stockExit);
-          console.log("Stock exit created successfully:", savedExit);
-        } else if (saveStockExit) {
-          // Use legacy saveStockExit if provided
-          savedExit = await saveStockExit(stockExit);
-          console.log("Stock exit saved successfully:", savedExit);
+          console.log("Venda criada com sucesso:", savedExit);
         } else {
-          throw new Error("No save method provided");
+          throw new Error("Nenhum método de salvamento fornecido");
         }
         
-        // Show success message
+        // Mostrar mensagem de sucesso
         toast({
           title: "Sucesso",
           description: `Venda ${savedExit?.number || ''} guardada com sucesso`,
           variant: "default"
         });
         
-        // Navigate to the stock exits list
+        // Navegar para a lista de vendas
         navigate('/saidas/historico');
       } catch (saveError) {
-        console.error("Error saving stock exit:", saveError);
+        console.error("Erro ao salvar venda:", saveError);
         toast({
           title: "Erro",
           description: "Ocorreu um erro ao guardar a venda: " + (saveError instanceof Error ? saveError.message : "Erro desconhecido"),
@@ -156,7 +148,7 @@ export const useSubmit = ({
         setIsSubmitting(false);
       }
     } catch (error) {
-      console.error("Error during stock exit submission:", error);
+      console.error("Erro durante o processo de envio de venda:", error);
       toast({
         title: "Erro", 
         description: "Ocorreu um erro ao guardar a venda: " + (error instanceof Error ? error.message : "Erro desconhecido"),
@@ -169,6 +161,6 @@ export const useSubmit = ({
   return {
     handleSubmit,
     isSubmitting,
-    navigate // Export navigate so it can be used in StockExitNew.tsx
+    navigate
   };
 };

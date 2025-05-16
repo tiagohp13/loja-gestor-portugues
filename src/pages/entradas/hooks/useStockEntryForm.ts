@@ -1,17 +1,25 @@
 
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
+import { EntryItem } from './stockEntryForm/types';
 import { useFormState } from './stockEntryForm/useFormState';
-import { useFormHandlers } from './stockEntryForm/useFormHandlers';
 import { useFilters } from './stockEntryForm/useFilters';
-import { useSupplierSelect } from './stockEntryForm/useSupplierSelect';
-import { useSubmit } from './stockEntryForm/useSubmit';
+import { useFormHandlers } from './stockEntryForm/useFormHandlers';
 import { useCalculations } from './stockEntryForm/useCalculations';
-import { UseStockEntryFormReturn } from './stockEntryForm/types';
+import { useSubmit } from './stockEntryForm/useSubmit';
+import { useSupplierSelect } from './stockEntryForm/useSupplierSelect';
 
-export const useStockEntryForm = (): UseStockEntryFormReturn => {
-  const { addStockEntry, products, suppliers } = useData();
-  
+export const useStockEntryForm = () => {
+  const { products, suppliers, addStockEntry } = useData();
+  const navigate = useNavigate();
+
+  // Estado
   const {
+    entryDate,
+    calendarOpen,
+    setCalendarOpen,
+    setEntryDate,
     entryDetails,
     setEntryDetails,
     items,
@@ -24,93 +32,117 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
     setSelectedProductDisplay,
     isProductSearchOpen,
     setIsProductSearchOpen,
-    isSupplierSearchOpen,
-    setIsSupplierSearchOpen,
+    isSubmitting,
+    setIsSubmitting
+  } = useFormState();
+
+  // Filtros
+  const {
+    productSearchResults,
+    supplierSearchResults,
     supplierSearchTerm,
     setSupplierSearchTerm,
-    entryDate,
-    setEntryDate,
-    calendarOpen,
-    setCalendarOpen
-  } = useFormState();
-  
+    isSupplierSearchOpen,
+    setIsSupplierSearchOpen,
+    handleSearch,
+    handleSupplierSearch
+  } = useFilters({
+    products,
+    suppliers,
+    searchTerm
+  });
+
+  // Seleção de fornecedor
+  const {
+    handleSupplierSelect,
+    selectedSupplier
+  } = useSupplierSelect({
+    suppliers,
+    setEntryDetails,
+    setSupplierSearchTerm,
+    setIsSupplierSearchOpen
+  });
+
+  // Manipuladores
   const {
     handleEntryDetailsChange,
-    handleItemChange,
-    handleSearch,
     handleProductSelect,
     addItemToEntry,
-    removeItem
+    removeItem,
+    updateItem
   } = useFormHandlers({
+    products,
     entryDetails,
     setEntryDetails,
-    currentItem,
-    setCurrentItem,
     items,
     setItems,
-    selectedProductDisplay,
-    setSelectedProductDisplay,
+    currentItem,
+    setCurrentItem,
     setSearchTerm,
-    setIsProductSearchOpen, 
-    setIsSupplierSearchOpen,
-    products
+    setSelectedProductDisplay,
+    setIsProductSearchOpen
   });
-  
-  const { handleSupplierSearch, handleSupplierSelect } = useSupplierSelect(
-    setEntryDetails,
-    setIsSupplierSearchOpen,
-    suppliers
-  );
-  
-  const { filteredProducts, filteredSuppliers } = useFilters({
-    searchTerm,
-    supplierSearchTerm,
-    products,
-    suppliers
-  });
-  
-  const { totalValue } = useCalculations(items);
-  
-  const { handleSubmit, isSubmitting } = useSubmit({
+
+  // Cálculos
+  const {
+    getTotalProducts,
+    getTotalValue
+  } = useCalculations(items);
+
+  // Submissão
+  const { handleSubmit } = useSubmit({
     entryDetails,
     items,
     entryDate,
-    suppliers,
-    addStockEntry
+    addStockEntry,
+    suppliers
   });
 
   return {
+    // Estado
+    entryDate,
+    calendarOpen,
+    setCalendarOpen,
+    setEntryDate,
     entryDetails,
     items,
     currentItem,
+    setCurrentItem,
     searchTerm,
+    setSearchTerm,
     selectedProductDisplay,
     isProductSearchOpen,
-    isSupplierSearchOpen,
-    supplierSearchTerm,
-    entryDate,
-    calendarOpen,
-    filteredProducts,
-    filteredSuppliers,
-    totalValue,
-    isSubmitting, // Add isSubmitting to the return object
-    setEntryDetails,
-    setCurrentItem,
-    setSearchTerm,
-    setSelectedProductDisplay,
     setIsProductSearchOpen,
-    setIsSupplierSearchOpen,
+    isSubmitting,
+    setIsSubmitting,
+
+    // Filtros
+    productSearchResults,
+    supplierSearchResults,
+    supplierSearchTerm,
     setSupplierSearchTerm,
-    setCalendarOpen,
-    setEntryDate,
-    handleEntryDetailsChange,
-    handleItemChange,
+    isSupplierSearchOpen,
+    setIsSupplierSearchOpen,
     handleSearch,
     handleSupplierSearch,
-    handleProductSelect,
+
+    // Seleção de fornecedor
     handleSupplierSelect,
+    selectedSupplier,
+
+    // Manipuladores
+    handleEntryDetailsChange,
+    handleProductSelect,
     addItemToEntry,
     removeItem,
-    handleSubmit
+    updateItem,
+
+    // Cálculos
+    getTotalProducts,
+    getTotalValue,
+
+    // Submissão
+    handleSubmit,
+    navigate
   };
 };
