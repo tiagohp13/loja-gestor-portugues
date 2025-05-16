@@ -1,44 +1,34 @@
 
-import { useState } from 'react';
-import { EntryDetails } from './types';
-
-interface SupplierSelectProps {
+export const useSupplierSelect = (
+  setEntryDetails: React.Dispatch<React.SetStateAction<{
+    supplierId: string;
+    supplierName: string;
+    date: string;
+    invoiceNumber: string;
+    notes: string;
+  }>>,
+  setIsSupplierSearchOpen: React.Dispatch<React.SetStateAction<boolean>>,
   suppliers: Array<{
     id: string;
     name: string;
-  }>;
-  setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
-  setSupplierSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-  setIsSupplierSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-export const useSupplierSelect = ({
-  suppliers,
-  setEntryDetails,
-  setSupplierSearchTerm,
-  setIsSupplierSearchOpen
-}: SupplierSelectProps) => {
-  const [selectedSupplier, setSelectedSupplier] = useState<any>(null);
-
+  }>
+) => {
   const handleSupplierSearch = (value: string) => {
     return value;
   };
 
   const handleSupplierSelect = (supplierId: string) => {
-    const supplier = suppliers.find(s => s.id === supplierId);
-    setSelectedSupplier(supplier);
+    const selectedSupplier = suppliers.find(s => s.id === supplierId);
     setEntryDetails(prev => ({
       ...prev,
       supplierId,
-      supplierName: supplier?.name || ''
+      supplierName: selectedSupplier?.name || ''
     }));
-    setSupplierSearchTerm('');
     setIsSupplierSearchOpen(false);
   };
 
   return {
     handleSupplierSearch,
-    handleSupplierSelect,
-    selectedSupplier
+    handleSupplierSelect
   };
 };

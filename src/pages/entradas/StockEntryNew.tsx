@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +16,6 @@ const StockEntryNew = () => {
   const { suppliers } = useData();
   const {
     entryDetails,
-    setEntryDetails,
     items,
     currentItem,
     searchTerm,
@@ -31,11 +29,11 @@ const StockEntryNew = () => {
     filteredSuppliers,
     totalValue,
     isSubmitting,
+    setEntryDetails,
     setCurrentItem,
     setSearchTerm,
     setIsProductSearchOpen,
     setIsSupplierSearchOpen,
-    setSupplierSearchTerm,
     setCalendarOpen,
     setEntryDate,
     handleSupplierSearch,
@@ -87,7 +85,7 @@ const StockEntryNew = () => {
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
-        <form className="space-y-6">
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="grid md:grid-cols-2 gap-6">
             <SupplierSelector
               supplierSearchTerm={supplierSearchTerm}

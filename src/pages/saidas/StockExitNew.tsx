@@ -3,18 +3,15 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, Save } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useStockExit } from './hooks/useStockExit';
 import ClientSelector from './components/ClientSelector';
 import DatePicker from './components/DatePicker';
 import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { useData } from '@/contexts/DataContext';
+import { toast } from '@/hooks/use-toast';
+import { ExitItem } from './hooks/stockExit/types';
 
 const StockExitNew = () => {
-  const navigate = useNavigate();
-  
   const {
     exitDetails,
     items,
@@ -49,6 +46,7 @@ const StockExitNew = () => {
     selectedClient,
     selectedProduct,
     products,
+    navigate,
     isSubmitting
   } = useStockExit();
 
@@ -78,8 +76,8 @@ const StockExitNew = () => {
         >
           {isSubmitting ? (
             <>
-              <LoadingSpinner />
-              <span className="ml-2">A guardar...</span>
+              <span className="animate-spin mr-2">◌</span>
+              A guardar...
             </>
           ) : (
             <>

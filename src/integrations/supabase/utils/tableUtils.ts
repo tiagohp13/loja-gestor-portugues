@@ -25,40 +25,33 @@ export const insertIntoTable = async (table: TableName, data: any) => {
       const counterId = table === 'orders' ? 'order' : 
                         table === 'stock_entries' ? 'entry' : 'exit';
       
-      // Determine the year from the document date
-      let targetYear;
-      if (data.date) {
-        targetYear = new Date(data.date).getFullYear();
-      } else {
-        targetYear = new Date().getFullYear();
-      }
-      
-      // Call the database function to get the next number for that specific year
+      // Call the database function to get the next formatted number
       const { data: counterData, error: counterError } = await supabase
-        .rpc('get_next_counter_by_year', { 
-          counter_id: counterId,
-          target_year: targetYear
-        });
+        .rpc('get_next_counter', { counter_id: counterId });
         
       if (counterError) {
         console.error(`Error getting next counter for ${table}:`, counterError);
-        throw new Error(`Erro ao gerar o número do documento: ${counterError.message}`);
-      }
-      
-      if (!counterData) {
-        console.error(`No counter data returned for ${table}`);
-        throw new Error('Erro ao gerar o número do documento: Nenhum número retornado');
-      }
-      
-      // The counter function returns the properly formatted number
-      data.number = counterData;
-      
-      // If there's a reference_old field in the schema, and we're generating a new number
-      // and the data doesn't already have a reference_old value, save the old number format
-      // if it exists in the data object
-      if (data.number && !data.reference_old && data.reference) {
-        data.reference_old = data.reference;
-        delete data.reference; // Remove the old reference field
+        // Fallback to a timestamp-based number if needed
+        const date = new Date();
+        const year = date.getFullYear();
+        const timestamp = Date.now();
+        // Use the correct prefix based on table type
+        const prefix = table === 'orders' ? 'ENC' : 
+                      table === 'stock_entries' ? 'COMP' : 'VEN';
+        data.number = `${prefix}-${year}/${timestamp.toString().slice(-3)}`;
+      } else {
+        // Format the number with the correct prefix
+        const prefix = table === 'orders' ? 'ENC' : 
+                      table === 'stock_entries' ? 'COMP' : 'VEN';
+        data.number = `${prefix}-${counterData}`;
+        
+        // If there's a reference_old field in the schema, and we're generating a new number
+        // and the data doesn't already have a reference_old value, save the old number format
+        // if it exists in the data object
+        if (data.number && !data.reference_old && data.reference) {
+          data.reference_old = data.reference;
+          delete data.reference; // Remove the old reference field
+        }
       }
     }
     
@@ -80,12 +73,7 @@ export const insertIntoTable = async (table: TableName, data: any) => {
     
     if (error) {
       console.error(`Error inserting into ${table}:`, error);
-      throw new Error(`Erro ao inserir em ${table}: ${error.message}`);
-    }
-    
-    if (!result || result.length === 0) {
-      console.error(`No result returned when inserting into ${table}`);
-      throw new Error(`Erro ao inserir em ${table}: Nenhum dado retornado`);
+      throw new Error(`Error inserting into ${table}: ${error.message}`);
     }
     
     // Log the result
@@ -113,12 +101,7 @@ export const updateTable = async (table: TableName, id: string, data: any) => {
     
     if (error) {
       console.error(`Error updating ${table}:`, error);
-      throw new Error(`Erro ao atualizar ${table}: ${error.message}`);
-    }
-    
-    if (!result || result.length === 0) {
-      console.error(`No result returned when updating ${table} with id ${id}`);
-      throw new Error(`Erro ao atualizar ${table}: Nenhum dado retornado`);
+      throw new Error(`Error updating ${table}: ${error.message}`);
     }
     
     return snakeToCamel(result);
@@ -162,12 +145,9 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
       
       if (insertError) {
         console.error(`Error inserting batch into ${table}:`, insertError);
-        throw new Error(`Erro ao inserir em lote em ${table}: ${insertError.message}`);
+        throw new Error(`Error inserting batch into ${table}: ${insertError.message}`);
       } else if (insertedData) {
         results.push(...insertedData);
-      } else {
-        console.error(`No data returned when inserting batch into ${table}`);
-        throw new Error(`Erro ao inserir em lote em ${table}: Nenhum dado retornado`);
       }
     }
     
@@ -186,12 +166,9 @@ export const batchSaveToTable = async (table: TableName, records: any[]) => {
       
       if (updateError) {
         console.error(`Error updating record in ${table}:`, updateError);
-        throw new Error(`Erro ao atualizar registro em ${table}: ${updateError.message}`);
+        throw new Error(`Error updating record in ${table}: ${updateError.message}`);
       } else if (updatedData && updatedData.length > 0) {
         results.push(...updatedData);
-      } else {
-        console.error(`No data returned when updating record in ${table} with id ${id}`);
-        throw new Error(`Erro ao atualizar registro em ${table}: Nenhum dado retornado`);
       }
     }
     

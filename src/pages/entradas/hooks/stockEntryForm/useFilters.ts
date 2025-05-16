@@ -1,7 +1,7 @@
 
 import { useMemo } from 'react';
 
-export interface UseFiltersProps {
+interface UseFiltersProps {
   searchTerm: string;
   supplierSearchTerm: string;
   products: Array<{
@@ -40,20 +40,8 @@ export const useFilters = ({
     );
   }, [supplierSearchTerm, suppliers]);
 
-  const handleSearch = (value: string) => {
-    return value;
-  };
-  
-  const handleSupplierSearch = (value: string) => {
-    return value;
-  };
-
   return {
     filteredProducts,
-    filteredSuppliers,
-    handleSearch,
-    handleSupplierSearch,
-    productSearchResults: filteredProducts,
-    supplierSearchResults: filteredSuppliers
+    filteredSuppliers
   };
 };

@@ -28,7 +28,6 @@ export const useFormState = () => {
   const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
   const [entryDate, setEntryDate] = useState<Date>(new Date());
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   return {
     entryDetails,
@@ -50,8 +49,6 @@ export const useFormState = () => {
     entryDate,
     setEntryDate,
     calendarOpen,
-    setCalendarOpen,
-    isSubmitting,
-    setIsSubmitting
+    setCalendarOpen
   };
 };

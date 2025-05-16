@@ -20,54 +20,22 @@ export const useOrderSubmit = (
   const { validateOrder, displayValidationError } = useOrderValidation();
   
   const handleSaveOrder = async () => {
+    // Validate the order
+    const validation = validateOrder(selectedClientId, orderItems, orderDate);
+    if (!validation.valid) {
+      displayValidationError(validation.message || "Dados da encomenda inválidos");
+      return;
+    }
+    
     try {
-      // Validar a encomenda
-      const validation = validateOrder(selectedClientId, orderItems, orderDate);
-      if (!validation.valid) {
-        displayValidationError(validation.message || "Dados da encomenda inválidos");
-        return;
-      }
-      
       setIsSubmitting(true);
-      console.log("Iniciando processo de salvamento de encomenda");
       
-      // Calcular valor total
+      // Calculate total value
       const total = orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
       
-      // Obter o ano da data da encomenda
-      const orderYear = orderDate.getFullYear();
+      console.log("Submitting order with total:", total);
       
-      // Gerar número de encomenda usando a função de contador por ano
-      const { data: orderNumber, error: numberError } = await supabase.rpc('get_next_counter_by_year', {
-        counter_id: 'order',
-        target_year: orderYear
-      });
-      
-      if (numberError) {
-        console.error("Erro ao gerar número de encomenda:", numberError);
-        toast({
-          title: "Erro",
-          description: "Não foi possível gerar o número da encomenda",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      if (!orderNumber) {
-        console.error("Nenhum número de encomenda retornado");
-        toast({
-          title: "Erro",
-          description: "Não foi possível gerar o número da encomenda",
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
-        return;
-      }
-      
-      console.log("Número de encomenda gerado:", orderNumber);
-      
-      // Criar objeto de encomenda com todos os dados necessários
+      // Create order object with all required data
       const newOrder = {
         clientId: selectedClientId,
         clientName: selectedClient?.name,
@@ -79,50 +47,43 @@ export const useOrderSubmit = (
           salePrice: item.salePrice
         })),
         notes,
-        total,
-        number: orderNumber
+        total  // Adding total value to the order
       };
       
-      console.log("Dados da encomenda a ser enviados:", JSON.stringify(newOrder));
+      console.log("Order data being submitted:", JSON.stringify(newOrder));
       
+      // Submit the order using the provided addOrder function
       try {
-        // Submeter a encomenda usando a função addOrder fornecida
         const savedOrder = await addOrder(newOrder);
         
         if (!savedOrder || !savedOrder.id) {
           throw new Error("A criação da encomenda falhou");
         }
         
-        console.log("Encomenda guardada com sucesso:", savedOrder);
+        console.log("Order saved successfully:", savedOrder);
         
-        // Mostrar mensagem de sucesso
+        // Show success message
         toast({
           title: "Sucesso",
           description: `Encomenda ${savedOrder.number || ''} guardada com sucesso`,
           variant: "default"
         });
         
-        // Garantir que o estado de submissão é resetado ANTES da navegação
-        setIsSubmitting(false);
-        
-        // Navegar de volta para a lista de encomendas
+        // Navigate back to order list
         navigate('/encomendas/consultar');
       } catch (error) {
-        console.error("Erro ao guardar encomenda:", error);
-        toast({
-          title: "Erro",
-          description: "Erro ao guardar a encomenda: " + (error instanceof Error ? error.message : "Erro desconhecido"),
-          variant: "destructive"
-        });
-        setIsSubmitting(false);
+        console.error("Error saving order:", error);
+        // If the addOrder function fails, make sure we show an error
+        throw error;
       }
     } catch (error) {
-      console.error("Erro ao processar encomenda:", error);
+      console.error("Error saving order:", error);
       toast({
         title: "Erro",
         description: "Erro ao guardar a encomenda: " + (error instanceof Error ? error.message : "Erro desconhecido"),
         variant: "destructive"
       });
+      // Make sure we're not redirecting on error and isSubmitting is reset
       setIsSubmitting(false);
     }
   };
