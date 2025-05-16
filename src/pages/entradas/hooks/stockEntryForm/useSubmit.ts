@@ -127,7 +127,7 @@ export const useSubmit = ({
           variant: "default"
         });
         
-        // Garantir que o estado de submissão é resetado antes da navegação
+        // Garantir que o estado de submissão é resetado ANTES da navegação
         setIsSubmitting(false);
         
         // Navegar para a lista de entradas
