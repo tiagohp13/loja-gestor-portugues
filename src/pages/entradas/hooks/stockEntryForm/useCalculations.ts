@@ -7,6 +7,18 @@ export const useCalculations = (items: StockEntryItem[]) => {
     return items.reduce((total, item) => 
       total + (item.quantity * item.purchasePrice), 0);
   }, [items]);
+  
+  const getTotalValue = () => {
+    return totalValue;
+  };
+  
+  const getTotalProducts = () => {
+    return items.reduce((total, item) => total + item.quantity, 0);
+  };
 
-  return { totalValue };
+  return { 
+    totalValue,
+    getTotalValue,
+    getTotalProducts
+  };
 };

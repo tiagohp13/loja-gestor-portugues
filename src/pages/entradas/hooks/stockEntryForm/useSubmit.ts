@@ -2,13 +2,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { EntryDetails, EntryItem } from './types';
+import { EntryDetails } from './types';
+import { StockEntryItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { StockEntry } from '@/types';
 
 interface SubmitProps {
   entryDetails: EntryDetails;
-  items: EntryItem[];
+  items: StockEntryItem[];
   entryDate: Date;
   addStockEntry: (entry: any) => Promise<StockEntry>;
   suppliers?: any[];
@@ -151,6 +152,7 @@ export const useSubmit = ({
   return {
     handleSubmit,
     isSubmitting,
+    setIsSubmitting,
     navigate
   };
 };

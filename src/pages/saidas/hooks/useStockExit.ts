@@ -1,76 +1,139 @@
-
-import { useData } from '@/contexts/DataContext';
-import { useExitState } from './stockExit/useExitState';
-import { useFilters } from './stockExit/useFilters';
-import { useHandlers } from './stockExit/useHandlers';
-import { useCalculations } from './stockExit/useCalculations';
-import { useSubmit } from './stockExit/useSubmit';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from '@/hooks/use-toast';
 import { StockExit } from '@/types';
-import { ExitItem } from './stockExit/types';
+import { supabase } from '@/integrations/supabase/client';
 
-export const useStockExit = (exitId?: string) => {
-  const { clients, products, addStockExit, updateStockExit } = useData();
-  
-  const state = useExitState(exitId);
-  
-  const filters = useFilters({
-    searchTerm: state.searchTerm,
-    clientSearchTerm: state.clientSearchTerm
-  });
-  
-  const handlers = useHandlers({
-    exitDetails: state.exitDetails,
-    setExitDetails: state.setExitDetails,
-    currentItem: state.currentItem,
-    setCurrentItem: state.setCurrentItem,
-    items: state.items,
-    setItems: state.setItems,
-    setSearchTerm: state.setSearchTerm,
-    setSelectedProductDisplay: state.setSelectedProductDisplay,
-    setIsProductSearchOpen: state.setIsProductSearchOpen,
-    setClientSearchTerm: state.setClientSearchTerm,
-    setIsClientSearchOpen: state.setIsClientSearchOpen,
-    products,
-    clients
-  });
-  
-  // Make sure we're passing items from state correctly to the calculations hook
-  const calculations = useCalculations(state.items);
-  
-  // Here we ensure that addStockExit and updateStockExit match the types expected by useSubmit
-  const typedAddStockExit = (exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
-    return addStockExit(exit);
+export const useStockExit = (
+  addStockExit: (exit: Omit<StockExit, 'number' | 'id' | 'createdAt'>) => Promise<StockExit>,
+  updateStockExit: (id: string, exit: any) => Promise<StockExit>,
+  deleteStockExit: (id: string) => Promise<void>
+) => {
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSaveExit = async (exit: Omit<StockExit, 'number' | 'id' | 'createdAt'>) => {
+    try {
+      setIsSubmitting(true);
+      console.log("Iniciando processo de salvamento de saída de stock");
+
+      // Obter o ano da data de saída
+      const exitYear = new Date(exit.date).getFullYear();
+      
+      // Gerar número de saída usando a função de contador por ano
+      const { data: exitNumber, error: numberError } = await supabase.rpc('get_next_counter_by_year', {
+        counter_id: 'exit',
+        target_year: exitYear
+      });
+      
+      if (numberError) {
+        console.error("Erro ao gerar número de saída:", numberError);
+        toast({
+          title: "Erro",
+          description: "Não foi possível gerar o número da saída",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+      
+      if (!exitNumber) {
+        console.error("Nenhum número de saída retornado");
+        toast({
+          title: "Erro",
+          description: "Não foi possível gerar o número da saída",
+          variant: "destructive"
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      const newExit = {
+        ...exit,
+        number: exitNumber
+      };
+
+      console.log("Dados da saída a serem salvos:", newExit);
+
+      const savedExit = await addStockExit(newExit);
+
+      toast({
+        title: "Sucesso",
+        description: `Saída ${savedExit.number || ''} guardada com sucesso`,
+        variant: "default"
+      });
+
+      navigate('/saidas/historico');
+    } catch (error) {
+      console.error("Erro ao salvar saída:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao guardar a saída: " + (error instanceof Error ? error.message : "Erro desconhecido"),
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const handleUpdateExit = async (id: string, exit: any) => {
+    try {
+      setIsSubmitting(true);
+      console.log(`Iniciando processo de atualização da saída de stock com ID: ${id}`);
   
-  const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
-    // First cast to unknown, then to Promise<StockExit | void> to avoid direct casting error
-    return updateStockExit(id, exit as any) as unknown as Promise<StockExit | void>;
+      const result = await updateStockExit(id, exit);
+  
+      toast({
+        title: "Sucesso",
+        description: `Saída ${result.number || ''} atualizada com sucesso`,
+        variant: "default"
+      });
+  
+      navigate('/saidas/historico');
+      return result as StockExit; // Ensure it returns the correct type
+    } catch (error) {
+      console.error("Erro ao atualizar saída:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar a saída: " + (error instanceof Error ? error.message : "Erro desconhecido"),
+        variant: "destructive"
+      });
+      throw error; // Instead of returning void, throw the error
+    } finally {
+      setIsSubmitting(false);
+    }
   };
-  
-  const submit = useSubmit({
-    exitId, // This is now defined in the SubmitProps interface
-    exitDetails: state.exitDetails,
-    items: state.items,
-    exitDate: state.exitDate,
-    addStockExit: typedAddStockExit,
-    updateStockExit: typedUpdateStockExit,
-    clients, // Pass the clients array
-    products // Pass the products array
-  });
-  
-  const selectedClient = clients.find(c => c.id === state.exitDetails.clientId);
-  // Adicionar selectedProduct baseado no currentItem.productId
-  const selectedProduct = products.find(p => p.id === state.currentItem.productId);
-  
+
+  const handleDeleteExit = async (id: string) => {
+    try {
+      setIsSubmitting(true);
+      console.log(`Iniciando processo de remoção da saída de stock com ID: ${id}`);
+
+      await deleteStockExit(id);
+
+      toast({
+        title: "Sucesso",
+        description: "Saída removida com sucesso",
+        variant: "default"
+      });
+
+      navigate('/saidas/historico');
+    } catch (error) {
+      console.error("Erro ao remover saída:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao remover a saída: " + (error instanceof Error ? error.message : "Erro desconhecido"),
+        variant: "destructive"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return {
-    ...state,
-    ...handlers,
-    ...filters,
-    ...calculations,
-    ...submit, // This now includes navigate
-    selectedClient,
-    selectedProduct,
-    products,
-    clients
+    isSubmitting,
+    handleSaveExit,
+    handleUpdateExit,
+    handleDeleteExit
   };
 };

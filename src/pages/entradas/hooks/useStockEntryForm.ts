@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
-import { EntryItem } from './stockEntryForm/types';
+import { EntryDetails, CurrentItem } from './stockEntryForm/types';
 import { useFormState } from './stockEntryForm/useFormState';
 import { useFilters } from './stockEntryForm/useFilters';
 import { useFormHandlers } from './stockEntryForm/useFormHandlers';
@@ -32,24 +32,27 @@ export const useStockEntryForm = () => {
     setSelectedProductDisplay,
     isProductSearchOpen,
     setIsProductSearchOpen,
+    isSupplierSearchOpen,
+    setIsSupplierSearchOpen,
+    supplierSearchTerm,
+    setSupplierSearchTerm,
     isSubmitting,
     setIsSubmitting
   } = useFormState();
 
   // Filtros
   const {
+    filteredProducts,
+    filteredSuppliers,
     productSearchResults,
     supplierSearchResults,
-    supplierSearchTerm,
-    setSupplierSearchTerm,
-    isSupplierSearchOpen,
-    setIsSupplierSearchOpen,
     handleSearch,
     handleSupplierSearch
   } = useFilters({
     products,
     suppliers,
-    searchTerm
+    searchTerm,
+    supplierSearchTerm
   });
 
   // Seleção de fornecedor
@@ -79,12 +82,15 @@ export const useStockEntryForm = () => {
     currentItem,
     setCurrentItem,
     setSearchTerm,
+    selectedProductDisplay,
     setSelectedProductDisplay,
-    setIsProductSearchOpen
+    setIsProductSearchOpen,
+    setIsSupplierSearchOpen
   });
 
   // Cálculos
   const {
+    totalValue,
     getTotalProducts,
     getTotalValue
   } = useCalculations(items);
@@ -105,6 +111,7 @@ export const useStockEntryForm = () => {
     setCalendarOpen,
     setEntryDate,
     entryDetails,
+    setEntryDetails,
     items,
     currentItem,
     setCurrentItem,
@@ -117,6 +124,8 @@ export const useStockEntryForm = () => {
     setIsSubmitting,
 
     // Filtros
+    filteredProducts,
+    filteredSuppliers,
     productSearchResults,
     supplierSearchResults,
     supplierSearchTerm,
@@ -138,6 +147,7 @@ export const useStockEntryForm = () => {
     updateItem,
 
     // Cálculos
+    totalValue,
     getTotalProducts,
     getTotalValue,
 

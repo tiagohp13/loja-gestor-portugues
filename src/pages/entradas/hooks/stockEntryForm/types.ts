@@ -14,7 +14,11 @@ export interface CurrentItem {
   productName: string;
   quantity: number;
   purchasePrice: number;
+  discountPercent?: number;
 }
+
+// Add missing EntryItem type
+export type EntryItem = StockEntryItem;
 
 export interface UseStockEntryFormReturn {
   entryDetails: EntryDetails;
@@ -38,7 +42,7 @@ export interface UseStockEntryFormReturn {
     name: string;
   }>;
   totalValue: number;
-  isSubmitting: boolean; // Add isSubmitting property
+  isSubmitting: boolean;
   setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
   setCurrentItem: React.Dispatch<React.SetStateAction<CurrentItem>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
@@ -48,13 +52,19 @@ export interface UseStockEntryFormReturn {
   setSupplierSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setCalendarOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setEntryDate: React.Dispatch<React.SetStateAction<Date>>;
+  setIsSubmitting: React.Dispatch<React.SetStateAction<boolean>>;
   handleEntryDetailsChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
   handleItemChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleSearch: (value: string) => void;
   handleSupplierSearch: (value: string) => void;
   handleProductSelect: (productId: string) => void;
   handleSupplierSelect: (supplierId: string) => void;
+  selectedSupplier: any;
   addItemToEntry: () => void;
   removeItem: (index: number) => void;
-  handleSubmit: (e: React.FormEvent) => Promise<void>;
+  updateItem: (index: number, item: Partial<CurrentItem>) => void;
+  getTotalProducts: () => number;
+  getTotalValue: () => number;
+  handleSubmit: () => Promise<void>;
+  navigate: (path: string) => void;
 }

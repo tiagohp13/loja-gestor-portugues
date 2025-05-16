@@ -3,7 +3,7 @@ import { StockEntryItem } from '@/types';
 import { CurrentItem, EntryDetails } from './types';
 import { toast } from 'sonner';
 
-interface UseFormHandlersProps {
+export interface UseFormHandlersProps {
   entryDetails: EntryDetails;
   setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
   currentItem: CurrentItem;
@@ -120,6 +120,12 @@ export const useFormHandlers = ({
     setItems(items.filter((_, i) => i !== index));
   };
 
+  const updateItem = (index: number, updatedValues: Partial<CurrentItem>) => {
+    const updatedItems = [...items];
+    updatedItems[index] = { ...updatedItems[index], ...updatedValues };
+    setItems(updatedItems);
+  };
+
   return {
     handleEntryDetailsChange,
     handleItemChange,
@@ -127,5 +133,6 @@ export const useFormHandlers = ({
     handleProductSelect,
     addItemToEntry,
     removeItem,
+    updateItem
   };
 };
