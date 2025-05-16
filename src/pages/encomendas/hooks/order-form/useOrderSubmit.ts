@@ -102,6 +102,9 @@ export const useOrderSubmit = (
           variant: "default"
         });
         
+        // Garantir que o estado de submissão é resetado antes da navegação
+        setIsSubmitting(false);
+        
         // Navegar de volta para a lista de encomendas
         navigate('/encomendas/consultar');
       } catch (error) {

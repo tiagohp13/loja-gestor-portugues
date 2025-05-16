@@ -2,19 +2,18 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
-import { ExitDetails, ExitItem } from './types';
-import { StockExit } from '@/types';
+import { ExitDetails } from './types';
+import { StockExit, StockExitItem } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SubmitProps {
   exitId?: string;
   exitDetails: ExitDetails;
-  items: ExitItem[];
+  items: StockExitItem[];
   exitDate: Date;
   addStockExit?: (exit: any) => Promise<StockExit>;
   updateStockExit?: (id: string, exit: any) => Promise<StockExit>;
   clients?: any[];
-  products?: any[];
 }
 
 export const useSubmit = ({ 
@@ -135,6 +134,9 @@ export const useSubmit = ({
           description: `Venda ${savedExit?.number || ''} guardada com sucesso`,
           variant: "default"
         });
+        
+        // Garantir que o estado de submissão é resetado antes da navegação
+        setIsSubmitting(false);
         
         // Navegar para a lista de vendas
         navigate('/saidas/historico');

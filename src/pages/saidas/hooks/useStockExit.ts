@@ -102,8 +102,9 @@ export const useStockExit = (exitId?: string) => {
         return;
       }
 
-      // Mapear itens para um formato adequado para salvar
+      // Ensure we have proper data structure for items
       const stockExitItems = exitState.items.map(item => ({
+        id: item.id,
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
@@ -144,6 +145,9 @@ export const useStockExit = (exitId?: string) => {
           variant: "default"
         });
         
+        // Reset submit state before navigation
+        setIsSubmitting(false);
+        
         // Navegar para a lista de vendas
         navigate('/saidas/historico');
       } catch (saveError) {
@@ -176,6 +180,7 @@ export const useStockExit = (exitId?: string) => {
         description: "Venda removida com sucesso",
         variant: "default"
       });
+      setIsSubmitting(false);
       navigate('/saidas/historico');
     } catch (error) {
       console.error("Erro ao remover venda:", error);
