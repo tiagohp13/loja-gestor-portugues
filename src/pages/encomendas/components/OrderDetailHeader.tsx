@@ -1,9 +1,10 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
 import { FileText, ShoppingCart, Pencil } from 'lucide-react';
-import { Order, StockExit } from '@/types';
+import { Order, StockExit, Product } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 import {
   Dialog,
@@ -24,14 +25,40 @@ interface OrderDetailHeaderProps {
 
 const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit }) => {
   const navigate = useNavigate();
-  const { convertOrderToStockExit } = useData();
+  const { convertOrderToStockExit, products } = useData();
   const isPending = !order.convertedToStockExitId;
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
+  const [isStockWarningOpen, setIsStockWarningOpen] = useState(false);
+  const [insufficientStockProducts, setInsufficientStockProducts] = useState<string[]>([]);
   const [invoiceNumber, setInvoiceNumber] = useState('');
   const [isConverting, setIsConverting] = useState(false);
 
   const handleConvertDialog = () => {
-    setIsConvertDialogOpen(true);
+    // Check if all products have sufficient stock before showing the dialog
+    const productsWithInsufficientStock = checkStockAvailability(order, products);
+    
+    if (productsWithInsufficientStock.length > 0) {
+      setInsufficientStockProducts(productsWithInsufficientStock);
+      setIsStockWarningOpen(true);
+    } else {
+      setIsConvertDialogOpen(true);
+    }
+  };
+
+  // Helper function to check stock availability
+  const checkStockAvailability = (order: Order, productsList: Product[]): string[] => {
+    const insufficientProducts: string[] = [];
+    
+    if (!order.items || !productsList.length) return insufficientProducts;
+    
+    order.items.forEach(item => {
+      const product = productsList.find(p => p.id === item.productId);
+      if (product && product.currentStock < item.quantity) {
+        insufficientProducts.push(product.name);
+      }
+    });
+    
+    return insufficientProducts;
   };
 
   const handleEditOrder = () => {
@@ -130,6 +157,34 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
         }
       />
 
+      {/* Stock Warning Dialog */}
+      <Dialog open={isStockWarningOpen} onOpenChange={setIsStockWarningOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Stock Insuficiente</DialogTitle>
+            <DialogDescription>
+              Não foi possível converter a encomenda.
+              Os seguintes produtos não têm stock suficiente:
+              <ul className="list-disc pl-5 mt-2">
+                {insufficientStockProducts.map((product, index) => (
+                  <li key={index} className="text-sm">{product}</li>
+                ))}
+              </ul>
+              Por favor, verifique o stock antes de tentar novamente.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <DialogFooter className="mt-4">
+            <Button 
+              onClick={() => setIsStockWarningOpen(false)}
+            >
+              OK
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Convert to Stock Exit Dialog */}
       <Dialog open={isConvertDialogOpen} onOpenChange={setIsConvertDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
