@@ -26,13 +26,13 @@ const LowStockProducts: React.FC<LowStockProductsProps> = ({
         {displayProducts.length > 0 ? (
           <div className="space-y-4">
             {displayProducts.map((product) => (
-              <div key={product.id} className="flex justify-between items-center p-3 bg-red-50 rounded-md">
-                <div className="flex items-center">
-                  <AlertTriangle className="h-5 w-5 text-red-500 mr-2" />
+              <div key={product.id} className="flex justify-between items-start p-3 bg-red-50 rounded-md">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
                   <div>
                     <Button 
                       variant="link" 
-                      className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors"
+                      className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors whitespace-normal text-left justify-start min-h-[24px]"
                       onClick={() => navigateToProductDetail(product.id)}
                     >
                       {product.name}
