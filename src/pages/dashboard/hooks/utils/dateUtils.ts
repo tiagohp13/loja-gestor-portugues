@@ -36,12 +36,24 @@ export const processExitsForMonthlyData = (
   dataMap: Map<string, { name: string, vendas: number, compras: number }>
 ): void => {
   stockExits.forEach(exit => {
+    // Ensure exit has date and items property
+    if (!exit.date || !exit.items) return;
+    
     const date = ensureDate(exit.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
     if (dataMap.has(monthKey)) {
       const current = dataMap.get(monthKey)!;
-      const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+      // Check if items exist and are an array before reducing
+      const exitTotal = Array.isArray(exit.items) 
+        ? exit.items.reduce((sum, item) => {
+            // Ensure item has required properties
+            if (!item || typeof item.quantity !== 'number' || typeof item.salePrice !== 'number') {
+              return sum;
+            }
+            return sum + (item.quantity * item.salePrice);
+          }, 0)
+        : 0;
       
       dataMap.set(monthKey, {
         ...current,
@@ -59,12 +71,24 @@ export const processEntriesForMonthlyData = (
   dataMap: Map<string, { name: string, vendas: number, compras: number }>
 ): void => {
   stockEntries.forEach(entry => {
+    // Ensure entry has date and items property
+    if (!entry.date || !entry.items) return;
+    
     const date = ensureDate(entry.date);
     const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
     
     if (dataMap.has(monthKey)) {
       const current = dataMap.get(monthKey)!;
-      const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+      // Check if items exist and are an array before reducing
+      const entryTotal = Array.isArray(entry.items) 
+        ? entry.items.reduce((sum, item) => {
+            // Ensure item has required properties
+            if (!item || typeof item.quantity !== 'number' || typeof item.purchasePrice !== 'number') {
+              return sum;
+            }
+            return sum + (item.quantity * item.purchasePrice);
+          }, 0)
+        : 0;
       
       dataMap.set(monthKey, {
         ...current,
