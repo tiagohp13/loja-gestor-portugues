@@ -5,7 +5,7 @@ export type TransactionItem = {
   id: string;
   type: 'entry' | 'exit';
   productId: string;
-  product: Product | undefined;  // Changed from optional to required to match Transaction type
+  product: Product | undefined;
   entity: string;
   entityId: string;
   quantity: number;
@@ -36,8 +36,8 @@ export const createAllTransactions = (
               id: entry.id,
               type: 'entry',
               productId: item.productId,
-              product: products.find(p => p && p.id === item.productId),
-              entity: entry.supplierName || (entry.supplierId ? suppliers.find(s => s && s.id === entry.supplierId)?.name || 'Desconhecido' : 'Desconhecido'),
+              product: products?.find(p => p && p.id === item.productId),
+              entity: entry.supplierName || (entry.supplierId ? suppliers?.find(s => s && s.id === entry.supplierId)?.name || 'Desconhecido' : 'Desconhecido'),
               entityId: entry.supplierId || '',
               quantity: item.quantity || 0,
               date: entry.date,
@@ -60,8 +60,8 @@ export const createAllTransactions = (
               id: exit.id,
               type: 'exit',
               productId: item.productId,
-              product: products.find(p => p && p.id === item.productId),
-              entity: exit.clientName || (exit.clientId ? clients.find(c => c && c.id === exit.clientId)?.name || 'Desconhecido' : 'Desconhecido'),
+              product: products?.find(p => p && p.id === item.productId),
+              entity: exit.clientName || (exit.clientId ? clients?.find(c => c && c.id === exit.clientId)?.name || 'Desconhecido' : 'Desconhecido'),
               entityId: exit.clientId || '',
               quantity: item.quantity || 0,
               date: exit.date,

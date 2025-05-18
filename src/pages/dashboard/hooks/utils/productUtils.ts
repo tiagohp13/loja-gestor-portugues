@@ -5,7 +5,13 @@ import { Product, StockEntry, StockExit } from '@/types';
  * Creates category data for chart visualization
  */
 export const createCategoryData = (products: Product[]): { name: string, quantidade: number }[] => {
+  if (!products || !Array.isArray(products)) {
+    return [];
+  }
+  
   const categoryCounts = products.reduce((acc, product) => {
+    if (!product) return acc;
+    
     const { category } = product;
     if (!acc[category]) {
       acc[category] = 0;
@@ -24,14 +30,17 @@ export const createCategoryData = (products: Product[]): { name: string, quantid
  * Identifies products with stock levels below their minimum threshold
  */
 export const identifyLowStockProducts = (products: Product[]): Product[] => {
+  if (!products || !Array.isArray(products)) {
+    return [];
+  }
+  
   return products.filter(product => 
-    product.currentStock <= (product.minStock || 0) && product.minStock > 0
+    product && product.currentStock <= (product.minStock || 0) && product.minStock > 0
   );
 };
 
 /**
  * Calculates the quantity of each product sold
- * Fixed: Added null checking for items to prevent "Cannot destructure property 'productId' of 'item' as it is undefined"
  */
 export const calculateProductSales = (stockExits: StockExit[]): Record<string, number> => {
   if (!stockExits || !Array.isArray(stockExits)) {
@@ -40,7 +49,10 @@ export const calculateProductSales = (stockExits: StockExit[]): Record<string, n
   
   return stockExits
     .filter(exit => exit && exit.items && Array.isArray(exit.items))
-    .flatMap(exit => exit.items.filter(item => item !== undefined))
+    .flatMap(exit => {
+      if (!exit.items) return [];
+      return exit.items.filter(item => item !== undefined);
+    })
     .reduce((acc, item) => {
       if (!item) return acc;
       

@@ -146,7 +146,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   }, []);
 
   // Generic function to handle database operations and state updates
-  const handleDataChange = async <T>(
+  const handleDataChange = async <T,>(
     operation: 'insert' | 'update' | 'delete',
     tableName: string,
     data: any,
