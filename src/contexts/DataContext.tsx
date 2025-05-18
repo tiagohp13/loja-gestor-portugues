@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Client, StockEntry, StockExit, Supplier, Category, Order } from '@/types';
@@ -54,7 +55,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
   const [stockExits, setStockExits] = useState<StockExit[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-   const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
@@ -253,8 +254,8 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const deleteStockExit = async (id: string): Promise<void> => {
     return handleDataChange('delete', 'stock_exits', { id }, setStockExits);
   };
-  
-   const addSupplier = async (supplier: Omit<Supplier, 'id' | 'createdAt'>): Promise<Supplier> => {
+   
+  const addSupplier = async (supplier: Omit<Supplier, 'id' | 'createdAt'>): Promise<Supplier> => {
     return handleDataChange('insert', 'suppliers', supplier, setSuppliers);
   };
 
@@ -290,150 +291,149 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return handleDataChange('delete', 'orders', { id }, setOrders);
   };
 
-// Procure a função convertOrderToStockExit no DataContext
-const convertOrderToStockExit = async (orderId: string, invoiceNumber?: string) => {
-  try {
-    // Buscar a encomenda
-    const { data: order, error: orderError } = await supabase
-      .from('orders')
-      .select('*, items:order_items(*)')
-      .eq('id', orderId)
-      .single();
-      
-    if (orderError || !order) {
-      console.error("Error fetching order:", orderError);
-      throw new Error("Não foi possível encontrar a encomenda");
-    }
-    
-    if (order.converted_to_stock_exit_id) {
-      throw new Error("Esta encomenda já foi convertida para venda");
-    }
-    
-    // Verificar o stock dos produtos
-    const insufficientStockProducts = [];
-    
-    for (const item of order.items) {
-      // Buscar o produto para verificar o stock atual
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .select('id, name, current_stock')
-        .eq('id', item.product_id)
+  // Convert order to stock exit function
+  const convertOrderToStockExit = async (orderId: string, invoiceNumber?: string): Promise<StockExit> => {
+    try {
+      // Buscar a encomenda
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .select('*, items:order_items(*)')
+        .eq('id', orderId)
         .single();
         
-      if (productError || !product) {
-        console.error("Error fetching product:", productError);
-        continue;
+      if (orderError || !order) {
+        console.error("Error fetching order:", orderError);
+        throw new Error("Não foi possível encontrar a encomenda");
       }
       
-      if (product.current_stock < item.quantity) {
-        insufficientStockProducts.push(product.name);
+      if (order.converted_to_stock_exit_id) {
+        throw new Error("Esta encomenda já foi convertida para venda");
       }
-    }
-    
-    if (insufficientStockProducts.length > 0) {
-      throw new Error(`Stock insuficiente para os produtos: ${insufficientStockProducts.join(", ")}`);
-    }
-    
-    // Obter o próximo número de saída
-    const targetYear = new Date(order.date).getFullYear();
-    const { data: exitNumber, error: numberError } = await supabase
-      .rpc('get_next_counter_by_year', { 
-        counter_id: 'exit',
-        target_year: targetYear
-      });
       
-    if (numberError || !exitNumber) {
-      console.error("Error getting exit number:", numberError);
-      throw new Error("Não foi possível gerar o número da venda");
-    }
-    
-    // Notas: manter apenas a versão em português (remover versão em inglês)
-    const notesText = `Convertida da encomenda ${order.number}`;
-    
-    // Criar a saída de stock
-    const exitData = {
-      client_id: order.client_id,
-      client_name: order.client_name,
-      date: order.date,
-      number: exitNumber,
-      from_order_id: order.id,
-      from_order_number: order.number,
-      notes: notesText, // Apenas a versão em português
-      invoice_number: invoiceNumber || null
-    };
-    
-    // Inserir a saída de stock
-    const { data: exit, error: exitError } = await supabase
-      .from('stock_exits')
-      .insert(exitData)
-      .select()
-      .single();
+      // Verificar o stock dos produtos
+      const insufficientStockProducts = [];
       
-    if (exitError || !exit) {
-      console.error("Error creating stock exit:", exitError);
-      throw new Error("Erro ao criar a saída de stock");
-    }
-    
-    // Inserir os items da saída
-    const exitItems = order.items.map(item => ({
-      exit_id: exit.id,
-      product_id: item.product_id,
-      product_name: item.product_name,
-      quantity: item.quantity,
-      sale_price: item.sale_price,
-      discount_percent: item.discount_percent || 0
-    }));
-    
-    const { error: itemsError } = await supabase
-      .from('stock_exit_items')
-      .insert(exitItems);
+      for (const item of order.items) {
+        // Buscar o produto para verificar o stock atual
+        const { data: product, error: productError } = await supabase
+          .from('products')
+          .select('id, name, current_stock')
+          .eq('id', item.product_id)
+          .single();
+          
+        if (productError || !product) {
+          console.error("Error fetching product:", productError);
+          continue;
+        }
+        
+        if (product.current_stock < item.quantity) {
+          insufficientStockProducts.push(product.name);
+        }
+      }
       
-    if (itemsError) {
-      console.error("Error creating stock exit items:", itemsError);
-      throw new Error("Erro ao criar os itens da saída de stock");
-    }
-    
-    // Atualizar o stock dos produtos
-    for (const item of order.items) {
-      const { error: updateError } = await supabase
-        .rpc('decrement_product_stock', {
-          product_id: item.product_id,
-          quantity: item.quantity
+      if (insufficientStockProducts.length > 0) {
+        throw new Error(`Stock insuficiente para os produtos: ${insufficientStockProducts.join(", ")}`);
+      }
+      
+      // Obter o próximo número de saída
+      const targetYear = new Date(order.date).getFullYear();
+      const { data: exitNumber, error: numberError } = await supabase
+        .rpc('get_next_counter_by_year', { 
+          counter_id: 'exit',
+          target_year: targetYear
         });
         
-      if (updateError) {
-        console.error("Error updating product stock:", updateError);
+      if (numberError || !exitNumber) {
+        console.error("Error getting exit number:", numberError);
+        throw new Error("Não foi possível gerar o número da venda");
       }
-    }
-    
-    // Atualizar a encomenda
-    const { error: updateOrderError } = await supabase
-      .from('orders')
-      .update({
-        converted_to_stock_exit_id: exit.id,
-        converted_to_stock_exit_number: exit.number
-      })
-      .eq('id', orderId);
       
-    if (updateOrderError) {
-      console.error("Error updating order:", updateOrderError);
-      throw new Error("Erro ao atualizar a encomenda");
+      // Notas: manter apenas a versão em português (remover versão em inglês)
+      const notesText = `Convertida da encomenda ${order.number}`;
+      
+      // Criar a saída de stock
+      const exitData = {
+        client_id: order.client_id,
+        client_name: order.client_name,
+        date: order.date,
+        number: exitNumber,
+        from_order_id: order.id,
+        from_order_number: order.number,
+        notes: notesText,
+        invoice_number: invoiceNumber || null
+      };
+      
+      // Inserir a saída de stock
+      const { data: exit, error: exitError } = await supabase
+        .from('stock_exits')
+        .insert(exitData)
+        .select()
+        .single();
+        
+      if (exitError || !exit) {
+        console.error("Error creating stock exit:", exitError);
+        throw new Error("Erro ao criar a saída de stock");
+      }
+      
+      // Inserir os items da saída
+      const exitItems = order.items.map(item => ({
+        exit_id: exit.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        sale_price: item.sale_price,
+        discount_percent: item.discount_percent || 0
+      }));
+      
+      const { error: itemsError } = await supabase
+        .from('stock_exit_items')
+        .insert(exitItems);
+        
+      if (itemsError) {
+        console.error("Error creating stock exit items:", itemsError);
+        throw new Error("Erro ao criar os itens da saída de stock");
+      }
+      
+      // Atualizar o stock dos produtos
+      for (const item of order.items) {
+        const { error: updateError } = await supabase
+          .rpc('decrement_product_stock', {
+            product_id: item.product_id,
+            quantity: item.quantity
+          });
+          
+        if (updateError) {
+          console.error("Error updating product stock:", updateError);
+        }
+      }
+      
+      // Atualizar a encomenda
+      const { error: updateOrderError } = await supabase
+        .from('orders')
+        .update({
+          converted_to_stock_exit_id: exit.id,
+          converted_to_stock_exit_number: exit.number
+        })
+        .eq('id', orderId);
+        
+      if (updateOrderError) {
+        console.error("Error updating order:", updateOrderError);
+        throw new Error("Erro ao atualizar a encomenda");
+      }
+      
+      // Atualizar o estado local
+      setStockExits(prev => [...prev, exit]);
+      setOrders(prev => prev.map(o => o.id === orderId 
+        ? { ...o, converted_to_stock_exit_id: exit.id, converted_to_stock_exit_number: exit.number } 
+        : o
+      ));
+      
+      return exit;
+    } catch (error) {
+      console.error("Error converting order to stock exit:", error);
+      throw error;
     }
-    
-    // Atualizar o estado local
-    setStockExits(prev => [...prev, exit]);
-    setOrders(prev => prev.map(o => o.id === orderId 
-      ? { ...o, converted_to_stock_exit_id: exit.id, converted_to_stock_exit_number: exit.number } 
-      : o
-    ));
-    
-    return exit;
-  } catch (error) {
-    console.error("Error converting order to stock exit:", error);
-    throw error;
-  }
-};
-
+  };
 
   const value: DataContextType = {
     products,
