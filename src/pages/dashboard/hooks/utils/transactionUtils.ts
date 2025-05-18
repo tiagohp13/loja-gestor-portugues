@@ -26,7 +26,7 @@ export const createAllTransactions = (
   const transactions: TransactionItem[] = [];
 
   // Process stock entries if they exist and have items
-  if (stockEntries && stockEntries.length > 0) {
+  if (stockEntries && Array.isArray(stockEntries) && stockEntries.length > 0) {
     stockEntries.forEach(entry => {
       // Make sure entry.items exists before trying to map it
       if (entry && entry.items && Array.isArray(entry.items)) {
@@ -36,8 +36,8 @@ export const createAllTransactions = (
               id: entry.id,
               type: 'entry',
               productId: item.productId,
-              product: products.find(p => p.id === item.productId),
-              entity: entry.supplierName || (entry.supplierId ? suppliers.find(s => s.id === entry.supplierId)?.name : null) || 'Desconhecido',
+              product: products.find(p => p && p.id === item.productId),
+              entity: entry.supplierName || (entry.supplierId ? suppliers.find(s => s && s.id === entry.supplierId)?.name : null) || 'Desconhecido',
               entityId: entry.supplierId || '',
               quantity: item.quantity || 0,
               date: entry.date,
@@ -50,7 +50,7 @@ export const createAllTransactions = (
   }
 
   // Process stock exits if they exist and have items
-  if (stockExits && stockExits.length > 0) {
+  if (stockExits && Array.isArray(stockExits) && stockExits.length > 0) {
     stockExits.forEach(exit => {
       // Make sure exit.items exists before trying to map it
       if (exit && exit.items && Array.isArray(exit.items)) {
@@ -60,8 +60,8 @@ export const createAllTransactions = (
               id: exit.id,
               type: 'exit',
               productId: item.productId,
-              product: products.find(p => p.id === item.productId),
-              entity: exit.clientName || (exit.clientId ? clients.find(c => c.id === exit.clientId)?.name : null) || 'Desconhecido',
+              product: products.find(p => p && p.id === item.productId),
+              entity: exit.clientName || (exit.clientId ? clients.find(c => c && c.id === exit.clientId)?.name : null) || 'Desconhecido',
               entityId: exit.clientId || '',
               quantity: item.quantity || 0,
               date: exit.date,

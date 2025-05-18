@@ -99,19 +99,19 @@ export const useDashboardData = () => {
   }, [products]);
 
   const totalProfit = useMemo(() => {
-    return calculateTotalProfit(totalSalesValue, totalPurchaseValue);
+    return calculateTotalProfit(totalSalesValue || 0, totalPurchaseValue || 0);
   }, [totalSalesValue, totalPurchaseValue]);
   
   const profitMarginPercent = useMemo(() => {
-    return calculateProfitMarginPercent(totalProfit, totalSalesValue);
+    return calculateProfitMarginPercent(totalProfit || 0, totalSalesValue || 0);
   }, [totalProfit, totalSalesValue]);
   
   const roiValue = useMemo(() => {
-    return calculateRoiValue(totalProfit, totalPurchaseValue);
+    return calculateRoiValue(totalProfit || 0, totalPurchaseValue || 0);
   }, [totalProfit, totalPurchaseValue]);
   
   const roiPercent = useMemo(() => {
-    return calculateRoiPercent(totalProfit, totalPurchaseValue);
+    return calculateRoiPercent(totalProfit || 0, totalPurchaseValue || 0);
   }, [totalProfit, totalPurchaseValue]);
 
   return {

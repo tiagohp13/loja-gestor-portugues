@@ -5,8 +5,22 @@ import { StockExit, StockEntry } from '@/types';
  * Calculate total sales value from stock exits
  */
 export const calculateTotalSalesValue = (stockExits: StockExit[]): number => {
+  if (!stockExits || !Array.isArray(stockExits)) {
+    return 0;
+  }
+  
   return stockExits.reduce((total, exit) => {
-    const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
+    if (!exit || !exit.items || !Array.isArray(exit.items)) {
+      return total;
+    }
+    
+    const exitTotal = exit.items.reduce((sum, item) => {
+      if (!item || typeof item.quantity !== 'number' || typeof item.salePrice !== 'number') {
+        return sum;
+      }
+      return sum + (item.quantity * item.salePrice);
+    }, 0);
+    
     return total + exitTotal;
   }, 0);
 };
@@ -15,8 +29,22 @@ export const calculateTotalSalesValue = (stockExits: StockExit[]): number => {
  * Calculate total purchase value from stock entries
  */
 export const calculateTotalPurchaseValue = (stockEntries: StockEntry[]): number => {
+  if (!stockEntries || !Array.isArray(stockEntries)) {
+    return 0;
+  }
+  
   return stockEntries.reduce((total, entry) => {
-    const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
+    if (!entry || !entry.items || !Array.isArray(entry.items)) {
+      return total;
+    }
+    
+    const entryTotal = entry.items.reduce((sum, item) => {
+      if (!item || typeof item.quantity !== 'number' || typeof item.purchasePrice !== 'number') {
+        return sum;
+      }
+      return sum + (item.quantity * item.purchasePrice);
+    }, 0);
+    
     return total + entryTotal;
   }, 0);
 };
