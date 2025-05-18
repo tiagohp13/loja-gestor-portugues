@@ -53,40 +53,40 @@ export const calculateTotalPurchaseValue = (stockEntries: StockEntry[]): number 
  * Calculate profit (sales minus purchases)
  */
 export const calculateTotalProfit = (totalSalesValue: number, totalPurchaseValue: number): number => {
-  return totalSalesValue - totalPurchaseValue;
+  return (totalSalesValue || 0) - (totalPurchaseValue || 0);
 };
 
 /**
  * Calculate profit margin as percentage of sales
  */
 export const calculateProfitMarginPercent = (totalProfit: number, totalSalesValue: number): number => {
-  return totalSalesValue > 0 ? (totalProfit / totalSalesValue) * 100 : 0;
+  return (totalSalesValue || 0) > 0 ? ((totalProfit || 0) / totalSalesValue) * 100 : 0;
 };
 
 /**
  * Calculate ROI in monetary value (profit / purchases)
  */
 export const calculateRoiValue = (totalProfit: number, totalPurchaseValue: number): number => {
-  return totalPurchaseValue > 0 ? totalProfit / totalPurchaseValue : 0;
+  return (totalPurchaseValue || 0) > 0 ? (totalProfit || 0) / totalPurchaseValue : 0;
 };
 
 /**
  * Calculate ROI as percentage
  */
 export const calculateRoiPercent = (totalProfit: number, totalPurchaseValue: number): number => {
-  return totalPurchaseValue > 0 ? (totalProfit / totalPurchaseValue) * 100 : 0;
+  return (totalPurchaseValue || 0) > 0 ? ((totalProfit || 0) / totalPurchaseValue) * 100 : 0;
 };
 
 /**
  * Calculate average sale value per sale
  */
 export const calculateAverageSaleValue = (totalSalesValue: number, salesCount: number): number => {
-  return salesCount > 0 ? totalSalesValue / salesCount : 0;
+  return (salesCount || 0) > 0 ? (totalSalesValue || 0) / salesCount : 0;
 };
 
 /**
  * Calculate average profit per sale
  */
 export const calculateAverageProfitPerSale = (totalProfit: number, salesCount: number): number => {
-  return salesCount > 0 ? totalProfit / salesCount : 0;
+  return (salesCount || 0) > 0 ? (totalProfit || 0) / salesCount : 0;
 };

@@ -65,14 +65,14 @@ export const useDashboardData = () => {
     return getRecentTransactions(allTransactions || []);
   }, [allTransactions]);
   
-  // Calculate product sales
+  // Calculate product sales - this was causing the error
   const productSales = useMemo(() => {
     return calculateProductSales(stockExits || []);
   }, [stockExits]);
   
   // Find most sold product
   const mostSoldProduct = useMemo(() => {
-    return findMostSoldProduct(productSales, products || []);
+    return findMostSoldProduct(productSales || {}, products || []);
   }, [productSales, products]);
   
   // Find most frequent client

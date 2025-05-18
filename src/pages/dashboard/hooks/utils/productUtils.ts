@@ -31,16 +31,28 @@ export const identifyLowStockProducts = (products: Product[]): Product[] => {
 
 /**
  * Calculates the quantity of each product sold
+ * Fixed: Added null checking for items to prevent "Cannot destructure property 'productId' of 'item' as it is undefined"
  */
 export const calculateProductSales = (stockExits: StockExit[]): Record<string, number> => {
-  return stockExits.flatMap(exit => exit.items).reduce((acc, item) => {
-    const { productId, quantity } = item;
-    if (!acc[productId]) {
-      acc[productId] = 0;
-    }
-    acc[productId] += quantity;
-    return acc;
-  }, {} as Record<string, number>);
+  if (!stockExits || !Array.isArray(stockExits)) {
+    return {};
+  }
+  
+  return stockExits
+    .filter(exit => exit && exit.items && Array.isArray(exit.items))
+    .flatMap(exit => exit.items.filter(item => item !== undefined))
+    .reduce((acc, item) => {
+      if (!item) return acc;
+      
+      const { productId, quantity } = item;
+      if (!productId) return acc;
+      
+      if (!acc[productId]) {
+        acc[productId] = 0;
+      }
+      acc[productId] += quantity || 0;
+      return acc;
+    }, {} as Record<string, number>);
 };
 
 /**
@@ -50,6 +62,10 @@ export const findMostSoldProduct = (
   productSales: Record<string, number>,
   products: Product[]
 ): Product | undefined => {
+  if (!productSales || !products || !Array.isArray(products)) {
+    return undefined;
+  }
+  
   let mostSoldProductId = '';
   let mostSoldQuantity = 0;
   
@@ -60,14 +76,19 @@ export const findMostSoldProduct = (
     }
   });
   
-  return products.find(p => p.id === mostSoldProductId);
+  return products.find(p => p && p.id === mostSoldProductId);
 };
 
 /**
  * Calculates the total value of current stock
  */
 export const calculateTotalStockValue = (products: Product[]): number => {
+  if (!products || !Array.isArray(products)) {
+    return 0;
+  }
+  
   return products.reduce((total, product) => {
+    if (!product) return total;
     return total + (product.currentStock * product.purchasePrice);
   }, 0);
 };
