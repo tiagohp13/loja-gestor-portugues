@@ -2,6 +2,15 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Product, Client, StockEntry, StockExit, Supplier, Category, Order } from '@/types';
+import { 
+  mapDbProductToProduct, 
+  mapDbClientToClient, 
+  mapDbStockEntryToStockEntry,
+  mapDbStockExitToStockExit,
+  mapDbSupplierToSupplier,
+  mapDbCategoryToCategory,
+  mapDbOrderToOrder
+} from '@/utils/mappers';
 
 interface DataContextType {
   products: Product[];
@@ -61,6 +70,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Fetch products
         const { data: productsData, error: productsError } = await supabase
           .from('products')
           .select('*')
@@ -69,9 +79,10 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (productsError) {
           console.error("Error fetching products:", productsError);
         } else {
-          setProducts(productsData || []);
+          setProducts(productsData?.map(mapDbProductToProduct) || []);
         }
 
+        // Fetch clients
         const { data: clientsData, error: clientsError } = await supabase
           .from('clients')
           .select('*')
@@ -80,9 +91,10 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (clientsError) {
           console.error("Error fetching clients:", clientsError);
         } else {
-          setClients(clientsData || []);
+          setClients(clientsData?.map(mapDbClientToClient) || []);
         }
 
+        // Fetch stock entries with items
         const { data: stockEntriesData, error: stockEntriesError } = await supabase
           .from('stock_entries')
           .select('*')
@@ -91,9 +103,20 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (stockEntriesError) {
           console.error("Error fetching stock entries:", stockEntriesError);
         } else {
-          setStockEntries(stockEntriesData || []);
+          // For each entry, fetch its items
+          const entriesWithItems = await Promise.all((stockEntriesData || []).map(async (entry) => {
+            const { data: items } = await supabase
+              .from('stock_entry_items')
+              .select('*')
+              .eq('entry_id', entry.id);
+            
+            return mapDbStockEntryToStockEntry(entry, items || []);
+          }));
+          
+          setStockEntries(entriesWithItems);
         }
 
+        // Fetch stock exits with items
         const { data: stockExitsData, error: stockExitsError } = await supabase
           .from('stock_exits')
           .select('*')
@@ -102,9 +125,20 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (stockExitsError) {
           console.error("Error fetching stock exits:", stockExitsError);
         } else {
-          setStockExits(stockExitsData || []);
+          // For each exit, fetch its items
+          const exitsWithItems = await Promise.all((stockExitsData || []).map(async (exit) => {
+            const { data: items } = await supabase
+              .from('stock_exit_items')
+              .select('*')
+              .eq('exit_id', exit.id);
+            
+            return mapDbStockExitToStockExit(exit, items || []);
+          }));
+          
+          setStockExits(exitsWithItems);
         }
 
+        // Fetch suppliers
         const { data: suppliersData, error: suppliersError } = await supabase
           .from('suppliers')
           .select('*')
@@ -113,10 +147,11 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (suppliersError) {
           console.error("Error fetching suppliers:", suppliersError);
         } else {
-          setSuppliers(suppliersData || []);
+          setSuppliers(suppliersData?.map(mapDbSupplierToSupplier) || []);
         }
         
-         const { data: categoriesData, error: categoriesError } = await supabase
+        // Fetch categories
+        const { data: categoriesData, error: categoriesError } = await supabase
           .from('categories')
           .select('*')
           .order('created_at', { ascending: false });
@@ -124,9 +159,10 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (categoriesError) {
           console.error("Error fetching categories:", categoriesError);
         } else {
-          setCategories(categoriesData || []);
+          setCategories(categoriesData?.map(mapDbCategoryToCategory) || []);
         }
 
+        // Fetch orders with items
         const { data: ordersData, error: ordersError } = await supabase
           .from('orders')
           .select('*')
@@ -135,7 +171,17 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         if (ordersError) {
           console.error("Error fetching orders:", ordersError);
         } else {
-          setOrders(ordersData || []);
+          // For each order, fetch its items
+          const ordersWithItems = await Promise.all((ordersData || []).map(async (order) => {
+            const { data: items } = await supabase
+              .from('order_items')
+              .select('*')
+              .eq('order_id', order.id);
+            
+            return mapDbOrderToOrder(order, items || []);
+          }));
+          
+          setOrders(ordersWithItems);
         }
       } catch (error) {
         console.error("Error during initial data fetch:", error);
@@ -155,6 +201,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   ): Promise<any> => {
     try {
       let response;
+      let mappedResult;
 
       switch (operation) {
         case 'insert':
@@ -187,16 +234,60 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         throw response.error;
       }
 
+      // Apply mapping based on the table
+      if (operation !== 'delete' && response.data) {
+        switch (tableName) {
+          case 'products':
+            mappedResult = mapDbProductToProduct(response.data);
+            break;
+          case 'clients':
+            mappedResult = mapDbClientToClient(response.data);
+            break;
+          case 'stock_entries':
+            // Fetch items for this entry
+            const { data: entryItems } = await supabase
+              .from('stock_entry_items')
+              .select('*')
+              .eq('entry_id', response.data.id);
+            mappedResult = mapDbStockEntryToStockEntry(response.data, entryItems || []);
+            break;
+          case 'stock_exits':
+            // Fetch items for this exit
+            const { data: exitItems } = await supabase
+              .from('stock_exit_items')
+              .select('*')
+              .eq('exit_id', response.data.id);
+            mappedResult = mapDbStockExitToStockExit(response.data, exitItems || []);
+            break;
+          case 'suppliers':
+            mappedResult = mapDbSupplierToSupplier(response.data);
+            break;
+          case 'categories':
+            mappedResult = mapDbCategoryToCategory(response.data);
+            break;
+          case 'orders':
+            // Fetch items for this order
+            const { data: orderItems } = await supabase
+              .from('order_items')
+              .select('*')
+              .eq('order_id', response.data.id);
+            mappedResult = mapDbOrderToOrder(response.data, orderItems || []);
+            break;
+          default:
+            mappedResult = response.data;
+        }
+      }
+
       // Update local state based on the operation
       switch (operation) {
         case 'insert':
-          setData((prev: any[]) => [...prev, response.data]);
-          return response.data;
+          setData((prev: any[]) => [...prev, mappedResult]);
+          return mappedResult;
         case 'update':
           setData((prev: any[]) =>
-            prev.map((item: any) => (item[idField] === response.data[idField] ? response.data : item))
+            prev.map((item: any) => (item[idField] === mappedResult[idField] ? mappedResult : item))
           );
-          return response.data;
+          return mappedResult;
         case 'delete':
           setData((prev: any[]) => prev.filter((item: any) => item[idField] !== data[idField]));
           break;
