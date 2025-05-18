@@ -20,14 +20,15 @@ const StockEntryEditSupplier: React.FC<StockEntryEditSupplierProps> = ({
         Fornecedor
       </label>
       <Select
-        value={supplierId}
+        value={supplierId || undefined}
         onValueChange={onSupplierChange}
       >
         <SelectTrigger id="supplierId" className="w-full">
           <SelectValue placeholder="Selecione um fornecedor" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="">Selecione um fornecedor</SelectItem>
+          {/* Item placeholder com valor não vazio */}
+          <SelectItem value="placeholder">Selecione um fornecedor</SelectItem>
           {suppliers.map((supplier) => (
             <SelectItem key={supplier.id} value={supplier.id}>
               {supplier.name}

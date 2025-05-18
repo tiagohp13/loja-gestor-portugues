@@ -13,6 +13,9 @@ export const useEntryForm = (initialEntry: StockEntryFormState, setEntry: React.
   };
 
   const handleSupplierChange = (value: string) => {
+    // Não aceitar o valor "placeholder"
+    if (value === "placeholder") return;
+    
     setEntry(prev => ({
       ...prev,
       supplierId: value
@@ -21,6 +24,9 @@ export const useEntryForm = (initialEntry: StockEntryFormState, setEntry: React.
 
   const handleItemChange = (index: number, field: keyof StockEntryItem, value: any) => {
     const updatedItems = [...initialEntry.items];
+    
+    // Se o valor for "placeholder" para o campo productId, ignorar a alteração
+    if (field === 'productId' && value === "placeholder") return;
     
     if (field === 'productId' && typeof value === 'string') {
       const selectedProduct = window.products?.find(p => p.id === value);
@@ -52,7 +58,7 @@ export const useEntryForm = (initialEntry: StockEntryFormState, setEntry: React.
         ...prev.items,
         {
           id: `temp-${Date.now()}`,
-          productId: '',
+          productId: '', // Este valor vazio será substituído por "placeholder" na UI
           productName: '',
           quantity: 1,
           purchasePrice: 0,

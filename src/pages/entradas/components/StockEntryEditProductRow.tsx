@@ -28,13 +28,14 @@ const StockEntryEditProductRow: React.FC<StockEntryEditProductRowProps> = ({
     <tr>
       <td className="px-3 py-2">
         <Select
-          value={item.productId}
+          value={item.productId || "placeholder"}
           onValueChange={(value) => onItemChange(index, 'productId', value)}
         >
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Selecione um produto" />
           </SelectTrigger>
           <SelectContent>
+            <SelectItem value="placeholder">Selecione um produto</SelectItem>
             {products.map((product) => (
               <SelectItem key={product.id} value={product.id}>
                 {product.code} - {product.name}
@@ -48,7 +49,7 @@ const StockEntryEditProductRow: React.FC<StockEntryEditProductRowProps> = ({
           type="number"
           min="1"
           value={item.quantity}
-          onChange={(e) => onItemChange(index, 'quantity', parseInt(e.target.value))}
+          onChange={(e) => onItemChange(index, 'quantity', parseInt(e.target.value) || 1)}
           className="w-24"
         />
       </td>
@@ -58,7 +59,7 @@ const StockEntryEditProductRow: React.FC<StockEntryEditProductRowProps> = ({
           min="0"
           step="0.01"
           value={item.purchasePrice}
-          onChange={(e) => onItemChange(index, 'purchasePrice', parseFloat(e.target.value))}
+          onChange={(e) => onItemChange(index, 'purchasePrice', parseFloat(e.target.value) || 0)}
           className="w-24"
         />
       </td>
