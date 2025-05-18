@@ -15,7 +15,7 @@ export const useProductHistory = (productId: string | undefined) => {
   const entriesForProduct = useMemo(() => {
     return productHistory.entries
       .flatMap(entry => entry.items
-        .filter(item => item.productId === productId)
+        .filter((item: StockEntryItem) => item.productId === productId)
         .map(item => ({
           date: entry.date,
           number: entry.number,
@@ -31,7 +31,7 @@ export const useProductHistory = (productId: string | undefined) => {
   const exitsForProduct = useMemo(() => {
     return productHistory.exits
       .flatMap(exit => exit.items
-        .filter(item => item.productId === productId)
+        .filter((item: StockExitItem) => item.productId === productId)
         .map(item => ({
           date: exit.date,
           number: exit.number,

@@ -20,7 +20,7 @@ interface DataContextType {
   suppliers: Supplier[];
   categories: Category[];
   orders: Order[];
-  addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<Product>;
+  addProduct: (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Product>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<Product | void>;
   deleteProduct: (id: string) => Promise<void>;
   addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Client>;
@@ -49,6 +49,7 @@ interface DataContextType {
   getClient: (id: string) => Client | undefined;
   getSupplier: (id: string) => Supplier | undefined;
   findOrder: (id: string) => Order | undefined;
+  getProduct: (id: string) => Product | undefined;
   
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
@@ -180,12 +181,21 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         } else {
           // For each order, fetch its items
           const ordersWithItems = await Promise.all((ordersData || []).map(async (order) => {
-            const { data: items } = await supabase
+            const { data: itemsData } = await supabase
               .from('order_items')
               .select('*')
               .eq('order_id', order.id);
+              
+            // Map the DB items to our OrderItem type
+            const items = itemsData?.map(item => ({
+              productId: item.product_id || '',
+              productName: item.product_name,
+              quantity: item.quantity,
+              salePrice: item.sale_price,
+              discountPercent: item.discount_percent
+            })) || [];
             
-            return mapDbOrderToOrder(order, items || []);
+            return mapDbOrderToOrder(order, items);
           }));
           
           setOrders(ordersWithItems);
@@ -199,6 +209,10 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   }, []);
 
   // Helper methods for data retrieval
+  const getProduct = (id: string): Product | undefined => {
+    return products.find(product => product.id === id);
+  };
+  
   const getCategory = (id: string): Category | undefined => {
     return categories.find(category => category.id === id);
   };
@@ -251,7 +265,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   // Generic function to handle database operations and state updates
   const handleDataChange = async <T,>(
     operation: 'insert' | 'update' | 'delete',
-    tableName: 'products' | 'clients' | 'stock_entries' | 'stock_exits' | 'suppliers' | 'categories' | 'orders' | 'stock_entry_items' | 'stock_exit_items' | 'order_items',
+    tableName: string,
     data: any,
     setData: React.Dispatch<React.SetStateAction<T[]>>,
     idField: string = 'id'
@@ -328,7 +342,17 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
               .from('order_items')
               .select('*')
               .eq('order_id', response.data.id);
-            mappedResult = mapDbOrderToOrder(response.data, orderItems || []);
+              
+            // Map the DB items to our OrderItem type
+            const items = orderItems?.map(item => ({
+              productId: item.product_id || '',
+              productName: item.product_name,
+              quantity: item.quantity,
+              salePrice: item.sale_price,
+              discountPercent: item.discount_percent
+            })) || [];
+            
+            mappedResult = mapDbOrderToOrder(response.data, items);
             break;
           default:
             mappedResult = response.data;
@@ -355,7 +379,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     }
   };
 
-  const addProduct = async (product: Omit<Product, 'id' | 'createdAt'>): Promise<Product> => {
+  const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product> => {
     return handleDataChange('insert', 'products', product, setProducts);
   };
 
@@ -544,10 +568,16 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       // Atualizar o stock dos produtos
       for (const item of order.items) {
-        await supabase.rpc('decrement_product_stock', {
-          product_id: item.product_id,
-          quantity: item.quantity
-        });
+        // Use direct SQL query since we don't have the function in the list
+        const { error: stockError } = await supabase
+          .from('products')
+          .update({ current_stock: supabase.sql`current_stock - ${item.quantity}` })
+          .eq('id', item.product_id);
+          
+        if (stockError) {
+          console.error("Error updating product stock:", stockError);
+          // Continue despite errors, we'll handle it manually if needed
+        }
       }
       
       // Atualizar a encomenda
@@ -564,8 +594,14 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         throw new Error("Erro ao atualizar a encomenda");
       }
       
+      // Fetch the exit items we just created
+      const { data: createdExitItems } = await supabase
+        .from('stock_exit_items')
+        .select('*')
+        .eq('exit_id', exit.id);
+      
       // Atualizar o estado local
-      const mappedExit = mapDbStockExitToStockExit(exit, exitItems);
+      const mappedExit = mapDbStockExitToStockExit(exit, createdExitItems || []);
       
       setStockExits(prev => [...prev, mappedExit]);
       
@@ -624,7 +660,8 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     getCategory,
     getClient,
     getSupplier,
-    findOrder
+    findOrder,
+    getProduct
   };
 
   return (

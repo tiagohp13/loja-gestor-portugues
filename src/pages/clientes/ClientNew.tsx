@@ -27,8 +27,7 @@ const ClientNew = () => {
       address,
       taxId,
       notes,
-      status: 'active',
-      updatedAt: new Date().toISOString()
+      status: 'active'
     });
     
     navigate('/clientes/consultar');

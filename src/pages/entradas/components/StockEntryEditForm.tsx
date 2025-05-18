@@ -6,7 +6,6 @@ import StockEntryEditProductTable from './StockEntryEditProductTable';
 import StockEntryEditActions from './StockEntryEditActions';
 import { useStockEntryEdit } from '../hooks/useStockEntryEdit';
 import { useData } from '@/contexts/DataContext';
-import { StockEntryItem } from '@/types';
 
 interface StockEntryEditFormProps {
   id?: string;
