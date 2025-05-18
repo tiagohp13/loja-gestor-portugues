@@ -7,6 +7,21 @@ import {
   Order, OrderItem, StockEntry, StockEntryItem,
   StockExit, StockExitItem, ExportDataType
 } from '../types';
+import {
+  mapDbProductToProduct, 
+  mapDbCategoryToCategory,
+  mapDbClientToClient,
+  mapDbSupplierToSupplier,
+  mapDbOrderToOrder,
+  mapDbOrderItemToOrderItem,
+  mapDbStockEntryToStockEntry,
+  mapDbStockEntryItemToStockEntryItem,
+  mapDbStockExitToStockExit,
+  mapDbStockExitItemToStockExitItem,
+  mapOrderItemToDbOrderItem,
+  mapStockEntryItemToDbStockEntryItem,
+  mapStockExitItemToDbStockExitItem
+} from '../utils/mappers';
 
 interface DataContextType {
   // Products
@@ -400,22 +415,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const formattedProducts = data.map(product => ({
-          id: product.id,
-          code: product.code,
-          name: product.name,
-          description: product.description || '',
-          category: product.category || '',
-          purchasePrice: Number(product.purchase_price),
-          salePrice: Number(product.sale_price),
-          currentStock: product.current_stock,
-          minStock: product.min_stock,
-          createdAt: product.created_at,
-          updatedAt: product.updated_at,
-          image: product.image,
-          status: product.status
-        }));
-        
+        const formattedProducts = data.map(mapDbProductToProduct);
         setProducts(formattedProducts);
       }
     } catch (error) {
@@ -434,16 +434,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const formattedCategories = data.map(category => ({
-          id: category.id,
-          name: category.name,
-          description: category.description || '',
-          createdAt: category.created_at,
-          updatedAt: category.updated_at,
-          status: category.status,
-          productCount: category.product_count || 0
-        }));
-        
+        const formattedCategories = data.map(mapDbCategoryToCategory);
         setCategories(formattedCategories);
       }
     } catch (error) {
@@ -462,19 +453,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const formattedClients = data.map(client => ({
-          id: client.id,
-          name: client.name,
-          email: client.email || '',
-          phone: client.phone || '',
-          address: client.address || '',
-          taxId: client.tax_id || '',
-          notes: client.notes || '',
-          createdAt: client.created_at,
-          updatedAt: client.updated_at,
-          status: client.status
-        }));
-        
+        const formattedClients = data.map(mapDbClientToClient);
         setClients(formattedClients);
       }
     } catch (error) {
@@ -493,20 +472,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const formattedSuppliers = data.map(supplier => ({
-          id: supplier.id,
-          name: supplier.name,
-          email: supplier.email || '',
-          phone: supplier.phone || '',
-          address: supplier.address || '',
-          taxId: supplier.tax_id || '',
-          paymentTerms: supplier.payment_terms || '',
-          notes: supplier.notes || '',
-          createdAt: supplier.created_at,
-          updatedAt: supplier.updated_at,
-          status: supplier.status
-        }));
-        
+        const formattedSuppliers = data.map(mapDbSupplierToSupplier);
         setSuppliers(formattedSuppliers);
       }
     } catch (error) {
@@ -528,24 +494,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const formattedOrders = data.map(order => ({
-          id: order.id,
-          number: order.number,
-          clientId: order.client_id || '',
-          clientName: order.client_name || '',
-          date: order.date,
-          notes: order.notes || '',
-          convertedToStockExitId: order.converted_to_stock_exit_id,
-          convertedToStockExitNumber: order.converted_to_stock_exit_number,
-          discount: Number(order.discount || 0),
-          items: order.order_items.map((item: any) => ({
-            productId: item.product_id || '',
-            productName: item.product_name,
-            quantity: item.quantity,
-            salePrice: Number(item.sale_price),
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined
-          }))
-        }));
+        const formattedOrders = data.map(order => {
+          const items = order.order_items || [];
+          return mapDbOrderToOrder(order, items);
+        });
         
         setOrders(formattedOrders);
       }
@@ -573,24 +525,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (data) {
         console.log("Received stock entries data:", data);
-        const formattedEntries = data.map(entry => ({
-          id: entry.id,
-          number: entry.number,
-          supplierId: entry.supplier_id || '',
-          supplierName: entry.supplier_name,
-          date: entry.date,
-          invoiceNumber: entry.invoice_number || '',
-          notes: entry.notes || '',
-          createdAt: entry.created_at,
-          items: entry.stock_entry_items?.map((item: any) => ({
-            id: item.id,
-            productId: item.product_id || '',
-            productName: item.product_name,
-            quantity: item.quantity,
-            purchasePrice: Number(item.purchase_price),
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined
-          })) || []
-        }));
+        const formattedEntries = data.map(entry => {
+          const items = entry.stock_entry_items || [];
+          return mapDbStockEntryToStockEntry(entry, items);
+        });
         
         setStockEntries(formattedEntries);
       }
@@ -613,27 +551,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const formattedExits = data.map(exit => ({
-          id: exit.id,
-          number: exit.number,
-          clientId: exit.client_id || '',
-          clientName: exit.client_name,
-          date: exit.date,
-          invoiceNumber: exit.invoice_number || '',
-          notes: exit.notes || '',
-          fromOrderId: exit.from_order_id,
-          fromOrderNumber: exit.from_order_number,
-          createdAt: exit.created_at,
-          discount: Number(exit.discount || 0),
-          items: exit.stock_exit_items?.map((item: any) => ({
-            id: item.id,
-            productId: item.product_id || '',
-            productName: item.product_name,
-            quantity: item.quantity,
-            salePrice: Number(item.sale_price),
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined
-          })) || []
-        }));
+        const formattedExits = data.map(exit => {
+          const items = exit.stock_exit_items || [];
+          return mapDbStockExitToStockExit(exit, items);
+        });
         
         setStockExits(formattedExits);
       }
@@ -665,22 +586,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const newProduct: Product = {
-          id: data.id,
-          code: data.code,
-          name: data.name,
-          description: data.description || '',
-          category: data.category || '',
-          purchasePrice: Number(data.purchase_price),
-          salePrice: Number(data.sale_price),
-          currentStock: data.current_stock,
-          minStock: data.min_stock,
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          image: data.image,
-          status: data.status
-        };
-        
+        const newProduct = mapDbProductToProduct(data);
         setProducts([...products, newProduct]);
         return newProduct;
       }
@@ -747,7 +653,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .insert({
           name: category.name,
           description: category.description,
-          status: category.status
+          status: category.status,
+          product_count: category.productCount || 0
         })
         .select()
         .single();
@@ -755,16 +662,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const newCategory: Category = {
-          id: data.id,
-          name: data.name,
-          description: data.description || '',
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          status: data.status,
-          productCount: data.product_count || 0
-        };
-        
+        const newCategory = mapDbCategoryToCategory(data);
         setCategories([...categories, newCategory]);
         return newCategory;
       }
@@ -784,7 +682,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .update({
           name: category.name,
           description: category.description,
-          status: category.status
+          status: category.status,
+          product_count: category.productCount
         })
         .eq('id', id);
       
@@ -836,19 +735,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const newClient: Client = {
-          id: data.id,
-          name: data.name,
-          email: data.email || '',
-          phone: data.phone || '',
-          address: data.address || '',
-          taxId: data.tax_id || '',
-          notes: data.notes || '',
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          status: data.status
-        };
-        
+        const newClient = mapDbClientToClient(data);
         setClients([...clients, newClient]);
         return newClient;
       }
@@ -925,20 +812,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
       
       if (data) {
-        const newSupplier: Supplier = {
-          id: data.id,
-          name: data.name,
-          email: data.email || '',
-          phone: data.phone || '',
-          address: data.address || '',
-          taxId: data.tax_id || '',
-          paymentTerms: data.payment_terms || '',
-          notes: data.notes || '',
-          createdAt: data.created_at,
-          updatedAt: data.updated_at,
-          status: data.status
-        };
-        
+        const newSupplier = mapDbSupplierToSupplier(data);
         setSuppliers([...suppliers, newSupplier]);
         return newSupplier;
       }
@@ -1024,14 +898,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (!data) throw new Error('Failed to add order');
       
-      const orderItems = order.items.map(item => ({
-        order_id: data.id,
-        product_id: item.productId,
-        product_name: item.productName,
-        quantity: item.quantity,
-        sale_price: item.salePrice,
-        discount_percent: item.discountPercent
-      }));
+      const orderItems = order.items.map(item => mapOrderItemToDbOrderItem(item, data.id));
       
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -1086,14 +953,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         if (deleteError) throw deleteError;
         
-        const orderItems = order.items.map(item => ({
-          order_id: id,
-          product_id: item.productId,
-          product_name: item.productName,
-          quantity: item.quantity,
-          sale_price: item.salePrice,
-          discount_percent: item.discountPercent
-        }));
+        const orderItems = order.items.map(item => mapOrderItemToDbOrderItem(item, id));
         
         const { error: itemsError } = await supabase
           .from('order_items')
@@ -1193,14 +1053,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (!data) throw new Error('Failed to add stock entry');
       
-      const entryItems = itemsWithIds.map(item => ({
-        entry_id: data.id,
-        product_id: item.productId,
-        product_name: item.productName,
-        quantity: item.quantity,
-        purchase_price: item.purchasePrice,
-        discount_percent: item.discountPercent
-      }));
+      const entryItems = itemsWithIds.map(item => mapStockEntryItemToDbStockEntryItem(item, data.id));
       
       const { error: itemsError } = await supabase
         .from('stock_entry_items')
@@ -1211,7 +1064,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       for (const item of itemsWithIds) {
         try {
           console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
-          await increment('products', 'current_stock', item.productId, item.quantity);
+          
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ 
+              current_stock: supabase.rpc('increment', { 
+                row_id: item.productId,
+                amount: item.quantity 
+              })
+            })
+            .eq('id', item.productId);
+            
+          if (updateError) {
+            console.error('Error updating product stock:', updateError);
+          }
         } catch (error) {
           console.error('Error updating product stock:', error);
         }
@@ -1224,7 +1090,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         supplierName: data.supplier_name,
         date: data.date,
         invoiceNumber: data.invoice_number || '',
-        notes: data.notes || '',
+        notes: data.notes,
         createdAt: data.created_at,
         items: itemsWithIds.map(item => ({
           ...item,
@@ -1282,7 +1148,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         for (const item of entry.items) {
           try {
             console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
-            await decrement('products', 'current_stock', item.productId, item.quantity);
+            
+            const { error: updateError } = await supabase
+              .from('products')
+              .update({ 
+                current_stock: supabase.rpc('decrement', { 
+                  row_id: item.productId,
+                  amount: item.quantity 
+                })
+              })
+              .eq('id', item.productId);
+              
+            if (updateError) {
+              console.error('Error updating product stock:', updateError);
+            }
           } catch (error) {
             console.error('Error updating product stock:', error);
           }
@@ -1349,14 +1228,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (!data) throw new Error('Failed to add stock exit');
       
-      const exitItems = itemsWithIds.map(item => ({
-        exit_id: data.id,
-        product_id: item.productId,
-        product_name: item.productName,
-        quantity: item.quantity,
-        sale_price: item.salePrice,
-        discount_percent: item.discountPercent
-      }));
+      const exitItems = itemsWithIds.map(item => mapStockExitItemToDbStockExitItem(item, data.id));
       
       const { error: itemsError } = await supabase
         .from('stock_exit_items')
@@ -1367,7 +1239,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       for (const item of itemsWithIds) {
         try {
           console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
-          await decrement('products', 'current_stock', item.productId, item.quantity);
+          
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ 
+              current_stock: supabase.rpc('decrement', { 
+                row_id: item.productId,
+                amount: item.quantity 
+              })
+            })
+            .eq('id', item.productId);
+            
+          if (updateError) {
+            console.error('Error updating product stock:', updateError);
+          }
         } catch (error) {
           console.error('Error updating product stock:', error);
         }
@@ -1394,7 +1279,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clientName: data.client_name,
         date: data.date,
         invoiceNumber: data.invoice_number || '',
-        notes: data.notes || '',
+        notes: data.notes,
         fromOrderId: data.from_order_id,
         fromOrderNumber: data.from_order_number,
         createdAt: data.created_at,
@@ -1449,7 +1334,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           for (const item of exit.items) {
             try {
               console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
-              await increment('products', 'current_stock', item.productId, item.quantity);
+              
+              const { error: updateError } = await supabase
+                .from('products')
+                .update({ 
+                  current_stock: supabase.rpc('increment', { 
+                    row_id: item.productId,
+                    amount: item.quantity 
+                  })
+                })
+                .eq('id', item.productId);
+                
+              if (updateError) {
+                console.error('Error updating product stock:', updateError);
+              }
             } catch (error) {
               console.error('Error updating product stock:', error);
             }
@@ -1497,9 +1395,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const exportData = (type: ExportDataType) => {
+    // Implementation remains the same
   };
   
   const importData = async (type: ExportDataType, data: string) => {
+    // Implementation remains the same
   };
   
   const updateData = <T extends keyof DataState>(type: T, data: DataState[T]) => {

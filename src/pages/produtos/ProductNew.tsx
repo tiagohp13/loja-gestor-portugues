@@ -1,120 +1,71 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { useData } from '@/contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PageHeader from '@/components/ui/PageHeader';
-import { Upload, X, Link as LinkIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProductNew = () => {
   const navigate = useNavigate();
   const { addProduct, categories } = useData();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [product, setProduct] = useState({
-    name: '',
-    code: '',
-    purchasePrice: 0,
-    salePrice: 0,
-    currentStock: 0,
-    minStock: 0,
-    category: '',
-    description: '',
-    image: ''
-  });
-  const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState('');
-  const [activeTab, setActiveTab] = useState('upload');
+  const [name, setName] = useState('');
+  const [code, setCode] = useState('');
+  const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [purchasePrice, setPurchasePrice] = useState(0);
+  const [salePrice, setSalePrice] = useState(0);
+  const [currentStock, setCurrentStock] = useState(0);
+  const [minStock, setMinStock] = useState(0);
+  const [image, setImage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setProduct(prev => ({
-      ...prev,
-      [name]: name === 'purchasePrice' || name === 'salePrice' || name === 'currentStock' 
-              ? parseFloat(value) || 0 
-              : value
-    }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    
-    if (!file.type.includes('image/jpeg') && !file.type.includes('image/png')) {
-      toast.error('Apenas imagens JPG ou PNG são permitidas');
-      return;
-    }
-    
-    const objectUrl = URL.createObjectURL(file);
-    setPreviewImage(objectUrl);
-    setImageUrl('');
-    
-    setProduct(prev => ({
-      ...prev,
-      image: objectUrl
-    }));
-  };
-
-  const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setImageUrl(e.target.value);
-  };
-
-  const handleImageUrlSubmit = () => {
-    if (!imageUrl) {
-      toast.error('Por favor, insira um URL de imagem válido');
-      return;
-    }
-
-    setPreviewImage(imageUrl);
-    setProduct(prev => ({
-      ...prev,
-      image: imageUrl
-    }));
-    toast.success('Imagem adicionada com sucesso');
-  };
-
-  const handleRemoveImage = () => {
-    setPreviewImage(null);
-    setImageUrl('');
-    setProduct(prev => ({
-      ...prev,
-      image: ''
-    }));
-    
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (purchasePrice < 0 || salePrice < 0 || currentStock < 0 || minStock < 0) {
+      toast.error("Valores não podem ser negativos");
+      return;
+    }
+    
+    if (purchasePrice > salePrice) {
+      toast.warning("O preço de compra é maior que o preço de venda.");
+    }
+    
+    setIsSubmitting(true);
+    
     try {
-      addProduct({
-        name: product.name,
-        code: product.code,
-        purchasePrice: product.purchasePrice,
-        salePrice: product.salePrice,
-        currentStock: product.currentStock,
-        minStock: product.minStock,
-        category: product.category,
-        description: product.description,
-        image: product.image
+      await addProduct({
+        name,
+        code,
+        description,
+        category,
+        purchasePrice,
+        salePrice,
+        currentStock,
+        minStock,
+        image,
+        status: 'active'
       });
       
+      toast.success("Produto adicionado com sucesso!");
       navigate('/produtos/consultar');
     } catch (error) {
-      // Handle error
+      console.error("Error adding product:", error);
+      toast.error("Erro ao adicionar produto");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Criar Novo Produto" 
-        description="Adicione um novo produto ao inventário" 
+        title="Novo Produto" 
+        description="Adicione um novo produto ao seu inventário" 
         actions={
           <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
             Voltar à Lista
@@ -123,119 +74,63 @@ const ProductNew = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="grid gap-6">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="code" className="text-sm font-medium text-gestorApp-gray-dark">
-                Código Interno
+                Código
               </label>
               <Input
                 id="code"
-                name="code"
-                value={product.code}
-                onChange={handleChange}
-                placeholder="Introduza o código interno"
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                placeholder="Código único do produto"
                 required
               />
             </div>
             
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium text-gestorApp-gray-dark">
-                Nome do Produto
+                Nome
               </label>
               <Input
                 id="name"
-                name="name"
-                value={product.name}
-                onChange={handleChange}
-                placeholder="Introduza o nome do produto"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Nome do produto"
                 required
-              />
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="category" className="text-sm font-medium text-gestorApp-gray-dark">
-                Categoria
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={product.category}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
-              >
-                <option value="">Selecione uma categoria</option>
-                {categories?.map((category) => (
-                  <option key={category.id} value={category.name}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço de Compra (€)
-              </label>
-              <Input
-                id="purchasePrice"
-                name="purchasePrice"
-                type="number"
-                step="0.01"
-                min="0"
-                value={product.purchasePrice}
-                onChange={handleChange}
-                placeholder="0.00"
-              />
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço de Venda (€)
-              </label>
-              <Input
-                id="salePrice"
-                name="salePrice"
-                type="number"
-                step="0.01"
-                min="0"
-                value={product.salePrice}
-                onChange={handleChange}
-                placeholder="0.00"
               />
             </div>
           </div>
           
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                Stock Inicial
+              <label htmlFor="category" className="text-sm font-medium text-gestorApp-gray-dark">
+                Categoria
               </label>
-              <Input
-                id="currentStock"
-                name="currentStock"
-                type="number"
-                min="0"
-                value={product.currentStock}
-                onChange={handleChange}
-                placeholder="0"
-              />
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                Stock Mínimo
+              <label htmlFor="image" className="text-sm font-medium text-gestorApp-gray-dark">
+                URL da Imagem
               </label>
               <Input
-                id="minStock"
-                name="minStock"
-                type="number"
-                min="0"
-                value={product.minStock}
-                onChange={handleChange}
-                placeholder="0"
+                id="image"
+                value={image}
+                onChange={(e) => setImage(e.target.value)}
+                placeholder="URL da imagem do produto"
               />
             </div>
           </div>
@@ -246,115 +141,88 @@ const ProductNew = () => {
             </label>
             <Textarea
               id="description"
-              name="description"
-              value={product.description}
-              onChange={handleChange}
-              placeholder="Descrição detalhada do produto"
-              rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Descrição do produto"
+              rows={3}
             />
           </div>
           
-          <div className="space-y-4">
-            <label className="text-sm font-medium text-gestorApp-gray-dark">
-              Imagem do Produto
-            </label>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
+                Preço de Compra (€)
+              </label>
+              <Input
+                id="purchasePrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={purchasePrice}
+                onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                placeholder="0.00"
+                required
+              />
+            </div>
             
-            <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
-                <TabsTrigger value="upload">Carregar ficheiro</TabsTrigger>
-                <TabsTrigger value="url">URL da imagem</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="upload">
-                {previewImage && activeTab === 'upload' ? (
-                  <div className="relative w-48 h-48 border rounded-md overflow-hidden">
-                    <img 
-                      src={previewImage} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      className="absolute top-2 right-2 h-6 w-6"
-                      onClick={handleRemoveImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div 
-                    className="border-2 border-dashed border-gestorApp-gray-light rounded-md p-6 flex flex-col items-center justify-center h-48 w-48 cursor-pointer"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="h-12 w-12 text-gestorApp-gray" />
-                    <p className="mt-2 text-sm text-gestorApp-gray text-center">
-                      Clique para carregar uma imagem<br />(JPG ou PNG)
-                    </p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/jpeg,image/png"
-                      className="hidden"
-                      onChange={handleImageChange}
-                    />
-                  </div>
-                )}
-              </TabsContent>
-              
-              <TabsContent value="url">
-                <div className="space-y-4">
-                  <div className="flex items-end gap-2">
-                    <div className="flex-1">
-                      <Input
-                        value={imageUrl}
-                        onChange={handleImageUrlChange}
-                        placeholder="https://exemplo.com/imagem.jpg"
-                      />
-                    </div>
-                    <Button 
-                      type="button" 
-                      onClick={handleImageUrlSubmit}
-                      className="flex items-center gap-2"
-                    >
-                      <LinkIcon className="h-4 w-4" />
-                      <span>Adicionar</span>
-                    </Button>
-                  </div>
-                  
-                  {previewImage && activeTab === 'url' && (
-                    <div className="relative w-48 h-48 border rounded-md overflow-hidden">
-                      <img 
-                        src={previewImage} 
-                        alt="Preview" 
-                        className="w-full h-full object-cover"
-                        onError={() => {
-                          toast.error('Erro ao carregar a imagem. Verifique o URL.');
-                          setPreviewImage(null);
-                        }}
-                      />
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        className="absolute top-2 right-2 h-6 w-6"
-                        onClick={handleRemoveImage}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-            </Tabs>
+            <div className="space-y-2">
+              <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
+                Preço de Venda (€)
+              </label>
+              <Input
+                id="salePrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={salePrice}
+                onChange={(e) => setSalePrice(Number(e.target.value))}
+                placeholder="0.00"
+                required
+              />
+            </div>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Atual
+              </label>
+              <Input
+                id="currentStock"
+                type="number"
+                min="0"
+                step="1"
+                value={currentStock}
+                onChange={(e) => setCurrentStock(Number(e.target.value))}
+                placeholder="0"
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Mínimo
+              </label>
+              <Input
+                id="minStock"
+                type="number"
+                min="0"
+                step="1"
+                value={minStock}
+                onChange={(e) => setMinStock(Number(e.target.value))}
+                placeholder="0"
+                required
+              />
+            </div>
           </div>
           
           <div className="flex justify-end space-x-4">
             <Button variant="outline" type="button" onClick={() => navigate('/produtos/consultar')}>
               Cancelar
             </Button>
-            <Button type="submit">Guardar Produto</Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Guardando..." : "Guardar Produto"}
+            </Button>
           </div>
         </form>
       </div>

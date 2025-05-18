@@ -9,33 +9,32 @@ interface StockEntryEditSupplierProps {
   onSupplierChange: (value: string) => void;
 }
 
-const StockEntryEditSupplier: React.FC<StockEntryEditSupplierProps> = ({ 
+const StockEntryEditSupplier: React.FC<StockEntryEditSupplierProps> = ({
   supplierId,
   suppliers,
-  onSupplierChange 
+  onSupplierChange
 }) => {
   return (
-    <div className="space-y-2">
-      <label htmlFor="supplierId" className="text-sm font-medium text-gestorApp-gray-dark">
-        Fornecedor
-      </label>
-      <Select
-        value={supplierId || undefined}
-        onValueChange={onSupplierChange}
-      >
-        <SelectTrigger id="supplierId" className="w-full">
-          <SelectValue placeholder="Selecione um fornecedor" />
-        </SelectTrigger>
-        <SelectContent>
-          {/* Item placeholder com valor não vazio */}
-          <SelectItem value="placeholder">Selecione um fornecedor</SelectItem>
-          {suppliers.map((supplier) => (
-            <SelectItem key={supplier.id} value={supplier.id}>
-              {supplier.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="space-y-4">
+      <h2 className="text-xl font-semibold">Fornecedor</h2>
+      
+      <div className="space-y-2">
+        <label htmlFor="supplier" className="text-sm font-medium">
+          Fornecedor
+        </label>
+        <Select value={supplierId} onValueChange={onSupplierChange}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Selecionar fornecedor" />
+          </SelectTrigger>
+          <SelectContent>
+            {suppliers.map((supplier) => (
+              <SelectItem key={supplier.id} value={supplier.id}>
+                {supplier.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
     </div>
   );
 };
