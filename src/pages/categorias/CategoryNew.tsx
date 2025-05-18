@@ -18,7 +18,6 @@ const CategoryNew = () => {
     name: '',
     description: '',
     status: 'active',
-    productCount: 0
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
