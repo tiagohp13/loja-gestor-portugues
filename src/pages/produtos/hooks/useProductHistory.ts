@@ -2,22 +2,21 @@
 import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { StockEntryItem, StockExitItem } from '@/types';
-import { EntryItem, ExitItem } from '../types/productHistoryTypes';
 
 export const useProductHistory = (productId: string | undefined) => {
-  const { getProductHistory } = useData();
+  const { products, stockEntries, stockExits, getProductHistory } = useData();
   
   const productHistory = useMemo(() => {
     if (!productId) return { entries: [], exits: [] };
-    return getProductHistory(productId) || { entries: [], exits: [] };
+    return getProductHistory(productId);
   }, [productId, getProductHistory]);
   
   // Get stock movement for this product from entries and exits
   const entriesForProduct = useMemo(() => {
     return productHistory.entries
       .flatMap(entry => entry.items
-        .filter((item: StockEntryItem) => item.productId === productId)
-        .map((item: StockEntryItem) => ({
+        .filter(item => item.productId === productId)
+        .map(item => ({
           date: entry.date,
           number: entry.number,
           document: entry.invoiceNumber || '-',
@@ -32,8 +31,8 @@ export const useProductHistory = (productId: string | undefined) => {
   const exitsForProduct = useMemo(() => {
     return productHistory.exits
       .flatMap(exit => exit.items
-        .filter((item: StockExitItem) => item.productId === productId)
-        .map((item: StockExitItem) => ({
+        .filter(item => item.productId === productId)
+        .map(item => ({
           date: exit.date,
           number: exit.number,
           document: exit.invoiceNumber || '-',

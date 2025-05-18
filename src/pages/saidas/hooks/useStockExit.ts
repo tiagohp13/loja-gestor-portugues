@@ -6,7 +6,6 @@ import { useHandlers } from './stockExit/useHandlers';
 import { useCalculations } from './stockExit/useCalculations';
 import { useSubmit } from './stockExit/useSubmit';
 import { StockExit } from '@/types';
-import { ExitItem } from './stockExit/types';
 
 export const useStockExit = (exitId?: string) => {
   const { clients, products, addStockExit, updateStockExit } = useData();
@@ -38,13 +37,12 @@ export const useStockExit = (exitId?: string) => {
   const calculations = useCalculations(state.items);
   
   // Here we ensure that addStockExit and updateStockExit match the types expected by useSubmit
-  const typedAddStockExit = (exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
+  const typedAddStockExit = (exit: Omit<StockExit, "id" | "number" | "createdAt">) => {
     return addStockExit(exit);
   };
   
-  const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
-    // First cast to unknown, then to Promise<StockExit | void> to avoid direct casting error
-    return updateStockExit(id, exit as any) as unknown as Promise<StockExit | void>;
+  const typedUpdateStockExit = (id: string, exit: Partial<StockExit>) => {
+    return updateStockExit(id, exit);
   };
   
   const submit = useSubmit({
@@ -57,7 +55,7 @@ export const useStockExit = (exitId?: string) => {
   });
   
   const selectedClient = clients.find(c => c.id === state.exitDetails.clientId);
-  // Adicionar selectedProduct baseado no currentItem.productId
+  // Add selectedProduct based on currentItem.productId
   const selectedProduct = products.find(p => p.id === state.currentItem.productId);
   
   return {

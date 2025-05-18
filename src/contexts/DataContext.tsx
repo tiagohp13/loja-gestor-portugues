@@ -23,7 +23,7 @@ interface DataContextType {
   addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<Product>;
   updateProduct: (id: string, updates: Partial<Product>) => Promise<Product | void>;
   deleteProduct: (id: string) => Promise<void>;
-  addClient: (client: Omit<Client, 'id' | 'createdAt'>) => Promise<Client>;
+  addClient: (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Client>;
   updateClient: (id: string, updates: Partial<Client>) => Promise<Client | void>;
   deleteClient: (id: string) => Promise<void>;
   addStockEntry: (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>) => Promise<StockEntry>;
@@ -32,16 +32,23 @@ interface DataContextType {
   addStockExit: (exit: Omit<StockExit, 'id' | 'number' | 'createdAt'>) => Promise<StockExit>;
   updateStockExit: (id: string, updates: Partial<StockExit>) => Promise<StockExit | void>;
   deleteStockExit: (id: string) => Promise<void>;
-  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt'>) => Promise<Supplier>;
+  addSupplier: (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Supplier>;
   updateSupplier: (id: string, updates: Partial<Supplier>) => Promise<Supplier | void>;
   deleteSupplier: (id: string) => Promise<void>;
-  addCategory: (category: Omit<Category, 'id' | 'createdAt'>) => Promise<Category>;
+  addCategory: (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Category>;
   updateCategory: (id: string, updates: Partial<Category>) => Promise<Category | void>;
   deleteCategory: (id: string) => Promise<void>;
   addOrder: (order: Omit<Order, 'id' | 'number' | 'createdAt' | 'total'>) => Promise<Order>;
   updateOrder: (id: string, updates: Partial<Order>) => Promise<Order | void>;
   deleteOrder: (id: string) => Promise<void>;
   convertOrderToStockExit: (orderId: string, invoiceNumber?: string) => Promise<StockExit>;
+  getProductHistory: (productId: string) => { entries: StockEntry[], exits: StockExit[] };
+  getClientHistory: (clientId: string) => { orders: Order[], exits: StockExit[] };
+  getSupplierHistory: (supplierId: string) => { entries: StockEntry[] };
+  getCategory: (id: string) => Category | undefined;
+  getClient: (id: string) => Client | undefined;
+  getSupplier: (id: string) => Supplier | undefined;
+  findOrder: (id: string) => Order | undefined;
   
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   setClients: React.Dispatch<React.SetStateAction<Client[]>>;
@@ -191,10 +198,60 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     fetchData();
   }, []);
 
+  // Helper methods for data retrieval
+  const getCategory = (id: string): Category | undefined => {
+    return categories.find(category => category.id === id);
+  };
+  
+  const getClient = (id: string): Client | undefined => {
+    return clients.find(client => client.id === id);
+  };
+  
+  const getSupplier = (id: string): Supplier | undefined => {
+    return suppliers.find(supplier => supplier.id === id);
+  };
+  
+  const findOrder = (id: string): Order | undefined => {
+    return orders.find(order => order.id === id);
+  };
+  
+  const getProductHistory = (productId: string) => {
+    const relevantEntries = stockEntries.filter(entry => 
+      entry.items.some(item => item.productId === productId)
+    );
+    
+    const relevantExits = stockExits.filter(exit => 
+      exit.items.some(item => item.productId === productId)
+    );
+    
+    return {
+      entries: relevantEntries,
+      exits: relevantExits
+    };
+  };
+  
+  const getClientHistory = (clientId: string) => {
+    const clientOrders = orders.filter(order => order.clientId === clientId);
+    const clientExits = stockExits.filter(exit => exit.clientId === clientId);
+    
+    return {
+      orders: clientOrders,
+      exits: clientExits
+    };
+  };
+  
+  const getSupplierHistory = (supplierId: string) => {
+    const supplierEntries = stockEntries.filter(entry => entry.supplierId === supplierId);
+    
+    return {
+      entries: supplierEntries
+    };
+  };
+
   // Generic function to handle database operations and state updates
   const handleDataChange = async <T,>(
     operation: 'insert' | 'update' | 'delete',
-    tableName: string,
+    tableName: 'products' | 'clients' | 'stock_entries' | 'stock_exits' | 'suppliers' | 'categories' | 'orders' | 'stock_entry_items' | 'stock_exit_items' | 'order_items',
     data: any,
     setData: React.Dispatch<React.SetStateAction<T[]>>,
     idField: string = 'id'
@@ -310,7 +367,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return handleDataChange('delete', 'products', { id }, setProducts);
   };
 
-  const addClient = async (client: Omit<Client, 'id' | 'createdAt'>): Promise<Client> => {
+  const addClient = async (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>): Promise<Client> => {
     return handleDataChange('insert', 'clients', client, setClients);
   };
 
@@ -346,7 +403,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return handleDataChange('delete', 'stock_exits', { id }, setStockExits);
   };
    
-  const addSupplier = async (supplier: Omit<Supplier, 'id' | 'createdAt'>): Promise<Supplier> => {
+  const addSupplier = async (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>): Promise<Supplier> => {
     return handleDataChange('insert', 'suppliers', supplier, setSuppliers);
   };
 
@@ -358,7 +415,7 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     return handleDataChange('delete', 'suppliers', { id }, setSuppliers);
   };
   
-  const addCategory = async (category: Omit<Category, 'id' | 'createdAt'>): Promise<Category> => {
+  const addCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>): Promise<Category> => {
     return handleDataChange('insert', 'categories', category, setCategories);
   };
 
@@ -487,15 +544,10 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       // Atualizar o stock dos produtos
       for (const item of order.items) {
-        const { error: updateError } = await supabase
-          .rpc('decrement_product_stock', {
-            product_id: item.product_id,
-            quantity: item.quantity
-          });
-          
-        if (updateError) {
-          console.error("Error updating product stock:", updateError);
-        }
+        await supabase.rpc('decrement_product_stock', {
+          product_id: item.product_id,
+          quantity: item.quantity
+        });
       }
       
       // Atualizar a encomenda
@@ -513,13 +565,16 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       }
       
       // Atualizar o estado local
-      setStockExits(prev => [...prev, exit]);
+      const mappedExit = mapDbStockExitToStockExit(exit, exitItems);
+      
+      setStockExits(prev => [...prev, mappedExit]);
+      
       setOrders(prev => prev.map(o => o.id === orderId 
-        ? { ...o, converted_to_stock_exit_id: exit.id, converted_to_stock_exit_number: exit.number } 
+        ? { ...o, convertedToStockExitId: exit.id, convertedToStockExitNumber: exit.number } 
         : o
       ));
       
-      return exit;
+      return mappedExit;
     } catch (error) {
       console.error("Error converting order to stock exit:", error);
       throw error;
@@ -562,7 +617,14 @@ const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     setStockExits,
     setSuppliers,
     setCategories,
-    setOrders
+    setOrders,
+    getProductHistory,
+    getClientHistory,
+    getSupplierHistory,
+    getCategory,
+    getClient,
+    getSupplier,
+    findOrder
   };
 
   return (
