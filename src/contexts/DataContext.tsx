@@ -1386,6 +1386,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
   
+  const updateProductStock = async (productId: string, quantity: number) => {
+    // Use the increment helper function to update the stock
+    const { error } = await supabase
+      .from('products')
+      .update({ current_stock: increment(quantity) })
+      .eq('id', productId);
+
+    if (error) {
+      console.error('Error updating product stock:', error);
+      throw error;
+    }
+  }
+  
   const exportData = (type: ExportDataType) => {
     // Implementation remains the same
   };

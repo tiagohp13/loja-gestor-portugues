@@ -5,8 +5,8 @@ import { camelToSnake, snakeToCamel } from './utils/formatUtils';
 import { addToDeletedCache, filterDeletedItems } from './utils/cacheUtils';
 import { getClientTotalSpent, getSupplierTotalSpent } from './utils/financialUtils';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ptkqosrcopnsclgyrjqh.supabase.co';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0a3Fvc3Jjb3Buc2NsZ3lyanFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5Nzg2MzUsImV4cCI6MjA1OTU1NDYzNX0.02iDkud89OEj98hFFkOt8_QNhs_N6uqAXj4laoZi7Mk';
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseKey);
 
@@ -41,7 +41,7 @@ export const getLowStockProducts = async () => {
   const { data, error } = await supabase
     .from('products')
     .select('*')
-    .lt('current_stock', supabase.rpc('greatest', { a: 'min_stock', b: 5 }));
+    .lt('current_stock', 5); // Simplified until we fix the rpc function issue
   
   if (error) {
     console.error('Error getting low stock products:', error);
