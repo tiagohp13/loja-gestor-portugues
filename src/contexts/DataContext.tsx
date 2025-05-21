@@ -1065,13 +1065,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
           
+          // Fix: Use the direct update approach instead of rpc
           const { error: updateError } = await supabase
             .from('products')
             .update({ 
-              current_stock: supabase.rpc('increment', { 
-                row_id: item.productId,
-                amount: item.quantity 
-              })
+              current_stock: increment(item.quantity) 
             })
             .eq('id', item.productId);
             
@@ -1149,13 +1147,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           try {
             console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
             
+            // Fix: Use the direct update approach instead of rpc
             const { error: updateError } = await supabase
               .from('products')
               .update({ 
-                current_stock: supabase.rpc('decrement', { 
-                  row_id: item.productId,
-                  amount: item.quantity 
-                })
+                current_stock: decrement(item.quantity)
               })
               .eq('id', item.productId);
               
@@ -1240,13 +1236,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
           
+          // Fix: Use the direct update approach instead of rpc
           const { error: updateError } = await supabase
             .from('products')
             .update({ 
-              current_stock: supabase.rpc('decrement', { 
-                row_id: item.productId,
-                amount: item.quantity 
-              })
+              current_stock: decrement(item.quantity)
             })
             .eq('id', item.productId);
             
@@ -1335,13 +1329,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
               console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
               
+              // Fix: Use the direct update approach instead of rpc
               const { error: updateError } = await supabase
                 .from('products')
                 .update({ 
-                  current_stock: supabase.rpc('increment', { 
-                    row_id: item.productId,
-                    amount: item.quantity 
-                  })
+                  current_stock: increment(item.quantity)
                 })
                 .eq('id', item.productId);
                 

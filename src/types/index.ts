@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -168,7 +167,7 @@ export interface OrderItem {
   discountPercent?: number;
 }
 
-export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits';
+export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'all';
 
 export interface LegacyStockEntry {
   id: string;

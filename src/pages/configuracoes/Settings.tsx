@@ -5,6 +5,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ExportDataType } from '@/types';
 
 const Settings = () => {
   const { 
@@ -12,7 +13,7 @@ const Settings = () => {
     exportData, importData, updateData
   } = useData();
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: any) => {
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: ExportDataType) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -70,7 +71,7 @@ const Settings = () => {
                 <Button variant="outline" onClick={() => exportData('stockExits')}>
                   Exportar Saídas ({stockExits.length})
                 </Button>
-                <Button variant="outline" onClick={() => exportData('all')}>
+                <Button variant="outline" onClick={() => exportData('all' as ExportDataType)}>
                   Exportar Todos os Dados
                 </Button>
               </div>
