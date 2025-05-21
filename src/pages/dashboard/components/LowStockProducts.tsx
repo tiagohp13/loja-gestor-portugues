@@ -14,8 +14,8 @@ const LowStockProducts: React.FC<LowStockProductsProps> = ({
   lowStockProducts,
   navigateToProductDetail
 }) => {
-  // Limit to a maximum of 3 products to match with FeaturedProducts height
-  const displayProducts = lowStockProducts.slice(0, 3);
+  // Limit to a maximum of 5 products to match with PendingOrders
+  const displayProducts = lowStockProducts.slice(0, 5);
   
   return (
     <Card className="h-full">

@@ -10,6 +10,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
 import LowStockProducts from './dashboard/components/LowStockProducts';
 import InsufficientStockOrders from './dashboard/components/InsufficientStockOrders';
+import PendingOrders from './dashboard/components/PendingOrders';
 import { findInsufficientStockOrders } from './dashboard/hooks/utils/orderUtils';
 
 // Import the SummaryCards from support page
@@ -34,6 +35,9 @@ const DashboardPage: React.FC = () => {
   
   // Find orders with insufficient stock
   const insufficientStockItems = findInsufficientStockOrders(orders, products);
+
+  // Filter for pending orders (not converted to stock exit)
+  const pendingOrders = orders.filter(order => !order.convertedToStockExitId);
 
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -70,18 +74,27 @@ const DashboardPage: React.FC = () => {
       {/* Summary Cards */}
       <SummaryCards stats={supportStats} />
       
-      {/* Removed the DashboardSummaryCards component that contained the redundant cards */}
-      
       <div className="grid grid-cols-1 gap-6 mb-8">
         <SalesAndPurchasesChart chartData={monthlyData} />
       </div>
       
-      {/* Products with Low Stock */}
-      <div className="grid grid-cols-1 gap-6 mb-8">
-        <LowStockProducts 
-          lowStockProducts={lowStockProducts}
-          navigateToProductDetail={navigateToProductDetail}
-        />
+      {/* Products with Low Stock and Pending Orders - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Products with Low Stock */}
+        <div>
+          <LowStockProducts 
+            lowStockProducts={lowStockProducts}
+            navigateToProductDetail={navigateToProductDetail}
+          />
+        </div>
+        
+        {/* Pending Orders */}
+        <div>
+          <PendingOrders 
+            pendingOrders={pendingOrders}
+            navigateToOrderDetail={navigateToOrderDetail}
+          />
+        </div>
       </div>
       
       {/* Orders with Insufficient Stock */}
