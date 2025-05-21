@@ -7,7 +7,6 @@ import PageHeader from '../components/ui/PageHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // Import components from dashboard
-import DashboardSummaryCards from './dashboard/components/DashboardSummaryCards';
 import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
 import LowStockProducts from './dashboard/components/LowStockProducts';
 import InsufficientStockOrders from './dashboard/components/InsufficientStockOrders';
@@ -71,12 +70,7 @@ const DashboardPage: React.FC = () => {
       {/* Summary Cards */}
       <SummaryCards stats={supportStats} />
       
-      <DashboardSummaryCards 
-        products={products}
-        clients={clients}
-        suppliers={suppliers}
-        totalStockValue={totalStockValue}
-      />
+      {/* Removed the DashboardSummaryCards component that contained the redundant cards */}
       
       <div className="grid grid-cols-1 gap-6 mb-8">
         <SalesAndPurchasesChart chartData={monthlyData} />
