@@ -7,40 +7,50 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import OperationsSummary from './suporte/components/OperationsSummary';
+import { useDashboardData } from './dashboard/hooks/useDashboardData';
+import FeaturedProducts from './dashboard/components/FeaturedProducts';
+import DashboardStatistics from './dashboard/components/DashboardStatistics';
+import RecentTransactions from './dashboard/components/RecentTransactions';
 
 const Suporte = () => {
   useScrollToTop();
   const navigate = useNavigate();
-  const { isLoading, stats } = useSupportData();
+  
+  // Get data from both support and dashboard hooks
+  const { isLoading: isSupportDataLoading, stats } = useSupportData();
+  const { 
+    products, 
+    suppliers, 
+    clients,
+    ensureDate,
+    productSales,
+    mostSoldProduct,
+    mostFrequentClient,
+    mostUsedSupplier,
+    totalSalesValue,
+    totalPurchaseValue,
+    totalStockValue,
+    totalProfit,
+    profitMarginPercent,
+    roiValue,
+    roiPercent,
+    recentTransactions
+  } = useDashboardData();
   
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
   };
+
+  const navigateToClientDetail = (id: string) => {
+    navigate(`/clientes/${id}`);
+  };
+
+  const navigateToSupplierDetail = (id: string) => {
+    navigate(`/fornecedores/${id}`);
+  };
   
-  // Priorizar o carregamento do gráfico principal ao invés de carregar tudo de uma vez
-  useEffect(() => {
-    // Pré-carregar componentes importantes após o componente principal ser montado
-    const preloadComponents = async () => {
-      const importPromises = [
-        import('./suporte/components/MetricsCards'),
-      ];
-      
-      try {
-        await Promise.all(importPromises);
-      } catch (error) {
-        console.error('Error preloading components:', error);
-      }
-    };
-    
-    // Usar requestIdleCallback ou setTimeout como fallback para não bloquear o thread principal
-    if (window.requestIdleCallback) {
-      window.requestIdleCallback(() => preloadComponents());
-    } else {
-      setTimeout(preloadComponents, 1000); // 1 segundo após renderização inicial
-    }
-  }, []);
-  
-  if (isLoading) {
+  if (isSupportDataLoading) {
     return (
       <div className="flex justify-center items-center h-48">
         <LoadingSpinner size={32} />
@@ -55,11 +65,12 @@ const Suporte = () => {
         description="Visualize estatísticas importantes do seu negócio"
       />
       
-      {/* Moved the MetricsCards (yellow highlighted cards) to top */}
+      {/* Summary cards at the top */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <MetricsCards stats={stats} showSummaryCardsOnly={true} />
       </div>
       
+      {/* Support chart (financial summary) */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <SupportChart 
           chartType="resumo"
@@ -71,12 +82,53 @@ const Suporte = () => {
             lowStockProducts: stats.lowStockProducts,
             monthlyOrders: stats.monthlyOrders
           }}
-          isLoading={isLoading}
+          isLoading={isSupportDataLoading}
           navigateToProduct={navigateToProductDetail}
         />
       </div>
       
-      {/* KPI Panel removed from here and moved to Dashboard.tsx */}
+      {/* Operations summary with KPI grid */}
+      <div className="mb-6">
+        <OperationsSummary stats={stats} />
+      </div>
+      
+      {/* MOVED FROM DASHBOARD: Total Products Card is included in MetricsCards already */}
+      
+      {/* MOVED FROM DASHBOARD: Featured Products */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
+        <FeaturedProducts 
+          products={products}
+          productSales={productSales}
+          navigateToProductDetail={navigateToProductDetail}
+          maxItems={5}
+        />
+      </div>
+      
+      {/* MOVED FROM DASHBOARD: Statistics and Recent Transactions */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <DashboardStatistics 
+          mostSoldProduct={mostSoldProduct}
+          mostFrequentClient={mostFrequentClient}
+          mostUsedSupplier={mostUsedSupplier}
+          totalPurchaseValue={totalPurchaseValue}
+          totalSalesValue={totalSalesValue}
+          totalProfit={totalProfit}
+          profitMarginPercent={profitMarginPercent}
+          roiValue={roiValue}
+          roiPercent={roiPercent}
+          navigateToProductDetail={navigateToProductDetail}
+          navigateToClientDetail={navigateToClientDetail}
+          navigateToSupplierDetail={navigateToSupplierDetail}
+        />
+        
+        <RecentTransactions 
+          recentTransactions={recentTransactions} 
+          navigateToProductDetail={navigateToProductDetail}
+          navigateToClientDetail={navigateToClientDetail}
+          navigateToSupplierDetail={navigateToSupplierDetail}
+          ensureDate={ensureDate}
+        />
+      </div>
     </div>
   );
 };

@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react';
-import { SupportStats } from './useSupportData';
+import { SupportStats } from '../types/supportTypes';
 
 /**
  * Custom hook for calculating KPIs based on business data
