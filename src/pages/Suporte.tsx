@@ -7,7 +7,7 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import OperationsSummary from './suporte/components/OperationsSummary';
+// Remove the import for OperationsSummary
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import FeaturedProducts from './dashboard/components/FeaturedProducts';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
@@ -87,12 +87,7 @@ const Suporte = () => {
         />
       </div>
       
-      {/* Operations summary with KPI grid */}
-      <div className="mb-6">
-        <OperationsSummary stats={stats} />
-      </div>
-      
-      {/* MOVED FROM DASHBOARD: Total Products Card is included in MetricsCards already */}
+      {/* Removed the OperationsSummary component with KPI grid */}
       
       {/* MOVED FROM DASHBOARD: Featured Products */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
