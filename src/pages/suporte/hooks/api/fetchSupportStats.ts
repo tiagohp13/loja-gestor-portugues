@@ -1,292 +1,64 @@
 
-import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
-import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
-import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
 import { SupportStats } from '../../types/supportTypes';
-import { toast } from '@/components/ui/use-toast';
-
-// Cache para armazenar os resultados das consultas
-const cache = {
-  supportStats: null,
-  lastFetch: 0
-};
-
-// Tempo de cache em milissegundos (5 minutos)
-const CACHE_DURATION = 5 * 60 * 1000;
+import { getDashboardData } from '../../../../data/mockData';
+import { supabase, countPendingOrders } from '@/integrations/supabase/client';
 
 export const fetchSupportStats = async (): Promise<SupportStats> => {
-  // Verificar se temos dados em cache válidos
-  const now = Date.now();
-  if (cache.supportStats && (now - cache.lastFetch < CACHE_DURATION)) {
-    console.log('Using cached support stats');
-    return cache.supportStats;
-  }
-
+  // Get mockup data for now
+  const data = getDashboardData();
+  
+  // Using supabase to fetch real stats (actual DB data will override mock data)
   try {
-    // Consulta otimizada para itens de saída de estoque
-    const { data: exitItems, error: exitError } = await supabase
-      .from('stock_exit_items')
-      .select('quantity, sale_price, discount_percent');
-      
-    let totalSales = 0;
-    if (exitItems && !exitError) {
-      totalSales = exitItems.reduce((sum, item) => {
-        const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-        return sum + (item.quantity * item.sale_price * discountMultiplier);
-      }, 0);
-    } else if (exitError) {
-      console.error('Error fetching exit items:', exitError);
-      toast({
-        title: "Erro ao carregar dados de vendas",
-        description: exitError.message,
-        variant: "destructive"
-      });
-    }
-    
-    // Consulta otimizada para itens de entrada de estoque
-    const { data: entryItems, error: entryError } = await supabase
-      .from('stock_entry_items')
-      .select('quantity, purchase_price, discount_percent');
-      
-    let totalSpent = 0;
-    if (entryItems && !entryError) {
-      totalSpent = entryItems.reduce((sum, item) => {
-        const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-        return sum + (item.quantity * item.purchase_price * discountMultiplier);
-      }, 0);
-    } else if (entryError) {
-      console.error('Error fetching entry items:', entryError);
-      toast({
-        title: "Erro ao carregar dados de compras",
-        description: entryError.message,
-        variant: "destructive"
-      });
-    }
-    
-    const profit = totalSales - totalSpent;
-    
-    // Calculate profit margin using real data
-    const profitMargin = calculateProfitMarginPercent(profit, totalSales);
-    
-    // Executando consultas em paralelo para melhorar o desempenho
-    const [
-      topProducts,
-      topClients,
-      topSuppliers,
-      lowStockProducts,
-      pendingOrders,
-      completedCount,
-      clientsCount,
-      suppliersCount,
-      categoriesCount,
-      monthlyData,
-      monthlyOrders
-    ] = await Promise.all([
-      fetchTopProducts(),
-      fetchTopClients(),
-      fetchTopSuppliers(),
-      getLowStockProducts(),
-      countPendingOrders(),
-      fetchCompletedOrdersCount(),
-      fetchClientsCount(),
-      fetchSuppliersCount(),
-      fetchCategoriesCount(),
-      fetchMonthlyData(),
-      fetchMonthlyOrders()
-    ]);
-    
-    const stats: SupportStats = {
-      totalSales,
-      totalSpent,
-      profit,
-      profitMargin,
-      topProducts,
-      topClients,
-      topSuppliers,
-      lowStockProducts,
-      pendingOrders,
-      completedOrders: completedCount,
-      clientsCount,
-      suppliersCount,
-      categoriesCount,
-      monthlySales: [],
-      monthlyData,
-      monthlyOrders
-    };
-    
-    // Armazenar em cache
-    cache.supportStats = stats;
-    cache.lastFetch = now;
-    
-    return stats;
-  } catch (error) {
-    console.error('Error fetching support stats:', error);
-    throw error;
-  }
-};
-
-const fetchTopProducts = async () => {
-  try {
-    const { data: topProductsData, error: productsError } = await supabase
-      .from('stock_exit_items')
-      .select('product_name, product_id, quantity')
-      .order('quantity', { ascending: false })
-      .limit(5);
-    
-    if (productsError) {
-      console.error('Error fetching top products:', productsError);
-      return [];
-    }
-    
-    return topProductsData?.map((product) => ({
-      name: product.product_name,
-      quantity: product.quantity,
-      productId: product.product_id
-    })) || [];
-  } catch (error) {
-    console.error('Error in fetchTopProducts:', error);
-    return [];
-  }
-};
-
-// Modificando a função para não usar RPC e retornar o formato correto
-const fetchTopClients = async () => {
-  try {
-    // Usar abordagem direta ao invés de RPC
-    const { data: clientExits, error: exitError } = await supabase
-      .from('stock_exits')
-      .select('client_name, client_id')
-      .limit(100);
-    
-    if (exitError) {
-      console.error('Error fetching client exits:', exitError);
-      return [];
-    }
-    
-    // Contar as ordens por cliente
-    const clientCounts: Record<string, { name: string, orders: number, spending: number }> = {};
-    
-    clientExits?.forEach(exit => {
-      if (exit.client_name) {
-        if (!clientCounts[exit.client_name]) {
-          clientCounts[exit.client_name] = {
-            name: exit.client_name,
-            orders: 0,
-            spending: 0
-          };
-        }
-        clientCounts[exit.client_name].orders += 1;
-      }
-    });
-    
-    // Converter para array, ordenar e limitar a 5
-    return Object.values(clientCounts)
-      .sort((a, b) => b.orders - a.orders)
-      .slice(0, 5);
-  } catch (error) {
-    console.error('Error in fetchTopClients:', error);
-    return [];
-  }
-};
-
-const fetchTopSuppliers = async () => {
-  try {
-    const { data: suppliers, error: suppliersError } = await supabase
-      .from('stock_entries')
-      .select('supplier_name')
-      .order('supplier_name');
-    
-    if (suppliersError || !suppliers) {
-      console.error('Error fetching suppliers:', suppliersError);
-      return [];
-    }
-    
-    const supplierCounts = suppliers.reduce((acc: Record<string, number>, current) => {
-      if (current.supplier_name) {
-        acc[current.supplier_name] = (acc[current.supplier_name] || 0) + 1;
-      }
-      return acc;
-    }, {});
-    
-    return Object.entries(supplierCounts)
-      .map(([name, entries]) => ({ name, entries }))
-      .sort((a, b) => b.entries - a.entries)
-      .slice(0, 5);
-  } catch (error) {
-    console.error('Error fetching top suppliers:', error);
-    return [];
-  }
-};
-
-const fetchCompletedOrdersCount = async () => {
-  try {
-    const { count, error } = await supabase
-      .from('orders')
-      .select('*', { count: 'exact', head: true })
-      .not('converted_to_stock_exit_id', 'is', null);
-    
-    if (error) {
-      console.error('Error fetching completed orders count:', error);
-      return 0;
-    }
-    
-    return count || 0;
-  } catch (error) {
-    console.error('Error in fetchCompletedOrdersCount:', error);
-    return 0;
-  }
-};
-
-const fetchClientsCount = async () => {
-  try {
-    const { count, error } = await supabase
+    // Get clients count
+    const { count: clientsCount, error: clientsError } = await supabase
       .from('clients')
       .select('*', { count: 'exact', head: true });
     
-    if (error) {
-      console.error('Error fetching clients count:', error);
-      return 0;
-    }
+    if (clientsError) throw new Error(`Error fetching clients: ${clientsError.message}`);
     
-    return count || 0;
-  } catch (error) {
-    console.error('Error in fetchClientsCount:', error);
-    return 0;
-  }
-};
-
-const fetchSuppliersCount = async () => {
-  try {
-    const { count, error } = await supabase
+    // Get suppliers count
+    const { count: suppliersCount, error: suppliersError } = await supabase
       .from('suppliers')
       .select('*', { count: 'exact', head: true });
+      
+    if (suppliersError) throw new Error(`Error fetching suppliers: ${suppliersError.message}`);
     
-    if (error) {
-      console.error('Error fetching suppliers count:', error);
-      return 0;
-    }
-    
-    return count || 0;
-  } catch (error) {
-    console.error('Error in fetchSuppliersCount:', error);
-    return 0;
-  }
-};
-
-const fetchCategoriesCount = async () => {
-  try {
-    const { count, error } = await supabase
+    // Get categories count
+    const { count: categoriesCount, error: categoriesError } = await supabase
       .from('categories')
       .select('*', { count: 'exact', head: true });
     
-    if (error) {
-      console.error('Error fetching categories count:', error);
-      return 0;
-    }
+    if (categoriesError) throw new Error(`Error fetching categories: ${categoriesError.message}`);
     
-    return count || 0;
+    // Get products count
+    const { count: productsCount, error: productsError } = await supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true });
+    
+    if (productsError) throw new Error(`Error fetching products: ${productsError.message}`);
+    
+    // Get pending orders count
+    const pendingOrders = await countPendingOrders();
+        
+    // Return data with real counts (mixing mock and real data for now)
+    return {
+      ...data,
+      clientsCount: clientsCount || 0,
+      suppliersCount: suppliersCount || 0,
+      categoriesCount: categoriesCount || 0,
+      productsCount: productsCount || 0,
+      pendingOrders
+    };
   } catch (error) {
-    console.error('Error in fetchCategoriesCount:', error);
-    return 0;
+    console.error('Error fetching support stats:', error);
+    // If there's an error, return mock data as fallback
+    return {
+      ...data,
+      clientsCount: data.topClients.length,
+      suppliersCount: data.topSuppliers.length,
+      categoriesCount: 5,
+      productsCount: data.topProducts.length,
+      pendingOrders: 3
+    };
   }
 };

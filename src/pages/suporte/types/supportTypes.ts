@@ -1,19 +1,65 @@
 
+export interface SupportChartData {
+  label: string;
+  value: number;
+}
+
+export interface ProductData {
+  id: string;
+  name: string;
+  sales: number;
+  profit: number;
+}
+
+export interface ClientData {
+  id: string;
+  name: string;
+  spent: number;
+  orders: number;
+}
+
+export interface SupplierData {
+  id: string;
+  name: string;
+  spent: number;
+  purchases: number;
+}
+
+export interface LowStockProduct {
+  id: string;
+  name: string;
+  currentStock: number;
+  minStock: number;
+}
+
+export interface MonthlyOrderData {
+  month: string;
+  count: number;
+}
+
 export interface SupportStats {
   totalSales: number;
   totalSpent: number;
   profit: number;
   profitMargin: number;
-  topProducts: Array<{ name: string; quantity: number; productId?: string }>;
-  topClients: Array<{ name: string; orders: number; spending: number }>;
-  topSuppliers: Array<{ name: string; entries: number }>;
-  lowStockProducts: any[];
-  pendingOrders: number;
-  completedOrders: number;
   clientsCount: number;
   suppliersCount: number;
   categoriesCount: number;
-  monthlySales: any[];
-  monthlyData: any[];
-  monthlyOrders: any[];
+  productsCount: number;
+  pendingOrders: number;
+  monthlyData: SupportChartData[];
+  topProducts: ProductData[];
+  topClients: ClientData[];
+  topSuppliers: SupplierData[];
+  lowStockProducts: LowStockProduct[];
+  monthlyOrders: MonthlyOrderData[];
+}
+
+export interface KpiData {
+  id: string;
+  name: string;
+  value: number;
+  target: number;
+  description: string;
+  isPercentage: boolean;
 }
