@@ -1065,13 +1065,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
           
-          // Fix: Use the current_stock + quantity approach instead of increment function
+          // Update product stock by using direct arithmetic instead of raw function
           const { error: updateError } = await supabase
             .from('products')
-            .update({ 
-              current_stock: supabase.raw(`current_stock + ${item.quantity}`) 
-            })
-            .eq('id', item.productId);
+            .select('current_stock')
+            .eq('id', item.productId)
+            .single()
+            .then(({ data, error }) => {
+              if (!error && data) {
+                return supabase
+                  .from('products')
+                  .update({ 
+                    current_stock: data.current_stock + item.quantity 
+                  })
+                  .eq('id', item.productId);
+              }
+              return { error };
+            });
             
           if (updateError) {
             console.error('Error updating product stock:', updateError);
@@ -1147,13 +1157,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           try {
             console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
             
-            // Fix: Use the current_stock - quantity approach
+            // Update product stock by using direct arithmetic instead of raw function
             const { error: updateError } = await supabase
               .from('products')
-              .update({ 
-                current_stock: supabase.raw(`current_stock - ${item.quantity}`) 
-              })
-              .eq('id', item.productId);
+              .select('current_stock')
+              .eq('id', item.productId)
+              .single()
+              .then(({ data, error }) => {
+                if (!error && data) {
+                  return supabase
+                    .from('products')
+                    .update({ 
+                      current_stock: Math.max(0, data.current_stock - item.quantity) 
+                    })
+                    .eq('id', item.productId);
+                }
+                return { error };
+              });
               
             if (updateError) {
               console.error('Error updating product stock:', updateError);
@@ -1236,13 +1256,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
           console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
           
-          // Fix: Use the current_stock - quantity approach
+          // Update product stock by using direct arithmetic instead of raw function
           const { error: updateError } = await supabase
             .from('products')
-            .update({ 
-              current_stock: supabase.raw(`current_stock - ${item.quantity}`) 
-            })
-            .eq('id', item.productId);
+            .select('current_stock')
+            .eq('id', item.productId)
+            .single()
+            .then(({ data, error }) => {
+              if (!error && data) {
+                return supabase
+                  .from('products')
+                  .update({ 
+                    current_stock: Math.max(0, data.current_stock - item.quantity) 
+                  })
+                  .eq('id', item.productId);
+              }
+              return { error };
+            });
             
           if (updateError) {
             console.error('Error updating product stock:', updateError);
@@ -1329,13 +1359,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             try {
               console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
               
-              // Fix: Use the current_stock + quantity approach
+              // Update product stock by using direct arithmetic instead of raw function
               const { error: updateError } = await supabase
                 .from('products')
-                .update({ 
-                  current_stock: supabase.raw(`current_stock + ${item.quantity}`)
-                })
-                .eq('id', item.productId);
+                .select('current_stock')
+                .eq('id', item.productId)
+                .single()
+                .then(({ data, error }) => {
+                  if (!error && data) {
+                    return supabase
+                      .from('products')
+                      .update({ 
+                        current_stock: data.current_stock + item.quantity 
+                      })
+                      .eq('id', item.productId);
+                  }
+                  return { error };
+                });
                 
               if (updateError) {
                 console.error('Error updating product stock:', updateError);
@@ -1387,10 +1427,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const updateProductStock = async (productId: string, quantity: number) => {
-    // Use the increment helper function to update the stock
+    // First get current stock value
+    const { data, error: fetchError } = await supabase
+      .from('products')
+      .select('current_stock')
+      .eq('id', productId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching product stock:', fetchError);
+      throw fetchError;
+    }
+    
+    // Then update with new calculated value
+    const newStock = (data?.current_stock || 0) + quantity;
     const { error } = await supabase
       .from('products')
-      .update({ current_stock: increment(quantity) })
+      .update({ current_stock: newStock })
       .eq('id', productId);
 
     if (error) {
