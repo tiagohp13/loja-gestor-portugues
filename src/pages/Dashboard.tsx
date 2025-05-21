@@ -21,10 +21,13 @@ import { findInsufficientStockOrders } from './dashboard/hooks/utils/orderUtils'
 // Import the SummaryCards from support page
 import SummaryCards from './suporte/components/SummaryCards';
 
+// Import KPI panel components
+import KPIPanel from '@/components/statistics/KPIPanel';
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const dashboardData = getDashboardData();
-  const { isLoading: isLoadingSupportData, stats: supportStats } = useSupportData(); // Add support data hook
+  const { isLoading: isLoadingSupportData, stats: supportStats, kpis } = useSupportData(); // Add kpis to the destructured values
   
   const {
     products,
@@ -123,7 +126,7 @@ const DashboardPage: React.FC = () => {
       </div>
       
       {/* LINHA INFERIOR: Estatísticas + Transações Recentes */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <DashboardStatistics 
           mostSoldProduct={mostSoldProduct}
           mostFrequentClient={mostFrequentClient}
@@ -145,6 +148,15 @@ const DashboardPage: React.FC = () => {
           navigateToClientDetail={navigateToClientDetail}
           navigateToSupplierDetail={navigateToSupplierDetail}
           ensureDate={ensureDate}
+        />
+      </div>
+      
+      {/* Add KPI Panel at the bottom of the dashboard */}
+      <div className="mb-6">
+        <KPIPanel 
+          title="Indicadores de Performance" 
+          description="Principais KPIs do negócio" 
+          kpis={kpis} 
         />
       </div>
     </div>
