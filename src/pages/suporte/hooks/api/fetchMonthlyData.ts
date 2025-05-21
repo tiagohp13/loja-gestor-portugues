@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
 
@@ -172,22 +173,7 @@ export const fetchMonthlyData = async () => {
       description: error.message,
       variant: "destructive"
     });
-    
-    // Return fallback data in case of errors
-    const fallbackData = Array(6).fill(0).map((_, i) => {
-      const date = new Date();
-      date.setMonth(date.getMonth() - 5 + i);
-      const monthName = date.toLocaleString('default', { month: 'short' });
-      
-      return {
-        name: monthName,
-        vendas: Math.floor(Math.random() * 10000),
-        compras: Math.floor(Math.random() * 8000),
-        lucro: Math.floor(Math.random() * 5000)
-      };
-    });
-    
-    return fallbackData;
+    return [];
   }
 };
 
