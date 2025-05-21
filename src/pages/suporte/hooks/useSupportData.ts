@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { fetchSupportStats } from './api/fetchSupportStats';
-import { SupportChartData, SupportStats, KpiData } from '../types/supportTypes';
+import { SupportStats } from '../types/supportTypes';
 import { useKpiCalculations } from './useKpiCalculations';
+import type { KPI } from '@/components/statistics/KPIPanel';
 
 export const useSupportData = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -24,7 +25,8 @@ export const useSupportData = () => {
     monthlyOrders: []
   });
   
-  const { kpis } = useKpiCalculations(stats);
+  const calculations = useKpiCalculations(stats);
+  const kpis = calculations.kpis as KPI[]; // Explicitly cast to KPI type
   
   useEffect(() => {
     const loadData = async () => {

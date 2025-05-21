@@ -1,10 +1,10 @@
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Users, Truck, Tag, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { SupportStats } from '../hooks/useSupportData';
+import { SupportStats } from '../types/supportTypes';
 import { toast } from '@/components/ui/use-toast';
 
 interface MetricsCardsProps {

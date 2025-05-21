@@ -39,26 +39,87 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     
     // Get pending orders count
     const pendingOrders = await countPendingOrders();
-        
-    // Return data with real counts (mixing mock and real data for now)
-    return {
+
+    // Ensure data has all the required properties
+    const enhancedData: SupportStats = {
       ...data,
+      totalSales: data.totalSalesValue || 0,
+      totalSpent: data.totalPurchaseValue || 0,
+      profit: data.totalProfit || 0,
+      profitMargin: data.profitMarginPercent || 0,
       clientsCount: clientsCount || 0,
       suppliersCount: suppliersCount || 0,
       categoriesCount: categoriesCount || 0,
       productsCount: productsCount || 0,
-      pendingOrders
+      pendingOrders,
+      monthlyData: data.monthlyData || [],
+      topProducts: (data.topProducts || []).map(p => ({
+        id: p.id,
+        name: p.name,
+        sales: p.sales || 0,
+        profit: p.profit || 0
+      })),
+      topClients: (data.topClients || []).map(c => ({
+        id: c.id,
+        name: c.name,
+        spent: c.spent || 0,
+        orders: c.orders || 0
+      })),
+      topSuppliers: (data.topSuppliers || []).map(s => ({
+        id: s.id,
+        name: s.name,
+        spent: s.spent || 0,
+        purchases: s.purchases || 0,
+        entries: s.entries || 0
+      })),
+      lowStockProducts: data.lowStockProducts || [],
+      monthlyOrders: (data.monthlyOrders || []).map(m => ({
+        month: m.month,
+        count: m.count || 0,
+        completedExits: m.completedExits || 0
+      }))
     };
+        
+    return enhancedData;
   } catch (error) {
     console.error('Error fetching support stats:', error);
-    // If there's an error, return mock data as fallback
+    // If there's an error, return mock data as fallback with the proper structure
     return {
-      ...data,
-      clientsCount: data.topClients.length,
-      suppliersCount: data.topSuppliers.length,
+      totalSales: data.totalSalesValue || 0,
+      totalSpent: data.totalPurchaseValue || 0,
+      profit: data.totalProfit || 0,
+      profitMargin: data.profitMarginPercent || 0,
+      clientsCount: data.topClients?.length || 0,
+      suppliersCount: data.topSuppliers?.length || 0,
       categoriesCount: 5,
-      productsCount: data.topProducts.length,
-      pendingOrders: 3
+      productsCount: data.topProducts?.length || 0,
+      pendingOrders: 3,
+      monthlyData: data.monthlyData || [],
+      topProducts: (data.topProducts || []).map(p => ({
+        id: p.id || "",
+        name: p.name || "",
+        sales: p.sales || 0,
+        profit: p.profit || 0
+      })),
+      topClients: (data.topClients || []).map(c => ({
+        id: c.id || "",
+        name: c.name || "",
+        spent: c.spent || 0,
+        orders: c.orders || 0
+      })),
+      topSuppliers: (data.topSuppliers || []).map(s => ({
+        id: s.id || "",
+        name: s.name || "",
+        spent: s.spent || 0,
+        purchases: s.purchases || 0,
+        entries: s.entries || 0
+      })),
+      lowStockProducts: data.lowStockProducts || [],
+      monthlyOrders: (data.monthlyOrders || []).map(m => ({
+        month: m.month || "",
+        count: m.count || 0,
+        completedExits: m.completedExits || 0
+      }))
     };
   }
 };

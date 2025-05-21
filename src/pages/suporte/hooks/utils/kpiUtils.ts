@@ -1,11 +1,14 @@
 
 import { KPI } from '@/components/statistics/KPIPanel';
-import { SupportStats } from '../useSupportData';
+import { SupportStats } from '../../types/supportTypes';
 
 export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Calculamos as métricas básicas
-  const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
-  const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
+  const completedExitsCount = stats.monthlyOrders?.reduce((sum, month) => 
+    sum + (month.completedExits || 0), 0) || 0;
+    
+  const totalEntries = stats.topSuppliers?.reduce((sum, supplier) => 
+    sum + (supplier.entries || 0), 0) || 0;
   
   // Valores para cálculos
   const clientsCount = stats.clientsCount;
@@ -29,7 +32,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   
   // Taxa de Conversão = (Número de Vendas / Número de Clientes) * 100
   // Isso calcula a porcentagem de clientes que fizeram compras
-  const salesConversionRate = (salesCount / clientsCount) * 100;
+  const salesConversionRate = clientsCount > 0 ? (salesCount / clientsCount) * 100 : 0;
   
   // Outros cálculos de médias
   const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;

@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react';
-import { SupportStats } from './useSupportData';
+import { SupportStats } from '../types/supportTypes';
 
 /**
  * Custom hook for calculating KPIs based on business data
@@ -8,8 +8,11 @@ import { SupportStats } from './useSupportData';
 export const useKpiCalculations = (stats: SupportStats) => {
   return useMemo(() => {
     // Calculate basic metrics that will be used in multiple KPI calculations
-    const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
-    const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
+    const completedExitsCount = stats.monthlyOrders?.reduce((sum, month) => 
+      sum + (month.completedExits || 0), 0) || 0;
+    
+    const totalEntries = stats.topSuppliers?.reduce((sum, supplier) => 
+      sum + (supplier.entries || 0), 0) || 0;
     
     // ROI (Retorno sobre o Investimento) = (Lucro / Valor de Compras) × 100
     const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
@@ -37,6 +40,9 @@ export const useKpiCalculations = (stats: SupportStats) => {
     // Lucro por Cliente = Lucro / Número de Clientes
     const profitPerClient = stats.clientsCount > 0 ? stats.profit / stats.clientsCount : 0;
 
+    // Generate KPIs based on the calculations
+    const generatedKpis = generateKPIs(stats);
+
     return {
       // Return all calculated KPIs
       roi,
@@ -49,7 +55,11 @@ export const useKpiCalculations = (stats: SupportStats) => {
       profitPerClient,
       // Additional metrics that might be useful
       completedExitsCount,
-      totalEntries
+      totalEntries,
+      kpis: generatedKpis
     };
   }, [stats]);
 };
+
+// Import the KPI generation function
+import { generateKPIs } from './utils/kpiUtils';

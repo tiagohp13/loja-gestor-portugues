@@ -23,6 +23,7 @@ export interface SupplierData {
   name: string;
   spent: number;
   purchases: number;
+  entries: number; // Added missing property
 }
 
 export interface LowStockProduct {
@@ -35,6 +36,7 @@ export interface LowStockProduct {
 export interface MonthlyOrderData {
   month: string;
   count: number;
+  completedExits: number; // Added missing property
 }
 
 export interface SupportStats {
