@@ -7,7 +7,6 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-// Remove the import for OperationsSummary
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import FeaturedProducts from './dashboard/components/FeaturedProducts';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
@@ -86,8 +85,6 @@ const Suporte = () => {
           navigateToProduct={navigateToProductDetail}
         />
       </div>
-      
-      {/* Removed the OperationsSummary component with KPI grid */}
       
       {/* MOVED FROM DASHBOARD: Featured Products */}
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
