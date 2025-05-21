@@ -30,6 +30,7 @@ export const useSupportData = (): SupportDataReturn => {
     clientsCount: 0,
     suppliersCount: 0,
     categoriesCount: 0,
+    productsCount: 0,  // Added the productsCount property here
     monthlySales: [],
     monthlyData: [],
     monthlyOrders: []
