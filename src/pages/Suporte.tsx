@@ -55,6 +55,11 @@ const Suporte = () => {
         description="Visualize estatísticas importantes do seu negócio"
       />
       
+      {/* Moved the MetricsCards (yellow highlighted cards) to top */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <MetricsCards stats={stats} showSummaryCardsOnly={true} />
+      </div>
+      
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <SupportChart 
           chartType="resumo"
@@ -70,8 +75,6 @@ const Suporte = () => {
           navigateToProduct={navigateToProductDetail}
         />
       </div>
-      
-      <MetricsCards stats={stats} />
       
       {/* KPI Panel removed from here and moved to Dashboard.tsx */}
     </div>
