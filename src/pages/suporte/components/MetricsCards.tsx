@@ -1,10 +1,12 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PackageCheck, Users, Truck, ShoppingCart, Tag } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { SupportStats } from '../hooks/useSupportData';
+import { getMostSoldProduct } from '@/integrations/supabase/client';
+import { toast } from '@/components/ui/use-toast';
 
 interface MetricsCardsProps {
   stats: SupportStats;
@@ -12,6 +14,30 @@ interface MetricsCardsProps {
 
 const MetricsCards: React.FC<MetricsCardsProps> = ({ stats }) => {
   const navigate = useNavigate();
+  const [topProduct, setTopProduct] = useState<{name: string; quantity: number; productId: string | null}>({
+    name: 'Carregando...',
+    quantity: 0,
+    productId: null
+  });
+  
+  // Fetch the most sold product directly from the database
+  useEffect(() => {
+    const fetchTopProduct = async () => {
+      try {
+        const product = await getMostSoldProduct();
+        setTopProduct(product);
+      } catch (error) {
+        console.error('Error fetching top product:', error);
+        toast({
+          title: "Erro ao carregar produto mais vendido",
+          description: "Não foi possível obter dados do produto mais vendido.",
+          variant: "destructive"
+        });
+      }
+    };
+    
+    fetchTopProduct();
+  }, []);
 
   return (
     <>
@@ -24,22 +50,25 @@ const MetricsCards: React.FC<MetricsCardsProps> = ({ stats }) => {
           <CardContent>
             <div className="flex items-center">
               <PackageCheck className="w-4 h-4 mr-2 text-blue-500" />
-              {stats.topProducts.length > 0 ? (
-                <div className="text-md font-medium">
-                  <span className="text-blue-600 cursor-pointer hover:underline" 
-                    onClick={() => {
-                      const product = stats.topProducts[0];
-                      if (product.productId) {
-                        navigate(`/produtos/${product.productId}`);
-                      }
-                    }}>
-                    {stats.topProducts[0].name}
-                  </span>
-                  <span className="ml-2 text-sm text-gray-500">({stats.topProducts[0].quantity} vendidos)</span>
-                </div>
-              ) : (
-                <div className="text-md">Nenhuma venda registada</div>
-              )}
+              <div className="text-md font-medium">
+                {topProduct.productId ? (
+                  <>
+                    <span 
+                      className="text-blue-600 cursor-pointer hover:underline" 
+                      onClick={() => {
+                        if (topProduct.productId) {
+                          navigate(`/produtos/${topProduct.productId}`);
+                        }
+                      }}
+                    >
+                      {topProduct.name}
+                    </span>
+                    <span className="ml-2 text-sm text-gray-500">({topProduct.quantity} vendidos)</span>
+                  </>
+                ) : (
+                  <div className="text-md">{topProduct.name}</div>
+                )}
+              </div>
             </div>
           </CardContent>
         </Card>

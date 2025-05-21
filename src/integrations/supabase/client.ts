@@ -51,6 +51,50 @@ export const getLowStockProducts = async () => {
   return data || [];
 };
 
+// Get the most sold product with total quantity sold
+export const getMostSoldProduct = async () => {
+  try {
+    // First, get the aggregated quantities by product_id
+    const { data: topProductData, error: topProductError } = await supabase
+      .from('stock_exit_items')
+      .select('product_id, product_name, quantity')
+      .order('quantity', { ascending: false });
+    
+    if (topProductError || !topProductData || topProductData.length === 0) {
+      console.error('Error fetching top product:', topProductError);
+      return { name: 'Nenhum produto vendido', quantity: 0, productId: null };
+    }
+    
+    // Group and sum by product
+    const productSales: Record<string, { name: string, quantity: number, productId: string | null }> = {};
+    
+    topProductData.forEach(item => {
+      if (item.product_id && item.product_name) {
+        if (!productSales[item.product_name]) {
+          productSales[item.product_name] = {
+            name: item.product_name,
+            quantity: 0,
+            productId: item.product_id
+          };
+        }
+        productSales[item.product_name].quantity += item.quantity;
+      }
+    });
+    
+    // Convert to array and find the one with highest quantity
+    const productsList = Object.values(productSales);
+    if (productsList.length === 0) {
+      return { name: 'Nenhum produto vendido', quantity: 0, productId: null };
+    }
+    
+    // Sort by quantity (highest first) and return the top result
+    return productsList.sort((a, b) => b.quantity - a.quantity)[0];
+  } catch (error) {
+    console.error('Error in getMostSoldProduct:', error);
+    return { name: 'Erro ao carregar dados', quantity: 0, productId: null };
+  }
+};
+
 // Add increment and decrement helper functions for direct use in update statements
 export const increment = (amount: number) => {
   return (value: any) => typeof value === 'number' ? value + amount : amount;
