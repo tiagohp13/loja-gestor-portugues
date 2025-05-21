@@ -13,6 +13,7 @@ export interface SupportStats {
   clientsCount: number;
   suppliersCount: number;
   categoriesCount: number;
+  productsCount: number;
   monthlySales: any[];
   monthlyData: any[];
   monthlyOrders: any[];

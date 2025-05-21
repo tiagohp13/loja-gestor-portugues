@@ -1,4 +1,3 @@
-
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
 import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
@@ -79,6 +78,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       clientsCount,
       suppliersCount,
       categoriesCount,
+      productsCount,
       monthlyData,
       monthlyOrders
     ] = await Promise.all([
@@ -91,6 +91,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       fetchClientsCount(),
       fetchSuppliersCount(),
       fetchCategoriesCount(),
+      fetchProductsCount(),
       fetchMonthlyData(),
       fetchMonthlyOrders()
     ]);
@@ -109,6 +110,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       clientsCount,
       suppliersCount,
       categoriesCount,
+      productsCount,
       monthlySales: [],
       monthlyData,
       monthlyOrders
@@ -287,6 +289,24 @@ const fetchCategoriesCount = async () => {
     return count || 0;
   } catch (error) {
     console.error('Error in fetchCategoriesCount:', error);
+    return 0;
+  }
+};
+
+const fetchProductsCount = async () => {
+  try {
+    const { count, error } = await supabase
+      .from('products')
+      .select('*', { count: 'exact', head: true });
+    
+    if (error) {
+      console.error('Error fetching products count:', error);
+      return 0;
+    }
+    
+    return count || 0;
+  } catch (error) {
+    console.error('Error in fetchProductsCount:', error);
     return 0;
   }
 };
