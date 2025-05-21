@@ -9,7 +9,7 @@ export interface ProductData {
   name: string;
   sales: number;
   profit: number;
-  quantity?: number; // Adding optional quantity field to fix compatibility
+  quantity: number; // Changed from optional to required
 }
 
 export interface ClientData {

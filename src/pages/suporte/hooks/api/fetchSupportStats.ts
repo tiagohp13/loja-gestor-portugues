@@ -47,12 +47,10 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     const mockProfitMargin = (mockTotalSales > 0) ? ((mockProfit / mockTotalSales) * 100) : 0;
 
     // Create monthly data if not available
-    const mappedMonthlyData = Array.isArray(data.monthlyData) 
-      ? data.monthlyData 
-      : Array(6).fill(0).map((_, i) => ({
-          label: `Month ${i+1}`,
-          value: Math.floor(Math.random() * 1000)
-        }));
+    const mappedMonthlyData = Array(6).fill(0).map((_, i) => ({
+      label: `Month ${i+1}`,
+      value: Math.floor(Math.random() * 1000)
+    }));
 
     // Transform top products
     const mappedTopProducts = data.lowStockProducts 
@@ -60,7 +58,8 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
           id: p.id || "",
           name: p.name || "",
           sales: Math.floor(Math.random() * 100),
-          profit: Math.floor(Math.random() * 500)
+          profit: Math.floor(Math.random() * 500),
+          quantity: p.currentStock || 0 // Ensure quantity is always provided
         }))
       : [];
 
@@ -68,7 +67,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     const mappedTopClients = data.recentTransactions
       ? data.recentTransactions.slice(0, 3).map((t, i) => ({
           id: `client-${i}`,
-          name: t.client || `Client ${i+1}`,
+          name: t.entity || `Client ${i+1}`, // Use entity instead of client
           spent: Math.floor(Math.random() * 5000),
           orders: Math.floor(Math.random() * 10)
         }))
@@ -134,7 +133,8 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
         id: `product-${i}`,
         name: `Product ${i+1}`,
         sales: Math.floor(Math.random() * 100),
-        profit: Math.floor(Math.random() * 500)
+        profit: Math.floor(Math.random() * 500),
+        quantity: Math.floor(Math.random() * 50) // Ensure quantity is always provided
       })),
       topClients: Array(3).fill(0).map((_, i) => ({
         id: `client-${i}`,
