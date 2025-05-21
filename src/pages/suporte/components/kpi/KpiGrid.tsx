@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SupportStats } from '../../types/supportTypes';
+import { SupportStats } from '../../hooks/useSupportData';
 import KpiCard from './KpiCard';
 import { useKpiCalculations } from '../../hooks/useKpiCalculations';
 import { BadgeDollarSign, BadgePercent, Coins, Wallet, Users, Euro, Tag } from 'lucide-react';

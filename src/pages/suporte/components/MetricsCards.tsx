@@ -1,10 +1,10 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Users, Truck, Tag, Package } from 'lucide-react';
+import { Users, Truck, Tag, ShoppingCart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { SupportStats } from '../types/supportTypes';
+import { SupportStats } from '../hooks/useSupportData';
 import { toast } from '@/components/ui/use-toast';
 
 interface MetricsCardsProps {
@@ -65,19 +65,19 @@ const MetricsCards: React.FC<MetricsCardsProps> = ({ stats, showSummaryCardsOnly
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total de Produtos</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">Encomendas Pendentes</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center">
-            <Package className="w-4 h-4 mr-2 text-orange-500" />
-            <div className="text-2xl font-bold">{stats.productsCount}</div>
+            <ShoppingCart className="w-4 h-4 mr-2 text-orange-500" />
+            <div className="text-2xl font-bold">{stats.pendingOrders}</div>
             <Button 
               variant="ghost" 
               size="sm" 
               className="ml-2" 
-              onClick={() => navigate('/produtos/consultar')}
+              onClick={() => navigate('/encomendas/consultar')}
             >
-              Ver todos
+              Ver todas
             </Button>
           </div>
         </CardContent>
