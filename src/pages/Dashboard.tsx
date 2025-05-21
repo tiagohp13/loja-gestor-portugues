@@ -17,10 +17,12 @@ import SummaryCards from './suporte/components/SummaryCards';
 
 // Import KPI panel components
 import KPIPanel from '@/components/statistics/KPIPanel';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoading: isLoadingSupportData, stats: supportStats, kpis } = useSupportData();
+  const isMobile = useIsMobile();
   
   const {
     products,
@@ -70,22 +72,19 @@ const DashboardPage: React.FC = () => {
       {/* Summary Cards */}
       <SummaryCards stats={supportStats} />
       
-      {/* Removed the DashboardSummaryCards component that contained the redundant cards */}
-      
       <div className="grid grid-cols-1 gap-6 mb-8">
         <SalesAndPurchasesChart chartData={monthlyData} />
       </div>
       
-      {/* Products with Low Stock */}
-      <div className="grid grid-cols-1 gap-6 mb-8">
+      {/* Products with Low Stock and Orders with Insufficient Stock - Side by Side */}
+      <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-6 mb-8`}>
+        {/* Products with Low Stock */}
         <LowStockProducts 
           lowStockProducts={lowStockProducts}
           navigateToProductDetail={navigateToProductDetail}
         />
-      </div>
-      
-      {/* Orders with Insufficient Stock */}
-      <div className="grid grid-cols-1 gap-6 mb-8">
+        
+        {/* Orders with Insufficient Stock */}
         <InsufficientStockOrders 
           insufficientItems={insufficientStockItems}
           navigateToProductDetail={navigateToProductDetail}
