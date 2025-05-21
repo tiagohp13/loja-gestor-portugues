@@ -5,7 +5,6 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageHeader from '@/components/ui/PageHeader';
 import KPIPanel from '@/components/statistics/KPIPanel';
 import { useSupportData } from './suporte/hooks/useSupportData';
-import SummaryCards from './suporte/components/SummaryCards';
 import SupportChart from './suporte/components/SupportChart';
 import MetricsCards from './suporte/components/MetricsCards';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
@@ -63,7 +62,7 @@ const Suporte = () => {
         description="Visualize estatísticas importantes do seu negócio"
       />
       
-      <SummaryCards stats={stats} />
+      {/* SummaryCards removed from here and moved to Dashboard.tsx */}
       
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <SupportChart 

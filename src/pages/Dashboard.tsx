@@ -2,10 +2,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
+import { useSupportData } from './suporte/hooks/useSupportData'; // Add import for support data
 import { getDashboardData } from '../data/mockData';
 import PageHeader from '../components/ui/PageHeader';
+import LoadingSpinner from '@/components/ui/LoadingSpinner'; // Add import for loading spinner
 
-// Importar componentes do dashboard
+// Import components from dashboard
 import DashboardSummaryCards from './dashboard/components/DashboardSummaryCards';
 import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
 import LowStockProducts from './dashboard/components/LowStockProducts';
@@ -16,9 +18,13 @@ import InsufficientStockOrders from './dashboard/components/InsufficientStockOrd
 import { TransactionItem } from './dashboard/hooks/utils/transactionUtils';
 import { findInsufficientStockOrders } from './dashboard/hooks/utils/orderUtils';
 
+// Import the SummaryCards from support page
+import SummaryCards from './suporte/components/SummaryCards';
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const dashboardData = getDashboardData();
+  const { isLoading: isLoadingSupportData, stats: supportStats } = useSupportData(); // Add support data hook
   
   const {
     products,
@@ -61,12 +67,24 @@ const DashboardPage: React.FC = () => {
     navigate(`/encomendas/${id}`);
   };
 
+  // Show loading spinner while support data is loading
+  if (isLoadingSupportData) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <LoadingSpinner size={32} />
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Dashboard" 
         description="Vista geral do seu negócio"
       />
+      
+      {/* Add SummaryCards at the top */}
+      <SummaryCards stats={supportStats} />
       
       <DashboardSummaryCards 
         products={products}
