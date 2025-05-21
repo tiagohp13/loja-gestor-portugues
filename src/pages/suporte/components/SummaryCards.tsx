@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
-import { SupportStats } from '../hooks/useSupportData';
+import { SupportStats } from '../types/supportTypes';
 
 interface SummaryCardsProps {
   stats: SupportStats;

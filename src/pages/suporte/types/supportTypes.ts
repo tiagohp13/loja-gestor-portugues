@@ -9,6 +9,7 @@ export interface ProductData {
   name: string;
   sales: number;
   profit: number;
+  quantity?: number; // Adding optional quantity field to fix compatibility
 }
 
 export interface ClientData {
@@ -23,7 +24,7 @@ export interface SupplierData {
   name: string;
   spent: number;
   purchases: number;
-  entries: number; // Added missing property
+  entries: number;
 }
 
 export interface LowStockProduct {
@@ -36,7 +37,7 @@ export interface LowStockProduct {
 export interface MonthlyOrderData {
   month: string;
   count: number;
-  completedExits: number; // Added missing property
+  completedExits: number;
 }
 
 export interface SupportStats {

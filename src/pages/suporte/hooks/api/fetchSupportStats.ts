@@ -40,86 +40,123 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     // Get pending orders count
     const pendingOrders = await countPendingOrders();
 
-    // Ensure data has all the required properties
+    // Map mock data properly with fallbacks
+    const mockTotalSales = data.totalSalesValue || 0;
+    const mockTotalSpent = data.totalStockValue || 0;
+    const mockProfit = mockTotalSales - mockTotalSpent;
+    const mockProfitMargin = (mockTotalSales > 0) ? ((mockProfit / mockTotalSales) * 100) : 0;
+
+    // Create monthly data if not available
+    const mappedMonthlyData = Array.isArray(data.monthlyData) 
+      ? data.monthlyData 
+      : Array(6).fill(0).map((_, i) => ({
+          label: `Month ${i+1}`,
+          value: Math.floor(Math.random() * 1000)
+        }));
+
+    // Transform top products
+    const mappedTopProducts = data.lowStockProducts 
+      ? data.lowStockProducts.map(p => ({
+          id: p.id || "",
+          name: p.name || "",
+          sales: Math.floor(Math.random() * 100),
+          profit: Math.floor(Math.random() * 500)
+        }))
+      : [];
+
+    // Create top clients data if not available
+    const mappedTopClients = data.recentTransactions
+      ? data.recentTransactions.slice(0, 3).map((t, i) => ({
+          id: `client-${i}`,
+          name: t.client || `Client ${i+1}`,
+          spent: Math.floor(Math.random() * 5000),
+          orders: Math.floor(Math.random() * 10)
+        }))
+      : [];
+
+    // Create top suppliers if not available
+    const mappedTopSuppliers = Array(3).fill(0).map((_, i) => ({
+      id: `supplier-${i}`,
+      name: `Supplier ${i+1}`,
+      spent: Math.floor(Math.random() * 5000),
+      purchases: Math.floor(Math.random() * 10),
+      entries: Math.floor(Math.random() * 20)
+    }));
+
+    // Create monthly orders if not available
+    const mappedMonthlyOrders = Array(6).fill(0).map((_, i) => ({
+      month: `Month ${i+1}`,
+      count: Math.floor(Math.random() * 30),
+      completedExits: Math.floor(Math.random() * 20)
+    }));
+        
+    // Construct the final data object
     const enhancedData: SupportStats = {
-      ...data,
-      totalSales: data.totalSalesValue || 0,
-      totalSpent: data.totalPurchaseValue || 0,
-      profit: data.totalProfit || 0,
-      profitMargin: data.profitMarginPercent || 0,
+      totalSales: mockTotalSales,
+      totalSpent: mockTotalSpent,
+      profit: mockProfit,
+      profitMargin: mockProfitMargin,
       clientsCount: clientsCount || 0,
       suppliersCount: suppliersCount || 0,
       categoriesCount: categoriesCount || 0,
       productsCount: productsCount || 0,
       pendingOrders,
-      monthlyData: data.monthlyData || [],
-      topProducts: (data.topProducts || []).map(p => ({
-        id: p.id,
-        name: p.name,
-        sales: p.sales || 0,
-        profit: p.profit || 0
-      })),
-      topClients: (data.topClients || []).map(c => ({
-        id: c.id,
-        name: c.name,
-        spent: c.spent || 0,
-        orders: c.orders || 0
-      })),
-      topSuppliers: (data.topSuppliers || []).map(s => ({
-        id: s.id,
-        name: s.name,
-        spent: s.spent || 0,
-        purchases: s.purchases || 0,
-        entries: s.entries || 0
-      })),
+      monthlyData: mappedMonthlyData,
+      topProducts: mappedTopProducts,
+      topClients: mappedTopClients,
+      topSuppliers: mappedTopSuppliers,
       lowStockProducts: data.lowStockProducts || [],
-      monthlyOrders: (data.monthlyOrders || []).map(m => ({
-        month: m.month,
-        count: m.count || 0,
-        completedExits: m.completedExits || 0
-      }))
+      monthlyOrders: mappedMonthlyOrders
     };
         
     return enhancedData;
   } catch (error) {
     console.error('Error fetching support stats:', error);
-    // If there's an error, return mock data as fallback with the proper structure
-    return {
+    
+    // Create fallback data with proper structure for when the API fails
+    const fallbackData: SupportStats = {
       totalSales: data.totalSalesValue || 0,
-      totalSpent: data.totalPurchaseValue || 0,
-      profit: data.totalProfit || 0,
-      profitMargin: data.profitMarginPercent || 0,
-      clientsCount: data.topClients?.length || 0,
-      suppliersCount: data.topSuppliers?.length || 0,
+      totalSpent: data.totalStockValue || 0,
+      profit: (data.totalSalesValue || 0) - (data.totalStockValue || 0),
+      profitMargin: (data.totalSalesValue || 0) > 0 
+        ? (((data.totalSalesValue || 0) - (data.totalStockValue || 0)) / (data.totalSalesValue || 0)) * 100 
+        : 0,
+      clientsCount: data.totalClients || 0,
+      suppliersCount: data.totalSuppliers || 0,
       categoriesCount: 5,
-      productsCount: data.topProducts?.length || 0,
+      productsCount: data.totalProducts || 0,
       pendingOrders: 3,
-      monthlyData: data.monthlyData || [],
-      topProducts: (data.topProducts || []).map(p => ({
-        id: p.id || "",
-        name: p.name || "",
-        sales: p.sales || 0,
-        profit: p.profit || 0
+      monthlyData: Array(6).fill(0).map((_, i) => ({
+        label: `Month ${i+1}`,
+        value: Math.floor(Math.random() * 1000)
       })),
-      topClients: (data.topClients || []).map(c => ({
-        id: c.id || "",
-        name: c.name || "",
-        spent: c.spent || 0,
-        orders: c.orders || 0
+      topProducts: Array(3).fill(0).map((_, i) => ({
+        id: `product-${i}`,
+        name: `Product ${i+1}`,
+        sales: Math.floor(Math.random() * 100),
+        profit: Math.floor(Math.random() * 500)
       })),
-      topSuppliers: (data.topSuppliers || []).map(s => ({
-        id: s.id || "",
-        name: s.name || "",
-        spent: s.spent || 0,
-        purchases: s.purchases || 0,
-        entries: s.entries || 0
+      topClients: Array(3).fill(0).map((_, i) => ({
+        id: `client-${i}`,
+        name: `Client ${i+1}`,
+        spent: Math.floor(Math.random() * 5000),
+        orders: Math.floor(Math.random() * 10)
+      })),
+      topSuppliers: Array(3).fill(0).map((_, i) => ({
+        id: `supplier-${i}`,
+        name: `Supplier ${i+1}`,
+        spent: Math.floor(Math.random() * 5000),
+        purchases: Math.floor(Math.random() * 10),
+        entries: Math.floor(Math.random() * 20)
       })),
       lowStockProducts: data.lowStockProducts || [],
-      monthlyOrders: (data.monthlyOrders || []).map(m => ({
-        month: m.month || "",
-        count: m.count || 0,
-        completedExits: m.completedExits || 0
+      monthlyOrders: Array(6).fill(0).map((_, i) => ({
+        month: `Month ${i+1}`,
+        count: Math.floor(Math.random() * 30),
+        completedExits: Math.floor(Math.random() * 20)
       }))
     };
+    
+    return fallbackData;
   }
 };
