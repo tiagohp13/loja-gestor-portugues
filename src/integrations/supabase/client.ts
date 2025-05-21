@@ -1,5 +1,9 @@
+
 import { createClient } from '@supabase/supabase-js';
 import { Database } from './types';
+
+// Import financial utilities to re-export them
+import { getClientTotalSpent, getSupplierTotalSpent } from './utils/financialUtils';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
@@ -22,3 +26,6 @@ export const increment = (amount: number) => {
 export const decrement = (amount: number) => {
   return (value: any) => typeof value === 'number' ? Math.max(0, value - amount) : 0;
 };
+
+// Re-export financial utilities
+export { getClientTotalSpent, getSupplierTotalSpent };
