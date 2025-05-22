@@ -44,7 +44,7 @@ const DashboardPage: React.FC = () => {
   };
 
   const navigateToClientDetail = (id: string) => {
-    navigate(`/clientes/${id}`);
+    navigate(`/clientes/detalhe/${id}`);
   };
 
   const navigateToSupplierDetail = (id: string) => {
@@ -93,6 +93,7 @@ const DashboardPage: React.FC = () => {
           <PendingOrders 
             pendingOrders={pendingOrders}
             navigateToOrderDetail={navigateToOrderDetail}
+            navigateToClientDetail={navigateToClientDetail}
           />
         </div>
       </div>

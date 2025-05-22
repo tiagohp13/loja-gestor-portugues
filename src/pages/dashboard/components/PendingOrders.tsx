@@ -10,11 +10,13 @@ import { Button } from '@/components/ui/button';
 interface PendingOrdersProps {
   pendingOrders: Order[];
   navigateToOrderDetail: (id: string) => void;
+  navigateToClientDetail?: (id: string) => void;
 }
 
 const PendingOrders: React.FC<PendingOrdersProps> = ({ 
   pendingOrders,
-  navigateToOrderDetail
+  navigateToOrderDetail,
+  navigateToClientDetail
 }) => {
   // Limit to a maximum of 5 orders for display
   const displayOrders = pendingOrders.slice(0, 5);
@@ -70,7 +72,19 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
                     <TableCell>
                       {format(new Date(order.date), 'dd/MM/yyyy')}
                     </TableCell>
-                    <TableCell>{order.clientName || 'Cliente desconhecido'}</TableCell>
+                    <TableCell>
+                      {order.clientId && navigateToClientDetail ? (
+                        <Button 
+                          variant="link" 
+                          className="p-0 h-auto text-blue-600 hover:underline"
+                          onClick={() => navigateToClientDetail(order.clientId!)}
+                        >
+                          {order.clientName || 'Cliente desconhecido'}
+                        </Button>
+                      ) : (
+                        order.clientName || 'Cliente desconhecido'
+                      )}
+                    </TableCell>
                     <TableCell className="text-right font-medium">
                       {formatCurrency(order.total || calculateTotal(order))}
                     </TableCell>
