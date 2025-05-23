@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, DollarSign, Percent } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { SupportStats } from '../hooks/useSupportData';
 
@@ -10,6 +10,26 @@ interface SummaryCardsProps {
 }
 
 const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
+  // Helper function to render variation indicator
+  const renderVariation = (currentValue: number, previousValue: number) => {
+    if (previousValue === 0 || !previousValue) return null;
+    
+    const diff = currentValue - previousValue;
+    const percentChange = (diff / previousValue) * 100;
+    const isPositive = percentChange >= 0;
+    
+    return (
+      <div className={`flex items-center ml-2 text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+        {isPositive ? (
+          <ArrowUp className="h-3 w-3 mr-1" />
+        ) : (
+          <ArrowDown className="h-3 w-3 mr-1" />
+        )}
+        <span>{isPositive ? '+' : ''}{percentChange.toFixed(1)}%</span>
+      </div>
+    );
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {/* Total de Vendas */}
@@ -21,6 +41,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <div className="flex items-center">
             <DollarSign className="w-4 h-4 mr-2 text-green-500" />
             <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
+            {stats.monthlySales && stats.monthlySales.length > 1 && 
+              renderVariation(
+                stats.monthlySales[stats.monthlySales.length - 1]?.value || 0,
+                stats.monthlySales[stats.monthlySales.length - 2]?.value || 0
+              )
+            }
           </div>
         </CardContent>
       </Card>
@@ -34,6 +60,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <div className="flex items-center">
             <DollarSign className="w-4 h-4 mr-2 text-red-500" />
             <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
+            {stats.monthlyData && stats.monthlyData.length > 1 && 
+              renderVariation(
+                stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0,
+                stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0
+              )
+            }
           </div>
         </CardContent>
       </Card>
@@ -51,6 +83,12 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
               <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
             )}
             <div className="text-2xl font-bold">{formatCurrency(stats.profit)}</div>
+            {stats.monthlyData && stats.monthlyData.length > 1 && 
+              renderVariation(
+                (stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0),
+                (stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0)
+              )
+            }
           </div>
         </CardContent>
       </Card>
@@ -64,6 +102,18 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <div className="flex items-center">
             <Percent className="w-4 h-4 mr-2 text-green-500" />
             <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
+            {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
+              // Calculate current and previous profit margins
+              const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0;
+              const currentPurchases = stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0;
+              const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0;
+              const previousPurchases = stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0;
+              
+              const currentMargin = currentSales > 0 ? ((currentSales - currentPurchases) / currentSales) * 100 : 0;
+              const previousMargin = previousSales > 0 ? ((previousSales - previousPurchases) / previousSales) * 100 : 0;
+              
+              return renderVariation(currentMargin, previousMargin);
+            })()}
           </div>
         </CardContent>
       </Card>
