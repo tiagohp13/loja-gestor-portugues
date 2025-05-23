@@ -19,7 +19,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
     const isPositive = percentChange >= 0;
     
     return (
-      <div className={`flex items-center ml-2 text-sm ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+      <div className={`flex items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'} mt-1`}>
         {isPositive ? (
           <ArrowUp className="h-3 w-3 mr-1" />
         ) : (
@@ -38,9 +38,11 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-2 text-green-500" />
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
+            </div>
             {stats.monthlySales && stats.monthlySales.length > 1 && 
               renderVariation(
                 stats.monthlySales[stats.monthlySales.length - 1]?.value || 0,
@@ -57,9 +59,11 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-2 text-red-500" />
-            <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 mr-2 text-red-500" />
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
+            </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && 
               renderVariation(
                 stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0,
@@ -76,13 +80,15 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            {stats.profit >= 0 ? (
-              <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
-            ) : (
-              <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
-            )}
-            <div className="text-2xl font-bold">{formatCurrency(stats.profit)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              {stats.profit >= 0 ? (
+                <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
+              ) : (
+                <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
+              )}
+              <div className="text-2xl font-bold">{formatCurrency(stats.profit)}</div>
+            </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && 
               renderVariation(
                 (stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0),
@@ -99,9 +105,11 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            <Percent className="w-4 h-4 mr-2 text-green-500" />
-            <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <Percent className="w-4 h-4 mr-2 text-green-500" />
+              <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
+            </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
               // Calculate current and previous profit margins
               const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0;
