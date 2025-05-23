@@ -2,7 +2,7 @@
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { TrendingUp, TrendingDown, AlertTriangle, Info } from 'lucide-react';
+import { TrendingUp, TrendingDown, AlertTriangle, Info, ArrowUp, ArrowDown } from 'lucide-react';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -50,6 +50,26 @@ const KPICard = ({ kpi }: KPICardProps) => {
     if (isNaN(kpi.value) || kpi.value === undefined || kpi.value === null) return 0;
     const progress = (kpi.value / kpi.target) * 100;
     return progress > 100 ? 100 : progress;
+  };
+
+  // Get variation indicator comparing current value to previous value
+  const getVariationIndicator = () => {
+    if (!kpi.previousValue || kpi.previousValue === 0) return null;
+    
+    const diff = kpi.value - kpi.previousValue;
+    const percentChange = (diff / kpi.previousValue) * 100;
+    const isPositive = percentChange >= 0;
+    
+    return (
+      <div className={`flex items-center text-xs mt-1 ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+        {isPositive ? (
+          <ArrowUp className="h-3 w-3 mr-1" />
+        ) : (
+          <ArrowDown className="h-3 w-3 mr-1" />
+        )}
+        <span>{isPositive ? '+' : ''}{percentChange.toFixed(1)}%</span>
+      </div>
+    );
   };
 
   // Get icon based on KPI name
@@ -133,13 +153,18 @@ const KPICard = ({ kpi }: KPICardProps) => {
             </div>
           </div>
           
-          <div className="flex items-center justify-between">
-            <div className="text-2xl font-bold">
-              {kpi.unit === '€' && !kpi.isPercentage && '€ '}
-              {formatValue(kpi.value)}
-              {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="text-2xl font-bold">
+                {kpi.unit === '€' && !kpi.isPercentage && '€ '}
+                {formatValue(kpi.value)}
+                {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
+              </div>
+              {getTrendIcon()}
             </div>
-            {getTrendIcon()}
+            
+            {/* Variation indicator */}
+            {getVariationIndicator()}
           </div>
           
           <div className="mt-2">
