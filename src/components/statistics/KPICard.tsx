@@ -100,15 +100,6 @@ const KPICard = ({ kpi }: KPICardProps) => {
     if (name.includes('Lucro por Cliente')) {
       return <Info className="h-4 w-4 text-indigo-500" />;
     }
-    if (name === 'Total de Vendas') {
-      return <Info className="h-4 w-4 text-green-500" />;
-    }
-    if (name === 'Total Gasto') {
-      return <Info className="h-4 w-4 text-red-500" />;
-    }
-    if (name === 'Lucro') {
-      return <Info className="h-4 w-4 text-blue-500" />;
-    }
     
     // Default fallback
     return <Info className="h-4 w-4 text-gray-500" />;
