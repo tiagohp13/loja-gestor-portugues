@@ -55,7 +55,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       target: 40,
       unit: '%',
       isPercentage: true,
-      previousValue: 30.1, // Ensure this is set
+      previousValue: 30.1,
       description: "Mede o retorno em relação ao custo de investimento.",
       formula: "(Lucro / Custo) × 100",
       belowTarget: roi < 40
@@ -66,7 +66,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       target: 25,
       unit: '%',
       isPercentage: true,
-      previousValue: 25.2, // Ensure this is set
+      previousValue: 25.2,
       description: "Mede a rentabilidade da empresa.",
       formula: "(Lucro / Receita) × 100",
       belowTarget: stats.profitMargin < 25
@@ -80,7 +80,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     target: 20,
     unit: '%',
     isPercentage: true,
-    previousValue: 17.5, // Ensure this is set
+    previousValue: 17.5,
     description: "Mede a eficiência em converter clientes em vendas.",
     formula: "(Número de Vendas / Número de Clientes) × 100",
     belowTarget: salesConversionRate < 20
@@ -96,7 +96,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     target: 500,
     unit: '€',
     isPercentage: false,
-    previousValue: 450, // Ensure this is set
+    previousValue: 450,
     description: "Valor médio gasto em cada compra a fornecedores.",
     formula: "Valor de Compras / Número de Compras",
     belowTarget: averagePurchaseValue > 500, // Lógica inversa: acima da meta é ruim
@@ -114,7 +114,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       target: 600,
       unit: '€',
       isPercentage: false,
-      previousValue: 550, // Ensure this is set
+      previousValue: 550,
       description: "Valor médio recebido em cada venda a clientes.",
       formula: "Valor de Vendas / Número de Vendas",
       belowTarget: averageSaleValue < 600
@@ -125,7 +125,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       target: 200,
       unit: '€',
       isPercentage: false,
-      previousValue: 180, // Ensure this is set
+      previousValue: 180,
       description: "Lucro médio gerado em cada venda.",
       formula: "Lucro / Número de Vendas",
       belowTarget: averageProfitPerSale < 200
@@ -136,7 +136,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       target: 10000,
       unit: '€',
       isPercentage: false,
-      previousValue: 9500, // Ensure this is set
+      previousValue: 9500,
       description: "Lucro total gerado no período.",
       formula: "Valor de Vendas - Valor de Compras",
       belowTarget: stats.profit < 10000
@@ -147,7 +147,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
       target: 800,
       unit: '€',
       isPercentage: false,
-      previousValue: 750, // Ensure this is set
+      previousValue: 750,
       description: "Lucro médio gerado por cada cliente.",
       formula: "Lucro / Número de Clientes",
       belowTarget: profitPerClient < 800

@@ -1,130 +1,92 @@
 
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Percent } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { SupportStats } from '../hooks/useSupportData';
+import KPICard from '@/components/statistics/KPICard';
+import { KPI } from '@/components/statistics/KPIPanel';
 
 interface SummaryCardsProps {
   stats: SupportStats;
 }
 
 const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
-  // Helper function to render variation indicator
-  const renderVariation = (currentValue: number, previousValue: number) => {
-    if (previousValue === 0 || !previousValue) return null;
+  // Create KPI objects for the summary cards
+  const kpis: KPI[] = [
+    // Total de Vendas
+    {
+      name: "Total de Vendas",
+      value: stats.totalSales,
+      target: stats.totalSales * 1.1, // Example target: 10% more than current
+      unit: '€',
+      isPercentage: false,
+      previousValue: stats.monthlySales && stats.monthlySales.length > 1 
+        ? stats.monthlySales[stats.monthlySales.length - 2]?.value || 0 
+        : undefined,
+      description: "Total de vendas realizadas no período.",
+      formula: "Soma de todas as vendas",
+      belowTarget: false
+    },
     
-    const diff = currentValue - previousValue;
-    const percentChange = (diff / previousValue) * 100;
-    const isPositive = percentChange >= 0;
+    // Total Gasto
+    {
+      name: "Total Gasto",
+      value: stats.totalSpent,
+      target: stats.totalSpent * 0.9, // Example target: 10% less than current (spend less)
+      unit: '€',
+      isPercentage: false,
+      previousValue: stats.monthlyData && stats.monthlyData.length > 1 
+        ? stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0 
+        : undefined,
+      description: "Total gasto em compras no período.",
+      formula: "Soma de todas as compras",
+      belowTarget: false,
+      isInverseKPI: true // Lower is better for spending
+    },
     
-    return (
-      <div className={`flex items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'} mt-1`}>
-        {isPositive ? (
-          <ArrowUp className="h-3 w-3 mr-1" />
-        ) : (
-          <ArrowDown className="h-3 w-3 mr-1" />
-        )}
-        <span>{isPositive ? '+' : ''}{percentChange.toFixed(1)}%</span>
-      </div>
-    );
-  };
+    // Lucro
+    {
+      name: "Lucro",
+      value: stats.profit,
+      target: stats.profit * 1.1, // Example target: 10% more than current
+      unit: '€',
+      isPercentage: false,
+      previousValue: stats.monthlyData && stats.monthlyData.length > 1 
+        ? (stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0) - 
+          (stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0) 
+        : undefined,
+      description: "Lucro obtido no período (Vendas - Compras).",
+      formula: "Total de Vendas - Total de Compras",
+      belowTarget: false
+    },
+    
+    // Margem de Lucro
+    {
+      name: "Margem de Lucro",
+      value: stats.profitMargin,
+      target: stats.profitMargin * 1.05, // Example target: 5% more than current
+      unit: '%',
+      isPercentage: true,
+      previousValue: stats.monthlyData && stats.monthlyData.length > 1 
+        ? (() => {
+          // Calculate previous profit margin
+          const prevSales = stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0;
+          const prevPurchases = stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0;
+          return prevSales > 0 ? ((prevSales - prevPurchases) / prevSales) * 100 : 0;
+        })() 
+        : undefined,
+      description: "Porcentagem de lucro em relação ao total de vendas.",
+      formula: "(Lucro / Total de Vendas) × 100",
+      belowTarget: false
+    }
+  ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-      {/* Total de Vendas */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
-            </div>
-            {stats.monthlySales && stats.monthlySales.length > 1 && 
-              renderVariation(
-                stats.monthlySales[stats.monthlySales.length - 1]?.value || 0,
-                stats.monthlySales[stats.monthlySales.length - 2]?.value || 0
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Total Gasto */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-red-500" />
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
-            </div>
-            {stats.monthlyData && stats.monthlyData.length > 1 && 
-              renderVariation(
-                stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0,
-                stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Lucro */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              {stats.profit >= 0 ? (
-                <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
-              ) : (
-                <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
-              )}
-              <div className="text-2xl font-bold">{formatCurrency(stats.profit)}</div>
-            </div>
-            {stats.monthlyData && stats.monthlyData.length > 1 && 
-              renderVariation(
-                (stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0),
-                (stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0)
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Margem de Lucro */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <Percent className="w-4 h-4 mr-2 text-green-500" />
-              <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
-            </div>
-            {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
-              // Calculate current and previous profit margins
-              const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0;
-              const currentPurchases = stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0;
-              const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0;
-              const previousPurchases = stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0;
-              
-              const currentMargin = currentSales > 0 ? ((currentSales - currentPurchases) / currentSales) * 100 : 0;
-              const previousMargin = previousSales > 0 ? ((previousSales - previousPurchases) / previousSales) * 100 : 0;
-              
-              return renderVariation(currentMargin, previousMargin);
-            })()}
-          </div>
-        </CardContent>
-      </Card>
+      {kpis.map((kpi, index) => (
+        <KPICard key={index} kpi={kpi} />
+      ))}
     </div>
   );
 };
