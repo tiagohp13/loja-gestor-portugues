@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Edit, Trash2, Plus, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, ArrowUp, ArrowDown, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
+import RecordCount from '@/components/common/RecordCount';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
@@ -240,6 +241,12 @@ const StockExitList = () => {
         title="Histórico de Vendas" 
         description="Consulte o histórico de vendas de stock"
         actions={null}
+      />
+      
+      <RecordCount 
+        title="Total de vendas"
+        count={localExits.length}
+        icon={ShoppingCart}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">

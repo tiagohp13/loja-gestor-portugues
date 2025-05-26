@@ -4,7 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import StockEntrySearch from './components/StockEntrySearch';
 import StockEntryTable from './components/StockEntryTable';
+import RecordCount from '@/components/common/RecordCount';
 import { useStockEntries } from './hooks/useStockEntries';
+import { Package } from 'lucide-react';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -17,7 +19,8 @@ const StockEntryList = () => {
     sortedEntries,
     handleSortChange,
     handleDeleteEntry,
-    calculateEntryTotal
+    calculateEntryTotal,
+    localEntries
   } = useStockEntries();
   
   const handleViewEntry = (id: string) => {
@@ -48,6 +51,12 @@ const StockEntryList = () => {
       <PageHeader 
         title="Histórico de Compras" 
         description="Consulte o histórico de compras de stock"
+      />
+      
+      <RecordCount 
+        title="Total de compras"
+        count={localEntries.length}
+        icon={Package}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
