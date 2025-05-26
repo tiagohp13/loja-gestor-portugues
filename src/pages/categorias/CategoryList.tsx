@@ -8,6 +8,7 @@ import { Edit, Trash, Plus, Search } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
+import RecordCount from '@/components/common/RecordCount';
 
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
@@ -49,6 +50,11 @@ const CategoryList: React.FC = () => {
             Nova Categoria
           </Button>
         }
+      />
+      
+      <RecordCount 
+        title="Total de categorias"
+        count={categories.length}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">

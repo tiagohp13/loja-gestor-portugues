@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Edit, Trash2, History, Plus } from 'lucide-react';
+import { Search, Edit, Trash2, History, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import RecordCount from '@/components/common/RecordCount';
 import { useToast } from '@/hooks/use-toast';
 import {
   Table,
@@ -92,6 +93,12 @@ const ClientList = () => {
             Novo Cliente
           </Button>
         }
+      />
+      
+      <RecordCount 
+        title="Total de clientes"
+        count={clients.length}
+        icon={Users}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -6,7 +7,8 @@ import PageHeader from '@/components/ui/PageHeader';
 import { useProductSort, naturalSort } from './hooks/useProductSort';
 import ProductListHeader from './components/ProductListHeader';
 import ProductTable from './components/ProductTable';
-import { Plus } from 'lucide-react';
+import RecordCount from '@/components/common/RecordCount';
+import { Plus, Box } from 'lucide-react';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const ProductList = () => {
@@ -74,6 +76,12 @@ const ProductList = () => {
       <PageHeader 
         title="Produtos" 
         description="Consultar e gerir todos os produtos" 
+      />
+      
+      <RecordCount 
+        title="Total de produtos"
+        count={products.length}
+        icon={Box}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
