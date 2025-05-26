@@ -52,62 +52,58 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
       </CardHeader>
       <CardContent className="pt-0 p-0">
         {displayOrders.length > 0 ? (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº da Encomenda</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead className="text-right">Valor Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {displayOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <Button 
-                        variant="link" 
-                        className="p-0 h-auto text-blue-600 hover:underline"
-                        onClick={() => navigateToOrderDetail(order.id)}
-                      >
-                        {order.number}
-                      </Button>
-                    </TableCell>
-                    <TableCell>
-                      {format(new Date(order.date), 'dd/MM/yyyy')}
-                    </TableCell>
-                    <TableCell>
-                      {order.clientId && navigateToClientDetail ? (
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nº da Encomenda</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead className="text-right">Valor Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {displayOrders.map((order) => (
+                    <TableRow key={order.id}>
+                      <TableCell>
                         <Button 
                           variant="link" 
                           className="p-0 h-auto text-blue-600 hover:underline"
-                          onClick={() => navigateToClientDetail(order.clientId!)}
+                          onClick={() => navigateToOrderDetail(order.id)}
                         >
-                          {order.clientName || 'Cliente desconhecido'}
+                          {order.number}
                         </Button>
-                      ) : (
-                        order.clientName || 'Cliente desconhecido'
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(order.total || calculateTotal(order))}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              <tfoot>
-                <tr className="border-t">
-                  <td colSpan={3} className="text-right pr-4 pt-2 text-sm text-gray-600 font-medium">
-                    Total:
-                  </td>
-                  <td className="text-right pr-4 pt-2 text-sm text-gray-900 font-semibold">
-                    {formatCurrency(totalPendingValue)}
-                  </td>
-                </tr>
-              </tfoot>
-            </Table>
-          </div>
+                      </TableCell>
+                      <TableCell>
+                        {format(new Date(order.date), 'dd/MM/yyyy')}
+                      </TableCell>
+                      <TableCell>
+                        {order.clientId && navigateToClientDetail ? (
+                          <Button 
+                            variant="link" 
+                            className="p-0 h-auto text-blue-600 hover:underline"
+                            onClick={() => navigateToClientDetail(order.clientId!)}
+                          >
+                            {order.clientName || 'Cliente desconhecido'}
+                          </Button>
+                        ) : (
+                          order.clientName || 'Cliente desconhecido'
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right font-medium">
+                        {formatCurrency(order.total || calculateTotal(order))}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+            <div className="flex justify-end mt-3 pr-4 text-sm text-gray-600">
+              <span className="font-medium">Total:</span>
+              <span className="ml-1 text-gray-900 font-semibold">{formatCurrency(totalPendingValue)}</span>
+            </div>
+          </>
         ) : (
           <div className="text-center py-8 text-gray-500">
             Não existem encomendas pendentes.
