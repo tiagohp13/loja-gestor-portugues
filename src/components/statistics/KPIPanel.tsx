@@ -34,6 +34,12 @@ const KPIPanel = ({ kpis: initialKpis, title = "KPIs", description = "Indicadore
   const [kpisState, setKpisState] = useState<KPI[]>(initialKpis);
   const [isLoading, setIsLoading] = useState(true);
   
+  // Update KPIs state when props change (for real-time updates)
+  useEffect(() => {
+    setKpisState(initialKpis);
+    setIsLoading(false);
+  }, [initialKpis]);
+  
   // Carregar metas personalizadas ao inicializar o componente
   useEffect(() => {
     const fetchTargets = async () => {
@@ -68,8 +74,11 @@ const KPIPanel = ({ kpis: initialKpis, title = "KPIs", description = "Indicadore
       }
     };
     
-    fetchTargets();
-  }, [initialKpis]);
+    // Only fetch targets if we have initial KPIs
+    if (initialKpis.length > 0) {
+      fetchTargets();
+    }
+  }, [initialKpis.length]);
   
   // Update KPIs when targets are saved
   const handleSaveTargets = (updatedKpis: KPI[]) => {
