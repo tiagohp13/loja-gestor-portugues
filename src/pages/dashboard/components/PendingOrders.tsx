@@ -83,7 +83,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
                           <Button 
                             variant="link" 
                             className="p-0 h-auto text-blue-600 hover:underline"
-                            onClick={() => navigateToClientDetail(order.clientId!)}
+                            onClick={() => navigateToClientDetail(order.clientId)}
                           >
                             {order.clientName || 'Cliente desconhecido'}
                           </Button>
