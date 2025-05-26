@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
@@ -209,5 +208,6 @@ export const useStockEntries = () => {
     handleSortChange,
     handleDeleteEntry,
     calculateEntryTotal,
+    localEntries
   };
 };
