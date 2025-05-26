@@ -99,9 +99,8 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
                 </TableBody>
               </Table>
             </div>
-            <div className="flex justify-end mt-3 pr-4 text-sm text-gray-600">
-              <span className="font-medium">Total:</span>
-              <span className="ml-1 text-gray-900 font-semibold">{formatCurrency(totalPendingValue)}</span>
+            <div className="flex justify-end mt-2 px-4 pb-4 text-sm text-gray-700 font-medium">
+              Total: <span className="ml-1 text-gray-900">{formatCurrency(totalPendingValue)}</span>
             </div>
           </>
         ) : (
