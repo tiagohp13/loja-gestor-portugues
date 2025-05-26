@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -8,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
+import RecordCount from '@/components/common/RecordCount';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
 import { formatCurrency } from '@/utils/formatting';
@@ -257,6 +257,12 @@ const OrderList = () => {
       <PageHeader 
         title="Consultar Encomendas" 
         description="Consulte e gerencie as suas encomendas" 
+      />
+      
+      <RecordCount 
+        title="Total de encomendas"
+        count={localOrders.length}
+        icon={ShoppingCart}
       />
       
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 mt-4 sm:mt-6">
