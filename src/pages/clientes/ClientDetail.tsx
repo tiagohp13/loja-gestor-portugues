@@ -190,7 +190,7 @@ const ClientDetail = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <button 
                         className="text-blue-600 hover:underline font-medium focus:outline-none"
-                        onClick={() => navigate(`/encomendas/detalhe/${order.id}`)}
+                        onClick={() => navigate(`/encomendas/${order.id}`)}
                       >
                         {order.number}
                       </button>
