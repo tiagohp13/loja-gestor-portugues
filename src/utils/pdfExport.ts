@@ -1,41 +1,33 @@
-import html2pdf from 'html2pdf.js';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
-interface PdfExportOptions {
-  filename: string;
-  contentSelector?: string;
-  margin?: number;
-}
+export const exportToPdf = () => {
+  const doc = new jsPDF();
 
-export const exportToPdf = async ({
-  filename,
-  contentSelector = '.pdf-content',
-  margin = 10,
-}: PdfExportOptions): Promise<void> => {
-  const element = document.querySelector(contentSelector);
-  
-  if (!element) {
-    console.error(`Element with selector "${contentSelector}" not found`);
-    return;
-  }
+  // Título
+  doc.setFontSize(16);
+  doc.text('Detalhes da Encomenda', 14, 20);
 
-  const clone = element.cloneNode(true) as HTMLElement;
+  // Dados do cliente e da encomenda (podes alterar os valores fixos aqui)
+  doc.setFontSize(12);
+  doc.text('Cliente: Alexandra Gomes', 14, 30);
+  doc.text('Data: 26/05/2025', 14, 36);
+  doc.text('Número: ENC-2025/014', 14, 42);
+  doc.text('Estado: Pendente', 14, 48);
 
-  const buttonsToRemove = clone.querySelectorAll('button, .no-print');
-  buttonsToRemove.forEach(button => button.remove());
+  // Tabela de produtos encomendados
+  autoTable(doc, {
+    startY: 58,
+    head: [['Produto', 'Quantidade', 'Preço Unitário', 'Total']],
+    body: [
+      ['Camarão Red Cherry', '15', '0,90 €', '13,50 €'],
+      ['Caracóis', '15', '0,10 €', '1,50 €']
+    ]
+  });
 
-  const options = {
-    margin,
-    filename: `${filename}.pdf`,
-    html2canvas: { scale: 2, useCORS: true },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-    // 👇 REMOVIDO: image: { type: 'jpeg', quality: 0.98 }
-  };
+  // Total final
+  doc.text('Total da Encomenda: 15,00 €', 14, doc.lastAutoTable.finalY + 10);
 
-  try {
-    await html2pdf().set(options).from(clone).save();
-    clone.remove();
-    console.log(`PDF "${filename}.pdf" generated successfully`);
-  } catch (error) {
-    console.error('Error generating PDF:', error);
-  }
+  // Guardar PDF
+  doc.save('encomenda.pdf');
 };
