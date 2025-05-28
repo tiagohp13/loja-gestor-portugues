@@ -12,7 +12,7 @@ const Support = () => {
   useScrollToTop();
   
   const navigate = useNavigate();
-  const { monthlyData, isLoading } = useSupportData();
+  const { monthlyData, isLoading, stats } = useSupportData();
 
   const navigateToProduct = (productId: string) => {
     navigate(`/produtos/${productId}`);
@@ -25,9 +25,9 @@ const Support = () => {
         description="Análise de dados e métricas do negócio" 
       />
       
-      <KpiGrid />
+      <KpiGrid stats={stats} />
       
-      <SummaryCards />
+      <SummaryCards stats={stats} />
       
       <SupportChart 
         data={monthlyData} 

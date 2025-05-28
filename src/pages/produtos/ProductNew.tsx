@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -50,8 +49,10 @@ const ProductNew = () => {
       purchasePrice: parseFloat(formData.purchasePrice) || 0,
       currentStock: parseInt(formData.currentStock) || 0,
       minStock: parseInt(formData.minStock) || 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       ...(formData.imageUrl && { imageUrl: formData.imageUrl })
-    } as Product;
+    };
 
     addProduct(newProduct);
     toast.success('Produto criado com sucesso!');
