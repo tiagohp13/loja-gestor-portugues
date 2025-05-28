@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
+import { useProductHistory } from './hooks/useProductHistory';
 import ProductDetailHeader from './components/ProductDetailHeader';
 import ProductDetailCard from './components/ProductDetailCard';
 import ProductImageCard from './components/ProductImageCard';
@@ -19,6 +20,15 @@ const ProductDetail = () => {
   const [activeTab, setActiveTab] = useState('details');
   
   const product = products.find(p => p.id === id);
+  
+  const {
+    entriesForProduct,
+    exitsForProduct,
+    totalUnitsPurchased,
+    totalAmountSpent,
+    totalUnitsSold,
+    totalAmountSold
+  } = useProductHistory(id || '');
 
   if (!product) {
     return <ProductNotFound />;
@@ -40,14 +50,27 @@ const ProductDetail = () => {
         
         <TabsContent value="details" className="mt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ProductDetailCard product={product} />
-            <ProductImageCard product={product} />
-            <ProductStockCard product={product} />
+            <ProductDetailCard 
+              product={product}
+              totalUnitsSold={totalUnitsSold}
+            />
+            <ProductImageCard imageUrl={product.imageUrl} />
+            <ProductStockCard 
+              currentStock={product.currentStock}
+              minStock={product.minStock}
+            />
           </div>
         </TabsContent>
         
         <TabsContent value="history" className="mt-6">
-          <HistoryTables productId={product.id} />
+          <HistoryTables 
+            entriesForProduct={entriesForProduct}
+            exitsForProduct={exitsForProduct}
+            totalUnitsPurchased={totalUnitsPurchased}
+            totalAmountSpent={totalAmountSpent}
+            totalUnitsSold={totalUnitsSold}
+            totalAmountSold={totalAmountSold}
+          />
         </TabsContent>
       </Tabs>
     </div>

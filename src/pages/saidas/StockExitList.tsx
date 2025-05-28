@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -30,6 +31,14 @@ const StockExitList = () => {
 
   const handleAddExit = () => {
     navigate('/saidas/nova');
+  };
+
+  const calculateTotal = (exit: any) => {
+    if (!exit.items) return 0;
+    return exit.items.reduce((sum: number, item: any) => {
+      const itemPrice = item.salePrice || item.unitPrice || 0;
+      return sum + (item.quantity * itemPrice);
+    }, 0);
   };
 
   return (
@@ -86,7 +95,7 @@ const StockExitList = () => {
                   <td className="p-3">{new Date(exit.date).toLocaleDateString('pt-PT')}</td>
                   <td className="p-3">{exit.clientName || 'Cliente Geral'}</td>
                   <td className="p-3">
-                    {exit.items ? exit.items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0).toFixed(2) : '0.00'} €
+                    {calculateTotal(exit).toFixed(2)} €
                   </td>
                   <td className="p-3">
                     <div className="flex space-x-2">

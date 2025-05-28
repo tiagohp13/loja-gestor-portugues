@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -44,7 +45,7 @@ const ProductEdit = () => {
         purchasePrice: product.purchasePrice?.toString() || '',
         currentStock: product.currentStock.toString(),
         minStock: product.minStock?.toString() || '',
-        imageUrl: product.imageUrl || ''
+        imageUrl: (product as any).imageUrl || ''
       });
     }
   }, [product]);
@@ -80,8 +81,8 @@ const ProductEdit = () => {
       purchasePrice: parseFloat(formData.purchasePrice) || 0,
       currentStock: parseInt(formData.currentStock) || 0,
       minStock: parseInt(formData.minStock) || 0,
-      imageUrl: formData.imageUrl
-    };
+      ...(formData.imageUrl && { imageUrl: formData.imageUrl })
+    } as Product;
 
     updateProduct(updatedProduct);
     toast.success('Produto atualizado com sucesso!');
