@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -25,7 +24,7 @@ interface OrderDetailHeaderProps {
 
 const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit }) => {
   const navigate = useNavigate();
-  const { convertOrderToStockExit, products } = useData();
+  const { convertOrderToStockExit, products, clients } = useData();
   const isPending = !order.convertedToStockExitId;
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isStockWarningOpen, setIsStockWarningOpen] = useState(false);
@@ -66,11 +65,26 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
   };
 
   const handleExportToPdf = async () => {
-    if (order && order.number) {
+    if (order) {
+      // Find the client
+      const client = clients.find(c => c.id === order.clientId);
+      const clientWithAddress = client ? {
+        ...client,
+        address: client.address ? {
+          street: client.address,
+          postalCode: '',
+          city: ''
+        } : undefined
+      } : undefined;
+
+      // Calculate total value
+      const totalValue = order.items?.reduce((acc, item) => acc + (item.quantity * item.salePrice), 0) || 0;
+
       await exportToPdf({
         filename: order.number.replace('/', '-'),
-        contentSelector: '.pdf-content',
-        margin: 10
+        order,
+        client: clientWithAddress,
+        totalValue
       });
     }
   };
