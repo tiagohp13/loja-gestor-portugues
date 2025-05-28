@@ -1,231 +1,219 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import PageHeader from '@/components/ui/PageHeader';
+import { Product } from '@/types';
+import { generateId } from '@/utils/formatting';
 import { toast } from 'sonner';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const ProductNew = () => {
+  useScrollToTop();
+  
   const navigate = useNavigate();
   const { addProduct, categories } = useData();
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
-  const [purchasePrice, setPurchasePrice] = useState(0);
-  const [salePrice, setSalePrice] = useState(0);
-  const [currentStock, setCurrentStock] = useState(0);
-  const [minStock, setMinStock] = useState(0);
-  const [image, setImage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [formData, setFormData] = useState({
+    name: '',
+    code: '',
+    description: '',
+    category: '',
+    salePrice: '',
+    purchasePrice: '',
+    currentStock: '',
+    minStock: '',
+    imageUrl: ''
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (purchasePrice < 0 || salePrice < 0 || currentStock < 0 || minStock < 0) {
-      toast.error("Valores não podem ser negativos");
+    if (!formData.name || !formData.code || !formData.category || !formData.salePrice) {
+      toast.error('Por favor, preencha todos os campos obrigatórios');
       return;
     }
-    
-    if (purchasePrice > salePrice) {
-      toast.warning("O preço de compra é maior que o preço de venda.");
-    }
-    
-    setIsSubmitting(true);
-    
-    try {
-      await addProduct({
-        name,
-        code,
-        description,
-        category,
-        purchasePrice,
-        salePrice,
-        currentStock,
-        minStock,
-        image,
-        status: 'active'
-      });
-      
-      toast.success("Produto adicionado com sucesso!");
-      navigate('/produtos/consultar');
-    } catch (error) {
-      console.error("Error adding product:", error);
-      toast.error("Erro ao adicionar produto");
-    } finally {
-      setIsSubmitting(false);
-    }
+
+    const newProduct: Product = {
+      id: generateId(),
+      name: formData.name,
+      code: formData.code,
+      description: formData.description,
+      category: formData.category,
+      salePrice: parseFloat(formData.salePrice),
+      purchasePrice: parseFloat(formData.purchasePrice) || 0,
+      currentStock: parseInt(formData.currentStock) || 0,
+      minStock: parseInt(formData.minStock) || 0,
+      imageUrl: formData.imageUrl
+    };
+
+    addProduct(newProduct);
+    toast.success('Produto criado com sucesso!');
+    navigate('/produtos/consultar');
+  };
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Novo Produto" 
-        description="Adicione um novo produto ao seu inventário" 
+        description="Adicionar um novo produto ao catálogo"
         actions={
           <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
-            Voltar à Lista
+            Voltar ao Catálogo
           </Button>
         }
       />
       
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="code" className="text-sm font-medium text-gestorApp-gray-dark">
-                Código
-              </label>
-              <Input
-                id="code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="Código único do produto"
-                required
-              />
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Informações do Produto</CardTitle>
+          <CardDescription>
+            Preencha os dados do novo produto
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  placeholder="Nome do produto"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="code">Código *</Label>
+                <Input
+                  id="code"
+                  value={formData.code}
+                  onChange={(e) => handleChange('code', e.target.value)}
+                  placeholder="Código único do produto"
+                  required
+                />
+              </div>
             </div>
             
             <div className="space-y-2">
-              <label htmlFor="name" className="text-sm font-medium text-gestorApp-gray-dark">
-                Nome
-              </label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Nome do produto"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="category" className="text-sm font-medium text-gestorApp-gray-dark">
-                Categoria
-              </label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="image" className="text-sm font-medium text-gestorApp-gray-dark">
-                URL da Imagem
-              </label>
-              <Input
-                id="image"
-                value={image}
-                onChange={(e) => setImage(e.target.value)}
-                placeholder="URL da imagem do produto"
-              />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <label htmlFor="description" className="text-sm font-medium text-gestorApp-gray-dark">
-              Descrição
-            </label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Descrição do produto"
-              rows={3}
-            />
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço de Compra (€)
-              </label>
-              <Input
-                id="purchasePrice"
-                type="number"
-                min="0"
-                step="0.01"
-                value={purchasePrice}
-                onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                placeholder="0.00"
-                required
+              <Label htmlFor="description">Descrição</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleChange('description', e.target.value)}
+                placeholder="Descrição detalhada do produto"
+                rows={3}
               />
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                Preço de Venda (€)
-              </label>
-              <Input
-                id="salePrice"
-                type="number"
-                min="0"
-                step="0.01"
-                value={salePrice}
-                onChange={(e) => setSalePrice(Number(e.target.value))}
-                placeholder="0.00"
-                required
-              />
-            </div>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                Stock Atual
-              </label>
-              <Input
-                id="currentStock"
-                type="number"
-                min="0"
-                step="1"
-                value={currentStock}
-                onChange={(e) => setCurrentStock(Number(e.target.value))}
-                placeholder="0"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria *</Label>
+                <Select value={formData.category} onValueChange={(value) => handleChange('category', value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar categoria" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="imageUrl">URL da Imagem</Label>
+                <Input
+                  id="imageUrl"
+                  value={formData.imageUrl}
+                  onChange={(e) => handleChange('imageUrl', e.target.value)}
+                  placeholder="URL da imagem do produto"
+                />
+              </div>
             </div>
             
-            <div className="space-y-2">
-              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                Stock Mínimo
-              </label>
-              <Input
-                id="minStock"
-                type="number"
-                min="0"
-                step="1"
-                value={minStock}
-                onChange={(e) => setMinStock(Number(e.target.value))}
-                placeholder="0"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="salePrice">Preço de Venda *</Label>
+                <Input
+                  id="salePrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.salePrice}
+                  onChange={(e) => handleChange('salePrice', e.target.value)}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="purchasePrice">Preço de Compra</Label>
+                <Input
+                  id="purchasePrice"
+                  type="number"
+                  step="0.01"
+                  value={formData.purchasePrice}
+                  onChange={(e) => handleChange('purchasePrice', e.target.value)}
+                  placeholder="0.00"
+                />
+              </div>
             </div>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/produtos/consultar')}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando..." : "Guardar Produto"}
-            </Button>
-          </div>
-        </form>
-      </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentStock">Stock Atual</Label>
+                <Input
+                  id="currentStock"
+                  type="number"
+                  value={formData.currentStock}
+                  onChange={(e) => handleChange('currentStock', e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="minStock">Stock Mínimo</Label>
+                <Input
+                  id="minStock"
+                  type="number"
+                  value={formData.minStock}
+                  onChange={(e) => handleChange('minStock', e.target.value)}
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <Button type="submit" className="flex-1">
+                Criar Produto
+              </Button>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => navigate('/produtos/consultar')}
+              >
+                Cancelar
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 };

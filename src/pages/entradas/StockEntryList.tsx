@@ -1,79 +1,67 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useData } from '../../contexts/DataContext';
+import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import StockEntrySearch from './components/StockEntrySearch';
 import StockEntryTable from './components/StockEntryTable';
+import StockEntrySearch from './components/StockEntrySearch';
 import RecordCount from '@/components/common/RecordCount';
-import { useStockEntries } from './hooks/useStockEntries';
-import { Package } from 'lucide-react';
+import { Plus, LogIn } from 'lucide-react';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 const StockEntryList = () => {
-  const navigate = useNavigate();
-  const { 
-    searchTerm, 
-    setSearchTerm,
-    sortField,
-    sortOrder,
-    isLoading,
-    sortedEntries,
-    handleSortChange,
-    handleDeleteEntry,
-    calculateEntryTotal,
-    localEntries
-  } = useStockEntries();
+  useScrollToTop();
   
+  const navigate = useNavigate();
+  const { stockEntries } = useData();
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const filteredEntries = stockEntries.filter(entry =>
+    entry.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (entry.supplierName && entry.supplierName.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   const handleViewEntry = (id: string) => {
     navigate(`/entradas/${id}`);
   };
-  
-  const handleEditEntry = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
+
+  const handleEditEntry = (id: string) => {
     navigate(`/entradas/editar/${id}`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <PageHeader 
-          title="Histórico de Compras" 
-          description="A carregar dados..." 
-        />
-        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">
-          Carregando compras de stock...
-        </div>
-      </div>
-    );
-  }
+  const handleAddEntry = () => {
+    navigate('/entradas/nova');
+  };
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
-        title="Histórico de Compras" 
-        description="Consulte o histórico de compras de stock"
+        title="Compras" 
+        description="Consultar e gerir o histórico de compras"
+        actions={
+          <Button onClick={handleAddEntry}>
+            <Plus className="h-4 w-4" />
+            Nova Compra
+          </Button>
+        }
       />
       
       <RecordCount 
         title="Total de compras"
-        count={localEntries.length}
-        icon={Package}
+        count={stockEntries.length}
+        icon={LogIn}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <StockEntrySearch
+        <StockEntrySearch 
           searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
+          setSearchTerm={setSearchTerm}
         />
         
-        <StockEntryTable
-          entries={sortedEntries}
-          sortField={sortField}
-          sortOrder={sortOrder}
-          onSortChange={handleSortChange}
+        <StockEntryTable 
+          entries={filteredEntries}
           onViewEntry={handleViewEntry}
           onEditEntry={handleEditEntry}
-          onDeleteEntry={handleDeleteEntry}
-          calculateEntryTotal={calculateEntryTotal}
         />
       </div>
     </div>

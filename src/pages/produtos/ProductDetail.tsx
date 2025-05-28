@@ -1,81 +1,55 @@
 
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ProductDetailHeader from './components/ProductDetailHeader';
-import ProductImageCard from './components/ProductImageCard';
 import ProductDetailCard from './components/ProductDetailCard';
+import ProductImageCard from './components/ProductImageCard';
 import ProductStockCard from './components/ProductStockCard';
-import ProductNotFound from './components/ProductNotFound';
 import HistoryTables from './components/HistoryTables';
-import { useProductHistory } from './hooks/useProductHistory';
+import ProductNotFound from './components/ProductNotFound';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useScrollToTop } from '@/hooks/useScrollToTop';
 
-const ProductDetail: React.FC = () => {
+const ProductDetail = () => {
+  useScrollToTop();
+  
   const { id } = useParams<{ id: string }>();
-  const { getProduct, isLoading } = useData();
-  const navigate = useNavigate();
+  const { products } = useData();
+  const [activeTab, setActiveTab] = useState('details');
   
-  // Get product history
-  const {
-    entriesForProduct,
-    exitsForProduct,
-    totalUnitsSold,
-    totalUnitsPurchased,
-    totalAmountSpent,
-    totalAmountSold
-  } = useProductHistory(id);
-  
-  // Scroll to top on component mount
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
-  
-  if (isLoading) return <LoadingSpinner />;
-  
-  const product = id ? getProduct(id) : null;
-  
+  const product = products.find(p => p.id === id);
+
   if (!product) {
     return <ProductNotFound />;
   }
-  
+
   return (
     <div className="container mx-auto px-4 py-6">
       <ProductDetailHeader 
-        productName={product.name} 
+        productName={product.name}
         productCode={product.code}
-        productId={id}
+        productId={product.id}
       />
       
-      <div className="grid md:grid-cols-3 gap-6 mt-6">
-        {/* Product Image Card */}
-        {product.image && (
-          <ProductImageCard image={product.image} name={product.name} />
-        )}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="details">Detalhes</TabsTrigger>
+          <TabsTrigger value="history">Histórico</TabsTrigger>
+        </TabsList>
         
-        {/* Product Details Card */}
-        <ProductDetailCard 
-          product={product} 
-          totalUnitsSold={totalUnitsSold}
-        />
+        <TabsContent value="details" className="mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <ProductDetailCard product={product} />
+            <ProductImageCard product={product} />
+            <ProductStockCard product={product} />
+          </div>
+        </TabsContent>
         
-        {/* Stock Card */}
-        <ProductStockCard 
-          currentStock={product.currentStock} 
-          minStock={product.minStock}
-          hasImage={!!product.image} 
-        />
-      </div>
-      
-      {/* History Tables */}
-      <HistoryTables 
-        entriesForProduct={entriesForProduct} 
-        exitsForProduct={exitsForProduct}
-        totalUnitsPurchased={totalUnitsPurchased}
-        totalAmountSpent={totalAmountSpent}
-        totalUnitsSold={totalUnitsSold}
-        totalAmountSold={totalAmountSold}
-      />
+        <TabsContent value="history" className="mt-6">
+          <HistoryTables productId={product.id} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
