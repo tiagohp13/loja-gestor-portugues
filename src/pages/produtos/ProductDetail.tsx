@@ -1,78 +1,81 @@
 
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { useProductHistory } from './hooks/useProductHistory';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ProductDetailHeader from './components/ProductDetailHeader';
-import ProductDetailCard from './components/ProductDetailCard';
 import ProductImageCard from './components/ProductImageCard';
+import ProductDetailCard from './components/ProductDetailCard';
 import ProductStockCard from './components/ProductStockCard';
-import HistoryTables from './components/HistoryTables';
 import ProductNotFound from './components/ProductNotFound';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useScrollToTop } from '@/hooks/useScrollToTop';
+import HistoryTables from './components/HistoryTables';
+import { useProductHistory } from './hooks/useProductHistory';
 
-const ProductDetail = () => {
-  useScrollToTop();
-  
+const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { products } = useData();
-  const [activeTab, setActiveTab] = useState('details');
+  const { getProduct, isLoading } = useData();
+  const navigate = useNavigate();
   
-  const product = products.find(p => p.id === id);
-  
+  // Get product history
   const {
     entriesForProduct,
     exitsForProduct,
+    totalUnitsSold,
     totalUnitsPurchased,
     totalAmountSpent,
-    totalUnitsSold,
     totalAmountSold
-  } = useProductHistory(id || '');
-
+  } = useProductHistory(id);
+  
+  // Scroll to top on component mount
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+  
+  if (isLoading) return <LoadingSpinner />;
+  
+  const product = id ? getProduct(id) : null;
+  
   if (!product) {
     return <ProductNotFound />;
   }
-
+  
   return (
     <div className="container mx-auto px-4 py-6">
       <ProductDetailHeader 
-        productName={product.name}
+        productName={product.name} 
         productCode={product.code}
-        productId={product.id}
+        productId={id}
       />
       
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="details">Detalhes</TabsTrigger>
-          <TabsTrigger value="history">Histórico</TabsTrigger>
-        </TabsList>
+      <div className="grid md:grid-cols-3 gap-6 mt-6">
+        {/* Product Image Card */}
+        {product.image && (
+          <ProductImageCard image={product.image} name={product.name} />
+        )}
         
-        <TabsContent value="details" className="mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <ProductDetailCard 
-              product={product}
-              totalUnitsSold={totalUnitsSold}
-            />
-            <ProductImageCard imageUrl={product.imageUrl} />
-            <ProductStockCard 
-              currentStock={product.currentStock}
-              minStock={product.minStock}
-            />
-          </div>
-        </TabsContent>
+        {/* Product Details Card */}
+        <ProductDetailCard 
+          product={product} 
+          totalUnitsSold={totalUnitsSold}
+        />
         
-        <TabsContent value="history" className="mt-6">
-          <HistoryTables 
-            entriesForProduct={entriesForProduct}
-            exitsForProduct={exitsForProduct}
-            totalUnitsPurchased={totalUnitsPurchased}
-            totalAmountSpent={totalAmountSpent}
-            totalUnitsSold={totalUnitsSold}
-            totalAmountSold={totalAmountSold}
-          />
-        </TabsContent>
-      </Tabs>
+        {/* Stock Card */}
+        <ProductStockCard 
+          currentStock={product.currentStock} 
+          minStock={product.minStock}
+          hasImage={!!product.image} 
+        />
+      </div>
+      
+      {/* History Tables */}
+      <HistoryTables 
+        entriesForProduct={entriesForProduct} 
+        exitsForProduct={exitsForProduct}
+        totalUnitsPurchased={totalUnitsPurchased}
+        totalAmountSpent={totalAmountSpent}
+        totalUnitsSold={totalUnitsSold}
+        totalAmountSold={totalAmountSold}
+      />
     </div>
   );
 };

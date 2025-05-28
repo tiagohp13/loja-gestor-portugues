@@ -1,63 +1,123 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../contexts/DataContext';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
-import DashboardSummaryCards from './dashboard/components/DashboardSummaryCards';
-import LowStockProducts from './dashboard/components/LowStockProducts';
-import PendingOrders from './dashboard/components/PendingOrders';
-import RecentTransactions from './dashboard/components/RecentTransactions';
-import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { useSupportData } from './suporte/hooks/useSupportData';
+import PageHeader from '../components/ui/PageHeader';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
-const Dashboard = () => {
-  useScrollToTop();
-  
+// Import components from dashboard
+import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
+import LowStockProducts from './dashboard/components/LowStockProducts';
+import InsufficientStockOrders from './dashboard/components/InsufficientStockOrders';
+import PendingOrders from './dashboard/components/PendingOrders';
+import { findInsufficientStockOrders } from './dashboard/hooks/utils/orderUtils';
+
+// Import the SummaryCards from support page
+import SummaryCards from './suporte/components/SummaryCards';
+
+// Import KPI panel components
+import KPIPanel from '@/components/statistics/KPIPanel';
+
+const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { products, clients, suppliers } = useData();
-  const { 
-    lowStockProducts, 
-    pendingOrders, 
-    recentTransactions, 
+  const { isLoading: isLoadingSupportData, stats: supportStats, kpis } = useSupportData();
+  
+  const {
+    products,
+    suppliers,
+    clients,
+    orders,
+    monthlyData,
+    lowStockProducts,
     totalStockValue,
-    navigateToProductDetail,
-    navigateToClientDetail,
-    navigateToSupplierDetail,
-    navigateToOrderDetail,
-    ensureDate
   } = useDashboardData();
+  
+  // Find orders with insufficient stock
+  const insufficientStockItems = findInsufficientStockOrders(orders, products);
+
+  // Filter for pending orders (not converted to stock exit)
+  const pendingOrders = orders.filter(order => !order.convertedToStockExitId);
+
+  const navigateToProductDetail = (id: string) => {
+    navigate(`/produtos/${id}`);
+  };
+
+  const navigateToClientDetail = (id: string) => {
+    navigate(`/clientes/detalhe/${id}`);
+  };
+
+  const navigateToSupplierDetail = (id: string) => {
+    navigate(`/fornecedores/${id}`);
+  };
+  
+  const navigateToOrderDetail = (id: string) => {
+    navigate(`/encomendas/${id}`);
+  };
+
+  // Show loading spinner while support data is loading
+  if (isLoadingSupportData) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <LoadingSpinner size={32} />
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
-      <h1 className="text-3xl font-bold text-gestorApp-blue">Dashboard</h1>
-      
-      <DashboardSummaryCards 
-        products={products} 
-        clients={clients}
-        suppliers={suppliers}
-        totalStockValue={totalStockValue}
+    <div className="container mx-auto px-4 py-6">
+      <PageHeader 
+        title="Dashboard" 
+        description="Vista geral do seu negócio"
       />
       
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <LowStockProducts 
-          lowStockProducts={lowStockProducts}
+      {/* Summary Cards */}
+      <SummaryCards stats={supportStats} />
+      
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <SalesAndPurchasesChart chartData={monthlyData} />
+      </div>
+      
+      {/* Products with Low Stock and Pending Orders - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        {/* Products with Low Stock */}
+        <div>
+          <LowStockProducts 
+            lowStockProducts={lowStockProducts}
+            navigateToProductDetail={navigateToProductDetail}
+          />
+        </div>
+        
+        {/* Pending Orders */}
+        <div>
+          <PendingOrders 
+            pendingOrders={pendingOrders}
+            navigateToOrderDetail={navigateToOrderDetail}
+            navigateToClientDetail={navigateToClientDetail}
+          />
+        </div>
+      </div>
+      
+      {/* Orders with Insufficient Stock */}
+      <div className="grid grid-cols-1 gap-6 mb-8">
+        <InsufficientStockOrders 
+          insufficientItems={insufficientStockItems}
           navigateToProductDetail={navigateToProductDetail}
-        />
-        <PendingOrders 
-          pendingOrders={pendingOrders}
           navigateToOrderDetail={navigateToOrderDetail}
           navigateToClientDetail={navigateToClientDetail}
         />
       </div>
       
-      <RecentTransactions 
-        recentTransactions={recentTransactions}
-        navigateToProductDetail={navigateToProductDetail}
-        navigateToClientDetail={navigateToClientDetail}
-        navigateToSupplierDetail={navigateToSupplierDetail}
-        ensureDate={ensureDate}
-      />
+      {/* KPI Panel at the bottom of the dashboard */}
+      <div className="mb-6">
+        <KPIPanel 
+          title="Indicadores de Performance" 
+          description="Principais KPIs do negócio" 
+          kpis={kpis} 
+        />
+      </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default DashboardPage;
