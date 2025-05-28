@@ -51,22 +51,10 @@ export const useStockEntryDetail = (id: string | undefined) => {
 
   const handleExportToPdf = async () => {
     if (stockEntry && stockEntry.number) {
-      // Find the supplier with address format
-      const supplierData = suppliers.find(s => s.id === stockEntry.supplierId);
-      const supplierWithAddress = supplierData ? {
-        ...supplierData,
-        address: supplierData.address ? {
-          street: supplierData.address,
-          postalCode: '',
-          city: ''
-        } : undefined
-      } : undefined;
-
       await exportToPdf({
         filename: stockEntry.number.replace('/', '-'),
-        stockExit: stockEntry,
-        client: supplierWithAddress,
-        totalValue
+        contentSelector: '.pdf-content',
+        margin: 10
       });
     }
   };

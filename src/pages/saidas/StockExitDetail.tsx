@@ -6,7 +6,6 @@ import ExitInformationCard from './components/ExitInformationCard';
 import ClientInformationCard from './components/ClientInformationCard';
 import ProductsSoldTable from './components/ProductsSoldTable';
 import { exportToPdf } from '@/utils/pdfExport';
-import { useData } from '@/contexts/DataContext';
 
 const StockExitDetail = () => {
   const { 
@@ -20,7 +19,6 @@ const StockExitDetail = () => {
     id
   } = useStockExitDetail();
   
-  const { clients } = useData();
   const contentRef = useRef<HTMLDivElement>(null);
 
   if (!stockExit) {
@@ -34,23 +32,11 @@ const StockExitDetail = () => {
   
   // Handle PDF export
   const handleExportToPdf = async () => {
-    if (stockExit) {
-      // Find the client with address format
-      const clientData = clients.find(c => c.id === stockExit.clientId);
-      const clientWithAddress = clientData ? {
-        ...clientData,
-        address: clientData.address ? {
-          street: clientData.address,
-          postalCode: '',
-          city: ''
-        } : undefined
-      } : undefined;
-
+    if (stockExit && stockExit.number) {
       await exportToPdf({
         filename: stockExit.number.replace('/', '-'),
-        stockExit,
-        client: clientWithAddress,
-        totalValue
+        contentSelector: '.pdf-content',
+        margin: 10
       });
     }
   };
