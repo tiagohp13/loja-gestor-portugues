@@ -114,7 +114,15 @@ const ExpenseNew = () => {
       date: formData.date.toISOString(),
       notes: formData.notes,
       discount: formData.discount,
-      items: formData.items
+      items: formData.items.map(item => ({
+        id: crypto.randomUUID(),
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discountPercent: item.discountPercent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }))
     };
 
     addExpense(expense);

@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { StockEntryFormState } from './types';
 import { StockEntryItem } from '@/types';
@@ -52,19 +51,20 @@ export const useEntryForm = (initialEntry: StockEntryFormState, setEntry: React.
   };
 
   const addNewItem = () => {
+    const newItem: StockEntryItem = {
+      id: `temp-${Date.now()}`,
+      productId: '',
+      productName: '',
+      quantity: 1,
+      purchasePrice: 0,
+      discountPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
     setEntry(prev => ({
       ...prev,
-      items: [
-        ...prev.items,
-        {
-          id: `temp-${Date.now()}`,
-          productId: '', // Este valor vazio será substituído por "placeholder" na UI
-          productName: '',
-          quantity: 1,
-          purchasePrice: 0,
-          discountPercent: 0
-        }
-      ]
+      items: [...prev.items, newItem]
     }));
   };
 

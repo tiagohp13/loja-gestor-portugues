@@ -1,131 +1,149 @@
 
-import { 
-  Product, Category, Client, Supplier, 
-  Order, OrderItem, StockEntry, StockEntryItem,
-  StockExit, StockExitItem
-} from '../types';
+import { Product, Category, Client, Supplier, Order, OrderItem, StockEntry, StockEntryItem, StockExit, StockExitItem } from '../types';
 
-// Database to Frontend mappers
-export const mapDbProductToProduct = (data: any): Product => ({
-  id: data.id,
-  code: data.code,
-  name: data.name,
-  description: data.description || '',
-  category: data.category || '',
-  purchasePrice: Number(data.purchase_price),
-  salePrice: Number(data.sale_price),
-  currentStock: data.current_stock,
-  minStock: data.min_stock,
-  createdAt: data.created_at,
-  updatedAt: data.updated_at,
-  image: data.image,
-  status: data.status
+export const mapDbProductToProduct = (dbProduct: any): Product => ({
+  id: dbProduct.id,
+  userId: dbProduct.user_id,
+  code: dbProduct.code,
+  name: dbProduct.name,
+  description: dbProduct.description,
+  image: dbProduct.image,
+  category: dbProduct.category,
+  salePrice: Number(dbProduct.sale_price || 0),
+  purchasePrice: Number(dbProduct.purchase_price || 0),
+  currentStock: dbProduct.current_stock || 0,
+  minStock: dbProduct.min_stock || 0,
+  status: dbProduct.status,
+  createdAt: dbProduct.created_at,
+  updatedAt: dbProduct.updated_at
 });
 
-export const mapDbCategoryToCategory = (data: any): Category => ({
-  id: data.id,
-  name: data.name,
-  description: data.description || '',
-  createdAt: data.created_at,
-  updatedAt: data.updated_at,
-  status: data.status,
-  productCount: data.product_count || 0
+export const mapDbCategoryToCategory = (dbCategory: any): Category => ({
+  id: dbCategory.id,
+  userId: dbCategory.user_id,
+  name: dbCategory.name,
+  description: dbCategory.description,
+  status: dbCategory.status,
+  productCount: dbCategory.product_count || 0,
+  createdAt: dbCategory.created_at,
+  updatedAt: dbCategory.updated_at
 });
 
-export const mapDbClientToClient = (data: any): Client => ({
-  id: data.id,
-  name: data.name,
-  email: data.email || '',
-  phone: data.phone || '',
-  address: data.address || '',
-  taxId: data.tax_id || '',
-  notes: data.notes || '',
-  createdAt: data.created_at,
-  updatedAt: data.updated_at,
-  status: data.status
+export const mapDbClientToClient = (dbClient: any): Client => ({
+  id: dbClient.id,
+  userId: dbClient.user_id,
+  name: dbClient.name,
+  email: dbClient.email,
+  phone: dbClient.phone,
+  address: dbClient.address,
+  taxId: dbClient.tax_id,
+  notes: dbClient.notes,
+  status: dbClient.status,
+  createdAt: dbClient.created_at,
+  updatedAt: dbClient.updated_at
 });
 
-export const mapDbSupplierToSupplier = (data: any): Supplier => ({
-  id: data.id,
-  name: data.name,
-  email: data.email || '',
-  phone: data.phone || '',
-  address: data.address || '',
-  taxId: data.tax_id || '',
-  paymentTerms: data.payment_terms || '',
-  notes: data.notes || '',
-  createdAt: data.created_at,
-  updatedAt: data.updated_at,
-  status: data.status
+export const mapDbSupplierToSupplier = (dbSupplier: any): Supplier => ({
+  id: dbSupplier.id,
+  userId: dbSupplier.user_id,
+  name: dbSupplier.name,
+  email: dbSupplier.email,
+  phone: dbSupplier.phone,
+  address: dbSupplier.address,
+  taxId: dbSupplier.tax_id,
+  notes: dbSupplier.notes,
+  paymentTerms: dbSupplier.payment_terms,
+  status: dbSupplier.status,
+  createdAt: dbSupplier.created_at,
+  updatedAt: dbSupplier.updated_at
 });
 
-export const mapDbOrderItemToOrderItem = (data: any): OrderItem => ({
-  productId: data.product_id || '',
-  productName: data.product_name,
-  quantity: data.quantity,
-  salePrice: Number(data.sale_price),
-  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined
+export const mapDbOrderToOrder = (dbOrder: any, dbOrderItems: any[]): Order => ({
+  id: dbOrder.id,
+  userId: dbOrder.user_id,
+  number: dbOrder.number,
+  clientId: dbOrder.client_id,
+  clientName: dbOrder.client_name,
+  date: dbOrder.date,
+  notes: dbOrder.notes,
+  discount: Number(dbOrder.discount || 0),
+  total: 0, // Will be calculated
+  convertedToStockExitId: dbOrder.converted_to_stock_exit_id,
+  convertedToStockExitNumber: dbOrder.converted_to_stock_exit_number,
+  createdAt: dbOrder.created_at,
+  updatedAt: dbOrder.updated_at,
+  items: dbOrderItems.map(mapDbOrderItemToOrderItem)
 });
 
-export const mapDbOrderToOrder = (data: any, items: any[] = []): Order => ({
-  id: data.id,
-  number: data.number,
-  clientId: data.client_id || '',
-  clientName: data.client_name || '',
-  date: data.date,
-  notes: data.notes || '',
-  convertedToStockExitId: data.converted_to_stock_exit_id,
-  convertedToStockExitNumber: data.converted_to_stock_exit_number,
-  discount: Number(data.discount || 0),
-  items: items.map(mapDbOrderItemToOrderItem)
+export const mapDbOrderItemToOrderItem = (dbOrderItem: any): OrderItem => ({
+  id: dbOrderItem.id,
+  orderId: dbOrderItem.order_id,
+  productId: dbOrderItem.product_id,
+  productName: dbOrderItem.product_name,
+  quantity: dbOrderItem.quantity,
+  salePrice: Number(dbOrderItem.sale_price || 0),
+  discountPercent: Number(dbOrderItem.discount_percent || 0),
+  createdAt: dbOrderItem.created_at,
+  updatedAt: dbOrderItem.updated_at
 });
 
-export const mapDbStockEntryItemToStockEntryItem = (data: any): StockEntryItem => ({
-  id: data.id,
-  productId: data.product_id || '',
-  productName: data.product_name,
-  quantity: data.quantity,
-  purchasePrice: Number(data.purchase_price),
-  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined
+export const mapDbStockEntryToStockEntry = (dbEntry: any, dbEntryItems: any[]): StockEntry => ({
+  id: dbEntry.id,
+  userId: dbEntry.user_id,
+  number: dbEntry.number,
+  supplierId: dbEntry.supplier_id,
+  supplierName: dbEntry.supplier_name,
+  date: dbEntry.date,
+  invoiceNumber: dbEntry.invoice_number,
+  notes: dbEntry.notes,
+  discount: Number(dbEntry.discount || 0),
+  createdAt: dbEntry.created_at,
+  updatedAt: dbEntry.updated_at,
+  items: dbEntryItems.map(mapDbStockEntryItemToStockEntryItem)
 });
 
-export const mapDbStockEntryToStockEntry = (data: any, items: any[] = []): StockEntry => ({
-  id: data.id,
-  number: data.number,
-  supplierId: data.supplier_id || '',
-  supplierName: data.supplier_name,
-  date: data.date,
-  invoiceNumber: data.invoice_number || '',
-  notes: data.notes || '',
-  createdAt: data.created_at,
-  items: items.map(mapDbStockEntryItemToStockEntryItem)
+export const mapDbStockEntryItemToStockEntryItem = (dbItem: any): StockEntryItem => ({
+  id: dbItem.id,
+  entryId: dbItem.entry_id,
+  productId: dbItem.product_id,
+  productName: dbItem.product_name,
+  quantity: dbItem.quantity,
+  purchasePrice: Number(dbItem.purchase_price || 0),
+  discountPercent: Number(dbItem.discount_percent || 0),
+  createdAt: dbItem.created_at,
+  updatedAt: dbItem.updated_at
 });
 
-export const mapDbStockExitItemToStockExitItem = (data: any): StockExitItem => ({
-  id: data.id,
-  productId: data.product_id || '',
-  productName: data.product_name,
-  quantity: data.quantity,
-  salePrice: Number(data.sale_price),
-  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined
+export const mapDbStockExitToStockExit = (dbExit: any, dbExitItems: any[]): StockExit => ({
+  id: dbExit.id,
+  userId: dbExit.user_id,
+  number: dbExit.number,
+  clientId: dbExit.client_id,
+  clientName: dbExit.client_name,
+  date: dbExit.date,
+  notes: dbExit.notes,
+  discount: Number(dbExit.discount || 0),
+  fromOrderId: dbExit.from_order_id,
+  fromOrderNumber: dbExit.from_order_number,
+  invoiceNumber: dbExit.invoice_number,
+  createdAt: dbExit.created_at,
+  updatedAt: dbExit.updated_at,
+  items: dbExitItems.map(mapDbStockExitItemToStockExitItem)
 });
 
-export const mapDbStockExitToStockExit = (data: any, items: any[] = []): StockExit => ({
-  id: data.id,
-  number: data.number,
-  clientId: data.client_id || '',
-  clientName: data.client_name,
-  date: data.date,
-  invoiceNumber: data.invoice_number || '',
-  notes: data.notes || '',
-  fromOrderId: data.from_order_id,
-  fromOrderNumber: data.from_order_number,
-  createdAt: data.created_at,
-  discount: Number(data.discount || 0),
-  items: items.map(mapDbStockExitItemToStockExitItem)
+export const mapDbStockExitItemToStockExitItem = (dbItem: any): StockExitItem => ({
+  id: dbItem.id,
+  exitId: dbItem.exit_id,
+  productId: dbItem.product_id,
+  productName: dbItem.product_name,
+  quantity: dbItem.quantity,
+  salePrice: Number(dbItem.sale_price || 0),
+  discountPercent: Number(dbItem.discount_percent || 0),
+  createdAt: dbItem.created_at,
+  updatedAt: dbItem.updated_at
 });
 
-// Frontend to Database mappers
+// Reverse mappers for database operations
 export const mapOrderItemToDbOrderItem = (item: OrderItem, orderId: string) => ({
   order_id: orderId,
   product_id: item.productId,

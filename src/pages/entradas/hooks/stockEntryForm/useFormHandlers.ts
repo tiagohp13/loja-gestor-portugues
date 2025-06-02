@@ -1,4 +1,3 @@
-
 import { StockEntryItem } from '@/types';
 import { CurrentItem, EntryDetails } from './types';
 import { toast } from 'sonner';
@@ -100,10 +99,17 @@ export const useFormHandlers = ({
       };
       setItems(updatedItems);
     } else {
-      setItems([...items, { 
+      const newItem: StockEntryItem = { 
         id: crypto.randomUUID(),
-        ...currentItem 
-      }]);
+        productId: currentItem.productId,
+        productName: currentItem.productName,
+        quantity: currentItem.quantity,
+        purchasePrice: currentItem.purchasePrice,
+        discountPercent: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      setItems([...items, newItem]);
     }
     
     setCurrentItem({

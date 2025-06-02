@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -174,8 +173,18 @@ const OrderEdit = () => {
       return;
     }
     
-    // Always add as a new line - allow duplicate products
-    setItems([...items, { ...currentItem }]);
+    const newItem: OrderItem = {
+      id: crypto.randomUUID(),
+      productId: currentItem.productId,
+      productName: currentItem.productName,
+      quantity: currentItem.quantity,
+      salePrice: currentItem.salePrice,
+      discountPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    setItems([...items, newItem]);
     
     // Reset current item
     setCurrentItem({

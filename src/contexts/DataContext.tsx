@@ -1514,7 +1514,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       case 'expenses':
         return expenses;
       case 'all':
-        return {
+        return [{
           products,
           categories,
           clients,
@@ -1523,7 +1523,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
           stockEntries,
           stockExits,
           expenses
-        };
+        }];
       default:
         return [];
     }
@@ -1696,3 +1696,5 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
 };
 
 export default DataProvider;
+
+</edits_to_apply>
