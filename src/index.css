@@ -93,7 +93,12 @@
   }
 
   body {
-    @apply bg-background text-foreground font-inter;
+    @apply bg-background text-foreground font-inter transition-colors duration-300;
+  }
+
+  /* Melhorar transições para modo escuro */
+  .dashboard-card, .stat-card {
+    @apply transition-colors duration-300;
   }
 }
 
@@ -103,7 +108,7 @@
 }
 
 .dashboard-card {
-  @apply rounded-lg bg-white shadow-sm border p-5 overflow-hidden;
+  @apply rounded-lg bg-card shadow-sm border p-5 overflow-hidden transition-colors duration-300;
 }
 
 .stat-card {
@@ -111,13 +116,29 @@
 }
 
 .stat-value {
-  @apply text-2xl font-bold text-gestorApp-gray-dark mt-2;
+  @apply text-2xl font-bold text-foreground mt-2;
 }
 
 .stat-label {
-  @apply text-sm font-medium text-gestorApp-gray;
+  @apply text-sm font-medium text-muted-foreground;
 }
 
 .form-group {
   @apply mb-4;
+}
+
+/* Melhor suporte para modo escuro em tabelas */
+.dark .table-wrapper {
+  @apply bg-card;
+}
+
+/* Melhor contraste para gráficos no modo escuro */
+.dark .recharts-cartesian-grid-horizontal line,
+.dark .recharts-cartesian-grid-vertical line {
+  stroke: hsl(var(--border));
+  opacity: 0.5;
+}
+
+.dark .recharts-legend-wrapper {
+  color: hsl(var(--foreground));
 }

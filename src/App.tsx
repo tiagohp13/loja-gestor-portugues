@@ -3,6 +3,7 @@ import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
+import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'sonner';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
@@ -86,64 +87,66 @@ const ProtectedRoute = () => {
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <DataProvider>
-          <Suspense fallback={<LoadingSpinner />}>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              
-              <Route element={<ProtectedRoute />}>
-                <Route element={<AppLayout />}>
-                  <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                  <Route path="/dashboard" element={<DashboardPage />} />
-                  
-                  <Route path="/produtos/consultar" element={<ProductList />} />
-                  <Route path="/produtos/novo" element={<ProductNew />} />
-                  <Route path="/produtos/:id" element={<ProductDetail />} />
-                  <Route path="/produtos/editar/:id" element={<ProductEdit />} />
-                  
-                  <Route path="/categorias/consultar" element={<CategoryList />} />
-                  <Route path="/categorias/nova" element={<CategoryNew />} />
-                  <Route path="/categorias/:id" element={<CategoryDetail />} />
-                  <Route path="/categorias/editar/:id" element={<CategoryEdit />} />
-                  
-                  <Route path="/clientes/consultar" element={<ClientList />} />
-                  <Route path="/clientes/novo" element={<ClientNew />} />
-                  <Route path="/clientes/:id" element={<ClientDetail />} />
-                  <Route path="/clientes/editar/:id" element={<ClientEdit />} />
-                  
-                  <Route path="/fornecedores/consultar" element={<SupplierList />} />
-                  <Route path="/fornecedores/novo" element={<SupplierNew />} />
-                  <Route path="/fornecedores/:id" element={<SupplierDetail />} />
-                  <Route path="/fornecedores/editar/:id" element={<SupplierEdit />} />
-                  
-                  <Route path="/encomendas/consultar" element={<OrderList />} />
-                  <Route path="/encomendas/nova" element={<OrderNew />} />
-                  <Route path="/encomendas/:id" element={<OrderDetail />} />
-                  <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
-                  
-                  <Route path="/entradas/historico" element={<StockEntryList />} />
-                  <Route path="/entradas/nova" element={<StockEntryNew />} />
-                  <Route path="/entradas/:id" element={<StockEntryDetail />} />
-                  <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
-                  
-                  <Route path="/saidas/historico" element={<StockExitList />} />
-                  <Route path="/saidas/nova" element={<StockExitNew />} />
-                  <Route path="/saidas/:id" element={<StockExitDetail />} />
-                  <Route path="/saidas/editar/:id" element={<StockExitEdit />} />
-                  
-                  <Route path="/configuracoes" element={<Settings />} />
-                  
-                  <Route path="/suporte" element={<Support />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <DataProvider>
+            <Suspense fallback={<LoadingSpinner />}>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                
+                <Route element={<ProtectedRoute />}>
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
+                    
+                    <Route path="/produtos/consultar" element={<ProductList />} />
+                    <Route path="/produtos/novo" element={<ProductNew />} />
+                    <Route path="/produtos/:id" element={<ProductDetail />} />
+                    <Route path="/produtos/editar/:id" element={<ProductEdit />} />
+                    
+                    <Route path="/categorias/consultar" element={<CategoryList />} />
+                    <Route path="/categorias/nova" element={<CategoryNew />} />
+                    <Route path="/categorias/:id" element={<CategoryDetail />} />
+                    <Route path="/categorias/editar/:id" element={<CategoryEdit />} />
+                    
+                    <Route path="/clientes/consultar" element={<ClientList />} />
+                    <Route path="/clientes/novo" element={<ClientNew />} />
+                    <Route path="/clientes/:id" element={<ClientDetail />} />
+                    <Route path="/clientes/editar/:id" element={<ClientEdit />} />
+                    
+                    <Route path="/fornecedores/consultar" element={<SupplierList />} />
+                    <Route path="/fornecedores/novo" element={<SupplierNew />} />
+                    <Route path="/fornecedores/:id" element={<SupplierDetail />} />
+                    <Route path="/fornecedores/editar/:id" element={<SupplierEdit />} />
+                    
+                    <Route path="/encomendas/consultar" element={<OrderList />} />
+                    <Route path="/encomendas/nova" element={<OrderNew />} />
+                    <Route path="/encomendas/:id" element={<OrderDetail />} />
+                    <Route path="/encomendas/editar/:id" element={<OrderEdit />} />
+                    
+                    <Route path="/entradas/historico" element={<StockEntryList />} />
+                    <Route path="/entradas/nova" element={<StockEntryNew />} />
+                    <Route path="/entradas/:id" element={<StockEntryDetail />} />
+                    <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
+                    
+                    <Route path="/saidas/historico" element={<StockExitList />} />
+                    <Route path="/saidas/nova" element={<StockExitNew />} />
+                    <Route path="/saidas/:id" element={<StockExitDetail />} />
+                    <Route path="/saidas/editar/:id" element={<StockExitEdit />} />
+                    
+                    <Route path="/configuracoes" element={<Settings />} />
+                    
+                    <Route path="/suporte" element={<Support />} />
+                  </Route>
                 </Route>
-              </Route>
-              
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Toaster />
-          </Suspense>
-        </DataProvider>
-      </AuthProvider>
+                
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+              <Toaster />
+            </Suspense>
+          </DataProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }

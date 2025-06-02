@@ -1,10 +1,11 @@
-
 import React from 'react';
 import { useData } from '@/contexts/DataContext';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Separator } from '@/components/ui/separator';
+import ThemeToggle from '@/components/ui/ThemeToggle';
 import { ExportDataType } from '@/types';
 
 const Settings = () => {
@@ -179,8 +180,30 @@ const Settings = () => {
                 Configurações gerais do sistema
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <p>Em breve...</p>
+            <CardContent className="space-y-6">
+              <div>
+                <h4 className="text-sm font-medium mb-3">Aparência</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-lg border bg-background">
+                    <div className="space-y-1">
+                      <h5 className="text-sm font-medium">Tema da Interface</h5>
+                      <p className="text-xs text-muted-foreground">
+                        Escolha entre modo claro e escuro para maior conforto visual
+                      </p>
+                    </div>
+                    <ThemeToggle />
+                  </div>
+                </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h4 className="text-sm font-medium mb-3">Outras Configurações</h4>
+                <p className="text-sm text-muted-foreground">
+                  Mais opções de configuração estarão disponíveis em breve...
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

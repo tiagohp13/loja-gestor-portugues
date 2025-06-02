@@ -105,6 +105,9 @@ export default {
 			},
 			fontFamily: {
 				inter: ['Inter', 'sans-serif']
+			},
+			transitionProperty: {
+				'colors': 'color, background-color, border-color, text-decoration-color, fill, stroke',
 			}
 		}
 	},
