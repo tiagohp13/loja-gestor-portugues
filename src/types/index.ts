@@ -88,6 +88,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   items: OrderItem[];
+  total?: number;
 }
 
 export interface OrderItem {
@@ -181,6 +182,54 @@ export interface ExpenseItem {
   discountPercent?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  createdAt: string;
+}
+
+export interface LegacyStockEntry {
+  id: string;
+  supplierId: string;
+  supplierName: string;
+  number: string;
+  invoiceNumber: string;
+  notes: string;
+  date: string;
+  createdAt: string;
+  items: any[];
+}
+
+export interface LegacyStockExit {
+  id: string;
+  clientId: string;
+  clientName: string;
+  number: string;
+  invoiceNumber: string;
+  notes: string;
+  date: string;
+  createdAt: string;
+  fromOrderId: string;
+  fromOrderNumber: string;
+  discount: number;
+  items: any[];
+}
+
+export interface LegacyOrder {
+  id: string;
+  clientId: string;
+  clientName: string;
+  number: string;
+  date: string;
+  notes: string;
+  createdAt: string;
+  convertedToStockExitId: string;
+  discount: number;
+  items: any[];
 }
 
 export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';
