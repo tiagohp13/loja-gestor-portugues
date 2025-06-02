@@ -1696,5 +1696,3 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
 };
 
 export default DataProvider;
-
-</edits_to_apply>
