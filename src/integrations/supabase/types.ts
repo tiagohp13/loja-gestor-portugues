@@ -215,6 +215,94 @@ export type Database = {
           },
         ]
       }
+      expense_items: {
+        Row: {
+          created_at: string
+          discount_percent: number | null
+          expense_id: string | null
+          id: string
+          product_name: string
+          quantity: number
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discount_percent?: number | null
+          expense_id?: string | null
+          id?: string
+          product_name: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discount_percent?: number | null
+          expense_id?: string | null
+          id?: string
+          product_name?: string
+          quantity?: number
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expense_items_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      expenses: {
+        Row: {
+          created_at: string
+          date: string
+          discount: number | null
+          id: string
+          notes: string | null
+          number: string
+          supplier_id: string | null
+          supplier_name: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          date?: string
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          number: string
+          supplier_id?: string | null
+          supplier_name: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          discount?: number | null
+          id?: string
+          notes?: string | null
+          number?: string
+          supplier_id?: string | null
+          supplier_name?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kpi_targets: {
         Row: {
           created_at: string | null

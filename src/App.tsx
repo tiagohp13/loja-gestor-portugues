@@ -1,4 +1,3 @@
-
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -55,6 +54,11 @@ import StockExitList from './pages/saidas/StockExitList';
 import StockExitDetail from './pages/saidas/StockExitDetail';
 import StockExitNew from './pages/saidas/StockExitNew';
 import StockExitEdit from './pages/saidas/StockExitEdit';
+
+// Expenses
+import ExpenseList from './pages/despesas/ExpenseList';
+import ExpenseNew from './pages/despesas/ExpenseNew';
+import ExpenseEdit from './pages/despesas/ExpenseEdit';
 
 // Settings
 import Settings from './pages/configuracoes/Settings';
@@ -133,6 +137,10 @@ function App() {
                     <Route path="/saidas/nova" element={<StockExitNew />} />
                     <Route path="/saidas/:id" element={<StockExitDetail />} />
                     <Route path="/saidas/editar/:id" element={<StockExitEdit />} />
+                    
+                    <Route path="/despesas/historico" element={<ExpenseList />} />
+                    <Route path="/despesas/nova" element={<ExpenseNew />} />
+                    <Route path="/despesas/editar/:id" element={<ExpenseEdit />} />
                     
                     <Route path="/configuracoes" element={<Settings />} />
                     

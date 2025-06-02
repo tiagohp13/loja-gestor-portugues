@@ -1,171 +1,174 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { 
-  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList
+import React, { useState } from 'react';
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Menu } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Package,
+  Tag,
+  Users,
+  Truck,
+  ShoppingCart,
+  ArrowDownCircle,
+  ArrowUpCircle,
+  Settings,
+  BarChart3,
+  CreditCard,
 } from 'lucide-react';
-import { 
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
-  SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
-  SidebarMenuItem, useSidebar
-} from '@/components/ui/sidebar';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { toast } from "sonner";
+import { NavLink, useLocation } from 'react-router-dom';
+import { cn } from '@/lib/utils';
+import ThemeToggle from '../ui/ThemeToggle';
 
-/**
- * Main navigation sidebar component 
- * Provides consistent navigation across the application
- */
-const AppSidebar: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const { setOpenMobile } = useSidebar();
-  
-  const navigationItems = [
-    { 
-      path: '/dashboard', 
-      label: 'Dashboard', 
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      isActive: location.pathname === '/' || location.pathname === '/dashboard'
+interface MenuItem {
+  title: string;
+  icon: any;
+  href?: string;
+  items?: { title: string; href: string }[];
+}
+
+const Sidebar = () => {
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+
+  const toggleOpen = () => setOpen(!open);
+
+  const closeSidebar = () => setOpen(false);
+
+  const menuItems: MenuItem[] = [
+    {
+      title: 'Dashboard',
+      icon: LayoutDashboard,
+      href: '/dashboard',
     },
-    { 
-      path: '/produtos/consultar', 
-      label: 'Produtos', 
-      icon: <Package className="w-5 h-5" />,
-      isActive: location.pathname.includes('/produtos')
+    {
+      title: 'Produtos',
+      icon: Package,
+      items: [
+        { title: 'Consultar', href: '/produtos/consultar' },
+        { title: 'Novo Produto', href: '/produtos/novo' },
+      ],
     },
-    { 
-      path: '/categorias/consultar', 
-      label: 'Categorias', 
-      icon: <Tag className="w-5 h-5" />,
-      isActive: location.pathname.includes('/categorias')
+    {
+      title: 'Categorias',
+      icon: Tag,
+      items: [
+        { title: 'Consultar', href: '/categorias/consultar' },
+        { title: 'Nova Categoria', href: '/categorias/nova' },
+      ],
     },
-    { 
-      path: '/clientes/consultar', 
-      label: 'Clientes', 
-      icon: <Users className="w-5 h-5" />,
-      isActive: location.pathname.includes('/clientes')
+    {
+      title: 'Clientes',
+      icon: Users,
+      items: [
+        { title: 'Consultar', href: '/clientes/consultar' },
+        { title: 'Novo Cliente', href: '/clientes/novo' },
+      ],
     },
-    { 
-      path: '/fornecedores/consultar', 
-      label: 'Fornecedores', 
-      icon: <Truck className="w-5 h-5" />,
-      isActive: location.pathname.includes('/fornecedores')
+    {
+      title: 'Fornecedores',
+      icon: Truck,
+      items: [
+        { title: 'Consultar', href: '/fornecedores/consultar' },
+        { title: 'Novo Fornecedor', href: '/fornecedores/novo' },
+      ],
     },
-    { 
-      path: '/encomendas/consultar', 
-      label: 'Encomendas', 
-      icon: <ClipboardList className="w-5 h-5" />,
-      isActive: location.pathname.includes('/encomendas')
+    {
+      title: 'Encomendas',
+      icon: ShoppingCart,
+      items: [
+        { title: 'Consultar', href: '/encomendas/consultar' },
+        { title: 'Nova Encomenda', href: '/encomendas/nova' },
+      ],
     },
-    { 
-      path: '/entradas/historico', 
-      label: 'Compras', 
-      icon: <LogIn className="w-5 h-5" />,
-      isActive: location.pathname.includes('/entradas')
+    {
+      title: 'Compras',
+      icon: ArrowDownCircle,
+      items: [
+        { title: 'Histórico', href: '/entradas/historico' },
+        { title: 'Nova Compra', href: '/entradas/nova' },
+      ],
     },
-    { 
-      path: '/saidas/historico', 
-      label: 'Vendas', 
-      icon: <LogOut className="w-5 h-5" />,
-      isActive: location.pathname.includes('/saidas')
+    {
+      title: 'Despesas',
+      icon: CreditCard,
+      items: [
+        { title: 'Histórico', href: '/despesas/historico' },
+        { title: 'Nova Despesa', href: '/despesas/nova' },
+      ],
     },
-    { 
-      path: '/suporte', 
-      label: 'Estatísticas', 
-      icon: <BarChart className="w-5 h-5" />,
-      isActive: location.pathname.includes('/suporte')
+    {
+      title: 'Vendas',
+      icon: ArrowUpCircle,
+      items: [
+        { title: 'Histórico', href: '/saidas/historico' },
+        { title: 'Nova Venda', href: '/saidas/nova' },
+      ],
     },
-    { 
-      path: '/configuracoes', 
-      label: 'Configurações', 
-      icon: <Settings className="w-5 h-5" />,
-      isActive: location.pathname.includes('/configuracoes')
-    }
+    {
+      title: 'Configurações',
+      icon: Settings,
+      href: '/configuracoes',
+    },
+    {
+      title: 'Estatísticas',
+      icon: BarChart3,
+      href: '/suporte',
+    },
   ];
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      toast.success('Sessão terminada com sucesso');
-      navigate('/login');
-    } catch (error) {
-      console.error('Error during logout:', error);
-      toast.error('Erro ao terminar sessão');
-    }
-  };
-
-  const handleNavigation = (path: string) => {
-    navigate(path);
-    if (isMobile) {
-      setOpenMobile(false);
-    }
-  };
-
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    
-    const userName = user.user_metadata?.name;
-    return userName || user.email?.split('@')[0] || '';
-  };
-
   return (
-    <Sidebar variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="p-4 flex items-center justify-between border-b">
-        <div className="flex items-center space-x-2">
-          <img 
-            src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
-            alt="Aqua Paraíso Logo" 
-            className="h-8 w-auto"
-          />
-          <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Menu className="absolute left-4 top-4 text-gestorApp-gray-dark md:hidden" onClick={toggleOpen} />
+      </SheetTrigger>
+      <SheetContent side="left" className="p-0 pt-10 w-[18rem]">
+        <nav className="grid gap-6 p-4">
+          {menuItems.map((item, index) => (
+            item.href ? (
+              <NavLink
+                key={index}
+                to={item.href}
+                onClick={closeSidebar}
+                className={({ isActive }) =>
+                  cn(
+                    "flex items-center gap-3 rounded-md p-2 text-sm font-semibold transition-colors hover:bg-gestorApp-blue-light hover:text-gestorApp-blue-dark",
+                    isActive ? "bg-gestorApp-blue-light text-gestorApp-blue-dark" : "text-gestorApp-gray-dark"
+                  )
+                }
+              >
+                <item.icon className="h-4 w-4" />
+                {item.title}
+              </NavLink>
+            ) : (
+              <div key={index}>
+                <div className="mb-2 text-sm font-semibold text-gestorApp-gray-dark">{item.title}</div>
+                <div className="grid gap-2">
+                  {item.items?.map((subItem, subIndex) => (
+                    <NavLink
+                      key={subIndex}
+                      to={subItem.href}
+                      onClick={closeSidebar}
+                      className={({ isActive }) =>
+                        cn(
+                          "flex items-center gap-3 rounded-md p-2 text-sm font-medium transition-colors hover:bg-gestorApp-blue-light hover:text-gestorApp-blue-dark",
+                          isActive ? "bg-gestorApp-blue-light text-gestorApp-blue-dark" : "text-gestorApp-gray-dark"
+                        )
+                      }
+                    >
+                      {subItem.title}
+                    </NavLink>
+                  ))}
+                </div>
+              </div>
+            )
+          ))}
+        </nav>
+
+        <div className="absolute bottom-4 left-4">
+          <ThemeToggle />
         </div>
-      </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navigationItems.map((item, index) => (
-                <SidebarMenuItem key={index}>
-                  <SidebarMenuButton 
-                    onClick={() => handleNavigation(item.path)}
-                    isActive={item.isActive}
-                    tooltip={item.label}
-                  >
-                    {item.icon}
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-      
-      <SidebarFooter className="p-4 border-t">
-        <div className="flex flex-col space-y-4">
-          {user && (
-            <div className="flex items-center space-x-2 text-sm">
-              <UserIcon className="w-5 h-5 text-gestorApp-gray" />
-              <span className="text-gestorApp-gray-dark">{getUserDisplayName()}</span>
-            </div>
-          )}
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 text-gestorApp-gray hover:text-gestorApp-blue transition-colors"
-          >
-            <ShoppingCart className="w-5 h-5" />
-            <span>Terminar Sessão</span>
-          </button>
-        </div>
-      </SidebarFooter>
-    </Sidebar>
+      </SheetContent>
+    </Sheet>
   );
 };
 
-export default AppSidebar;
+export default Sidebar;

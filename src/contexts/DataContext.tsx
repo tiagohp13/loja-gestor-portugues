@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { 
   Product, Category, Client, Supplier, 
   Order, OrderItem, StockEntry, StockEntryItem,
-  StockExit, StockExitItem, ExportDataType
+  StockExit, StockExitItem, ExportDataType, Expense
 } from '../types';
 import {
   mapDbProductToProduct, 
@@ -84,6 +84,12 @@ interface DataContextType {
   updateStockExit: (id: string, exit: Partial<StockExit>) => Promise<void>;
   deleteStockExit: (id: string) => Promise<void>;
   
+  // Expenses
+  expenses: Expense[];
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateExpense: (expense: Expense, id: string) => void;
+  deleteExpense: (id: string) => void;
+  
   // Export/Import
   exportData: (type: ExportDataType) => void;
   importData: (type: ExportDataType, data: string) => Promise<void>;
@@ -137,7 +143,7 @@ export const useData = () => {
   return context;
 };
 
-export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -145,6 +151,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [orders, setOrders] = useState<Order[]>([]);
   const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
   const [stockExits, setStockExits] = useState<StockExit[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
@@ -1452,14 +1459,159 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   }
   
+  const addExpense = (expenseData: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const newExpense: Expense = {
+      ...expenseData,
+      id: generateId(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setExpenses(prev => [...prev, newExpense]);
+    toast.success('Despesa adicionada com sucesso!');
+  };
+
+  const updateExpense = (updatedExpense: Expense, id: string) => {
+    setExpenses(prev => 
+      prev.map(expense => 
+        expense.id === id 
+          ? { ...updatedExpense, updatedAt: new Date().toISOString() }
+          : expense
+      )
+    );
+    toast.success('Despesa atualizada com sucesso!');
+  };
+
+  const deleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(expense => expense.id !== id));
+    toast.success('Despesa eliminada com sucesso!');
+  };
+
   const exportData = (type: ExportDataType) => {
-    // Implementation remains the same
+    let data: any;
+    let filename: string;
+
+    switch (type) {
+      case 'products':
+        data = products;
+        filename = 'produtos';
+        break;
+      case 'categories':
+        data = categories;
+        filename = 'categorias';
+        break;
+      case 'clients':
+        data = clients;
+        filename = 'clientes';
+        break;
+      case 'suppliers':
+        data = suppliers;
+        filename = 'fornecedores';
+        break;
+      case 'orders':
+        data = orders;
+        filename = 'encomendas';
+        break;
+      case 'stockEntries':
+        data = stockEntries;
+        filename = 'entradas_de_stock';
+        break;
+      case 'stockExits':
+        data = stockExits;
+        filename = 'saidas_de_stock';
+        break;
+      case 'expenses':
+        data = expenses;
+        filename = 'despesas';
+        break;
+      case 'all':
+        data = {
+          products,
+          categories,
+          clients,
+          suppliers,
+          orders,
+          stockEntries,
+          stockExits,
+          expenses
+        };
+        filename = 'todos_os_dados';
+        break;
+      default:
+        return;
+    }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename + '.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
-  
+
   const importData = async (type: ExportDataType, data: string) => {
-    // Implementation remains the same
+    let parsedData: any;
+
+    switch (type) {
+      case 'products':
+        parsedData = JSON.parse(data);
+        setProducts(parsedData);
+        toast.success('Produtos importados com sucesso!');
+        break;
+      case 'categories':
+        parsedData = JSON.parse(data);
+        setCategories(parsedData);
+        toast.success('Categorias importadas com sucesso!');
+        break;
+      case 'clients':
+        parsedData = JSON.parse(data);
+        setClients(parsedData);
+        toast.success('Clientes importados com sucesso!');
+        break;
+      case 'suppliers':
+        parsedData = JSON.parse(data);
+        setSuppliers(parsedData);
+        toast.success('Fornecedores importados com sucesso!');
+        break;
+      case 'orders':
+        parsedData = JSON.parse(data);
+        setOrders(parsedData);
+        toast.success('Encomendas importadas com sucesso!');
+        break;
+      case 'stockEntries':
+        parsedData = JSON.parse(data);
+        setStockEntries(parsedData);
+        toast.success('Entradas de stock importadas com sucesso!');
+        break;
+      case 'stockExits':
+        parsedData = JSON.parse(data);
+        setStockExits(parsedData);
+        toast.success('Saídas de stock importadas com sucesso!');
+        break;
+      case 'expenses':
+        parsedData = JSON.parse(data);
+        setExpenses(parsedData);
+        toast.success('Despesas importadas com sucesso!');
+        break;
+      case 'all':
+        parsedData = JSON.parse(data);
+        setProducts(parsedData.products);
+        setCategories(parsedData.categories);
+        setClients(parsedData.clients);
+        setSuppliers(parsedData.suppliers);
+        setOrders(parsedData.orders);
+        setStockEntries(parsedData.stockEntries);
+        setStockExits(parsedData.stockExits);
+        setExpenses(parsedData.expenses);
+        toast.success('Todos os dados importados com sucesso!');
+        break;
+      default:
+        toast.error('Tipo de dados inválido');
+    }
   };
-  
+
   const updateData = <T extends keyof DataState>(type: T, data: DataState[T]) => {
     switch (type) {
       case 'products':
@@ -1490,11 +1642,15 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setStockExits(data as StockExit[]);
         toast.success('Saídas de stock atualizadas com sucesso');
         break;
+      case 'expenses':
+        setExpenses(data as Expense[]);
+        toast.success('Despesas atualizadas com sucesso');
+        break;
       default:
         toast.error('Tipo de dados inválido');
     }
   };
-  
+
   const contextValue: DataContextType = {
     products,
     setProducts,
@@ -1542,6 +1698,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     addStockExit,
     updateStockExit,
     deleteStockExit,
+    expenses,
+    addExpense,
+    updateExpense,
+    deleteExpense,
     exportData,
     importData,
     updateData,
@@ -1549,7 +1709,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isLoading,
     setIsLoading
   };
-  
+
   return (
     <DataContext.Provider value={contextValue}>
       {children}

@@ -10,7 +10,7 @@ import { ExportDataType } from '@/types';
 
 const Settings = () => {
   const { 
-    products, categories, clients, suppliers, orders, stockEntries, stockExits, 
+    products, categories, clients, suppliers, orders, stockEntries, stockExits, expenses,
     exportData, importData, updateData
   } = useData();
 
@@ -71,6 +71,9 @@ const Settings = () => {
                 </Button>
                 <Button variant="outline" onClick={() => exportData('stockExits')}>
                   Exportar Saídas ({stockExits.length})
+                </Button>
+                <Button variant="outline" onClick={() => exportData('expenses')}>
+                  Exportar Despesas ({expenses.length})
                 </Button>
                 <Button variant="outline" onClick={() => exportData('all' as ExportDataType)}>
                   Exportar Todos os Dados
@@ -148,6 +151,22 @@ const Settings = () => {
                     type="file" 
                     accept=".json"
                     onChange={(e) => handleImport(e, 'suppliers')}
+                    className="hidden" 
+                  />
+                </div>
+                
+                <div>
+                  <label 
+                    htmlFor="import-expenses" 
+                    className="cursor-pointer block w-full px-4 py-2 text-center border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
+                  >
+                    Importar Despesas
+                  </label>
+                  <input 
+                    id="import-expenses" 
+                    type="file" 
+                    accept=".json"
+                    onChange={(e) => handleImport(e, 'expenses')}
                     className="hidden" 
                   />
                 </div>
