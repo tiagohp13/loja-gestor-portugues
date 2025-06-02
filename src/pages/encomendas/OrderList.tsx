@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { Search, Edit, Trash2, Plus, ArrowUp, ArrowDown, FileText, ShoppingBag } from 'lucide-react';
+import { Search, Edit, Trash2, Plus, ArrowUp, ArrowDown, ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
@@ -93,7 +93,7 @@ const OrderList = () => {
           *,
           order_items(*)
         `)
-        .order('created_at', { ascending: false });
+        .order('date', { ascending: false });
 
       if (error) {
         console.error("Error fetching orders:", error);
@@ -116,9 +116,7 @@ const OrderList = () => {
           date: order.date,
           notes: order.notes,
           createdAt: order.created_at,
-          updatedAt: order.updated_at || order.created_at,
           convertedToStockExitId: order.converted_to_stock_exit_id,
-          convertedToStockExitNumber: order.converted_to_stock_exit_number,
           discount: order.discount,
           items: order.order_items.map((item: any) => ({
             id: item.id,
@@ -126,9 +124,7 @@ const OrderList = () => {
             productName: item.product_name,
             quantity: item.quantity,
             salePrice: item.sale_price,
-            discountPercent: item.discount_percent,
-            createdAt: item.created_at,
-            updatedAt: item.updated_at || item.created_at
+            discountPercent: item.discount_percent
           }))
         }));
         
@@ -136,7 +132,6 @@ const OrderList = () => {
         
         setLocalOrders(filteredOrders);
         setOrders(filteredOrders);
-        console.log("Updated local orders:", filteredOrders.length);
       }
     } catch (error) {
       console.error("Error in fetchOrders:", error);
@@ -267,7 +262,7 @@ const OrderList = () => {
       <RecordCount 
         title="Total de encomendas"
         count={localOrders.length}
-        icon={ShoppingBag}
+        icon={ShoppingCart}
       />
       
       <div className="bg-white rounded-lg shadow p-4 sm:p-6 mt-4 sm:mt-6">
@@ -372,7 +367,7 @@ const OrderList = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                       {order.convertedToStockExitId ? (
-                        <StatusBadge variant="success" icon={ShoppingBag}>
+                        <StatusBadge variant="success" icon={ShoppingCart}>
                           Convertida em Saída
                         </StatusBadge>
                       ) : (

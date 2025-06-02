@@ -135,7 +135,7 @@ const ExpenseList = () => {
       </Card>
 
       <DeleteConfirmDialog
-        isOpen={deleteDialogOpen}
+        open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         onConfirm={confirmDelete}
         title="Eliminar Despesa"

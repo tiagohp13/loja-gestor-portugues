@@ -42,7 +42,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
   
   // Calculate total value of all displayed pending orders
   const totalPendingValue = displayOrders.reduce((sum, order) => {
-    return sum + calculateTotal(order);
+    return sum + (order.total || calculateTotal(order));
   }, 0);
   
   return (
@@ -92,7 +92,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
                         )}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatCurrency(calculateTotal(order))}
+                        {formatCurrency(order.total || calculateTotal(order))}
                       </TableCell>
                     </TableRow>
                   ))}

@@ -1,12 +1,4 @@
 
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  createdAt: string;
-}
-
 export interface Product {
   id: string;
   userId?: string;
@@ -192,31 +184,3 @@ export interface ExpenseItem {
 }
 
 export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';
-
-// Legacy types for backward compatibility
-export interface LegacyStockEntry {
-  id: string;
-  number: string;
-  supplierId: string;
-  supplierName: string;
-  date: string;
-  items: any[];
-}
-
-export interface LegacyStockExit {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName: string;
-  date: string;
-  items: any[];
-}
-
-export interface LegacyOrder {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName: string;
-  date: string;
-  items: any[];
-}
