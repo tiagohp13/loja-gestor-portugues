@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { 
   Product, Category, Client, Supplier, 
   Order, OrderItem, StockEntry, StockEntryItem,
-  StockExit, StockExitItem, ExportDataType, Expense
+  StockExit, StockExitItem, ExportDataType, Expense, ExpenseItem
 } from '../types';
 import {
   mapDbProductToProduct, 
@@ -22,6 +22,10 @@ import {
   mapStockEntryItemToDbStockEntryItem,
   mapStockExitItemToDbStockExitItem
 } from '../utils/mappers';
+
+interface DataProviderProps {
+  children: ReactNode;
+}
 
 interface DataContextType {
   // Products
@@ -131,6 +135,7 @@ interface DataState {
   orders: Order[];
   stockEntries: StockEntry[];
   stockExits: StockExit[];
+  expenses: Expense[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -142,6 +147,8 @@ export const useData = () => {
   }
   return context;
 };
+
+const generateId = () => crypto.randomUUID();
 
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -399,13 +406,16 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       fromOrderId: order.id,
       fromOrderNumber: order.number,
       discount: order.discount,
+      updatedAt: new Date().toISOString(),
       items: order.items.map(item => ({
         id: crypto.randomUUID(),
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
         salePrice: item.salePrice,
-        discountPercent: item.discountPercent
+        discountPercent: item.discountPercent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }))
     };
     
@@ -923,6 +933,8 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         convertedToStockExitId: data.converted_to_stock_exit_id,
         convertedToStockExitNumber: data.converted_to_stock_exit_number,
         discount: Number(data.discount || 0),
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
         items: order.items
       };
       
@@ -1024,7 +1036,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       const itemsWithIds = entry.items.map(item => {
         if (!item.id) {
-          return { ...item, id: crypto.randomUUID() };
+          return { 
+            ...item, 
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
         }
         return item;
       });
@@ -1038,6 +1055,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         invoiceNumber: entry.invoiceNumber || '',
         notes: entry.notes || '',
         createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         items: itemsWithIds
       };
       
@@ -1107,6 +1125,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         invoiceNumber: data.invoice_number || '',
         notes: data.notes,
         createdAt: data.created_at,
+        updatedAt: data.updated_at,
         items: itemsWithIds.map(item => ({
           ...item,
           id: item.id || crypto.randomUUID()
@@ -1226,7 +1245,12 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       const itemsWithIds = exit.items.map(item => {
         if (!item.id) {
-          return { ...item, id: crypto.randomUUID() };
+          return { 
+            ...item, 
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
         }
         return item;
       });
@@ -1314,6 +1338,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         fromOrderId: data.from_order_id,
         fromOrderNumber: data.from_order_number,
         createdAt: data.created_at,
+        updatedAt: data.updated_at,
         discount: Number(data.discount || 0),
         items: itemsWithIds
       };

@@ -1,3 +1,4 @@
+
 export interface Product {
   id: string;
   userId?: string;
@@ -40,6 +41,15 @@ export interface Client {
   updatedAt: string;
 }
 
+export interface ClientWithAddress extends Client {
+  address?: {
+    street?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+  };
+}
+
 export interface Supplier {
   id: string;
   userId?: string;
@@ -53,6 +63,15 @@ export interface Supplier {
   status?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SupplierWithAddress extends Supplier {
+  address?: {
+    street?: string;
+    city?: string;
+    postalCode?: string;
+    country?: string;
+  };
 }
 
 export interface Order {
