@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { 
   Product, Category, Client, Supplier, 
   Order, OrderItem, StockEntry, StockEntryItem,
-  StockExit, StockExitItem, ExportDataType, Expense, ExpenseItem
+  StockExit, StockExitItem, ExportDataType, Expense
 } from '../types';
 import {
   mapDbProductToProduct, 
@@ -22,10 +22,6 @@ import {
   mapStockEntryItemToDbStockEntryItem,
   mapStockExitItemToDbStockExitItem
 } from '../utils/mappers';
-
-interface DataProviderProps {
-  children: React.ReactNode;
-}
 
 interface DataContextType {
   // Products
@@ -90,14 +86,14 @@ interface DataContextType {
   
   // Expenses
   expenses: Expense[];
-  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  updateExpense: (expense: Expense, id: string) => Promise<void>;
-  deleteExpense: (id: string) => Promise<void>;
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
+  updateExpense: (expense: Expense, id: string) => void;
+  deleteExpense: (id: string) => void;
   
   // Export/Import
-  exportData: (dataType: ExportDataType) => any[];
+  exportData: (type: ExportDataType) => void;
   importData: (type: ExportDataType, data: string) => Promise<void>;
-  updateData: (type: keyof DataState, data: any) => void;
+  updateData: <T extends keyof DataState>(type: T, data: DataState[T]) => void;
   
   // Business Analytics
   getBusinessAnalytics: () => { 
@@ -135,7 +131,6 @@ interface DataState {
   orders: Order[];
   stockEntries: StockEntry[];
   stockExits: StockExit[];
-  expenses: Expense[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -209,7 +204,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       supabase.removeChannel(stockExitsChannel);
     };
   }, []);
-
+  
   const getProduct = (id: string): Product | undefined => {
     return products.find(product => product.id === id);
   };
@@ -404,22 +399,19 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       fromOrderId: order.id,
       fromOrderNumber: order.number,
       discount: order.discount,
-      updatedAt: new Date().toISOString(),
       items: order.items.map(item => ({
         id: crypto.randomUUID(),
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
         salePrice: item.salePrice,
-        discountPercent: item.discountPercent,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        discountPercent: item.discountPercent
       }))
     };
     
     return await addStockExit(stockExit);
   };
-
+  
   const fetchProducts = async () => {
     try {
       const { data, error } = await supabase
@@ -578,7 +570,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       toast.error('Erro ao carregar saídas de stock');
     }
   };
-
+  
   const addProduct = async (product: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const { data, error } = await supabase
@@ -613,7 +605,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const updateProduct = async (id: string, product: Partial<Product>) => {
     try {
       const { error } = await supabase
@@ -660,7 +652,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const addCategory = async (category: Omit<Category, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const { data, error } = await supabase
@@ -689,7 +681,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const updateCategory = async (id: string, category: Partial<Category>) => {
     try {
       const { error } = await supabase
@@ -730,7 +722,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const addClient = async (client: Omit<Client, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const { data, error } = await supabase
@@ -806,7 +798,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const addSupplier = async (supplier: Omit<Supplier, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const { data, error } = await supabase
@@ -884,7 +876,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const addOrder = async (order: Omit<Order, 'id' | 'number'>) => {
     try {
       const { data: orderNumberData, error: orderNumberError } = await supabase
@@ -931,8 +923,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         convertedToStockExitId: data.converted_to_stock_exit_id,
         convertedToStockExitNumber: data.converted_to_stock_exit_number,
         discount: Number(data.discount || 0),
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
         items: order.items
       };
       
@@ -944,7 +934,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const updateOrder = async (id: string, order: Partial<Order>) => {
     try {
       const { error } = await supabase
@@ -1020,7 +1010,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>) => {
     try {
       const { data: entryNumberData, error: entryNumberError } = await supabase
@@ -1034,12 +1024,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       const itemsWithIds = entry.items.map(item => {
         if (!item.id) {
-          return { 
-            ...item, 
-            id: crypto.randomUUID(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
+          return { ...item, id: crypto.randomUUID() };
         }
         return item;
       });
@@ -1053,7 +1038,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         invoiceNumber: entry.invoiceNumber || '',
         notes: entry.notes || '',
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
         items: itemsWithIds
       };
       
@@ -1123,7 +1107,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         invoiceNumber: data.invoice_number || '',
         notes: data.notes,
         createdAt: data.created_at,
-        updatedAt: data.updated_at,
         items: itemsWithIds.map(item => ({
           ...item,
           id: item.id || crypto.randomUUID()
@@ -1146,7 +1129,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
-
+  
   const updateStockEntry = async (id: string, entry: Partial<StockEntry>) => {
     try {
       const { error } = await supabase
@@ -1243,12 +1226,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       
       const itemsWithIds = exit.items.map(item => {
         if (!item.id) {
-          return { 
-            ...item, 
-            id: crypto.randomUUID(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          };
+          return { ...item, id: crypto.randomUUID() };
         }
         return item;
       });
@@ -1336,7 +1314,6 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         fromOrderId: data.from_order_id,
         fromOrderNumber: data.from_order_number,
         createdAt: data.created_at,
-        updatedAt: data.updated_at,
         discount: Number(data.discount || 0),
         items: itemsWithIds
       };
@@ -1455,66 +1432,99 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
       throw error;
     }
   };
+  
+  const updateProductStock = async (productId: string, quantity: number) => {
+    // First get current stock value
+    const { data, error: fetchError } = await supabase
+      .from('products')
+      .select('current_stock')
+      .eq('id', productId)
+      .single();
+    
+    if (fetchError) {
+      console.error('Error fetching product stock:', fetchError);
+      throw fetchError;
+    }
+    
+    // Then update with new calculated value
+    const newStock = (data?.current_stock || 0) + quantity;
+    const { error } = await supabase
+      .from('products')
+      .update({ current_stock: newStock })
+      .eq('id', productId);
 
-  const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
+    if (error) {
+      console.error('Error updating product stock:', error);
+      throw error;
+    }
+  }
+  
+  const addExpense = (expenseData: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newExpense: Expense = {
-      id: crypto.randomUUID(),
-      ...expense,
+      ...expenseData,
+      id: generateId(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      items: expense.items.map(item => ({
-        id: crypto.randomUUID(),
-        expenseId: '',
-        productName: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        discountPercent: item.discountPercent || 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }))
     };
-    
-    // Update the expense ID in items
-    newExpense.items = newExpense.items.map(item => ({
-      ...item,
-      expenseId: newExpense.id
-    }));
-    
-    setExpenses([...expenses, newExpense]);
+    setExpenses(prev => [...prev, newExpense]);
+    toast.success('Despesa adicionada com sucesso!');
   };
 
-  const updateExpense = async (expense: Expense, id: string) => {
-    const updatedExpense = {
-      ...expense,
-      updatedAt: new Date().toISOString()
-    };
-    setExpenses(expenses.map(e => e.id === id ? updatedExpense : e));
+  const updateExpense = (updatedExpense: Expense, id: string) => {
+    setExpenses(prev => 
+      prev.map(expense => 
+        expense.id === id 
+          ? { ...updatedExpense, updatedAt: new Date().toISOString() }
+          : expense
+      )
+    );
+    toast.success('Despesa atualizada com sucesso!');
   };
 
-  const deleteExpense = async (id: string) => {
-    setExpenses(expenses.filter(e => e.id !== id));
+  const deleteExpense = (id: string) => {
+    setExpenses(prev => prev.filter(expense => expense.id !== id));
+    toast.success('Despesa eliminada com sucesso!');
   };
 
-  const exportData = (dataType: ExportDataType): any[] => {
-    switch (dataType) {
+  const exportData = (type: ExportDataType) => {
+    let data: any;
+    let filename: string;
+
+    switch (type) {
       case 'products':
-        return products;
+        data = products;
+        filename = 'produtos';
+        break;
       case 'categories':
-        return categories;
+        data = categories;
+        filename = 'categorias';
+        break;
       case 'clients':
-        return clients;
+        data = clients;
+        filename = 'clientes';
+        break;
       case 'suppliers':
-        return suppliers;
+        data = suppliers;
+        filename = 'fornecedores';
+        break;
       case 'orders':
-        return orders;
+        data = orders;
+        filename = 'encomendas';
+        break;
       case 'stockEntries':
-        return stockEntries;
+        data = stockEntries;
+        filename = 'entradas_de_stock';
+        break;
       case 'stockExits':
-        return stockExits;
+        data = stockExits;
+        filename = 'saidas_de_stock';
+        break;
       case 'expenses':
-        return expenses;
+        data = expenses;
+        filename = 'despesas';
+        break;
       case 'all':
-        return [{
+        data = {
           products,
           categories,
           clients,
@@ -1523,10 +1533,22 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
           stockEntries,
           stockExits,
           expenses
-        }];
+        };
+        filename = 'todos_os_dados';
+        break;
       default:
-        return [];
+        return;
     }
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename + '.json';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const importData = async (type: ExportDataType, data: string) => {
@@ -1590,7 +1612,7 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     }
   };
 
-  const updateData = (type: keyof DataState, data: any) => {
+  const updateData = <T extends keyof DataState>(type: T, data: DataState[T]) => {
     switch (type) {
       case 'products':
         setProducts(data as Product[]);

@@ -24,9 +24,7 @@ export const useExitState = (exitId?: string): UseExitStateReturn => {
     productName: '',
     quantity: 1,
     salePrice: 0,
-    discountPercent: 0,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    discountPercent: 0
   });
   const [searchTerm, setSearchTerm] = useState('');
   const [clientSearchTerm, setClientSearchTerm] = useState('');
@@ -50,15 +48,13 @@ export const useExitState = (exitId?: string): UseExitStateReturn => {
           discount: exitData.discount || 0,
         });
         
-        // Ensure we have an id and timestamps in each item
-        const itemsWithTimestamps = exitData.items.map(item => ({
+        // Ensure we have an id in each item
+        const itemsWithId = exitData.items.map(item => ({
           ...item,
-          id: item.id || uuidv4(),
-          createdAt: item.createdAt || new Date().toISOString(),
-          updatedAt: item.updatedAt || new Date().toISOString()
+          id: item.id || uuidv4()
         }));
         
-        setItems(itemsWithTimestamps);
+        setItems(itemsWithId);
         setExitDate(new Date(exitData.date));
       }
     }

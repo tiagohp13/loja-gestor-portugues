@@ -1,4 +1,3 @@
-
 export interface Product {
   id: string;
   userId?: string;
@@ -41,15 +40,6 @@ export interface Client {
   updatedAt: string;
 }
 
-export interface ClientWithAddress extends Omit<Client, 'address'> {
-  address?: {
-    street?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-  };
-}
-
 export interface Supplier {
   id: string;
   userId?: string;
@@ -65,15 +55,6 @@ export interface Supplier {
   updatedAt: string;
 }
 
-export interface SupplierWithAddress extends Omit<Supplier, 'address'> {
-  address?: {
-    street?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-  };
-}
-
 export interface Order {
   id: string;
   userId?: string;
@@ -83,7 +64,6 @@ export interface Order {
   date: string;
   notes?: string;
   discount?: number;
-  total?: number;
   convertedToStockExitId?: string;
   convertedToStockExitNumber?: string;
   createdAt: string;
@@ -182,42 +162,6 @@ export interface ExpenseItem {
   discountPercent?: number;
   createdAt: string;
   updatedAt: string;
-}
-
-// Legacy types for mockData compatibility
-export interface User {
-  id: string;
-  email: string;
-  name?: string;
-  role?: string;
-  createdAt: string;
-}
-
-export interface LegacyStockEntry {
-  id: string;
-  number: string;
-  supplierId: string;
-  supplierName: string;
-  date: string;
-  items: any[];
-}
-
-export interface LegacyStockExit {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName: string;
-  date: string;
-  items: any[];
-}
-
-export interface LegacyOrder {
-  id: string;
-  number: string;
-  clientId: string;
-  clientName: string;
-  date: string;
-  items: any[];
 }
 
 export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';

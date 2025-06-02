@@ -116,7 +116,6 @@ const OrderList = () => {
           date: order.date,
           notes: order.notes,
           createdAt: order.created_at,
-          updatedAt: order.updated_at,
           convertedToStockExitId: order.converted_to_stock_exit_id,
           discount: order.discount,
           items: order.order_items.map((item: any) => ({
@@ -125,9 +124,7 @@ const OrderList = () => {
             productName: item.product_name,
             quantity: item.quantity,
             salePrice: item.sale_price,
-            discountPercent: item.discount_percent,
-            createdAt: item.created_at,
-            updatedAt: item.updated_at
+            discountPercent: item.discount_percent
           }))
         }));
         
