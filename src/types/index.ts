@@ -83,6 +83,7 @@ export interface Order {
   date: string;
   notes?: string;
   discount?: number;
+  total?: number;
   convertedToStockExitId?: string;
   convertedToStockExitNumber?: string;
   createdAt: string;
@@ -181,6 +182,41 @@ export interface ExpenseItem {
   discountPercent?: number;
   createdAt: string;
   updatedAt: string;
+}
+
+// Legacy types for mockData compatibility
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  createdAt: string;
+}
+
+export interface LegacyStockEntry {
+  id: string;
+  number: string;
+  supplierId: string;
+  supplierName: string;
+  date: string;
+  items: any[];
+}
+
+export interface LegacyStockExit {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  date: string;
+  items: any[];
+}
+
+export interface LegacyOrder {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  date: string;
+  items: any[];
 }
 
 export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';

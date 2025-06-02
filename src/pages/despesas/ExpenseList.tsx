@@ -137,9 +137,10 @@ const ExpenseList = () => {
       <DeleteConfirmDialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
-        onConfirm={confirmDelete}
+        onDelete={confirmDelete}
         title="Eliminar Despesa"
         description="Tem a certeza que deseja eliminar esta despesa? Esta ação não pode ser revertida."
+        trigger={<div style={{ display: 'none' }}></div>}
       />
     </div>
   );

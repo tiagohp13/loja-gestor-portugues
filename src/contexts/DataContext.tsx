@@ -24,7 +24,7 @@ import {
 } from '../utils/mappers';
 
 interface DataProviderProps {
-  children: ReactNode;
+  children: React.ReactNode;
 }
 
 interface DataContextType {
@@ -90,12 +90,12 @@ interface DataContextType {
   
   // Expenses
   expenses: Expense[];
-  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => void;
-  updateExpense: (expense: Expense, id: string) => void;
-  deleteExpense: (id: string) => void;
+  addExpense: (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
+  updateExpense: (expense: Expense, id: string) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
   
   // Export/Import
-  exportData: (type: ExportDataType) => void;
+  exportData: <T extends ExportDataType>(dataType: T): any[];
   importData: (type: ExportDataType, data: string) => Promise<void>;
   updateData: <T extends keyof DataState>(type: T, data: DataState[T]) => void;
   
@@ -1484,72 +1484,65 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     }
   }
   
-  const addExpense = (expenseData: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addExpense = async (expense: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newExpense: Expense = {
-      ...expenseData,
-      id: generateId(),
+      id: crypto.randomUUID(),
+      ...expense,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      items: expense.items.map(item => ({
+        id: crypto.randomUUID(),
+        expenseId: '',
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discountPercent: item.discountPercent || 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }))
     };
-    setExpenses(prev => [...prev, newExpense]);
-    toast.success('Despesa adicionada com sucesso!');
+    
+    // Update the expense ID in items
+    newExpense.items = newExpense.items.map(item => ({
+      ...item,
+      expenseId: newExpense.id
+    }));
+    
+    setExpenses([...expenses, newExpense]);
   };
 
-  const updateExpense = (updatedExpense: Expense, id: string) => {
-    setExpenses(prev => 
-      prev.map(expense => 
-        expense.id === id 
-          ? { ...updatedExpense, updatedAt: new Date().toISOString() }
-          : expense
-      )
-    );
-    toast.success('Despesa atualizada com sucesso!');
+  const updateExpense = async (expense: Expense, id: string) => {
+    const updatedExpense = {
+      ...expense,
+      updatedAt: new Date().toISOString()
+    };
+    setExpenses(expenses.map(e => e.id === id ? updatedExpense : e));
   };
 
-  const deleteExpense = (id: string) => {
-    setExpenses(prev => prev.filter(expense => expense.id !== id));
-    toast.success('Despesa eliminada com sucesso!');
+  const deleteExpense = async (id: string) => {
+    setExpenses(expenses.filter(e => e.id !== id));
   };
 
-  const exportData = (type: ExportDataType) => {
-    let data: any;
-    let filename: string;
-
-    switch (type) {
+  const exportData = <T extends ExportDataType>(dataType: T): any[] => {
+    switch (dataType) {
       case 'products':
-        data = products;
-        filename = 'produtos';
-        break;
+        return products as any;
       case 'categories':
-        data = categories;
-        filename = 'categorias';
-        break;
+        return categories as any;
       case 'clients':
-        data = clients;
-        filename = 'clientes';
-        break;
+        return clients as any;
       case 'suppliers':
-        data = suppliers;
-        filename = 'fornecedores';
-        break;
+        return suppliers as any;
       case 'orders':
-        data = orders;
-        filename = 'encomendas';
-        break;
+        return orders as any;
       case 'stockEntries':
-        data = stockEntries;
-        filename = 'entradas_de_stock';
-        break;
+        return stockEntries as any;
       case 'stockExits':
-        data = stockExits;
-        filename = 'saidas_de_stock';
-        break;
+        return stockExits as any;
       case 'expenses':
-        data = expenses;
-        filename = 'despesas';
-        break;
+        return expenses as any;
       case 'all':
-        data = {
+        return {
           products,
           categories,
           clients,
@@ -1558,22 +1551,10 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
           stockEntries,
           stockExits,
           expenses
-        };
-        filename = 'todos_os_dados';
-        break;
+        } as any;
       default:
-        return;
+        return [] as any;
     }
-
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename + '.json';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const importData = async (type: ExportDataType, data: string) => {
