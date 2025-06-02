@@ -41,7 +41,7 @@ export interface Client {
   updatedAt: string;
 }
 
-export interface ClientWithAddress extends Client {
+export interface ClientWithAddress extends Omit<Client, 'address'> {
   address?: {
     street?: string;
     city?: string;
@@ -65,7 +65,7 @@ export interface Supplier {
   updatedAt: string;
 }
 
-export interface SupplierWithAddress extends Supplier {
+export interface SupplierWithAddress extends Omit<Supplier, 'address'> {
   address?: {
     street?: string;
     city?: string;
@@ -189,6 +189,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  role?: string;
   createdAt: string;
 }
 

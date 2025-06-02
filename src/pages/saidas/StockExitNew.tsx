@@ -9,7 +9,7 @@ import DatePicker from './components/DatePicker';
 import ProductForm from './components/ProductForm';
 import ProductsTable from './components/ProductsTable';
 import { toast } from '@/hooks/use-toast';
-import { ExitItem } from './hooks/stockExit/types';
+import { StockExitItem } from '@/types';
 
 const StockExitNew = () => {
   const {
@@ -49,6 +49,12 @@ const StockExitNew = () => {
     navigate,
     isSubmitting
   } = useStockExit();
+
+  // Convert ExitItem[] to StockExitItem[] for the table
+  const stockExitItems: StockExitItem[] = items.map(item => ({
+    ...item,
+    exitId: undefined
+  }));
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -135,9 +141,22 @@ const StockExitNew = () => {
             
             <div className="mt-6">
               <ProductsTable
-                items={items}
+                items={stockExitItems}
                 removeItem={removeItem}
-                updateItem={updateItem}
+                updateItem={(index: number, updatedItem: StockExitItem) => {
+                  // Convert StockExitItem to ExitItem for updateItem
+                  const exitItem = {
+                    id: updatedItem.id,
+                    productId: updatedItem.productId,
+                    productName: updatedItem.productName,
+                    quantity: updatedItem.quantity,
+                    salePrice: updatedItem.salePrice,
+                    discountPercent: updatedItem.discountPercent,
+                    createdAt: updatedItem.createdAt,
+                    updatedAt: updatedItem.updatedAt
+                  };
+                  updateItem(index, exitItem);
+                }}
                 getDiscountedPrice={getDiscountedPrice}
                 totalValue={totalValue}
               />

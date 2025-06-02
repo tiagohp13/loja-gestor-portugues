@@ -5,7 +5,7 @@ import { useFilters } from './stockExit/useFilters';
 import { useHandlers } from './stockExit/useHandlers';
 import { useCalculations } from './stockExit/useCalculations';
 import { useSubmit } from './stockExit/useSubmit';
-import { StockExit } from '@/types';
+import { StockExit, StockExitItem } from '@/types';
 import { ExitItem } from './stockExit/types';
 
 export const useStockExit = (exitId?: string) => {
@@ -34,30 +34,32 @@ export const useStockExit = (exitId?: string) => {
     clients
   });
   
-  // Make sure we're passing items from state correctly to the calculations hook
-  const calculations = useCalculations(state.items);
+  // Convert ExitItem[] to StockExitItem[] for calculations
+  const stockExitItems: StockExitItem[] = state.items.map(item => ({
+    ...item,
+    exitId: exitId
+  }));
   
-  // Here we ensure that addStockExit and updateStockExit match the types expected by useSubmit
+  const calculations = useCalculations(stockExitItems);
+  
   const typedAddStockExit = (exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
     return addStockExit(exit);
   };
   
   const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
-    // First cast to unknown, then to Promise<StockExit | void> to avoid direct casting error
     return updateStockExit(id, exit as any) as unknown as Promise<StockExit | void>;
   };
   
   const submit = useSubmit({
     exitId,
     exitDetails: state.exitDetails,
-    items: state.items,
+    items: stockExitItems,
     exitDate: state.exitDate,
     addStockExit: typedAddStockExit,
     updateStockExit: typedUpdateStockExit
   });
   
   const selectedClient = clients.find(c => c.id === state.exitDetails.clientId);
-  // Adicionar selectedProduct baseado no currentItem.productId
   const selectedProduct = products.find(p => p.id === state.currentItem.productId);
   
   return {

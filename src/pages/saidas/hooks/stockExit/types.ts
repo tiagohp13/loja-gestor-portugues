@@ -14,6 +14,8 @@ export interface ExitItem {
   quantity: number;
   salePrice: number;
   discountPercent?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface UseExitStateReturn {

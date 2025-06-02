@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -61,7 +60,9 @@ const StockExitEdit = () => {
                 productName: item.product_name,
                 quantity: item.quantity,
                 salePrice: item.sale_price,
-                discountPercent: item.discount_percent || 0
+                discountPercent: item.discount_percent || 0,
+                createdAt: item.created_at || new Date().toISOString(),
+                updatedAt: item.updated_at || new Date().toISOString()
               })),
               date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
               invoiceNumber: data.invoice_number || '',
@@ -99,13 +100,15 @@ const StockExitEdit = () => {
           ...updatedItems[index],
           productId: value,
           productName: selectedProduct.name,
-          salePrice: selectedProduct.salePrice || 0
+          salePrice: selectedProduct.salePrice || 0,
+          updatedAt: new Date().toISOString()
         };
       }
     } else {
       updatedItems[index] = {
         ...updatedItems[index],
-        [field]: value
+        [field]: value,
+        updatedAt: new Date().toISOString()
       };
     }
     
@@ -116,19 +119,20 @@ const StockExitEdit = () => {
   };
 
   const addNewItem = () => {
+    const newItem: StockExitItem = {
+      id: `temp-${Date.now()}`,
+      productId: '',
+      productName: '',
+      quantity: 1,
+      salePrice: 0,
+      discountPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
     setExit(prev => ({
       ...prev,
-      items: [
-        ...prev.items,
-        {
-          id: `temp-${Date.now()}`,
-          productId: '',
-          productName: '',
-          quantity: 1,
-          salePrice: 0,
-          discountPercent: 0
-        }
-      ]
+      items: [...prev.items, newItem]
     }));
   };
 
@@ -161,7 +165,6 @@ const StockExitEdit = () => {
 
     if (id) {
       try {
-        // Get the client associated with this exit
         const client = clients.find(c => c.id === exit.clientId);
         
         if (!client) {
@@ -169,7 +172,6 @@ const StockExitEdit = () => {
           return;
         }
         
-        // Update the stock exit
         const { error: exitError } = await supabase
           .from('stock_exits')
           .update({
@@ -187,10 +189,8 @@ const StockExitEdit = () => {
           return;
         }
         
-        // Handle items - we need to update existing ones and create new ones
         for (const item of exit.items) {
           if (item.id.toString().startsWith('temp-')) {
-            // This is a new item, create it
             const { error: newItemError } = await supabase
               .from('stock_exit_items')
               .insert({
@@ -207,7 +207,6 @@ const StockExitEdit = () => {
               toast.error(`Erro ao adicionar item: ${item.productName}`);
             }
           } else {
-            // This is an existing item, update it
             const { error: updateItemError } = await supabase
               .from('stock_exit_items')
               .update({
@@ -226,7 +225,6 @@ const StockExitEdit = () => {
           }
         }
         
-        // Delete any items that were removed
         const originalItems = stockExits.find(e => e.id === id)?.items || [];
         const keepItemIds = exit.items.filter(item => !item.id.toString().startsWith('temp-')).map(item => item.id);
         const itemsToDelete = originalItems.filter(item => !keepItemIds.includes(item.id));
