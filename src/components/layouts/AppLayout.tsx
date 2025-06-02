@@ -11,7 +11,8 @@ const AppLayout = () => {
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar />
-      <main className="flex-1 overflow-auto bg-gray-50">
+      {/* Main content area with left margin to account for fixed sidebar on desktop */}
+      <main className="flex-1 ml-0 md:ml-[240px] overflow-auto bg-gray-50">
         <div className="p-4">
           <Outlet />
         </div>

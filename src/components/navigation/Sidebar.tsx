@@ -13,7 +13,8 @@ import {
   ArrowUpCircle,
   Settings,
   BarChart3,
-  CreditCard,
+  User,
+  LogOut,
 } from 'lucide-react';
 import { NavLink } from 'react-router-dom';
 import { cn } from '@/lib/utils';
@@ -42,119 +43,67 @@ const Sidebar = () => {
     {
       title: 'Produtos',
       icon: Package,
-      items: [
-        { title: 'Consultar', href: '/produtos/consultar' },
-        { title: 'Novo Produto', href: '/produtos/novo' },
-      ],
+      href: '/produtos/consultar',
     },
     {
       title: 'Categorias',
       icon: Tag,
-      items: [
-        { title: 'Consultar', href: '/categorias/consultar' },
-        { title: 'Nova Categoria', href: '/categorias/nova' },
-      ],
+      href: '/categorias/consultar',
     },
     {
       title: 'Clientes',
       icon: Users,
-      items: [
-        { title: 'Consultar', href: '/clientes/consultar' },
-        { title: 'Novo Cliente', href: '/clientes/novo' },
-      ],
+      href: '/clientes/consultar',
     },
     {
       title: 'Fornecedores',
       icon: Truck,
-      items: [
-        { title: 'Consultar', href: '/fornecedores/consultar' },
-        { title: 'Novo Fornecedor', href: '/fornecedores/novo' },
-      ],
+      href: '/fornecedores/consultar',
     },
     {
       title: 'Encomendas',
       icon: ShoppingCart,
-      items: [
-        { title: 'Consultar', href: '/encomendas/consultar' },
-        { title: 'Nova Encomenda', href: '/encomendas/nova' },
-      ],
+      href: '/encomendas/consultar',
     },
     {
       title: 'Compras',
       icon: ArrowDownCircle,
-      items: [
-        { title: 'Histórico', href: '/entradas/historico' },
-        { title: 'Nova Compra', href: '/entradas/nova' },
-      ],
-    },
-    {
-      title: 'Despesas',
-      icon: CreditCard,
-      items: [
-        { title: 'Histórico', href: '/despesas/historico' },
-        { title: 'Nova Despesa', href: '/despesas/nova' },
-      ],
+      href: '/entradas/historico',
     },
     {
       title: 'Vendas',
       icon: ArrowUpCircle,
-      items: [
-        { title: 'Histórico', href: '/saidas/historico' },
-        { title: 'Nova Venda', href: '/saidas/nova' },
-      ],
-    },
-    {
-      title: 'Configurações',
-      icon: Settings,
-      href: '/configuracoes',
+      href: '/saidas/historico',
     },
     {
       title: 'Estatísticas',
       icon: BarChart3,
       href: '/suporte',
     },
+    {
+      title: 'Configurações',
+      icon: Settings,
+      href: '/configuracoes',
+    },
   ];
 
   const renderMenuItems = (onItemClick?: () => void) => (
     <>
       {menuItems.map((item, index) => (
-        item.href ? (
-          <NavLink
-            key={index}
-            to={item.href}
-            onClick={onItemClick}
-            className={({ isActive }) =>
-              cn(
-                "flex items-center gap-3 rounded-md p-2 text-sm font-semibold transition-colors hover:bg-gestorApp-blue-light hover:text-gestorApp-blue-dark",
-                isActive ? "bg-gestorApp-blue-light text-gestorApp-blue-dark" : "text-gestorApp-gray-dark"
-              )
-            }
-          >
-            <item.icon className="h-4 w-4" />
-            {item.title}
-          </NavLink>
-        ) : (
-          <div key={index}>
-            <div className="mb-2 text-sm font-semibold text-gestorApp-gray-dark">{item.title}</div>
-            <div className="grid gap-2">
-              {item.items?.map((subItem, subIndex) => (
-                <NavLink
-                  key={subIndex}
-                  to={subItem.href}
-                  onClick={onItemClick}
-                  className={({ isActive }) =>
-                    cn(
-                      "flex items-center gap-3 rounded-md p-2 text-sm font-medium transition-colors hover:bg-gestorApp-blue-light hover:text-gestorApp-blue-dark",
-                      isActive ? "bg-gestorApp-blue-light text-gestorApp-blue-dark" : "text-gestorApp-gray-dark"
-                    )
-                  }
-                >
-                  {subItem.title}
-                </NavLink>
-              ))}
-            </div>
-          </div>
-        )
+        <NavLink
+          key={index}
+          to={item.href!}
+          onClick={onItemClick}
+          className={({ isActive }) =>
+            cn(
+              "flex items-center gap-3 rounded-md p-3 text-sm font-medium transition-colors hover:bg-blue-50 hover:text-blue-600",
+              isActive ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600" : "text-gray-700"
+            )
+          }
+        >
+          <item.icon className="h-5 w-5" />
+          {item.title}
+        </NavLink>
       ))}
     </>
   );
@@ -164,38 +113,72 @@ const Sidebar = () => {
       {/* Mobile Sidebar */}
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Menu className="absolute left-4 top-4 text-gestorApp-gray-dark md:hidden z-50" onClick={toggleOpen} />
+          <Menu className="absolute left-4 top-4 text-gray-700 md:hidden z-50 cursor-pointer" onClick={toggleOpen} />
         </SheetTrigger>
-        <SheetContent side="left" className="p-0 pt-10 w-[18rem]">
-          <nav className="grid gap-6 p-4">
-            {renderMenuItems(closeSidebar)}
+        <SheetContent side="left" className="p-0 pt-10 w-[240px]">
+          <nav className="flex flex-col h-full">
+            <div className="flex-1 p-4 space-y-2">
+              {renderMenuItems(closeSidebar)}
+            </div>
+            
+            <div className="border-t border-gray-200 p-4">
+              <div className="flex items-center gap-3 mb-4">
+                <User className="h-8 w-8 text-gray-600" />
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Tiago Silva</p>
+                  <p className="text-xs text-gray-500">Admin</p>
+                </div>
+              </div>
+              
+              <button className="flex items-center gap-3 w-full p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+                <LogOut className="h-4 w-4" />
+                Terminar Sessão
+              </button>
+            </div>
           </nav>
-
-          <div className="absolute bottom-4 left-4">
-            <ThemeToggle />
-          </div>
         </SheetContent>
       </Sheet>
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col w-[18rem] bg-white border-r border-gray-200 h-full">
-        <div className="flex items-center p-4 border-b border-gray-200">
+      <div className="hidden md:flex flex-col w-[240px] bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-40">
+        {/* Logo Section */}
+        <div className="flex items-center p-6 border-b border-gray-200">
           <img 
             src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
             alt="Aqua Paraíso Logo" 
             className="h-8 w-auto mr-3"
           />
-          <h2 className="text-xl font-semibold text-gestorApp-blue">Aqua Paraíso</h2>
+          <h2 className="text-xl font-semibold text-blue-600">Aqua Paraíso</h2>
         </div>
         
-        <nav className="flex-1 overflow-y-auto p-4">
-          <div className="grid gap-6">
+        {/* Menu Principal */}
+        <div className="px-4 py-2">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Menu Principal</p>
+        </div>
+        
+        {/* Navigation Menu */}
+        <nav className="flex-1 overflow-y-auto px-4">
+          <div className="space-y-1">
             {renderMenuItems()}
           </div>
         </nav>
 
-        <div className="p-4 border-t border-gray-200">
-          <ThemeToggle />
+        {/* User Section at Bottom */}
+        <div className="border-t border-gray-200 p-4">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900">Tiago Silva</p>
+              <p className="text-xs text-gray-500">Admin</p>
+            </div>
+          </div>
+          
+          <button className="flex items-center gap-3 w-full p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
+            <LogOut className="h-4 w-4" />
+            Terminar Sessão
+          </button>
         </div>
       </div>
     </>
