@@ -1,188 +1,171 @@
 
-import React, { useState } from 'react';
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { Menu } from 'lucide-react';
-import {
-  LayoutDashboard,
-  Package,
-  Tag,
-  Users,
-  Truck,
-  ShoppingCart,
-  ArrowDownCircle,
-  ArrowUpCircle,
-  Settings,
-  BarChart3,
-  User,
-  LogOut,
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { 
+  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
+  UserIcon, Settings, Tag, BarChart, ClipboardList
 } from 'lucide-react';
-import { NavLink } from 'react-router-dom';
-import { cn } from '@/lib/utils';
-import ThemeToggle from '../ui/ThemeToggle';
+import { 
+  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
+  SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
+  SidebarMenuItem, useSidebar
+} from '@/components/ui/sidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
+import { toast } from "sonner";
 
-interface MenuItem {
-  title: string;
-  icon: any;
-  href?: string;
-  items?: { title: string; href: string }[];
-}
-
-const Sidebar = () => {
-  const [open, setOpen] = useState(false);
-
-  const toggleOpen = () => setOpen(!open);
-
-  const closeSidebar = () => setOpen(false);
-
-  const menuItems: MenuItem[] = [
-    {
-      title: 'Dashboard',
-      icon: LayoutDashboard,
-      href: '/dashboard',
+/**
+ * Main navigation sidebar component 
+ * Provides consistent navigation across the application
+ */
+const AppSidebar: React.FC = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const { setOpenMobile } = useSidebar();
+  
+  const navigationItems = [
+    { 
+      path: '/dashboard', 
+      label: 'Dashboard', 
+      icon: <LayoutDashboard className="w-5 h-5" />,
+      isActive: location.pathname === '/' || location.pathname === '/dashboard'
     },
-    {
-      title: 'Produtos',
-      icon: Package,
-      href: '/produtos/consultar',
+    { 
+      path: '/produtos/consultar', 
+      label: 'Produtos', 
+      icon: <Package className="w-5 h-5" />,
+      isActive: location.pathname.includes('/produtos')
     },
-    {
-      title: 'Categorias',
-      icon: Tag,
-      href: '/categorias/consultar',
+    { 
+      path: '/categorias/consultar', 
+      label: 'Categorias', 
+      icon: <Tag className="w-5 h-5" />,
+      isActive: location.pathname.includes('/categorias')
     },
-    {
-      title: 'Clientes',
-      icon: Users,
-      href: '/clientes/consultar',
+    { 
+      path: '/clientes/consultar', 
+      label: 'Clientes', 
+      icon: <Users className="w-5 h-5" />,
+      isActive: location.pathname.includes('/clientes')
     },
-    {
-      title: 'Fornecedores',
-      icon: Truck,
-      href: '/fornecedores/consultar',
+    { 
+      path: '/fornecedores/consultar', 
+      label: 'Fornecedores', 
+      icon: <Truck className="w-5 h-5" />,
+      isActive: location.pathname.includes('/fornecedores')
     },
-    {
-      title: 'Encomendas',
-      icon: ShoppingCart,
-      href: '/encomendas/consultar',
+    { 
+      path: '/encomendas/consultar', 
+      label: 'Encomendas', 
+      icon: <ClipboardList className="w-5 h-5" />,
+      isActive: location.pathname.includes('/encomendas')
     },
-    {
-      title: 'Compras',
-      icon: ArrowDownCircle,
-      href: '/entradas/historico',
+    { 
+      path: '/entradas/historico', 
+      label: 'Compras', 
+      icon: <LogIn className="w-5 h-5" />,
+      isActive: location.pathname.includes('/entradas')
     },
-    {
-      title: 'Vendas',
-      icon: ArrowUpCircle,
-      href: '/saidas/historico',
+    { 
+      path: '/saidas/historico', 
+      label: 'Vendas', 
+      icon: <LogOut className="w-5 h-5" />,
+      isActive: location.pathname.includes('/saidas')
     },
-    {
-      title: 'Estatísticas',
-      icon: BarChart3,
-      href: '/suporte',
+    { 
+      path: '/suporte', 
+      label: 'Estatísticas', 
+      icon: <BarChart className="w-5 h-5" />,
+      isActive: location.pathname.includes('/suporte')
     },
-    {
-      title: 'Configurações',
-      icon: Settings,
-      href: '/configuracoes',
-    },
+    { 
+      path: '/configuracoes', 
+      label: 'Configurações', 
+      icon: <Settings className="w-5 h-5" />,
+      isActive: location.pathname.includes('/configuracoes')
+    }
   ];
 
-  const renderMenuItems = (onItemClick?: () => void) => (
-    <>
-      {menuItems.map((item, index) => (
-        <NavLink
-          key={index}
-          to={item.href!}
-          onClick={onItemClick}
-          className={({ isActive }) =>
-            cn(
-              "flex items-center gap-3 rounded-md p-3 text-sm font-medium transition-colors hover:bg-blue-50 hover:text-blue-600",
-              isActive ? "bg-blue-50 text-blue-600 border-r-2 border-blue-600" : "text-gray-700"
-            )
-          }
-        >
-          <item.icon className="h-5 w-5" />
-          {item.title}
-        </NavLink>
-      ))}
-    </>
-  );
+  const handleLogout = async () => {
+    try {
+      await logout();
+      toast.success('Sessão terminada com sucesso');
+      navigate('/login');
+    } catch (error) {
+      console.error('Error during logout:', error);
+      toast.error('Erro ao terminar sessão');
+    }
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    
+    const userName = user.user_metadata?.name;
+    return userName || user.email?.split('@')[0] || '';
+  };
 
   return (
-    <>
-      {/* Mobile Sidebar */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild>
-          <Menu className="absolute left-4 top-4 text-gray-700 md:hidden z-50 cursor-pointer" onClick={toggleOpen} />
-        </SheetTrigger>
-        <SheetContent side="left" className="p-0 pt-10 w-[240px]">
-          <nav className="flex flex-col h-full">
-            <div className="flex-1 p-4 space-y-2">
-              {renderMenuItems(closeSidebar)}
-            </div>
-            
-            <div className="border-t border-gray-200 p-4">
-              <div className="flex items-center gap-3 mb-4">
-                <User className="h-8 w-8 text-gray-600" />
-                <div>
-                  <p className="text-sm font-medium text-gray-900">Tiago Silva</p>
-                  <p className="text-xs text-gray-500">Admin</p>
-                </div>
-              </div>
-              
-              <button className="flex items-center gap-3 w-full p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-                <LogOut className="h-4 w-4" />
-                Terminar Sessão
-              </button>
-            </div>
-          </nav>
-        </SheetContent>
-      </Sheet>
-
-      {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col w-[240px] bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-40">
-        {/* Logo Section */}
-        <div className="flex items-center p-6 border-b border-gray-200">
+    <Sidebar variant="sidebar" collapsible="offcanvas">
+      <SidebarHeader className="p-4 flex items-center justify-between border-b">
+        <div className="flex items-center space-x-2">
           <img 
             src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
             alt="Aqua Paraíso Logo" 
-            className="h-8 w-auto mr-3"
+            className="h-8 w-auto"
           />
-          <h2 className="text-xl font-semibold text-blue-600">Aqua Paraíso</h2>
+          <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
         </div>
-        
-        {/* Menu Principal */}
-        <div className="px-4 py-2">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Menu Principal</p>
-        </div>
-        
-        {/* Navigation Menu */}
-        <nav className="flex-1 overflow-y-auto px-4">
-          <div className="space-y-1">
-            {renderMenuItems()}
-          </div>
-        </nav>
-
-        {/* User Section at Bottom */}
-        <div className="border-t border-gray-200 p-4">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-blue-600" />
+      </SidebarHeader>
+      
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {navigationItems.map((item, index) => (
+                <SidebarMenuItem key={index}>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation(item.path)}
+                    isActive={item.isActive}
+                    tooltip={item.label}
+                  >
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+      
+      <SidebarFooter className="p-4 border-t">
+        <div className="flex flex-col space-y-4">
+          {user && (
+            <div className="flex items-center space-x-2 text-sm">
+              <UserIcon className="w-5 h-5 text-gestorApp-gray" />
+              <span className="text-gestorApp-gray-dark">{getUserDisplayName()}</span>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Tiago Silva</p>
-              <p className="text-xs text-gray-500">Admin</p>
-            </div>
-          </div>
-          
-          <button className="flex items-center gap-3 w-full p-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors">
-            <LogOut className="h-4 w-4" />
-            Terminar Sessão
+          )}
+          <button
+            onClick={handleLogout}
+            className="flex items-center space-x-2 text-gestorApp-gray hover:text-gestorApp-blue transition-colors"
+          >
+            <ShoppingCart className="w-5 h-5" />
+            <span>Terminar Sessão</span>
           </button>
         </div>
-      </div>
-    </>
+      </SidebarFooter>
+    </Sidebar>
   );
 };
 
-export default Sidebar;
+export default AppSidebar;

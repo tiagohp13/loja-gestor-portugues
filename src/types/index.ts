@@ -1,235 +1,212 @@
-
-export interface Product {
-  id: string;
-  userId?: string;
-  code: string;
-  name: string;
-  description?: string;
-  image?: string;
-  category?: string;
-  salePrice: number;
-  purchasePrice: number;
-  currentStock: number;
-  minStock: number;
-  status?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Category {
-  id: string;
-  userId?: string;
-  name: string;
-  description?: string;
-  status?: string;
-  productCount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Client {
-  id: string;
-  userId?: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  taxId?: string;
-  notes?: string;
-  status?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface ClientWithAddress extends Client {
-  address?: {
-    street?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-  };
-}
-
-export interface Supplier {
-  id: string;
-  userId?: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  taxId?: string;
-  notes?: string;
-  paymentTerms?: string;
-  status?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SupplierWithAddress extends Supplier {
-  address?: {
-    street?: string;
-    city?: string;
-    postalCode?: string;
-    country?: string;
-  };
-}
-
-export interface Order {
-  id: string;
-  userId?: string;
-  number: string;
-  clientId?: string;
-  clientName?: string;
-  date: string;
-  notes?: string;
-  discount?: number;
-  convertedToStockExitId?: string;
-  convertedToStockExitNumber?: string;
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-  total?: number;
-}
-
-export interface OrderItem {
-  id: string;
-  orderId?: string;
-  productId?: string;
-  productName: string;
-  quantity: number;
-  salePrice: number;
-  discountPercent?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface StockEntry {
-  id: string;
-  userId?: string;
-  number: string;
-  supplierId: string;
-  supplierName: string;
-  date: string;
-  invoiceNumber?: string;
-  notes?: string;
-  discount?: number;
-  createdAt: string;
-  updatedAt: string;
-  items: StockEntryItem[];
-}
-
-export interface StockEntryItem {
-  id: string;
-  entryId?: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  purchasePrice: number;
-  discountPercent?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface StockExit {
-  id: string;
-  userId?: string;
-  number: string;
-  clientId?: string;
-  clientName: string;
-  date: string;
-  notes?: string;
-  discount?: number;
-  fromOrderId?: string;
-  fromOrderNumber?: string;
-  invoiceNumber?: string;
-  createdAt: string;
-  updatedAt: string;
-  items: StockExitItem[];
-}
-
-export interface StockExitItem {
-  id: string;
-  exitId?: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  salePrice: number;
-  discountPercent?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Expense {
-  id: string;
-  userId?: string;
-  number: string;
-  supplierId?: string;
-  supplierName: string;
-  date: string;
-  notes?: string;
-  discount?: number;
-  createdAt: string;
-  updatedAt: string;
-  items: ExpenseItem[];
-}
-
-export interface ExpenseItem {
-  id: string;
-  expenseId?: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  discountPercent?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface User {
   id: string;
   name: string;
   email: string;
   role: string;
-  createdAt: string;
 }
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+}
+
+export interface Product {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  category: string;
+  purchasePrice: number;
+  salePrice: number;
+  currentStock: number;
+  minStock: number;
+  createdAt: string;
+  updatedAt: string;
+  image?: string;
+  status?: string;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+  productCount?: number;
+}
+
+export interface Client {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  taxId: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+}
+
+export interface ClientWithAddress {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  taxId: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+  };
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  taxId: string;
+  paymentTerms: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+}
+
+export interface SupplierWithAddress {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  taxId: string;
+  paymentTerms: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+  status?: string;
+  address?: {
+    street: string;
+    postalCode: string;
+    city: string;
+  };
+}
+
+export interface StockEntryItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  purchasePrice: number;
+  discountPercent?: number;
+}
+
+export interface StockExit {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName: string;
+  items: StockExitItem[];
+  date: string;
+  invoiceNumber?: string;
+  notes?: string;
+  fromOrderId?: string;
+  fromOrderNumber?: string;
+  createdAt: string;
+  discount?: number;
+  total?: number;
+}
+
+export interface StockExitItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
+  discountPercent?: number;
+}
+
+export interface StockEntry {
+  id: string;
+  number: string;
+  supplierId: string;
+  supplierName: string;
+  items: StockEntryItem[];
+  invoiceNumber?: string;
+  notes?: string;
+  date: string;
+  createdAt: string;
+  total?: number;
+}
+
+export interface Order {
+  id: string;
+  number: string;
+  clientId: string;
+  clientName?: string;
+  items: OrderItem[];
+  date: string;
+  notes?: string;
+  convertedToStockExitId?: string;
+  convertedToStockExitNumber?: string;
+  discount?: number;
+  total?: number;
+}
+
+export interface OrderItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  salePrice: number;
+  discountPercent?: number;
+}
+
+export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'all';
 
 export interface LegacyStockEntry {
   id: string;
+  productId: string;
+  productName: string;
   supplierId: string;
   supplierName: string;
-  number: string;
+  quantity: number;
+  purchasePrice: number;
   invoiceNumber: string;
   notes: string;
   date: string;
   createdAt: string;
-  items: any[];
 }
 
 export interface LegacyStockExit {
   id: string;
+  productId: string;
+  productName: string;
   clientId: string;
   clientName: string;
-  number: string;
+  quantity: number;
+  salePrice: number;
   invoiceNumber: string;
   notes: string;
   date: string;
   createdAt: string;
-  fromOrderId: string;
-  fromOrderNumber: string;
-  discount: number;
-  items: any[];
+  fromOrderId?: string;
 }
 
 export interface LegacyOrder {
   id: string;
+  productId: string;
+  productName: string;
   clientId: string;
   clientName: string;
-  number: string;
+  quantity: number;
+  salePrice: number;
   date: string;
   notes: string;
-  createdAt: string;
-  convertedToStockExitId: string;
-  discount: number;
-  items: any[];
+  convertedToStockExitId?: string;
 }
-
-export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';

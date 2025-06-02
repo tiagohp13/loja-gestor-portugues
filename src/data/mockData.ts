@@ -1,434 +1,266 @@
-import { 
-  Product, 
-  Category, 
-  Client, 
-  Supplier, 
-  Order, 
-  StockEntry, 
-  StockExit, 
-  Expense,
-  User,
-  LegacyStockEntry,
-  LegacyStockExit,
-  LegacyOrder
-} from '../types';
 
-export const mockUsers: User[] = [
-  { id: '1', name: 'Admin User', email: 'admin@example.com', role: 'admin', createdAt: '2024-01-01T00:00:00Z' },
-  { id: '2', name: 'Regular User', email: 'user@example.com', role: 'user', createdAt: '2024-01-01T00:00:00Z' },
+import { User, Product, Client, Supplier, StockEntry, StockExit, Category, Order, LegacyStockEntry, LegacyStockExit, LegacyOrder } from '../types';
+
+// Mock Users
+export const users: User[] = [
+  { id: '1', name: 'Administrador', email: 'admin@gestor.pt', role: 'admin' },
+  { id: '2', name: 'Utilizador', email: 'user@gestor.pt', role: 'user' },
 ];
 
-export const mockProducts: Product[] = [
-  {
-    id: '1',
-    code: 'PROD-001',
-    name: 'Água Mineral Natural',
-    description: 'Garrafa de 500ml',
-    category: 'Água',
-    salePrice: 1.50,
-    purchasePrice: 0.75,
-    currentStock: 500,
-    minStock: 100,
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '2',
-    code: 'PROD-002',
-    name: 'Refrigerante Cola',
-    description: 'Lata de 330ml',
-    category: 'Refrigerantes',
-    salePrice: 2.00,
-    purchasePrice: 1.00,
-    currentStock: 300,
-    minStock: 50,
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '3',
-    code: 'PROD-003',
-    name: 'Suco de Laranja',
-    description: 'Caixa de 1L',
-    category: 'Sucos',
-    salePrice: 3.50,
-    purchasePrice: 1.75,
-    currentStock: 200,
-    minStock: 30,
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-];
+// Empty initial data
+export const products: Product[] = [];
+export const clients: Client[] = [];
+export const suppliers: Supplier[] = [];
+export const stockEntries: StockEntry[] = [];
+export const stockExits: StockExit[] = [];
+export const categories: Category[] = [];
+export const orders: Order[] = [];
 
-export const mockCategories: Category[] = [
-  {
-    id: '1',
-    name: 'Água',
-    description: 'Todos os tipos de água mineral',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Refrigerantes',
-    description: 'Refrigerantes de todos os sabores',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Sucos',
-    description: 'Sucos naturais e de polpa',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-];
+// Helper function to get a product with its stock movements
+export const getProductWithHistory = (productId: string) => {
+  const product = products.find(p => p.id === productId);
+  
+  // Filter entries and exits where this product is included in the items array
+  const entries = stockEntries
+    .filter(entry => entry.items.some(item => item.productId === productId))
+    .map(entry => {
+      return {
+        ...entry,
+        supplier: suppliers.find(s => s.id === entry.supplierId)
+      };
+    });
+    
+  const exits = stockExits
+    .filter(exit => exit.items.some(item => item.productId === productId))
+    .map(exit => {
+      return {
+        ...exit,
+        client: clients.find(c => c.id === exit.clientId)
+      };
+    });
 
-export const mockClients: Client[] = [
-  {
-    id: '1',
-    name: 'João da Silva',
-    email: 'joao.silva@example.com',
-    phone: '123456789',
-    address: 'Rua A, 123',
-    taxId: '123.456.789-00',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Maria Souza',
-    email: 'maria.souza@example.com',
-    phone: '987654321',
-    address: 'Rua B, 456',
-    taxId: '987.654.321-00',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Carlos Pereira',
-    email: 'carlos.pereira@example.com',
-    phone: '456789123',
-    address: 'Rua C, 789',
-    taxId: '456.789.123-00',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-];
+  return {
+    product,
+    entries,
+    exits
+  };
+};
 
-export const mockSuppliers: Supplier[] = [
-  {
-    id: '1',
-    name: 'Fornecedor de Água SA',
-    email: 'agua@fornecedor.com',
-    phone: '111222333',
-    address: 'Rua X, 10',
-    taxId: '11.222.333/0001-44',
-    paymentTerms: '30 dias',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '2',
-    name: 'Distribuidora de Refrigerantes LTDA',
-    email: 'refri@distribuidora.com',
-    phone: '444555666',
-    address: 'Rua Y, 20',
-    taxId: '44.555.666/0001-55',
-    paymentTerms: 'À vista',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-  {
-    id: '3',
-    name: 'Indústria de Sucos NAT',
-    email: 'suco@industria.com',
-    phone: '777888999',
-    address: 'Rua Z, 30',
-    taxId: '77.888.999/0001-66',
-    paymentTerms: '60 dias',
-    createdAt: '2024-01-20T10:00:00Z',
-    updatedAt: '2024-01-20T10:00:00Z',
-  },
-];
+// Helper function to get a client with purchase history
+export const getClientWithHistory = (clientId: string) => {
+  const client = clients.find(c => c.id === clientId);
+  
+  const purchases = stockExits
+    .filter(exit => exit.clientId === clientId)
+    .map(exit => {
+      // For each exit, map all items that were part of it
+      const exitItems = exit.items.map(item => {
+        return {
+          ...item,
+          exitId: exit.id,
+          exitDate: exit.date,
+          product: products.find(p => p.id === item.productId)
+        };
+      });
+      
+      return {
+        exit,
+        items: exitItems
+      };
+    });
 
-export const mockOrders: Order[] = [
-  {
-    id: '1',
-    number: 'ORD-001',
-    clientId: '1',
-    clientName: 'João da Silva',
-    date: '2024-02-01T12:00:00Z',
-    notes: 'Encomenda normal',
-    discount: 0,
-    createdAt: '2024-02-01T12:00:00Z',
-    updatedAt: '2024-02-01T12:00:00Z',
-    items: [
-      {
-        id: '1',
-        productId: '1',
-        productName: 'Água Mineral Natural',
-        quantity: 10,
-        salePrice: 1.50,
-        createdAt: '2024-02-01T12:00:00Z',
-        updatedAt: '2024-02-01T12:00:00Z',
-      },
-      {
-        id: '2',
-        productId: '2',
-        productName: 'Refrigerante Cola',
-        quantity: 5,
-        salePrice: 2.00,
-        createdAt: '2024-02-01T12:00:00Z',
-        updatedAt: '2024-02-01T12:00:00Z',
-      },
-    ],
-  },
-  {
-    id: '2',
-    number: 'ORD-002',
-    clientId: '2',
-    clientName: 'Maria Souza',
-    date: '2024-02-05T14:00:00Z',
-    notes: 'Encomenda urgente',
-    discount: 5,
-    createdAt: '2024-02-05T14:00:00Z',
-    updatedAt: '2024-02-05T14:00:00Z',
-    items: [
-      {
-        id: '3',
-        productId: '3',
-        productName: 'Suco de Laranja',
-        quantity: 7,
-        salePrice: 3.50,
-        createdAt: '2024-02-05T14:00:00Z',
-        updatedAt: '2024-02-05T14:00:00Z',
-      },
-    ],
-  },
-];
+  return {
+    client,
+    purchases: purchases.flatMap(p => p.items) // Flatten to get all items
+  };
+};
 
-export const mockStockEntries: StockEntry[] = [
-  {
-    id: '1',
-    number: 'ENT-001',
-    supplierId: '1',
-    supplierName: 'Fornecedor de Água SA',
-    date: '2024-02-10T09:00:00Z',
-    invoiceNumber: 'INV-001',
-    notes: 'Entrada de água',
-    discount: 0,
-    createdAt: '2024-02-10T09:00:00Z',
-    updatedAt: '2024-02-10T09:00:00Z',
-    items: [
-      {
-        id: '1',
-        productId: '1',
-        productName: 'Água Mineral Natural',
-        quantity: 200,
-        purchasePrice: 0.75,
-        createdAt: '2024-02-10T09:00:00Z',
-        updatedAt: '2024-02-10T09:00:00Z',
-      },
-    ],
-  },
-  {
-    id: '2',
-    number: 'ENT-002',
-    supplierId: '2',
-    supplierName: 'Distribuidora de Refrigerantes LTDA',
-    date: '2024-02-12T11:00:00Z',
-    invoiceNumber: 'INV-002',
-    notes: 'Entrada de refrigerantes',
-    discount: 2,
-    createdAt: '2024-02-12T11:00:00Z',
-    updatedAt: '2024-02-12T11:00:00Z',
-    items: [
-      {
-        id: '2',
-        productId: '2',
-        productName: 'Refrigerante Cola',
-        quantity: 100,
-        purchasePrice: 1.00,
-        createdAt: '2024-02-12T11:00:00Z',
-        updatedAt: '2024-02-12T11:00:00Z',
-      },
-    ],
-  },
-];
+// Helper function to get a supplier with delivery history
+export const getSupplierWithHistory = (supplierId: string) => {
+  const supplier = suppliers.find(s => s.id === supplierId);
+  
+  const deliveries = stockEntries
+    .filter(entry => entry.supplierId === supplierId)
+    .map(entry => {
+      // For each entry, map all items that were part of it
+      const entryItems = entry.items.map(item => {
+        return {
+          ...item,
+          entryId: entry.id,
+          entryDate: entry.date,
+          product: products.find(p => p.id === item.productId)
+        };
+      });
+      
+      return {
+        entry,
+        items: entryItems
+      };
+    });
 
-export const mockStockExits: StockExit[] = [
-  {
-    id: '1',
-    number: 'SAI-001',
-    clientId: '1',
-    clientName: 'João da Silva',
-    date: '2024-02-15T15:00:00Z',
-    notes: 'Saída para cliente',
-    discount: 0,
-    createdAt: '2024-02-15T15:00:00Z',
-    updatedAt: '2024-02-15T15:00:00Z',
-    items: [
-      {
-        id: '1',
-        productId: '1',
-        productName: 'Água Mineral Natural',
-        quantity: 50,
-        salePrice: 1.50,
-        createdAt: '2024-02-15T15:00:00Z',
-        updatedAt: '2024-02-15T15:00:00Z',
-      },
-    ],
-  },
-  {
-    id: '2',
-    number: 'SAI-002',
-    clientId: '2',
-    clientName: 'Maria Souza',
-    date: '2024-02-18T16:00:00Z',
-    notes: 'Saída para cliente VIP',
-    discount: 10,
-    createdAt: '2024-02-18T16:00:00Z',
-    updatedAt: '2024-02-18T16:00:00Z',
-    items: [
-      {
-        id: '2',
-        productId: '3',
-        productName: 'Suco de Laranja',
-        quantity: 20,
-        salePrice: 3.50,
-        createdAt: '2024-02-18T16:00:00Z',
-        updatedAt: '2024-02-18T16:00:00Z',
-      },
-    ],
-  },
-];
+  return {
+    supplier,
+    deliveries: deliveries.flatMap(d => d.items) // Flatten to get all items
+  };
+};
 
-export const mockExpenses: Expense[] = [
-  {
-    id: '1',
-    number: 'EXP-001',
-    supplierId: '1',
-    supplierName: 'Fornecedor de Água SA',
-    date: '2024-02-20T10:00:00Z',
-    notes: 'Compra de água',
-    discount: 0,
-    createdAt: '2024-02-20T10:00:00Z',
-    updatedAt: '2024-02-20T10:00:00Z',
-    items: [
-      {
-        id: '1',
-        productName: 'Água Mineral Natural',
-        quantity: 100,
-        unitPrice: 0.75,
-        createdAt: '2024-02-20T10:00:00Z',
-        updatedAt: '2024-02-20T10:00:00Z',
-      },
-    ],
-  },
-  {
-    id: '2',
-    number: 'EXP-002',
-    supplierId: '2',
-    supplierName: 'Distribuidora de Refrigerantes LTDA',
-    date: '2024-02-22T14:00:00Z',
-    notes: 'Compra de refrigerantes',
-    discount: 5,
-    createdAt: '2024-02-22T14:00:00Z',
-    updatedAt: '2024-02-22T14:00:00Z',
-    items: [
-      {
-        id: '2',
-        productName: 'Refrigerante Cola',
-        quantity: 50,
-        unitPrice: 1.00,
-        createdAt: '2024-02-22T14:00:00Z',
-        updatedAt: '2024-02-22T14:00:00Z',
-      },
-    ],
-  },
-];
+// Helper to get dashboard data
+export const getDashboardData = () => {
+  // Ensure we have data to process
+  if (products.length === 0) {
+    return {
+      totalProducts: 0,
+      totalClients: 0,
+      totalSuppliers: 0,
+      totalStockValue: 0,
+      totalSalesValue: 0,
+      mostSoldProduct: null,
+      mostFrequentClient: null,
+      mostUsedSupplier: null,
+      lowStockProducts: [],
+      recentTransactions: []
+    };
+  }
 
-export const mockLegacyStockEntries: LegacyStockEntry[] = [
-  {
-    id: 'legacy-entry-1',
-    supplierId: '1',
-    supplierName: 'Legacy Supplier A',
-    number: 'LEG-ENT-001',
-    invoiceNumber: 'LEG-INV-001',
-    notes: 'Legacy stock entry A',
-    date: '2023-01-15T08:00:00Z',
-    createdAt: '2023-01-15T08:00:00Z',
-    items: [],
-  },
-  {
-    id: 'legacy-entry-2',
-    supplierId: '2',
-    supplierName: 'Legacy Supplier B',
-    number: 'LEG-ENT-002',
-    invoiceNumber: 'LEG-INV-002',
-    notes: 'Legacy stock entry B',
-    date: '2023-02-20T14:00:00Z',
-    createdAt: '2023-02-20T14:00:00Z',
-    items: [],
-  },
-];
+  // Total stock value
+  const totalStockValue = products.reduce((sum, product) => {
+    return sum + (product.currentStock * product.purchasePrice);
+  }, 0);
 
-export const mockLegacyStockExits: LegacyStockExit[] = [
-  {
-    id: 'legacy-exit-1',
-    clientId: '1',
-    clientName: 'Legacy Client X',
-    number: 'LEG-SAI-001',
-    invoiceNumber: 'LEG-INV-SAI-001',
-    notes: 'Legacy stock exit X',
-    date: '2023-03-10T10:00:00Z',
-    createdAt: '2023-03-10T10:00:00Z',
-    fromOrderId: 'legacy-order-1',
-    fromOrderNumber: 'LEG-ORD-001',
-    discount: 5,
-    items: [],
-  },
-  {
-    id: 'legacy-exit-2',
-    clientId: '2',
-    clientName: 'Legacy Client Y',
-    number: 'LEG-SAI-002',
-    invoiceNumber: 'LEG-INV-SAI-002',
-    notes: 'Legacy stock exit Y',
-    date: '2023-04-05T16:00:00Z',
-    createdAt: '2023-04-05T16:00:00Z',
-    fromOrderId: 'legacy-order-2',
-    fromOrderNumber: 'LEG-ORD-002',
-    discount: 10,
-    items: [],
-  },
-];
+  // Total sales value - calculate from all items in all exits
+  const totalSalesValue = stockExits.reduce((sum, exit) => {
+    const exitTotal = exit.items.reduce((itemSum, item) => 
+      itemSum + (item.quantity * item.salePrice), 0);
+    return sum + exitTotal;
+  }, 0);
 
-export const mockLegacyOrders: LegacyOrder[] = [
-  {
-    id: 'legacy-order-1',
-    clientId: '1',
-    clientName: 'Legacy Client X',
-    number: 'LEG-ORD-001',
-    date: '2023-03-01T12:00:00Z',
-    notes: 'Legacy order X',
-    createdAt: '2023-03-01T12:00:00Z',
-    convertedToStockExitId: 'legacy-exit-1',
-    discount: 2.5,
-    items: [],
-  },
-  {
-    id: 'legacy-order-2',
-    clientId: '2',
-    clientName: 'Legacy Client Y',
-    number: 'LEG-ORD-002',
-    date: '2023-04-01T18:00:00Z',
-    notes: 'Legacy order Y',
-    createdAt: '2023-04-01T18:00:00Z',
-    convertedToStockExitId: 'legacy-exit-2',
-    discount: 7.5,
-    items: [],
-  },
-];
+  // Most sold product
+  const productSales: Record<string, number> = {};
+  
+  // Count total quantity sold for each product across all exits
+  stockExits.forEach(exit => {
+    exit.items.forEach(item => {
+      if (!productSales[item.productId]) {
+        productSales[item.productId] = 0;
+      }
+      productSales[item.productId] += item.quantity;
+    });
+  });
+  
+  let mostSoldProductId = '';
+  let mostSoldQuantity = 0;
+  
+  Object.entries(productSales).forEach(([productId, quantity]) => {
+    if (quantity > mostSoldQuantity) {
+      mostSoldProductId = productId;
+      mostSoldQuantity = quantity;
+    }
+  });
+  
+  const mostSoldProduct = products.find(p => p.id === mostSoldProductId);
+
+  // Most frequent client
+  const clientPurchases: Record<string, number> = {};
+  stockExits.forEach(exit => {
+    if (!clientPurchases[exit.clientId]) {
+      clientPurchases[exit.clientId] = 0;
+    }
+    clientPurchases[exit.clientId]++;
+  });
+  
+  let mostFrequentClientId = '';
+  let mostPurchasesCount = 0;
+  
+  Object.entries(clientPurchases).forEach(([clientId, count]) => {
+    if (count > mostPurchasesCount) {
+      mostFrequentClientId = clientId;
+      mostPurchasesCount = count;
+    }
+  });
+  
+  const mostFrequentClient = clients.find(c => c.id === mostFrequentClientId);
+
+  // Most used supplier
+  const supplierDeliveries: Record<string, number> = {};
+  stockEntries.forEach(entry => {
+    if (!supplierDeliveries[entry.supplierId]) {
+      supplierDeliveries[entry.supplierId] = 0;
+    }
+    supplierDeliveries[entry.supplierId]++;
+  });
+  
+  let mostUsedSupplierId = '';
+  let mostDeliveriesCount = 0;
+  
+  Object.entries(supplierDeliveries).forEach(([supplierId, count]) => {
+    if (count > mostDeliveriesCount) {
+      mostUsedSupplierId = supplierId;
+      mostDeliveriesCount = count;
+    }
+  });
+  
+  const mostUsedSupplier = suppliers.find(s => s.id === mostUsedSupplierId);
+
+  // Low stock products - now checking against minStock instead of fixed value
+  const lowStockProducts = products.filter(p => p.currentStock <= (p.minStock || 5));
+
+  // Recent transactions - ensure we can combine and sort
+  const allTransactions = [
+    ...stockEntries.flatMap(entry => entry.items.map(item => ({
+      id: entry.id,
+      date: entry.date,
+      type: 'entry' as const,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.purchasePrice,
+      entityId: entry.supplierId,
+      createdAt: entry.createdAt
+    }))),
+    ...stockExits.flatMap(exit => exit.items.map(item => ({
+      id: exit.id,
+      date: exit.date,
+      type: 'exit' as const,
+      productId: item.productId,
+      quantity: item.quantity,
+      price: item.salePrice,
+      entityId: exit.clientId,
+      createdAt: exit.createdAt
+    })))
+  ];
+
+  const sortedTransactions = allTransactions.sort((a, b) => {
+    const dateA = new Date(a.date).getTime();
+    const dateB = new Date(b.date).getTime();
+    return dateB - dateA; // Most recent first
+  });
+
+  const recentTransactions = sortedTransactions.slice(0, 5).map(transaction => {
+    const product = products.find(p => p.id === transaction.productId);
+    const entity = transaction.type === 'entry'
+      ? suppliers.find(s => s.id === transaction.entityId)
+      : clients.find(c => c.id === transaction.entityId);
+
+    return {
+      id: transaction.id,
+      date: transaction.date,
+      type: transaction.type,
+      product,
+      quantity: transaction.quantity,
+      value: transaction.quantity * transaction.price,
+      entity: entity?.name || 'Desconhecido'
+    };
+  });
+
+  return {
+    totalProducts: products.length,
+    totalClients: clients.length,
+    totalSuppliers: suppliers.length,
+    totalStockValue,
+    totalSalesValue,
+    mostSoldProduct,
+    mostFrequentClient,
+    mostUsedSupplier,
+    lowStockProducts,
+    recentTransactions
+  };
+};
