@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useData } from '@/contexts/DataContext';
 import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
@@ -49,13 +50,16 @@ export const useStockEntries = () => {
           notes: entry.notes,
           date: entry.date,
           createdAt: entry.created_at,
+          updatedAt: entry.updated_at || entry.created_at,
           items: entry.stock_entry_items.map((item: any) => ({
             id: item.id,
             productId: item.product_id,
             productName: item.product_name,
             quantity: item.quantity,
             purchasePrice: item.purchase_price,
-            discountPercent: item.discount_percent
+            discountPercent: item.discount_percent,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at || item.created_at
           }))
         }));
         

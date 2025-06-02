@@ -3,8 +3,8 @@ import { User, Product, Client, Supplier, StockEntry, StockExit, Category, Order
 
 // Mock Users
 export const users: User[] = [
-  { id: '1', name: 'Administrador', email: 'admin@gestor.pt', role: 'admin' },
-  { id: '2', name: 'Utilizador', email: 'user@gestor.pt', role: 'user' },
+  { id: '1', name: 'Administrador', email: 'admin@gestor.pt', role: 'admin', createdAt: new Date().toISOString() },
+  { id: '2', name: 'Utilizador', email: 'user@gestor.pt', role: 'user', createdAt: new Date().toISOString() },
 ];
 
 // Empty initial data

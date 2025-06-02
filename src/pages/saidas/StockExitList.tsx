@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -116,6 +117,7 @@ const StockExitList = () => {
           notes: exit.notes,
           date: exit.date,
           createdAt: exit.created_at,
+          updatedAt: exit.updated_at || exit.created_at,
           fromOrderId: exit.from_order_id,
           fromOrderNumber: exit.from_order_number,
           discount: exit.discount,
@@ -125,7 +127,9 @@ const StockExitList = () => {
             productName: item.product_name,
             quantity: item.quantity,
             salePrice: item.sale_price,
-            discountPercent: item.discount_percent
+            discountPercent: item.discount_percent,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at || item.created_at
           }))
         }));
         

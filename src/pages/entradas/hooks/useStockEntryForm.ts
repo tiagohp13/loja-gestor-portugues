@@ -1,4 +1,3 @@
-
 import { useData } from '@/contexts/DataContext';
 import { useFormState } from './stockEntryForm/useFormState';
 import { useFormHandlers } from './stockEntryForm/useFormHandlers';
@@ -71,12 +70,21 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
   
   const { totalValue } = useCalculations(items);
   
+  // Cast addStockEntry to match the expected type signature
+  const typedAddStockEntry = (entry: { supplierId: string; supplierName: string; items: any[]; date: string; invoiceNumber: string; notes: string; total: number; }) => {
+    const entryWithTimestamp = {
+      ...entry,
+      updatedAt: new Date().toISOString()
+    };
+    return addStockEntry(entryWithTimestamp as any);
+  };
+  
   const { handleSubmit, isSubmitting } = useSubmit({
     entryDetails,
     items,
     entryDate,
     suppliers,
-    addStockEntry
+    addStockEntry: typedAddStockEntry
   });
 
   return {
