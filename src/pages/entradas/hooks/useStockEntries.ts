@@ -1,213 +1,204 @@
 import { useState, useEffect } from 'react';
-import { useData } from '@/contexts/DataContext';
-import { supabase, addToDeletedCache, filterDeletedItems } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
 import { StockEntry } from '@/types';
-
-type SortField = 'number' | 'date' | 'supplierName' | 'invoiceNumber' | 'value';
-type SortOrder = 'asc' | 'desc';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const useStockEntries = () => {
-  const { stockEntries, deleteStockEntry, setStockEntries } = useData();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [entries, setEntries] = useState<StockEntry[]>([]);
+  const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const calculateEntryTotal = (entry: StockEntry) => {
-    return entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
-  };
+  useEffect(() => {
+    fetchEntries();
+  }, []);
 
-  const fetchAllEntries = async () => {
+  useEffect(() => {
+    if (searchTerm) {
+      const filtered = entries.filter(entry =>
+        entry.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        entry.supplierName.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredEntries(filtered);
+    } else {
+      setFilteredEntries(entries);
+    }
+  }, [searchTerm, entries]);
+
+  const fetchEntries = async () => {
     try {
-      console.log("Fetching stock entries...");
+      setIsLoading(true);
       
-      const { data, error } = await supabase
+      const { data: entriesData, error: entriesError } = await supabase
         .from('stock_entries')
         .select(`
           *,
           stock_entry_items(*)
         `)
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error("Error fetching stock entries:", error);
-        toast.error("Erro ao carregar entradas de stock");
-        return;
-      }
+      if (entriesError) throw entriesError;
 
-      if (data) {
-        console.log("Stock entries data received:", data);
-        
-        const mappedEntries = data.map(entry => ({
+      if (entriesData) {
+        const formattedEntries: StockEntry[] = entriesData.map(entry => ({
           id: entry.id,
-          supplierId: entry.supplier_id,
+          supplierId: entry.supplier_id || '',
           supplierName: entry.supplier_name,
           number: entry.number,
-          invoiceNumber: entry.invoice_number,
-          notes: entry.notes,
+          invoiceNumber: entry.invoice_number || '',
+          notes: entry.notes || '',
           date: entry.date,
           createdAt: entry.created_at,
-          items: entry.stock_entry_items.map((item: any) => ({
+          updatedAt: entry.updated_at,
+          items: (entry.stock_entry_items || []).map((item: any) => ({
             id: item.id,
-            productId: item.product_id,
+            productId: item.product_id || '',
             productName: item.product_name,
             quantity: item.quantity,
-            purchasePrice: item.purchase_price,
-            discountPercent: item.discount_percent
-          }))
+            purchasePrice: Number(item.purchase_price),
+            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at
+          })),
+          total: (entry.stock_entry_items || []).reduce((sum: number, item: any) => {
+            const itemTotal = item.quantity * Number(item.purchase_price);
+            const itemDiscount = Number(item.discount_percent || 0);
+            const discountAmount = itemTotal * (itemDiscount / 100);
+            return sum + (itemTotal - discountAmount);
+          }, 0)
         }));
-        
-        const filteredEntries = filterDeletedItems('stock_entries', mappedEntries);
-        
-        setLocalEntries(filteredEntries);
-        setStockEntries(filteredEntries);
-        console.log("Updated local entries:", filteredEntries.length);
+
+        setEntries(formattedEntries);
+        setFilteredEntries(formattedEntries);
       }
     } catch (error) {
-      console.error("Error in fetchEntries:", error);
-      toast.error("Erro ao carregar entradas de stock");
+      console.error('Error fetching entries:', error);
+      toast.error('Erro ao carregar entradas de stock');
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    fetchAllEntries();
-  }, [setStockEntries]);
+  const createEntry = async (entry: Omit<StockEntry, 'number' | 'id' | 'createdAt' | 'updatedAt' | 'total'>): Promise<StockEntry> => {
+    try {
+      const { data: numberData, error: numberError } = await supabase
+        .rpc('get_next_counter', { counter_id: 'stock_entry' });
 
-  useEffect(() => {
-    console.log("Setting up realtime subscriptions for stock entries");
-    
-    // Create a dedicated channel for entries
-    const entriesChannel = supabase.channel('stock_entries_realtime')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_entries' }, 
-        (payload) => {
-          console.log('Stock entry change detected:', payload);
-          
-          if (payload.eventType === 'DELETE' && payload.old) {
-            const deletedId = payload.old.id;
-            console.log('Handling delete for entry:', deletedId);
-            addToDeletedCache('stock_entries', deletedId);
-            
-            setLocalEntries(prev => prev.filter(entry => entry.id !== deletedId));
-            setStockEntries(prev => prev.filter(entry => entry.id !== deletedId));
-            return;
-          }
-          
-          // For inserts and updates, refresh the entire list
-          if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
-            console.log('Handling insert/update, refreshing entries list');
-            fetchAllEntries();
-          }
-        }
-      )
-      .subscribe((status) => {
-        console.log('Stock entries subscription status:', status);
-      });
-      
-    // Create a dedicated channel for entry items
-    const itemsChannel = supabase.channel('stock_entry_items_realtime')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_entry_items' }, 
-        (payload) => {
-          console.log('Stock entry item change detected:', payload);
-          console.log('Refreshing entries list due to item changes');
-          fetchAllEntries();
-        }
-      )
-      .subscribe((status) => {
-        console.log('Stock entry items subscription status:', status);
-      });
-    
-    return () => {
-      console.log("Cleaning up realtime subscriptions");
-      supabase.removeChannel(entriesChannel);
-      supabase.removeChannel(itemsChannel);
-    };
-  }, [setStockEntries]);
+      if (numberError) throw numberError;
 
-  // Filter entries based on search term
-  const filteredEntries = localEntries.filter(entry => 
-    entry.supplierName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    entry.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (entry.invoiceNumber && entry.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
-  
-  // Sort entries based on sort field and order
-  const sortedEntries = [...filteredEntries].sort((a, b) => {
-    if (sortField === 'number') {
-      return sortOrder === 'asc' 
-        ? a.number.localeCompare(b.number) 
-        : b.number.localeCompare(a.number);
-    }
-    
-    if (sortField === 'date') {
-      const dateA = new Date(a.date).getTime();
-      const dateB = new Date(b.date).getTime();
-      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
-    }
-    
-    if (sortField === 'supplierName') {
-      return sortOrder === 'asc' 
-        ? (a.supplierName || '').localeCompare(b.supplierName || '') 
-        : (b.supplierName || '').localeCompare(a.supplierName || '');
-    }
-    
-    if (sortField === 'invoiceNumber') {
-      return sortOrder === 'asc' 
-        ? (a.invoiceNumber || '').localeCompare(b.invoiceNumber || '') 
-        : (b.invoiceNumber || '').localeCompare(a.invoiceNumber || '');
-    }
-    
-    if (sortField === 'value') {
-      const valueA = calculateEntryTotal(a);
-      const valueB = calculateEntryTotal(b);
-      return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
-    }
-    
-    return 0;
-  });
+      const entryNumber = numberData || `ENT-${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
 
-  const handleSortChange = (field: SortField) => {
-    if (sortField === field) {
-      // Toggle sort order if clicking on the same field
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      // Set new sort field and default to ascending order
-      setSortField(field);
-      setSortOrder('asc');
+      const { data, error } = await supabase
+        .from('stock_entries')
+        .insert({
+          number: entryNumber,
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes,
+          date: entry.date
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const createdEntry: StockEntry = {
+        id: data.id,
+        number: data.number,
+        supplierId: data.supplier_id || '',
+        supplierName: data.supplier_name,
+        invoiceNumber: data.invoice_number || '',
+        notes: data.notes || '',
+        date: data.date,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        items: [],
+        total: 0
+      };
+
+      setEntries([createdEntry, ...entries]);
+      setFilteredEntries([createdEntry, ...filteredEntries]);
+      toast.success('Entrada de stock criada com sucesso');
+
+      return createdEntry;
+    } catch (error) {
+      console.error('Error creating stock entry:', error);
+      toast.error('Erro ao criar entrada de stock');
+      throw error;
     }
   };
 
-  const handleDeleteEntry = async (id: string) => {
+  const updateEntry = async (entry: StockEntry): Promise<StockEntry> => {
     try {
-      addToDeletedCache('stock_entries', id);
-      
-      setLocalEntries(prev => prev.filter(entry => entry.id !== id));
-      
-      await deleteStockEntry(id);
-      
-      toast.success("Compra eliminada com sucesso");
+      const { data, error } = await supabase
+        .from('stock_entries')
+        .update({
+          supplier_id: entry.supplierId,
+          supplier_name: entry.supplierName,
+          invoice_number: entry.invoiceNumber,
+          notes: entry.notes,
+          date: entry.date
+        })
+        .eq('id', entry.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const updatedEntry: StockEntry = {
+        id: data.id,
+        number: data.number,
+        supplierId: data.supplier_id || '',
+        supplierName: data.supplier_name,
+        invoiceNumber: data.invoice_number || '',
+        notes: data.notes || '',
+        date: data.date,
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        items: [],
+        total: 0
+      };
+
+      setEntries(entries.map(e => (e.id === entry.id ? updatedEntry : e)));
+      setFilteredEntries(filteredEntries.map(e => (e.id === entry.id ? updatedEntry : e)));
+      toast.success('Entrada de stock atualizada com sucesso');
+
+      return updatedEntry;
     } catch (error) {
-      console.error("Error deleting entry:", error);
-      toast.error("Erro ao eliminar compra");
+      console.error('Error updating stock entry:', error);
+      toast.error('Erro ao atualizar entrada de stock');
+      throw error;
+    }
+  };
+
+  const deleteEntry = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stock_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEntries(entries.filter(entry => entry.id !== id));
+      setFilteredEntries(filteredEntries.filter(entry => entry.id !== id));
+      toast.success('Entrada de stock eliminada com sucesso');
+    } catch (error) {
+      console.error('Error deleting stock entry:', error);
+      toast.error('Erro ao eliminar entrada de stock');
     }
   };
 
   return {
+    entries,
+    filteredEntries,
+    isLoading,
     searchTerm,
     setSearchTerm,
-    sortField,
-    sortOrder,
-    isLoading,
-    sortedEntries,
-    handleSortChange,
-    handleDeleteEntry,
-    calculateEntryTotal,
-    localEntries
+    fetchEntries,
+    createEntry,
+    updateEntry,
+    deleteEntry
   };
 };

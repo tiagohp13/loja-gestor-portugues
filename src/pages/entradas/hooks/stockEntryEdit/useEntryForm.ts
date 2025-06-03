@@ -1,87 +1,109 @@
+import { useState, useEffect } from 'react';
+import { StockEntry, StockEntryItem } from '@/types';
 
-import { useState } from 'react';
-import { StockEntryFormState } from './types';
-import { StockEntryItem } from '@/types';
+interface StockEntryFormState {
+  items: StockEntryItem[];
+  supplierId: string;
+  date: string;
+  invoiceNumber: string;
+  notes: string;
+}
 
-export const useEntryForm = (initialEntry: StockEntryFormState, setEntry: React.Dispatch<React.SetStateAction<StockEntryFormState>>) => {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEntry(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
+export const useEntryForm = (initialEntry: StockEntry | null) => {
+  const [formState, setFormState] = useState<StockEntryFormState>({
+    items: [],
+    supplierId: '',
+    date: new Date().toISOString().split('T')[0],
+    invoiceNumber: '',
+    notes: '',
+  });
 
-  const handleSupplierChange = (value: string) => {
-    // Não aceitar o valor "placeholder"
-    if (value === "placeholder") return;
-    
-    setEntry(prev => ({
-      ...prev,
-      supplierId: value
-    }));
-  };
-
-  const handleItemChange = (index: number, field: keyof StockEntryItem, value: any) => {
-    const updatedItems = [...initialEntry.items];
-    
-    // Se o valor for "placeholder" para o campo productId, ignorar a alteração
-    if (field === 'productId' && value === "placeholder") return;
-    
-    if (field === 'productId' && typeof value === 'string') {
-      const selectedProduct = window.products?.find(p => p.id === value);
-      if (selectedProduct) {
-        updatedItems[index] = {
-          ...updatedItems[index],
-          productId: value,
-          productName: selectedProduct.name,
-          purchasePrice: selectedProduct.purchasePrice || 0
-        };
-      }
-    } else {
-      updatedItems[index] = {
-        ...updatedItems[index],
-        [field]: value
-      };
+  useEffect(() => {
+    if (initialEntry) {
+      setFormState({
+        items: initialEntry.items,
+        supplierId: initialEntry.supplierId,
+        date: initialEntry.date,
+        invoiceNumber: initialEntry.invoiceNumber || '',
+        notes: initialEntry.notes || '',
+      });
     }
-    
-    setEntry(prev => ({
-      ...prev,
-      items: updatedItems
-    }));
-  };
+  }, [initialEntry]);
 
-  const addNewItem = () => {
-    setEntry(prev => ({
+  const updateItem = (index: number, field: keyof StockEntryItem, value: any) => {
+    const updatedItems = [...formState.items];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value,
+    };
+    setFormState(prev => ({
       ...prev,
-      items: [
-        ...prev.items,
-        {
-          id: `temp-${Date.now()}`,
-          productId: '', // Este valor vazio será substituído por "placeholder" na UI
-          productName: '',
-          quantity: 1,
-          purchasePrice: 0,
-          discountPercent: 0
-        }
-      ]
+      items: updatedItems,
     }));
   };
 
   const removeItem = (index: number) => {
-    const updatedItems = [...initialEntry.items];
-    updatedItems.splice(index, 1);
-    setEntry(prev => ({
+    setFormState(prev => ({
       ...prev,
-      items: updatedItems
+      items: prev.items.filter((_, i) => i !== index),
+    }));
+  };
+
+  const addItem = () => {
+    const newItem: StockEntryItem = {
+      id: crypto.randomUUID(),
+      productId: '',
+      productName: '',
+      quantity: 1,
+      purchasePrice: 0,
+      discountPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setFormState(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }));
+  };
+
+  const setSupplierId = (supplierId: string) => {
+    setFormState(prev => ({
+      ...prev,
+      supplierId: supplierId,
+    }));
+  };
+
+  const setDate = (date: string) => {
+    setFormState(prev => ({
+      ...prev,
+      date: date,
+    }));
+  };
+
+  const setInvoiceNumber = (invoiceNumber: string) => {
+    setFormState(prev => ({
+      ...prev,
+      invoiceNumber: invoiceNumber,
+    }));
+  };
+
+  const setNotes = (notes: string) => {
+    setFormState(prev => ({
+      ...prev,
+      notes: notes,
     }));
   };
 
   return {
-    handleChange,
-    handleSupplierChange,
-    handleItemChange,
-    addNewItem,
+    formState,
+    setFormState,
+    updateItem,
     removeItem,
+    addItem,
+    setSupplierId,
+    setDate,
+    setInvoiceNumber,
+    setNotes,
   };
 };

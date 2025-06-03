@@ -1,131 +1,98 @@
-
-import { StockEntryItem } from '@/types';
-import { CurrentItem, EntryDetails } from './types';
+import React from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 
-interface UseFormHandlersProps {
-  entryDetails: EntryDetails;
-  setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
-  currentItem: CurrentItem;
-  setCurrentItem: React.Dispatch<React.SetStateAction<CurrentItem>>;
-  items: StockEntryItem[];
-  setItems: React.Dispatch<React.SetStateAction<StockEntryItem[]>>;
-  selectedProductDisplay: string;
-  setSelectedProductDisplay: React.Dispatch<React.SetStateAction<string>>;
-  setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
-  setIsProductSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setIsSupplierSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  products: Array<{
-    id: string;
-    name: string;
-    code: string;
-    currentStock: number;
-    purchasePrice: number;
-  }>;
-}
+import { StockEntryFormState } from './useStockEntryForm';
+import { Supplier, Product, StockEntryItem } from '@/types';
 
-export const useFormHandlers = ({
-  entryDetails,
-  setEntryDetails,
-  currentItem,
-  setCurrentItem,
-  items,
-  setItems,
-  selectedProductDisplay,
-  setSelectedProductDisplay,
-  setSearchTerm,
-  setIsProductSearchOpen,
-  setIsSupplierSearchOpen,
-  products
-}: UseFormHandlersProps) => {
-  
-  const handleEntryDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setEntryDetails(prev => ({
+export const useFormHandlers = (
+  formState: StockEntryFormState,
+  setFormState: React.Dispatch<React.SetStateAction<StockEntryFormState>>,
+  suppliers: Supplier[],
+  products: Product[]
+) => {
+  const handleSupplierChange = (supplierId: string) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
+    setFormState(prev => ({
       ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentItem(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'purchasePrice' 
-              ? parseFloat(value) || 0 
-              : value
+      supplierId: supplierId,
+      supplierName: supplier?.name || ''
     }));
   };
 
-  const handleSearch = (value: string) => {
-    setSearchTerm(value);
+  const handleDateChange = (date: string) => {
+    setFormState(prev => ({ ...prev, date: date }));
   };
 
-  const handleSupplierSearch = (value: string) => {
-    // This will be used in the useFilters hook
+  const handleInvoiceNumberChange = (invoiceNumber: string) => {
+    setFormState(prev => ({ ...prev, invoiceNumber: invoiceNumber }));
   };
 
-  const handleProductSelect = (productId: string) => {
-    const selectedProduct = products.find(p => p.id === productId);
-    if (selectedProduct) {
-      setCurrentItem({
-        productId: selectedProduct.id,
-        productName: selectedProduct.name,
-        quantity: 1,
-        purchasePrice: selectedProduct.purchasePrice
-      });
-      setSelectedProductDisplay(`${selectedProduct.code} - ${selectedProduct.name}`);
-    }
-    setIsProductSearchOpen(false);
+  const handleNotesChange = (notes: string) => {
+    setFormState(prev => ({ ...prev, notes: notes }));
   };
-  
-  const handleSupplierSelect = (supplierId: string) => {
-    // This will be implemented in the useSupplierSelect hook
-  };
-  
-  const addItemToEntry = () => {
-    if (!currentItem.productId || currentItem.quantity <= 0) {
-      toast.error('Selecione um produto e uma quantidade válida');
-      return;
-    }
-    
-    const existingItemIndex = items.findIndex(item => item.productId === currentItem.productId);
-    
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...items];
-      updatedItems[existingItemIndex] = {
-        ...updatedItems[existingItemIndex],
-        quantity: updatedItems[existingItemIndex].quantity + currentItem.quantity,
-        purchasePrice: currentItem.purchasePrice
-      };
-      setItems(updatedItems);
-    } else {
-      setItems([...items, { 
-        id: crypto.randomUUID(),
-        ...currentItem 
-      }]);
-    }
-    
-    setCurrentItem({
-      productId: '',
-      productName: '',
-      quantity: 1,
-      purchasePrice: 0
+
+  const handleItemQuantityChange = (index: number, quantity: number) => {
+    setFormState(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], quantity: quantity };
+      return { ...prev, items: newItems };
     });
-    setSelectedProductDisplay('');
-    setSearchTerm('');
   };
-  
+
+  const handleItemPurchasePriceChange = (index: number, purchasePrice: number) => {
+    setFormState(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], purchasePrice: purchasePrice };
+      return { ...prev, items: newItems };
+    });
+  };
+
+  const handleItemDiscountPercentChange = (index: number, discountPercent: number) => {
+    setFormState(prev => {
+      const newItems = [...prev.items];
+      newItems[index] = { ...newItems[index], discountPercent: discountPercent };
+      return { ...prev, items: newItems };
+    });
+  };
+
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
+    setFormState(prev => ({
+      ...prev,
+      items: prev.items.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addProduct = (productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (!product) return;
+
+    const newItem: StockEntryItem = {
+      id: crypto.randomUUID(),
+      productId: product.id,
+      productName: product.name,
+      quantity: 1,
+      purchasePrice: product.purchasePrice,
+      discountPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    setFormState(prev => ({
+      ...prev,
+      items: [...prev.items, newItem]
+    }));
   };
 
   return {
-    handleEntryDetailsChange,
-    handleItemChange,
-    handleSearch,
-    handleProductSelect,
-    addItemToEntry,
+    handleSupplierChange,
+    handleDateChange,
+    handleInvoiceNumberChange,
+    handleNotesChange,
+    handleItemQuantityChange,
+    handleItemPurchasePriceChange,
+    handleItemDiscountPercentChange,
     removeItem,
+    addProduct
   };
 };

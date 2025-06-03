@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -228,9 +227,10 @@ const ExpenseList = () => {
       <DeleteConfirmDialog 
         open={deleteDialog.open}
         onClose={() => setDeleteDialog({ open: false, expenseId: null })}
-        onConfirm={handleDeleteExpense}
+        onDelete={handleDeleteExpense}
         title="Eliminar Despesa"
         description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
+        trigger={<div style={{ display: 'none' }} />}
       />
     </div>
   );

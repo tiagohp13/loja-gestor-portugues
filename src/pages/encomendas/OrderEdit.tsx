@@ -1,623 +1,435 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { toast } from 'sonner';
+import { Client, OrderItem } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
-import { toast } from '@/components/ui/use-toast';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Search, Check, Plus, Trash, ShoppingCart, Pencil } from 'lucide-react';
-import { OrderItem } from '@/types';
+
+interface OrderFormData {
+  clientId: string;
+  clientName: string;
+  date: string;
+  notes: string;
+  discount: number;
+  items: OrderItem[];
+}
 
 const OrderEdit = () => {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { updateOrder, products, clients, findOrder } = useData();
-  const [orderDetails, setOrderDetails] = useState({
+  const { id } = useParams<{ id: string }>();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState<OrderFormData>({
     clientId: '',
     clientName: '',
     date: new Date().toISOString().split('T')[0],
-    notes: ''
-  });
-  
-  const [items, setItems] = useState<OrderItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<{
-    productId: string;
-    productName: string;
-    quantity: number;
-    salePrice: number;
-  }>({
-    productId: '',
-    productName: '',
-    quantity: 1,
-    salePrice: 0
-  });
-  
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isProductSearchOpen, setIsProductSearchOpen] = useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = useState('');
-  const [isClientSearchOpen, setIsClientSearchOpen] = useState(false);
-  
-  // New state for item editing
-  const [isEditingItem, setIsEditingItem] = useState(false);
-  const [editingItemIndex, setEditingItemIndex] = useState<number | null>(null);
-  const [editingItem, setEditingItem] = useState<{
-    quantity: number;
-    salePrice: number;
-  }>({
-    quantity: 0,
-    salePrice: 0
+    notes: '',
+    discount: 0,
+    items: []
   });
 
   useEffect(() => {
+    fetchClients();
     if (id) {
-      const order = findOrder(id);
-      if (order) {
-        if (order.convertedToStockExitId) {
-          toast({
-            title: "Erro",
-            description: "Não é possível editar uma encomenda já convertida em saída de stock.",
-            variant: "destructive"
-          });
-          navigate(`/encomendas/${id}`);
-          return;
-        }
-        
-        setOrderDetails({
-          clientId: order.clientId,
-          clientName: order.clientName || '',
-          date: order.date,
-          notes: order.notes || ''
-        });
-        
-        setItems(order.items);
-      } else {
-        toast({
-          title: "Erro",
-          description: "Encomenda não encontrada.",
-          variant: "destructive"
-        });
-        navigate('/encomendas/consultar');
-      }
+      fetchOrder(id);
     }
-  }, [id, findOrder, navigate]);
+  }, [id]);
 
-  const handleOrderDetailsChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setOrderDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setCurrentItem(prev => ({
-      ...prev,
-      [name]: name === 'quantity' || name === 'salePrice' 
-              ? parseFloat(value) || 0 
-              : value
-    }));
-  };
-  
-  const handleEditingItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditingItem(prev => ({
-      ...prev,
-      [name]: parseFloat(value) || 0
-    }));
-  };
+  const fetchClients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .order('name');
 
-  const handleProductSearch = (value: string) => {
-    setSearchTerm(value);
-  };
+      if (error) throw error;
 
-  const handleClientSearch = (value: string) => {
-    setClientSearchTerm(value);
-  };
-
-  const handleProductSelect = (productId: string) => {
-    const selectedProduct = products.find(p => p.id === productId);
-    if (selectedProduct) {
-      setCurrentItem({
-        productId: selectedProduct.id,
-        productName: `${selectedProduct.code} - ${selectedProduct.name}`,
-        quantity: 1,
-        salePrice: selectedProduct.salePrice
-      });
-      
-      // Automatically add product if this is the first selection
-      // Otherwise user will click "Add Product" button
-      if (items.length === 0 && !isProductSearchOpen) {
-        setTimeout(() => {
-          addItemToOrder();
-        }, 100);
+      if (data) {
+        const formattedClients: Client[] = data.map(client => ({
+          id: client.id,
+          name: client.name,
+          email: client.email || '',
+          phone: client.phone || '',
+          address: client.address || '',
+          taxId: client.taxId || '',
+          notes: client.notes || '',
+          createdAt: client.createdAt,
+          updatedAt: client.updatedAt,
+          status: client.status
+        }));
+        setClients(formattedClients);
       }
+    } catch (error) {
+      console.error('Error fetching clients:', error);
+      toast.error('Erro ao carregar clientes');
     }
-    setIsProductSearchOpen(false);
   };
+
+  const fetchOrder = async (orderId: string) => {
+    try {
+      setIsLoading(true);
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(*)
+        `)
+        .eq('id', orderId)
+        .single();
   
-  const handleClientSelect = (clientId: string) => {
-    const selectedClient = clients.find(c => c.id === clientId);
-    setOrderDetails(prev => ({
-      ...prev,
+      if (orderError) {
+        throw orderError;
+      }
+  
+      if (orderData) {
+        const formattedOrder: OrderFormData = {
+          clientId: orderData.client_id || '',
+          clientName: orderData.client_name || '',
+          date: orderData.date,
+          notes: orderData.notes || '',
+          discount: Number(orderData.discount || 0),
+          items: (orderData.order_items || []).map((item: any) => ({
+            id: item.id,
+            productId: item.product_id || '',
+            productName: item.product_name,
+            quantity: item.quantity,
+            salePrice: Number(item.sale_price),
+            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined,
+            createdAt: item.created_at,
+            updatedAt: item.updated_at
+          }))
+        };
+        setFormData(formattedOrder);
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+      toast.error('Erro ao carregar encomenda');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClientChange = (clientId: string) => {
+    const client = clients.find(c => c.id === clientId);
+    setFormData({
+      ...formData,
       clientId,
-      clientName: selectedClient?.name || ''
-    }));
-    setIsClientSearchOpen(false);
+      clientName: client?.name || ''
+    });
   };
-  
-  const addItemToOrder = () => {
-    if (!currentItem.productId || currentItem.quantity <= 0) {
-      toast({
-        title: "Erro",
-        description: "Selecione um produto e uma quantidade válida",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    // Always add as a new line - allow duplicate products
-    setItems([...items, { ...currentItem }]);
-    
-    // Reset current item
-    setCurrentItem({
+
+  const addItem = () => {
+    const newItem: OrderItem = {
+      id: crypto.randomUUID(),
       productId: '',
       productName: '',
       quantity: 1,
-      salePrice: 0
+      salePrice: 0,
+      discountPercent: 0,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    setFormData({
+      ...formData,
+      items: [...formData.items, newItem]
     });
-    setSearchTerm('');
   };
-  
+
   const removeItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index));
-  };
-  
-  const openEditItemDialog = (index: number) => {
-    const item = items[index];
-    setEditingItem({
-      quantity: item.quantity,
-      salePrice: item.salePrice
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
     });
-    setEditingItemIndex(index);
-    setIsEditingItem(true);
-  };
-  
-  const saveItemEdit = () => {
-    if (editingItemIndex !== null) {
-      const updatedItems = [...items];
-      updatedItems[editingItemIndex] = {
-        ...updatedItems[editingItemIndex],
-        quantity: editingItem.quantity,
-        salePrice: editingItem.salePrice
-      };
-      setItems(updatedItems);
-      setIsEditingItem(false);
-      setEditingItemIndex(null);
-    }
   };
 
-  const filteredProducts = searchTerm
-    ? products.filter(product => 
-        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.code.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    : products;
+  const updateItem = (index: number, field: keyof Omit<OrderItem, 'id' | 'createdAt' | 'updatedAt'>, value: string | number) => {
+    const updatedItems = [...formData.items];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value
+    };
+    setFormData({
+      ...formData,
+      items: updatedItems
+    });
+  };
 
-  const filteredClients = clientSearchTerm
-    ? clients.filter(client => 
-        client.name.toLowerCase().includes(clientSearchTerm.toLowerCase())
-      )
-    : clients;
+  const calculateTotal = () => {
+    const itemsTotal = formData.items.reduce((sum, item) => {
+      const itemTotal = item.quantity * item.salePrice;
+      const discountAmount = itemTotal * (item.discountPercent / 100);
+      return sum + (itemTotal - discountAmount);
+    }, 0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+    const generalDiscount = itemsTotal * (formData.discount / 100);
+    return itemsTotal - generalDiscount;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
-    if (!orderDetails.clientId || items.length === 0) {
-      toast({
-        title: "Erro",
-        description: "Selecione um cliente e adicione pelo menos um produto",
-        variant: "destructive"
-      });
+    if (!formData.clientId) {
+      toast.error('Por favor selecione um cliente');
       return;
     }
-    
-    // Get the client
-    const client = clients.find(c => c.id === orderDetails.clientId);
-    
-    if (!client) {
-      toast({
-        title: "Erro",
-        description: "Cliente não encontrado",
-        variant: "destructive"
-      });
+
+    if (formData.items.length === 0) {
+      toast.error('Por favor adicione pelo menos um item');
       return;
     }
-    
-    // Update the order
-    updateOrder(id!, {
-      clientId: orderDetails.clientId,
-      clientName: client.name,
-      items: items,
-      date: orderDetails.date,
-      notes: orderDetails.notes
-    });
-    
-    navigate(`/encomendas/${id}`);
+
+    if (formData.items.some(item => !item.productName.trim())) {
+      toast.error('Por favor preencha o nome de todos os produtos');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Update order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({
+          client_id: formData.clientId,
+          client_name: formData.clientName,
+          date: formData.date,
+          notes: formData.notes,
+          discount: formData.discount
+        })
+        .eq('id', id);
+
+      if (orderError) throw orderError;
+
+      // Delete existing order items
+      const { error: deleteItemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', id);
+
+      if (deleteItemsError) throw deleteItemsError;
+
+      // Create order items
+      const itemsToInsert = formData.items.map(item => ({
+        order_id: id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        sale_price: item.salePrice,
+        discount_percent: item.discountPercent
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+
+      toast.success('Encomenda atualizada com sucesso');
+      navigate('/encomendas/historico');
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast.error('Erro ao atualizar encomenda');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Calculate total value
-  const totalValue = items.reduce((total, item) => 
-    total + (item.quantity * item.salePrice), 0);
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-PT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(value);
+  };
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Editar Encomenda" 
-        description="Alterar dados da encomenda" 
-        actions={
-          <Button variant="outline" onClick={() => navigate(`/encomendas/${id}`)}>
-            Voltar à Encomenda
-          </Button>
-        }
-      />
-      
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="grid gap-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <label htmlFor="clientSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                Cliente
-              </label>
-              <Popover open={isClientSearchOpen} onOpenChange={setIsClientSearchOpen}>
-                <PopoverTrigger asChild>
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-                    <Input
-                      id="clientSearch"
-                      className="pl-10"
-                      placeholder="Pesquisar cliente por nome"
-                      value={clientSearchTerm}
-                      onChange={(e) => setClientSearchTerm(e.target.value)}
-                      onClick={() => setIsClientSearchOpen(true)}
-                    />
-                  </div>
-                </PopoverTrigger>
-                <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
-                  <Command>
-                    <CommandInput 
-                      placeholder="Pesquisar cliente..." 
-                      value={clientSearchTerm}
-                      onValueChange={handleClientSearch}
-                    />
-                    <CommandList>
-                      <CommandEmpty>Nenhum cliente encontrado</CommandEmpty>
-                      <CommandGroup heading="Clientes">
-                        {filteredClients.map((client) => (
-                          <CommandItem 
-                            key={client.id} 
-                            value={client.name}
-                            onSelect={() => handleClientSelect(client.id)}
-                          >
-                            <div className="flex items-center justify-between w-full">
-                              <div>{client.name}</div>
-                            </div>
-                            {orderDetails.clientId === client.id && (
-                              <Check className="ml-2 h-4 w-4" />
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {orderDetails.clientId && (
-                <div className="p-3 border border-gray-300 rounded-md bg-gray-50 mt-2">
-                  <div className="font-medium">
-                    {clients.find(c => c.id === orderDetails.clientId)?.name || ""}
-                  </div>
-                </div>
-              )}
+    <div className="p-6 space-y-6">
+      <PageHeader title="Editar Encomenda" />
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Informações da Encomenda</CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="client">Cliente *</Label>
+              <Input
+                id="client"
+                type="text"
+                value={formData.clientName}
+                disabled
+              />
             </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="date" className="text-sm font-medium text-gestorApp-gray-dark">
-                Data
-              </label>
+
+            <div>
+              <Label htmlFor="date">Data da Encomenda *</Label>
               <Input
                 id="date"
-                name="date"
                 type="date"
-                value={orderDetails.date}
-                onChange={handleOrderDetailsChange}
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
               />
             </div>
-            
-            <div className="space-y-2">
-              <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
-                Notas
-              </label>
-              <textarea
+
+            <div className="md:col-span-2">
+              <Label htmlFor="notes">Notas</Label>
+              <Textarea
                 id="notes"
-                name="notes"
-                value={orderDetails.notes}
-                onChange={handleOrderDetailsChange}
-                placeholder="Observações sobre a encomenda..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Notas adicionais sobre a encomenda..."
                 rows={3}
               />
             </div>
-            
-            <div className="border-t pt-4 mt-4">
-              <h3 className="text-md font-medium mb-4 flex items-center">
-                <ShoppingCart className="mr-2 h-5 w-5" />
-                Produtos da Encomenda
-              </h3>
-              
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label htmlFor="productSearch" className="text-sm font-medium text-gestorApp-gray-dark">
-                    Adicionar Produto
-                  </label>
-                  <Popover open={isProductSearchOpen} onOpenChange={setIsProductSearchOpen}>
-                    <PopoverTrigger asChild>
-                      <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
-                        <Input
-                          id="productSearch"
-                          className="pl-10"
-                          placeholder="Pesquisar por nome ou código"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          onClick={() => setIsProductSearchOpen(true)}
-                        />
-                      </div>
-                    </PopoverTrigger>
-                    <PopoverContent className="p-0 w-[calc(100vw-4rem)] max-w-lg" align="start">
-                      <Command>
-                        <CommandInput 
-                          placeholder="Pesquisar produto por nome ou código..." 
-                          value={searchTerm}
-                          onValueChange={handleProductSearch}
-                        />
-                        <CommandList>
-                          <CommandEmpty>Nenhum produto encontrado</CommandEmpty>
-                          <CommandGroup heading="Produtos">
-                            {filteredProducts.map((product) => (
-                              <CommandItem 
-                                key={product.id} 
-                                value={`${product.code} - ${product.name}`}
-                                onSelect={() => handleProductSelect(product.id)}
-                              >
-                                <div className="flex items-center justify-between w-full">
-                                  <div>
-                                    <span className="font-medium">{product.code}</span>
-                                    <span className="mx-2">-</span>
-                                    <span>{product.name}</span>
-                                  </div>
-                                </div>
-                                {currentItem.productId === product.id && (
-                                  <Check className="ml-2 h-4 w-4" />
-                                )}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                {currentItem.productId && (
-                  <div className="grid md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <label htmlFor="selectedProduct" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Produto Selecionado
-                      </label>
-                      <div className="p-3 border border-gray-300 rounded-md bg-gray-50">
-                        <div className="font-medium">{currentItem.productName}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="quantity" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Quantidade
-                      </label>
-                      <Input
-                        id="quantity"
-                        name="quantity"
-                        type="number"
-                        min="1"
-                        value={currentItem.quantity}
-                        onChange={handleItemChange}
-                        placeholder="0"
-                        required
-                      />
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
-                        Preço Unitário (€)
-                      </label>
-                      <Input
-                        id="salePrice"
-                        name="salePrice"
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={currentItem.salePrice}
-                        onChange={handleItemChange}
-                        placeholder="0.00"
-                        required
-                      />
-                    </div>
-                  </div>
-                )}
-                
-                {currentItem.productId && (
-                  <div className="flex justify-end">
-                    <Button 
-                      type="button" 
-                      onClick={addItemToOrder}
-                      className="flex items-center"
-                      disabled={
-                        !currentItem.productId || 
-                        currentItem.quantity <= 0
-                      }
-                    >
-                      <Plus className="mr-2 h-4 w-4" />
-                      Adicionar Produto
-                    </Button>
-                  </div>
-                )}
-              </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>Itens da Encomenda</CardTitle>
+              <Button type="button" onClick={addItem} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Item
+              </Button>
             </div>
-            
-            {/* Products list */}
-            {items.length > 0 && (
-              <div className="border rounded-md mt-4">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Produto</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                      <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subtotal</th>
-                      <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {items.map((item, index) => (
-                      <tr key={index}>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">{item.productName}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.quantity}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{item.salePrice.toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm">{(item.quantity * item.salePrice).toFixed(2)} €</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => openEditItemDialog(index)}
-                              className="text-blue-500 hover:text-blue-700"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              onClick={() => removeItem(index)}
-                              className="text-red-500 hover:text-red-700"
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+          </CardHeader>
+          <CardContent>
+            {formData.items.length === 0 ? (
+              <div className="text-center py-8 text-gestorApp-gray">
+                <p>Nenhum item adicionado ainda.</p>
+                <Button type="button" onClick={addItem} variant="outline" className="mt-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Primeiro Item
+                </Button>
               </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Produto</TableHead>
+                    <TableHead>Quantidade</TableHead>
+                    <TableHead>Preço Unitário</TableHead>
+                    <TableHead>Desconto (%)</TableHead>
+                    <TableHead>Subtotal</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {formData.items.map((item, index) => {
+                    const itemTotal = item.quantity * item.salePrice;
+                    const discountAmount = itemTotal * (item.discountPercent / 100);
+                    const subtotal = itemTotal - discountAmount;
+
+                    return (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <Input
+                            value={item.productName}
+                            onChange={(e) => updateItem(index, 'productName', e.target.value)}
+                            placeholder="Nome do produto"
+                            required
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.salePrice}
+                            onChange={(e) => updateItem(index, 'salePrice', parseFloat(e.target.value) || 0)}
+                            className="w-24"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value={item.discountPercent}
+                            onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value) || 0)}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(subtotal)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeItem(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
             )}
-          </div>
-          
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-100 rounded-md">
-            <p className="text-lg font-semibold text-blue-800">
-              Valor Total: {totalValue.toFixed(2)} €
-            </p>
-            <p className="text-sm text-blue-600 mt-1">
-              Total de itens: {items.length}
-            </p>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate(`/encomendas/${id}`)}>
-              Cancelar
-            </Button>
-            <Button 
-              type="submit"
-              disabled={items.length === 0 || !orderDetails.clientId}
-            >
-              Guardar Alterações
-            </Button>
-          </div>
-        </form>
-      </div>
-      
-      {/* Edit Item Dialog */}
-      <Dialog open={isEditingItem} onOpenChange={setIsEditingItem}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Item</DialogTitle>
-            <DialogDescription>
-              Modifique a quantidade ou preço do produto
-            </DialogDescription>
-          </DialogHeader>
-          
-          {editingItemIndex !== null && (
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="edit-quantity" className="text-sm font-medium">
-                  Quantidade
-                </label>
-                <Input
-                  id="edit-quantity"
-                  name="quantity"
-                  type="number"
-                  min="1"
-                  value={editingItem.quantity}
-                  onChange={handleEditingItemChange}
-                />
+          </CardContent>
+        </Card>
+
+        {formData.items.length > 0 && (
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <Label htmlFor="discount">Desconto Geral (%)</Label>
+                  <Input
+                    id="discount"
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={formData.discount}
+                    onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                  />
+                </div>
+                <div></div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gestorApp-blue">
+                    Total: {formatCurrency(calculateTotal())}
+                  </div>
+                </div>
               </div>
-              
-              <div className="grid gap-2">
-                <label htmlFor="edit-price" className="text-sm font-medium">
-                  Preço Unitário (€)
-                </label>
-                <Input
-                  id="edit-price"
-                  name="salePrice"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editingItem.salePrice}
-                  onChange={handleEditingItemChange}
-                />
-              </div>
-            </div>
-          )}
-          
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditingItem(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={saveItemEdit}>
-              Guardar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            </CardContent>
+          </Card>
+        )}
+
+        <div className="flex gap-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/historico')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'A guardar...' : 'Guardar Encomenda'}
+          </Button>
+        </div>
+      </form>
     </div>
   );
 };
