@@ -1,5 +1,6 @@
+
 import { useData } from '@/contexts/DataContext';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { 
   ensureDate, 
   createMonthlyDataMap, 
@@ -23,7 +24,12 @@ import {
   calculateTotalProfit,
   calculateProfitMarginPercent,
   calculateRoiValue,
-  calculateRoiPercent
+  calculateRoiPercent,
+  calculateTotalSpent,
+  calculateTotalProfitWithExpenses,
+  calculateProfitMarginPercentWithExpenses,
+  calculateRoiValueWithExpenses,
+  calculateRoiPercentWithExpenses
 } from './utils/financialUtils';
 import { 
   createAllTransactions,
@@ -32,6 +38,13 @@ import {
 
 export const useDashboardData = () => {
   const { products, suppliers, clients, stockEntries, stockExits, orders } = useData();
+  
+  // State for values that include expenses
+  const [totalSpentWithExpenses, setTotalSpentWithExpenses] = useState(0);
+  const [totalProfitWithExpenses, setTotalProfitWithExpenses] = useState(0);
+  const [profitMarginPercentWithExpenses, setProfitMarginPercentWithExpenses] = useState(0);
+  const [roiValueWithExpenses, setRoiValueWithExpenses] = useState(0);
+  const [roiPercentWithExpenses, setRoiPercentWithExpenses] = useState(0);
 
   // Prepare monthly data for charts
   const monthlyData = useMemo(() => {
@@ -80,7 +93,7 @@ export const useDashboardData = () => {
     return findMostUsedSupplier(stockEntries, suppliers);
   }, [stockEntries, suppliers]);
   
-  // Calculate financial metrics
+  // Calculate financial metrics (original without expenses)
   const totalSalesValue = useMemo(() => {
     return calculateTotalSalesValue(stockExits);
   }, [stockExits]);
@@ -109,6 +122,29 @@ export const useDashboardData = () => {
     return calculateRoiPercent(totalProfit, totalPurchaseValue);
   }, [totalProfit, totalPurchaseValue]);
 
+  // Calculate financial metrics including expenses
+  useEffect(() => {
+    const calculateWithExpenses = async () => {
+      try {
+        const totalSpent = await calculateTotalSpent(stockEntries);
+        const totalProfitWithExp = await calculateTotalProfitWithExpenses(totalSalesValue, stockEntries);
+        const profitMarginWithExp = await calculateProfitMarginPercentWithExpenses(totalSalesValue, stockEntries);
+        const roiValWithExp = await calculateRoiValueWithExpenses(totalSalesValue, stockEntries);
+        const roiPercWithExp = await calculateRoiPercentWithExpenses(totalSalesValue, stockEntries);
+        
+        setTotalSpentWithExpenses(totalSpent);
+        setTotalProfitWithExpenses(totalProfitWithExp);
+        setProfitMarginPercentWithExpenses(profitMarginWithExp);
+        setRoiValueWithExpenses(roiValWithExp);
+        setRoiPercentWithExpenses(roiPercWithExp);
+      } catch (error) {
+        console.error('Error calculating financial metrics with expenses:', error);
+      }
+    };
+    
+    calculateWithExpenses();
+  }, [stockEntries, totalSalesValue]);
+
   return {
     products,
     suppliers,
@@ -130,6 +166,12 @@ export const useDashboardData = () => {
     roiValue,
     roiPercent,
     productSales,
-    orders
+    orders,
+    // New values including expenses
+    totalSpentWithExpenses,
+    totalProfitWithExpenses,
+    profitMarginPercentWithExpenses,
+    roiValueWithExpenses,
+    roiPercentWithExpenses
   };
 };

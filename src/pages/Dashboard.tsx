@@ -31,6 +31,11 @@ const DashboardPage: React.FC = () => {
     monthlyData,
     lowStockProducts,
     totalStockValue,
+    // Use new values that include expenses
+    totalSalesValue,
+    totalSpentWithExpenses,
+    totalProfitWithExpenses,
+    profitMarginPercentWithExpenses
   } = useDashboardData();
   
   // Find orders with insufficient stock
@@ -64,6 +69,14 @@ const DashboardPage: React.FC = () => {
     );
   }
 
+  // Update support stats to include expenses
+  const updatedStats = {
+    ...supportStats,
+    totalSpent: totalSpentWithExpenses,
+    profit: totalProfitWithExpenses,
+    profitMargin: profitMarginPercentWithExpenses
+  };
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
@@ -71,8 +84,8 @@ const DashboardPage: React.FC = () => {
         description="Vista geral do seu negócio"
       />
       
-      {/* Summary Cards */}
-      <SummaryCards stats={supportStats} />
+      {/* Summary Cards with updated stats including expenses */}
+      <SummaryCards stats={updatedStats} />
       
       <div className="grid grid-cols-1 gap-6 mb-8">
         <SalesAndPurchasesChart chartData={monthlyData} />

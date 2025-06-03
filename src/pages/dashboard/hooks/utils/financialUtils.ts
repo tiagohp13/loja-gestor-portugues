@@ -1,5 +1,6 @@
 
 import { StockExit, StockEntry } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Calculate total sales value from stock exits
@@ -22,6 +23,50 @@ export const calculateTotalPurchaseValue = (stockEntries: StockEntry[]): number 
 };
 
 /**
+ * Calculate total expenses value from expenses table
+ */
+export const calculateTotalExpensesValue = async (): Promise<number> => {
+  try {
+    const { data: expenseItems, error } = await supabase
+      .from('expense_items')
+      .select('quantity, unit_price, discount_percent');
+      
+    if (error) {
+      console.error('Error fetching expense items:', error);
+      return 0;
+    }
+    
+    if (!expenseItems) return 0;
+    
+    return expenseItems.reduce((total, item) => {
+      const itemTotal = item.quantity * item.unit_price;
+      const discountAmount = itemTotal * ((item.discount_percent || 0) / 100);
+      return total + (itemTotal - discountAmount);
+    }, 0);
+  } catch (error) {
+    console.error('Error calculating total expenses:', error);
+    return 0;
+  }
+};
+
+/**
+ * Calculate total spent (purchases + expenses)
+ */
+export const calculateTotalSpent = async (stockEntries: StockEntry[]): Promise<number> => {
+  const purchasesValue = calculateTotalPurchaseValue(stockEntries);
+  const expensesValue = await calculateTotalExpensesValue();
+  return purchasesValue + expensesValue;
+};
+
+/**
+ * Calculate profit (sales minus purchases and expenses)
+ */
+export const calculateTotalProfitWithExpenses = async (totalSalesValue: number, stockEntries: StockEntry[]): Promise<number> => {
+  const totalSpent = await calculateTotalSpent(stockEntries);
+  return totalSalesValue - totalSpent;
+};
+
+/**
  * Calculate profit (sales minus purchases)
  */
 export const calculateTotalProfit = (totalSalesValue: number, totalPurchaseValue: number): number => {
@@ -29,10 +74,39 @@ export const calculateTotalProfit = (totalSalesValue: number, totalPurchaseValue
 };
 
 /**
+ * Calculate profit margin as percentage of sales (including expenses)
+ */
+export const calculateProfitMarginPercentWithExpenses = async (totalSalesValue: number, stockEntries: StockEntry[]): Promise<number> => {
+  if (totalSalesValue === 0) return 0;
+  const totalProfit = await calculateTotalProfitWithExpenses(totalSalesValue, stockEntries);
+  return (totalProfit / totalSalesValue) * 100;
+};
+
+/**
  * Calculate profit margin as percentage of sales
  */
 export const calculateProfitMarginPercent = (totalProfit: number, totalSalesValue: number): number => {
   return totalSalesValue > 0 ? (totalProfit / totalSalesValue) * 100 : 0;
+};
+
+/**
+ * Calculate ROI in monetary value (profit / total spent including expenses)
+ */
+export const calculateRoiValueWithExpenses = async (totalSalesValue: number, stockEntries: StockEntry[]): Promise<number> => {
+  const totalSpent = await calculateTotalSpent(stockEntries);
+  if (totalSpent === 0) return 0;
+  const totalProfit = await calculateTotalProfitWithExpenses(totalSalesValue, stockEntries);
+  return totalProfit / totalSpent;
+};
+
+/**
+ * Calculate ROI as percentage (including expenses)
+ */
+export const calculateRoiPercentWithExpenses = async (totalSalesValue: number, stockEntries: StockEntry[]): Promise<number> => {
+  const totalSpent = await calculateTotalSpent(stockEntries);
+  if (totalSpent === 0) return 0;
+  const totalProfit = await calculateTotalProfitWithExpenses(totalSalesValue, stockEntries);
+  return (totalProfit / totalSpent) * 100;
 };
 
 /**
@@ -54,6 +128,15 @@ export const calculateRoiPercent = (totalProfit: number, totalPurchaseValue: num
  */
 export const calculateAverageSaleValue = (totalSalesValue: number, salesCount: number): number => {
   return salesCount > 0 ? totalSalesValue / salesCount : 0;
+};
+
+/**
+ * Calculate average profit per sale (including expenses)
+ */
+export const calculateAverageProfitPerSaleWithExpenses = async (totalSalesValue: number, stockEntries: StockEntry[], salesCount: number): Promise<number> => {
+  if (salesCount === 0) return 0;
+  const totalProfit = await calculateTotalProfitWithExpenses(totalSalesValue, stockEntries);
+  return totalProfit / salesCount;
 };
 
 /**

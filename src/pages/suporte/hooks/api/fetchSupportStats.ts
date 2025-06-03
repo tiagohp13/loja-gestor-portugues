@@ -1,3 +1,4 @@
+
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
 import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
@@ -47,9 +48,9 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       .from('stock_entry_items')
       .select('quantity, purchase_price, discount_percent');
       
-    let totalSpent = 0;
+    let totalPurchases = 0;
     if (entryItems && !entryError) {
-      totalSpent = entryItems.reduce((sum, item) => {
+      totalPurchases = entryItems.reduce((sum, item) => {
         const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
         return sum + (item.quantity * item.purchase_price * discountMultiplier);
       }, 0);
@@ -62,9 +63,31 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       });
     }
     
+    // Consulta para despesas
+    const { data: expenseItems, error: expenseError } = await supabase
+      .from('expense_items')
+      .select('quantity, unit_price, discount_percent');
+      
+    let totalExpenses = 0;
+    if (expenseItems && !expenseError) {
+      totalExpenses = expenseItems.reduce((sum, item) => {
+        const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+        return sum + (item.quantity * item.unit_price * discountMultiplier);
+      }, 0);
+    } else if (expenseError) {
+      console.error('Error fetching expense items:', expenseError);
+      toast({
+        title: "Erro ao carregar dados de despesas",
+        description: expenseError.message,
+        variant: "destructive"
+      });
+    }
+    
+    // Total gasto = compras + despesas
+    const totalSpent = totalPurchases + totalExpenses;
     const profit = totalSales - totalSpent;
     
-    // Calculate profit margin using real data
+    // Calculate profit margin using real data including expenses
     const profitMargin = calculateProfitMarginPercent(profit, totalSales);
     
     // Executando consultas em paralelo para melhorar o desempenho
