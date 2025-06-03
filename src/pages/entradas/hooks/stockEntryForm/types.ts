@@ -1,6 +1,22 @@
 
 import { StockEntryItem } from '@/types';
 
+export interface EntryDetails {
+  supplierId: string;
+  supplierName: string;
+  date: string;
+  invoiceNumber: string;
+  notes: string;
+}
+
+export interface CurrentItem {
+  productId: string;
+  productName: string;
+  quantity: number;
+  purchasePrice: number;
+  discountPercent?: number;
+}
+
 export interface StockEntryFormState {
   supplierId: string;
   supplierName: string;
@@ -49,3 +65,6 @@ export interface UseStockEntryFormReturn {
   removeItem: (index: number) => void;
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
+
+// Define SortField type to avoid conflicts
+export type StockEntrySortField = 'date' | 'number' | 'supplier';

@@ -60,7 +60,7 @@ export const mapDbSupplierToSupplier = (data: any): Supplier => ({
 });
 
 export const mapDbOrderItemToOrderItem = (data: any): OrderItem => ({
-  id: data.id || '',
+  id: data.id || crypto.randomUUID(),
   productId: data.product_id || '',
   productName: data.product_name,
   quantity: data.quantity,
@@ -86,7 +86,7 @@ export const mapDbOrderToOrder = (data: any, items: any[] = []): Order => ({
 });
 
 export const mapDbStockEntryItemToStockEntryItem = (data: any): StockEntryItem => ({
-  id: data.id,
+  id: data.id || crypto.randomUUID(),
   productId: data.product_id || '',
   productName: data.product_name,
   quantity: data.quantity,
@@ -110,7 +110,7 @@ export const mapDbStockEntryToStockEntry = (data: any, items: any[] = []): Stock
 });
 
 export const mapDbStockExitItemToStockExitItem = (data: any): StockExitItem => ({
-  id: data.id,
+  id: data.id || crypto.randomUUID(),
   productId: data.product_id || '',
   productName: data.product_name,
   quantity: data.quantity,

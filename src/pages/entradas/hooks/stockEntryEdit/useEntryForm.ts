@@ -1,57 +1,41 @@
-import { useState, useEffect } from 'react';
-import { StockEntry, StockEntryItem } from '@/types';
 
-interface StockEntryFormState {
-  items: StockEntryItem[];
-  supplierId: string;
-  date: string;
-  invoiceNumber: string;
-  notes: string;
+import { StockEntryFormState } from './types';
+import { StockEntryItem } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+
+interface UseEntryFormProps {
+  entry: StockEntryFormState;
+  setEntry: React.Dispatch<React.SetStateAction<StockEntryFormState>>;
 }
 
-export const useEntryForm = (initialEntry: StockEntry | null) => {
-  const [formState, setFormState] = useState<StockEntryFormState>({
-    items: [],
-    supplierId: '',
-    date: new Date().toISOString().split('T')[0],
-    invoiceNumber: '',
-    notes: '',
-  });
+export const useEntryForm = ({ entry, setEntry }: UseEntryFormProps) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setEntry(prev => ({ ...prev, [name]: value }));
+  };
 
-  useEffect(() => {
-    if (initialEntry) {
-      setFormState({
-        items: initialEntry.items,
-        supplierId: initialEntry.supplierId,
-        date: initialEntry.date,
-        invoiceNumber: initialEntry.invoiceNumber || '',
-        notes: initialEntry.notes || '',
-      });
-    }
-  }, [initialEntry]);
-
-  const updateItem = (index: number, field: keyof StockEntryItem, value: any) => {
-    const updatedItems = [...formState.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: value,
-    };
-    setFormState(prev => ({
+  const handleSupplierChange = (value: string) => {
+    const supplier = window.suppliers?.find((s: any) => s.id === value);
+    setEntry(prev => ({
       ...prev,
-      items: updatedItems,
+      supplierId: value
     }));
   };
 
-  const removeItem = (index: number) => {
-    setFormState(prev => ({
+  const handleItemChange = (index: number, field: keyof StockEntryItem, value: any) => {
+    setEntry(prev => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index),
+      items: prev.items.map((item, i) => 
+        i === index 
+          ? { ...item, [field]: value, updatedAt: new Date().toISOString() }
+          : item
+      )
     }));
   };
 
-  const addItem = () => {
+  const addNewItem = () => {
     const newItem: StockEntryItem = {
-      id: crypto.randomUUID(),
+      id: uuidv4(),
       productId: '',
       productName: '',
       quantity: 1,
@@ -61,49 +45,24 @@ export const useEntryForm = (initialEntry: StockEntry | null) => {
       updatedAt: new Date().toISOString()
     };
 
-    setFormState(prev => ({
+    setEntry(prev => ({
       ...prev,
       items: [...prev.items, newItem]
     }));
   };
 
-  const setSupplierId = (supplierId: string) => {
-    setFormState(prev => ({
+  const removeItem = (index: number) => {
+    setEntry(prev => ({
       ...prev,
-      supplierId: supplierId,
-    }));
-  };
-
-  const setDate = (date: string) => {
-    setFormState(prev => ({
-      ...prev,
-      date: date,
-    }));
-  };
-
-  const setInvoiceNumber = (invoiceNumber: string) => {
-    setFormState(prev => ({
-      ...prev,
-      invoiceNumber: invoiceNumber,
-    }));
-  };
-
-  const setNotes = (notes: string) => {
-    setFormState(prev => ({
-      ...prev,
-      notes: notes,
+      items: prev.items.filter((_, i) => i !== index)
     }));
   };
 
   return {
-    formState,
-    setFormState,
-    updateItem,
-    removeItem,
-    addItem,
-    setSupplierId,
-    setDate,
-    setInvoiceNumber,
-    setNotes,
+    handleChange,
+    handleSupplierChange,
+    handleItemChange,
+    addNewItem,
+    removeItem
   };
 };

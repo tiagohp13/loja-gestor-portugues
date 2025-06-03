@@ -55,7 +55,7 @@ export const useHandlers = ({
     
     if (selectedProduct) {
       setCurrentItem({
-        id: '',
+        id: uuidv4(),
         productId: selectedProduct.id,
         productName: selectedProduct.name,
         quantity: 1,
@@ -139,7 +139,7 @@ export const useHandlers = ({
     setItems(prevItems => [...prevItems, newItem]);
     
     setCurrentItem({
-      id: '',
+      id: uuidv4(),
       productId: '',
       productName: '',
       quantity: 1,

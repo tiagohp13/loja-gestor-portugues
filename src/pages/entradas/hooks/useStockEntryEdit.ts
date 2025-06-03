@@ -5,7 +5,7 @@ import { useEntryForm } from './stockEntryEdit/useEntryForm';
 import { useEntrySubmit } from './stockEntryEdit/useEntrySubmit';
 import { calculateItemTotal, calculateTotal } from './stockEntryEdit/utils';
 import { StockEntryItem } from '@/types';
-import { UseStockEntryEditProps, UseStockEntryEditReturn } from './stockEntryEdit/types';
+import { UseStockEntryEditReturn } from './stockEntryEdit/types';
 
 // Make product and suppliers data available to other hooks via window object
 // This avoids circular dependencies
@@ -35,7 +35,7 @@ export const useStockEntryEdit = (id?: string): UseStockEntryEditReturn => {
     handleItemChange, 
     addNewItem, 
     removeItem 
-  } = useEntryForm(entry, setEntry);
+  } = useEntryForm({ entry, setEntry });
   
   // Form submission
   const { handleSubmit, isSubmitting, isNewEntry } = useEntrySubmit(id, entry);

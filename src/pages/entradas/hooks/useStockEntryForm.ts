@@ -51,7 +51,7 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
     selectedProductDisplay,
     setSelectedProductDisplay,
     setSearchTerm,
-    setIsProductSearchOpen, 
+    setIsProductSearchOpen,
     setIsSupplierSearchOpen,
     products
   });
@@ -93,7 +93,7 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
     filteredProducts,
     filteredSuppliers,
     totalValue,
-    isSubmitting, // Add isSubmitting to the return object
+    isSubmitting,
     setEntryDetails,
     setCurrentItem,
     setSearchTerm,
