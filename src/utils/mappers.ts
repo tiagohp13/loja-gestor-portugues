@@ -60,11 +60,14 @@ export const mapDbSupplierToSupplier = (data: any): Supplier => ({
 });
 
 export const mapDbOrderItemToOrderItem = (data: any): OrderItem => ({
+  id: data.id || '',
   productId: data.product_id || '',
   productName: data.product_name,
   quantity: data.quantity,
   salePrice: Number(data.sale_price),
-  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined
+  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined,
+  createdAt: data.created_at || new Date().toISOString(),
+  updatedAt: data.updated_at || new Date().toISOString()
 });
 
 export const mapDbOrderToOrder = (data: any, items: any[] = []): Order => ({
@@ -77,6 +80,8 @@ export const mapDbOrderToOrder = (data: any, items: any[] = []): Order => ({
   convertedToStockExitId: data.converted_to_stock_exit_id,
   convertedToStockExitNumber: data.converted_to_stock_exit_number,
   discount: Number(data.discount || 0),
+  createdAt: data.created_at,
+  updatedAt: data.updated_at,
   items: items.map(mapDbOrderItemToOrderItem)
 });
 
@@ -86,7 +91,9 @@ export const mapDbStockEntryItemToStockEntryItem = (data: any): StockEntryItem =
   productName: data.product_name,
   quantity: data.quantity,
   purchasePrice: Number(data.purchase_price),
-  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined
+  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined,
+  createdAt: data.created_at || new Date().toISOString(),
+  updatedAt: data.updated_at || new Date().toISOString()
 });
 
 export const mapDbStockEntryToStockEntry = (data: any, items: any[] = []): StockEntry => ({
@@ -98,6 +105,7 @@ export const mapDbStockEntryToStockEntry = (data: any, items: any[] = []): Stock
   invoiceNumber: data.invoice_number || '',
   notes: data.notes || '',
   createdAt: data.created_at,
+  updatedAt: data.updated_at,
   items: items.map(mapDbStockEntryItemToStockEntryItem)
 });
 
@@ -107,7 +115,9 @@ export const mapDbStockExitItemToStockExitItem = (data: any): StockExitItem => (
   productName: data.product_name,
   quantity: data.quantity,
   salePrice: Number(data.sale_price),
-  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined
+  discountPercent: data.discount_percent ? Number(data.discount_percent) : undefined,
+  createdAt: data.created_at || new Date().toISOString(),
+  updatedAt: data.updated_at || new Date().toISOString()
 });
 
 export const mapDbStockExitToStockExit = (data: any, items: any[] = []): StockExit => ({
@@ -121,6 +131,7 @@ export const mapDbStockExitToStockExit = (data: any, items: any[] = []): StockEx
   fromOrderId: data.from_order_id,
   fromOrderNumber: data.from_order_number,
   createdAt: data.created_at,
+  updatedAt: data.updated_at,
   discount: Number(data.discount || 0),
   items: items.map(mapDbStockExitItemToStockExitItem)
 });

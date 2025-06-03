@@ -1,25 +1,24 @@
 
 import { StockEntryItem } from '@/types';
 
-export interface EntryDetails {
+export interface StockEntryFormState {
   supplierId: string;
   supplierName: string;
   date: string;
   invoiceNumber: string;
   notes: string;
-}
-
-export interface CurrentItem {
-  productId: string;
-  productName: string;
-  quantity: number;
-  purchasePrice: number;
+  items: StockEntryItem[];
 }
 
 export interface UseStockEntryFormReturn {
-  entryDetails: EntryDetails;
+  entryDetails: {
+    supplierId: string;
+    supplierName: string;
+    invoiceNumber: string;
+    notes: string;
+  };
   items: StockEntryItem[];
-  currentItem: CurrentItem;
+  currentItem: StockEntryItem;
   searchTerm: string;
   selectedProductDisplay: string;
   isProductSearchOpen: boolean;
@@ -27,20 +26,12 @@ export interface UseStockEntryFormReturn {
   supplierSearchTerm: string;
   entryDate: Date;
   calendarOpen: boolean;
-  filteredProducts: Array<{
-    id: string;
-    name: string;
-    code: string;
-    currentStock: number;
-  }>;
-  filteredSuppliers: Array<{
-    id: string;
-    name: string;
-  }>;
+  filteredProducts: any[];
+  filteredSuppliers: any[];
   totalValue: number;
-  isSubmitting: boolean; // Add isSubmitting property
-  setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
-  setCurrentItem: React.Dispatch<React.SetStateAction<CurrentItem>>;
+  isSubmitting: boolean;
+  setEntryDetails: React.Dispatch<React.SetStateAction<any>>;
+  setCurrentItem: React.Dispatch<React.SetStateAction<StockEntryItem>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setSelectedProductDisplay: React.Dispatch<React.SetStateAction<string>>;
   setIsProductSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -48,8 +39,8 @@ export interface UseStockEntryFormReturn {
   setSupplierSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setCalendarOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setEntryDate: React.Dispatch<React.SetStateAction<Date>>;
-  handleEntryDetailsChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  handleItemChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  handleEntryDetailsChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  handleItemChange: (field: string, value: any) => void;
   handleSearch: (value: string) => void;
   handleSupplierSearch: (value: string) => void;
   handleProductSelect: (productId: string) => void;

@@ -8,6 +8,8 @@ import RecordCount from '@/components/common/RecordCount';
 import { useStockEntries } from './hooks/useStockEntries';
 import { Package } from 'lucide-react';
 
+type SortField = 'date' | 'number' | 'supplier';
+
 const StockEntryList = () => {
   const navigate = useNavigate();
   const { 
@@ -67,7 +69,7 @@ const StockEntryList = () => {
         
         <StockEntryTable
           entries={sortedEntries}
-          sortField={sortField}
+          sortField={sortField as SortField}
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
           onViewEntry={handleViewEntry}

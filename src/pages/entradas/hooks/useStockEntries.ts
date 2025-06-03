@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { StockEntry } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -113,7 +114,7 @@ export const useStockEntries = () => {
           notes: entry.notes || '',
           date: entry.date,
           createdAt: entry.created_at,
-          updatedAt: entry.updated_at,
+          updatedAt: entry.updated_at || entry.created_at,
           items: (entry.stock_entry_items || []).map((item: any) => ({
             id: item.id,
             productId: item.product_id || '',
@@ -234,6 +235,10 @@ export const useStockEntries = () => {
       toast.error('Erro ao atualizar entrada de stock');
       throw error;
     }
+  };
+
+  const deleteEntry = async (id: string) => {
+    return handleDeleteEntry(id);
   };
 
   return {
