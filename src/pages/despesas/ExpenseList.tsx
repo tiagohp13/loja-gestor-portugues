@@ -135,10 +135,7 @@ const ExpenseList = () => {
   if (isLoading) {
     return (
       <div className="p-6">
-        <PageHeader 
-          title="Despesas" 
-          subtitle="Gerir despesas internas"
-        />
+        <PageHeader title="Despesas" />
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gestorApp-blue mx-auto"></div>
@@ -151,10 +148,7 @@ const ExpenseList = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader 
-        title="Despesas" 
-        subtitle="Gerir despesas internas"
-      />
+      <PageHeader title="Despesas" />
 
       <Card>
         <CardHeader>
@@ -182,8 +176,6 @@ const ExpenseList = () => {
             <EmptyState 
               title="Nenhuma despesa encontrada"
               description={searchTerm ? "Tente ajustar os filtros de pesquisa." : "Comece por adicionar uma nova despesa."}
-              actionLabel="Nova Despesa"
-              onAction={() => navigate('/despesas/nova')}
             />
           ) : (
             <Table>

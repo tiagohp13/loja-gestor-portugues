@@ -204,10 +204,7 @@ const ExpenseNew = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader 
-        title="Nova Despesa" 
-        subtitle="Criar uma nova despesa interna"
-      />
+      <PageHeader title="Nova Despesa" />
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>

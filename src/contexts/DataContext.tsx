@@ -392,13 +392,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       fromOrderId: order.id,
       fromOrderNumber: order.number,
       discount: order.discount,
+      updatedAt: new Date().toISOString(),
       items: order.items.map(item => ({
         id: crypto.randomUUID(),
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
         salePrice: item.salePrice,
-        discountPercent: item.discountPercent
+        discountPercent: item.discountPercent,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       }))
     };
     
@@ -916,7 +919,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         convertedToStockExitId: data.converted_to_stock_exit_id,
         convertedToStockExitNumber: data.converted_to_stock_exit_number,
         discount: Number(data.discount || 0),
-        items: order.items
+        createdAt: data.created_at,
+        updatedAt: data.updated_at,
+        items: order.items,
+        total: order.total
       };
       
       setOrders([newOrder, ...orders]);
@@ -1017,7 +1023,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const itemsWithIds = entry.items.map(item => {
         if (!item.id) {
-          return { ...item, id: crypto.randomUUID() };
+          return { 
+            ...item, 
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
         }
         return item;
       });
@@ -1031,7 +1042,9 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         invoiceNumber: entry.invoiceNumber || '',
         notes: entry.notes || '',
         createdAt: new Date().toISOString(),
-        items: itemsWithIds
+        updatedAt: new Date().toISOString(),
+        items: itemsWithIds,
+        total: entry.total
       };
       
       setStockEntries(prev => [optimisticEntry, ...prev]);
@@ -1100,10 +1113,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         invoiceNumber: data.invoice_number || '',
         notes: data.notes,
         createdAt: data.created_at,
+        updatedAt: data.updated_at,
         items: itemsWithIds.map(item => ({
           ...item,
           id: item.id || crypto.randomUUID()
-        }))
+        })),
+        total: entry.total
       };
       
       setStockEntries(prev => [
@@ -1219,7 +1234,12 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const itemsWithIds = exit.items.map(item => {
         if (!item.id) {
-          return { ...item, id: crypto.randomUUID() };
+          return { 
+            ...item, 
+            id: crypto.randomUUID(),
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
         }
         return item;
       });
@@ -1307,8 +1327,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         fromOrderId: data.from_order_id,
         fromOrderNumber: data.from_order_number,
         createdAt: data.created_at,
+        updatedAt: data.updated_at,
         discount: Number(data.discount || 0),
-        items: itemsWithIds
+        items: itemsWithIds,
+        total: exit.total
       };
       
       await fetchProducts();
