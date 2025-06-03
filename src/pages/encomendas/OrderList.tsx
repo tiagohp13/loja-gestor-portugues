@@ -1,11 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Edit, Trash2, CheckCircle } from 'lucide-react';
+import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart } from 'lucide-react';
 import { toast } from 'sonner';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
@@ -139,7 +139,7 @@ const OrderList = () => {
   if (isLoading) {
     return (
       <div className="p-6">
-        <PageHeader title="Encomendas" />
+        <PageHeader title="Consultar Encomendas" description="Consulte e gerencie as suas encomendas" />
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gestorApp-blue mx-auto"></div>
@@ -152,102 +152,141 @@ const OrderList = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Encomendas" />
+      <PageHeader title="Consultar Encomendas" description="Consulte e gerencie as suas encomendas" />
 
+      {/* Card com total de encomendas */}
       <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle>Histórico de Encomendas</CardTitle>
-            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-              <div className="relative flex-1 sm:flex-initial">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray w-4 h-4" />
-                <Input
-                  placeholder="Pesquisar encomendas..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 w-full sm:w-64"
-                />
-              </div>
-              <Button onClick={() => navigate('/encomendas/nova')}>
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Encomenda
-              </Button>
-            </div>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-gestorApp-blue">
+            <ShoppingCart className="w-5 h-5" />
+            <span className="text-sm font-medium">Total de encomendas: {filteredOrders.length}</span>
           </div>
-        </CardHeader>
-        <CardContent>
-          {filteredOrders.length === 0 ? (
-            <EmptyState 
-              title="Nenhuma encomenda encontrada"
-              description={searchTerm ? "Tente ajustar os filtros de pesquisa." : "Comece por adicionar uma nova encomenda."}
-            />
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Número</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Total</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell>
-                      <Badge variant="outline">{order.number}</Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(order.date)}</TableCell>
-                    <TableCell>{order.clientName}</TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(order.total || 0)}
-                    </TableCell>
-                    <TableCell>
-                      {order.convertedToStockExitId ? (
-                        <Badge variant="secondary" className="bg-green-100 text-green-800">
-                          <CheckCircle className="w-3 h-3 mr-1" />
-                          Convertida
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">Pendente</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => navigate(`/encomendas/${order.id}`)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setDeleteDialog({ open: true, orderId: order.id })}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
         </CardContent>
       </Card>
 
-      <DeleteConfirmDialog 
-        open={deleteDialog.open}
-        onClose={() => setDeleteDialog({ open: false, orderId: null })}
-        onDelete={handleDeleteOrder}
-        title="Eliminar Encomenda"
-        description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
-        trigger={<div style={{ display: 'none' }} />}
-      />
+      {/* Campo de pesquisa e botão Nova Encomenda */}
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray w-4 h-4" />
+          <Input
+            placeholder="Pesquisar por cliente ou número da encomenda..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        <Button onClick={() => navigate('/encomendas/nova')}>
+          <Plus className="w-4 h-4 mr-2" />
+          Nova Encomenda
+        </Button>
+      </div>
+
+      {/* Tabela de encomendas */}
+      <Card>
+        <CardContent className="p-0">
+          {filteredOrders.length === 0 ? (
+            <div className="p-6">
+              <EmptyState 
+                title="Nenhuma encomenda encontrada"
+                description={searchTerm ? "Tente ajustar os filtros de pesquisa." : "Comece por adicionar uma nova encomenda."}
+              />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      Nº ENCOMENDA
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      DATA
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      CLIENTE
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      VALOR
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      ESTADO
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      AÇÕES
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredOrders.map((order) => (
+                    <tr key={order.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                          onClick={() => navigate(`/encomendas/${order.id}`)}
+                          className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark underline"
+                        >
+                          {order.number}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {formatDate(order.date)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
+                        {order.clientName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark font-medium">
+                        {formatCurrency(order.total || 0)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {order.convertedToStockExitId ? (
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Convertida em Saída
+                          </Badge>
+                        ) : (
+                          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                            Pendente
+                          </Badge>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => navigate(`/encomendas/${order.id}`)}
+                            disabled={order.convertedToStockExitId !== null}
+                            className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <DeleteConfirmDialog
+                            open={deleteDialog.open && deleteDialog.orderId === order.id}
+                            onClose={() => setDeleteDialog({ open: false, orderId: null })}
+                            onDelete={handleDeleteOrder}
+                            title="Eliminar Encomenda"
+                            description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
+                            trigger={
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDeleteDialog({ open: true, orderId: order.id })}
+                                disabled={order.convertedToStockExitId !== null}
+                                className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 };
