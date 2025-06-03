@@ -71,12 +71,19 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
   
   const { totalValue } = useCalculations(items);
   
+  // Fix type compatibility by ensuring entry has all required fields
   const { handleSubmit, isSubmitting } = useSubmit({
-    entryDetails,
+    entryDetails: {
+      ...entryDetails,
+      updatedAt: new Date().toISOString() // Add required field
+    },
     items,
     entryDate,
     suppliers,
-    addStockEntry
+    addStockEntry: (entry: any) => addStockEntry({
+      ...entry,
+      updatedAt: new Date().toISOString() // Ensure updatedAt is present
+    })
   });
 
   return {

@@ -10,11 +10,14 @@ export interface EntryDetails {
 }
 
 export interface CurrentItem {
+  id: string;
   productId: string;
   productName: string;
   quantity: number;
   purchasePrice: number;
   discountPercent?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface StockEntryFormState {
@@ -66,5 +69,8 @@ export interface UseStockEntryFormReturn {
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
-// Define SortField type to avoid conflicts
-export type StockEntrySortField = 'date' | 'number' | 'supplier';
+// Define SortField type to avoid conflicts - use consistent naming
+export type StockEntrySortField = 'date' | 'number' | 'supplier' | 'invoiceNumber' | 'value';
+
+// Export alias for compatibility
+export type SortField = StockEntrySortField;

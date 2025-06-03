@@ -7,15 +7,15 @@ import { Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import StockEntryTableHeader from './StockEntryTableHeader';
 import StockEntryItem from './StockEntryItem';
+import { StockEntrySortField } from '../hooks/stockEntryForm/types';
 
-type SortField = 'number' | 'date' | 'supplierName' | 'invoiceNumber' | 'value';
 type SortOrder = 'asc' | 'desc';
 
 interface StockEntryTableProps {
   entries: StockEntry[];
-  sortField: SortField;
+  sortField: StockEntrySortField;
   sortOrder: SortOrder;
-  onSortChange: (field: SortField) => void;
+  onSortChange: (field: StockEntrySortField) => void;
   onViewEntry: (id: string) => void;
   onEditEntry: (e: React.MouseEvent, id: string) => void;
   onDeleteEntry: (id: string) => void;

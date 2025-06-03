@@ -68,7 +68,7 @@ const StockEntryList = () => {
         
         <StockEntryTable
           entries={sortedEntries}
-          sortField={sortField as StockEntrySortField}
+          sortField={sortField}
           sortOrder={sortOrder}
           onSortChange={handleSortChange}
           onViewEntry={handleViewEntry}

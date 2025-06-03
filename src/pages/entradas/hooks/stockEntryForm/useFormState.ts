@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { StockEntryItem } from '@/types';
-import { EntryDetails, CurrentItem } from './types';
+import { EntryDetails } from './types';
 
 export const useFormState = () => {
   const [entryDetails, setEntryDetails] = useState<EntryDetails>({
@@ -14,11 +14,16 @@ export const useFormState = () => {
   
   const [items, setItems] = useState<StockEntryItem[]>([]);
   
-  const [currentItem, setCurrentItem] = useState<CurrentItem>({
+  // Initialize currentItem with all required StockEntryItem fields
+  const [currentItem, setCurrentItem] = useState<StockEntryItem>({
+    id: '',
     productId: '',
     productName: '',
     quantity: 1,
-    purchasePrice: 0
+    purchasePrice: 0,
+    discountPercent: 0,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
   });
   
   const [searchTerm, setSearchTerm] = useState('');

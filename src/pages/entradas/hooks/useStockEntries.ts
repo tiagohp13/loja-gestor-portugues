@@ -43,6 +43,14 @@ export const useStockEntries = () => {
         aValue = a.supplierName;
         bValue = b.supplierName;
         break;
+      case 'invoiceNumber':
+        aValue = a.invoiceNumber || '';
+        bValue = b.invoiceNumber || '';
+        break;
+      case 'value':
+        aValue = calculateEntryTotal(a);
+        bValue = calculateEntryTotal(b);
+        break;
       default:
         aValue = a.date;
         bValue = b.date;
