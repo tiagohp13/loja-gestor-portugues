@@ -68,16 +68,16 @@ const AppSidebar: React.FC = () => {
       isActive: location.pathname.includes('/entradas')
     },
     { 
-      path: '/despesas/historico', 
-      label: 'Despesas', 
-      icon: <Receipt className="w-5 h-5" />,
-      isActive: location.pathname.includes('/despesas')
-    },
-    { 
       path: '/saidas/historico', 
       label: 'Vendas', 
       icon: <LogOut className="w-5 h-5" />,
       isActive: location.pathname.includes('/saidas')
+    },
+    { 
+      path: '/despesas/historico', 
+      label: 'Despesas', 
+      icon: <Receipt className="w-5 h-5" />,
+      isActive: location.pathname.includes('/despesas')
     },
     { 
       path: '/suporte', 
