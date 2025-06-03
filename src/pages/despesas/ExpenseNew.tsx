@@ -19,7 +19,6 @@ interface ExpenseFormData {
   supplierName: string;
   date: string;
   notes: string;
-  discount: number;
   items: Omit<ExpenseItem, 'id' | 'createdAt' | 'updatedAt'>[];
 }
 
@@ -32,7 +31,6 @@ const ExpenseNew = () => {
     supplierName: '',
     date: new Date().toISOString().split('T')[0],
     notes: '',
-    discount: 0,
     items: []
   });
 
@@ -115,14 +113,11 @@ const ExpenseNew = () => {
   };
 
   const calculateTotal = () => {
-    const itemsTotal = formData.items.reduce((sum, item) => {
+    return formData.items.reduce((sum, item) => {
       const itemTotal = item.quantity * item.unitPrice;
       const discountAmount = itemTotal * (item.discountPercent / 100);
       return sum + (itemTotal - discountAmount);
     }, 0);
-
-    const generalDiscount = itemsTotal * (formData.discount / 100);
-    return itemsTotal - generalDiscount;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +149,7 @@ const ExpenseNew = () => {
 
       const expenseNumber = numberData || `DES-${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
 
-      // Create expense
+      // Create expense (removed discount field)
       const { data: expenseData, error: expenseError } = await supabase
         .from('expenses')
         .insert({
@@ -162,8 +157,7 @@ const ExpenseNew = () => {
           supplier_id: formData.supplierId,
           supplier_name: formData.supplierName,
           date: formData.date,
-          notes: formData.notes,
-          discount: formData.discount
+          notes: formData.notes
         })
         .select()
         .single();
@@ -354,20 +348,7 @@ const ExpenseNew = () => {
         {formData.items.length > 0 && (
           <Card>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label htmlFor="discount">Desconto Geral (%)</Label>
-                  <Input
-                    id="discount"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={formData.discount}
-                    onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div></div>
+              <div className="flex justify-end">
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gestorApp-blue">
                     Total: {formatCurrency(calculateTotal())}
