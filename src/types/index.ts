@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -105,6 +106,8 @@ export interface StockEntryItem {
   quantity: number;
   purchasePrice: number;
   discountPercent?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface StockExit {
@@ -119,6 +122,7 @@ export interface StockExit {
   fromOrderId?: string;
   fromOrderNumber?: string;
   createdAt: string;
+  updatedAt: string;
   discount?: number;
   total?: number;
 }
@@ -130,6 +134,8 @@ export interface StockExitItem {
   quantity: number;
   salePrice: number;
   discountPercent?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface StockEntry {
@@ -142,6 +148,7 @@ export interface StockEntry {
   notes?: string;
   date: string;
   createdAt: string;
+  updatedAt: string;
   total?: number;
 }
 
@@ -157,6 +164,8 @@ export interface Order {
   convertedToStockExitNumber?: string;
   discount?: number;
   total?: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface OrderItem {
@@ -165,9 +174,36 @@ export interface OrderItem {
   quantity: number;
   salePrice: number;
   discountPercent?: number;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
-export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'all';
+export interface Expense {
+  id: string;
+  number: string;
+  supplierId?: string;
+  supplierName: string;
+  items: ExpenseItem[];
+  date: string;
+  notes?: string;
+  discount?: number;
+  createdAt: string;
+  updatedAt: string;
+  total?: number;
+}
+
+export interface ExpenseItem {
+  id: string;
+  productName: string;
+  quantity: number;
+  unitPrice: number;
+  discountPercent?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';
 
 export interface LegacyStockEntry {
   id: string;

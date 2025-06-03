@@ -50,6 +50,10 @@ import StockEntryDetail from './pages/entradas/StockEntryDetail';
 import StockEntryNew from './pages/entradas/StockEntryNew';
 import StockEntryEdit from './pages/entradas/StockEntryEdit';
 
+// Expenses
+import ExpenseList from './pages/despesas/ExpenseList';
+import ExpenseNew from './pages/despesas/ExpenseNew';
+
 // Sales (Previously Stock Exits)
 import StockExitList from './pages/saidas/StockExitList';
 import StockExitDetail from './pages/saidas/StockExitDetail';
@@ -128,6 +132,9 @@ function App() {
                     <Route path="/entradas/nova" element={<StockEntryNew />} />
                     <Route path="/entradas/:id" element={<StockEntryDetail />} />
                     <Route path="/entradas/editar/:id" element={<StockEntryEdit />} />
+                    
+                    <Route path="/despesas/historico" element={<ExpenseList />} />
+                    <Route path="/despesas/nova" element={<ExpenseNew />} />
                     
                     <Route path="/saidas/historico" element={<StockExitList />} />
                     <Route path="/saidas/nova" element={<StockExitNew />} />
