@@ -1,8 +1,9 @@
+
 import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { toast } from 'sonner';
 
-import { StockEntryFormState } from './useStockEntryForm';
+import { StockEntryFormState } from './types';
 import { Supplier, Product, StockEntryItem } from '@/types';
 
 export const useFormHandlers = (

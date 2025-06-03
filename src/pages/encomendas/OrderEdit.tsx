@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -58,10 +59,10 @@ const OrderEdit = () => {
           email: client.email || '',
           phone: client.phone || '',
           address: client.address || '',
-          taxId: client.taxId || '',
+          taxId: client.tax_id || '',
           notes: client.notes || '',
-          createdAt: client.createdAt,
-          updatedAt: client.updatedAt,
+          createdAt: client.created_at,
+          updatedAt: client.updated_at,
           status: client.status
         }));
         setClients(formattedClients);

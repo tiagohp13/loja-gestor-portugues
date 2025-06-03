@@ -206,7 +206,7 @@ const OrderList = () => {
                     </TableCell>
                     <TableCell>
                       {order.convertedToStockExitId ? (
-                        <Badge variant="success">
+                        <Badge variant="secondary" className="bg-green-100 text-green-800">
                           <CheckCircle className="w-3 h-3 mr-1" />
                           Convertida
                         </Badge>
@@ -246,6 +246,7 @@ const OrderList = () => {
         onDelete={handleDeleteOrder}
         title="Eliminar Encomenda"
         description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
+        trigger={<div style={{ display: 'none' }} />}
       />
     </div>
   );

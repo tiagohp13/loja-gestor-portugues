@@ -8,6 +8,8 @@ export const useStockEntries = () => {
   const [filteredEntries, setFilteredEntries] = useState<StockEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortField, setSortField] = useState<string>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   useEffect(() => {
     fetchEntries();
@@ -24,6 +26,68 @@ export const useStockEntries = () => {
       setFilteredEntries(entries);
     }
   }, [searchTerm, entries]);
+
+  const sortedEntries = [...filteredEntries].sort((a, b) => {
+    let aValue: any, bValue: any;
+    
+    switch (sortField) {
+      case 'date':
+        aValue = new Date(a.date);
+        bValue = new Date(b.date);
+        break;
+      case 'number':
+        aValue = a.number;
+        bValue = b.number;
+        break;
+      case 'supplier':
+        aValue = a.supplierName;
+        bValue = b.supplierName;
+        break;
+      default:
+        return 0;
+    }
+    
+    if (sortOrder === 'asc') {
+      return aValue < bValue ? -1 : 1;
+    } else {
+      return aValue > bValue ? -1 : 1;
+    }
+  });
+
+  const handleSortChange = (field: string) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('stock_entries')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      setEntries(entries.filter(entry => entry.id !== id));
+      setFilteredEntries(filteredEntries.filter(entry => entry.id !== id));
+      toast.success('Entrada de stock eliminada com sucesso');
+    } catch (error) {
+      console.error('Error deleting stock entry:', error);
+      toast.error('Erro ao eliminar entrada de stock');
+    }
+  };
+
+  const calculateEntryTotal = (entry: StockEntry) => {
+    return entry.items.reduce((sum, item) => {
+      const itemTotal = item.quantity * item.purchasePrice;
+      const discount = item.discountPercent ? (itemTotal * item.discountPercent / 100) : 0;
+      return sum + (itemTotal - discount);
+    }, 0);
+  };
 
   const fetchEntries = async () => {
     try {
@@ -172,24 +236,6 @@ export const useStockEntries = () => {
     }
   };
 
-  const deleteEntry = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('stock_entries')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      setEntries(entries.filter(entry => entry.id !== id));
-      setFilteredEntries(filteredEntries.filter(entry => entry.id !== id));
-      toast.success('Entrada de stock eliminada com sucesso');
-    } catch (error) {
-      console.error('Error deleting stock entry:', error);
-      toast.error('Erro ao eliminar entrada de stock');
-    }
-  };
-
   return {
     entries,
     filteredEntries,
@@ -199,6 +245,13 @@ export const useStockEntries = () => {
     fetchEntries,
     createEntry,
     updateEntry,
-    deleteEntry
+    deleteEntry,
+    sortField,
+    sortOrder,
+    sortedEntries,
+    handleSortChange,
+    handleDeleteEntry,
+    calculateEntryTotal,
+    localEntries: entries
   };
 };
