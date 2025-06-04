@@ -52,7 +52,7 @@ import AppLayout from '@/components/layouts/AppLayout';
 import AuthLayout from '@/components/layouts/AuthLayout';
 
 // Import services
-import { authService } from '@/services/authService';
+import { getCurrentUser } from '@/services/authService';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -75,7 +75,20 @@ function App() {
   }, []);
 
   const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const isAuthenticated = authService.isAuthenticated();
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+
+    useEffect(() => {
+      const checkAuth = async () => {
+        const user = await getCurrentUser();
+        setIsAuthenticated(!!user);
+      };
+      checkAuth();
+    }, []);
+
+    if (isAuthenticated === null) {
+      return <div>Loading...</div>;
+    }
+
     return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
   };
 
