@@ -15,6 +15,12 @@ interface DashboardStatisticsProps {
   profitMarginPercent: number;
   roiValue: number;
   roiPercent: number;
+  // New props that include expenses
+  totalSpentWithExpenses: number;
+  totalProfitWithExpenses: number;
+  profitMarginPercentWithExpenses: number;
+  roiValueWithExpenses: number;
+  roiPercentWithExpenses: number;
   navigateToProductDetail: (id: string) => void;
   navigateToClientDetail: (id: string) => void;
   navigateToSupplierDetail: (id: string) => void;
@@ -30,6 +36,11 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
   profitMarginPercent,
   roiValue,
   roiPercent,
+  totalSpentWithExpenses,
+  totalProfitWithExpenses,
+  profitMarginPercentWithExpenses,
+  roiValueWithExpenses,
+  roiPercentWithExpenses,
   navigateToProductDetail,
   navigateToClientDetail,
   navigateToSupplierDetail
@@ -84,9 +95,9 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
             </dd>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Total Compras</dt>
+            <dt className="text-gray-500 font-medium text-left">Total Gasto</dt>
             <dd className="font-semibold text-red-500 text-right">
-              {formatCurrency(totalPurchaseValue)}
+              {formatCurrency(totalSpentWithExpenses)}
             </dd>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
@@ -98,13 +109,13 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
           <div className="flex justify-between items-center py-2 border-b">
             <dt className="text-gray-500 font-medium text-left">Lucro</dt>
             <dd className="font-semibold text-green-600 text-right">
-              {formatCurrency(totalProfit)}
+              {formatCurrency(totalProfitWithExpenses)}
             </dd>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
             <dt className="text-gray-500 font-medium text-left">Margem de Lucro</dt>
             <dd className="font-semibold text-green-600 text-right">
-              {profitMarginPercent.toFixed(2)}%
+              {profitMarginPercentWithExpenses.toFixed(2)}%
             </dd>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
@@ -112,7 +123,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               ROI (€)
             </dt>
             <dd className="font-semibold text-green-600 text-right">
-              {formatCurrency(roiValue)}
+              {formatCurrency(roiValueWithExpenses)}
             </dd>
           </div>
           <div className="flex justify-between items-center py-2">
@@ -120,7 +131,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               ROI (%)
             </dt>
             <dd className="font-semibold text-green-600 text-right">
-              {roiPercent.toFixed(2)}%
+              {roiPercentWithExpenses.toFixed(2)}%
             </dd>
           </div>
         </dl>

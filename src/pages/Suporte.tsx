@@ -34,7 +34,13 @@ const Suporte = () => {
     profitMarginPercent,
     roiValue,
     roiPercent,
-    recentTransactions
+    recentTransactions,
+    // New values including expenses
+    totalSpentWithExpenses,
+    totalProfitWithExpenses,
+    profitMarginPercentWithExpenses,
+    roiValueWithExpenses,
+    roiPercentWithExpenses
   } = useDashboardData();
   
   const navigateToProductDetail = (id: string) => {
@@ -108,6 +114,11 @@ const Suporte = () => {
           profitMarginPercent={profitMarginPercent}
           roiValue={roiValue}
           roiPercent={roiPercent}
+          totalSpentWithExpenses={totalSpentWithExpenses}
+          totalProfitWithExpenses={totalProfitWithExpenses}
+          profitMarginPercentWithExpenses={profitMarginPercentWithExpenses}
+          roiValueWithExpenses={roiValueWithExpenses}
+          roiPercentWithExpenses={roiPercentWithExpenses}
           navigateToProductDetail={navigateToProductDetail}
           navigateToClientDetail={navigateToClientDetail}
           navigateToSupplierDetail={navigateToSupplierDetail}
