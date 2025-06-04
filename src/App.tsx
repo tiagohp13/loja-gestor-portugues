@@ -100,8 +100,16 @@ function App() {
             <Router>
               <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
                 <Routes>
-                  <Route path="/login" element={<AuthLayout><Login /></AuthLayout>} />
-                  <Route path="/register" element={<AuthLayout><Register /></AuthLayout>} />
+                  <Route path="/login" element={
+                    <AuthLayout>
+                      <Login />
+                    </AuthLayout>
+                  } />
+                  <Route path="/register" element={
+                    <AuthLayout>
+                      <Register />
+                    </AuthLayout>
+                  } />
                   <Route
                     path="/*"
                     element={
