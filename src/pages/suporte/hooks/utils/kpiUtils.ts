@@ -19,6 +19,8 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     totalSales: stats.totalSales,
     totalSpent: stats.totalSpent,
     profit: stats.profit,
+    totalEntries,
+    numberOfExpenses: stats.numberOfExpenses,
     // Taxa de conversão - verificar usando os valores corretos
     calculatedTaxaConversao: (salesCount / clientsCount) * 100
   });
@@ -31,8 +33,13 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Isso calcula a porcentagem de clientes que fizeram compras
   const salesConversionRate = (salesCount / clientsCount) * 100;
   
-  // Outros cálculos de médias
-  const averagePurchaseValue = totalEntries > 0 ? stats.totalSpent / totalEntries : 0;
+  // CORREÇÃO: Valor Médio de Compra agora inclui despesas
+  // Numerador: Total Gasto (compras + despesas) - já está correto em stats.totalSpent
+  // Denominador: Número de Compras + Número de Despesas
+  const totalTransactions = totalEntries + (stats.numberOfExpenses || 0);
+  
+  // Valor Médio de Compra = (Total Compras + Total Despesas) / (Número de Compras + Número de Despesas)
+  const averagePurchaseValue = totalTransactions > 0 ? stats.totalSpent / totalTransactions : 0;
   
   // Valor Médio de Venda = Valor de Vendas / Número de Vendas
   // Correção: Usar o valor completo sem arredondamento para evitar imprecisões
@@ -89,7 +96,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Adicionamos a Taxa de Conversão ao array de KPIs
   kpis.push(taxaConversao);
   
-  // Valor Médio de Compra com lógica inversa (menor é melhor)
+  // Valor Médio de Compra CORRIGIDO - agora inclui despesas no denominador
   const valorMedioCompra: KPI = {
     name: "Valor Médio de Compra",
     value: averagePurchaseValue,
@@ -97,13 +104,13 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     unit: '€',
     isPercentage: false,
     previousValue: 450,
-    description: "Valor médio gasto em cada compra a fornecedores.",
-    formula: "Valor de Compras / Número de Compras",
+    description: "Valor médio gasto em cada transação (compras + despesas).",
+    formula: "(Total Compras + Total Despesas) / (Número de Compras + Número de Despesas)",
     belowTarget: averagePurchaseValue > 500, // Lógica inversa: acima da meta é ruim
     isInverseKPI: true // Marcador para indicar que este KPI tem lógica inversa
   };
   
-  // Adicionamos o Valor Médio de Compra ao array de KPIs
+  // Adicionamos o Valor Médio de Compra corrigido ao array de KPIs
   kpis.push(valorMedioCompra);
   
   // Adicionamos os KPIs restantes ao array

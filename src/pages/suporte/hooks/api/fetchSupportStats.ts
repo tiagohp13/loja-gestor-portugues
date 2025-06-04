@@ -76,7 +76,9 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       `);
       
     let totalExpenses = 0;
+    let numberOfExpenses = 0;
     if (expenses && !expenseError) {
+      numberOfExpenses = expenses.length; // Contar o número de despesas
       totalExpenses = expenses.reduce((sum, expense) => {
         const expenseItemsTotal = (expense.expense_items || []).reduce((itemSum: number, item: any) => {
           const itemTotal = item.quantity * item.unit_price;
@@ -150,7 +152,9 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       productsCount,
       monthlySales: [],
       monthlyData,
-      monthlyOrders
+      monthlyOrders,
+      // Adicionando o número de despesas para o cálculo do KPI
+      numberOfExpenses
     };
     
     // Armazenar em cache
