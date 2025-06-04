@@ -34,7 +34,8 @@ export const useSupportData = (): SupportDataReturn => {
     productsCount: 0,
     monthlySales: [],
     monthlyData: [],
-    monthlyOrders: []
+    monthlyOrders: [],
+    numberOfExpenses: 0
   });
   
   const [kpis, setKpis] = useState<KPI[]>([]);
@@ -53,18 +54,18 @@ export const useSupportData = (): SupportDataReturn => {
         if (supportStats.monthlyData.length === 0) {
           // Add a previous month with slightly lower values
           const previousMonth = {
-            month: 'Previous',
-            sales: supportStats.totalSales * 0.9,
-            purchases: supportStats.totalSpent * 0.9
+            name: 'Previous',
+            vendas: supportStats.totalSales * 0.9,
+            compras: supportStats.totalSpent * 0.9
           };
           supportStats.monthlyData.push(previousMonth);
         }
         if (supportStats.monthlyData.length === 1) {
           // Add current month
           const currentMonth = {
-            month: 'Current',
-            sales: supportStats.totalSales,
-            purchases: supportStats.totalSpent
+            name: 'Current',
+            vendas: supportStats.totalSales,
+            compras: supportStats.totalSpent
           };
           supportStats.monthlyData.push(currentMonth);
         }
@@ -74,10 +75,10 @@ export const useSupportData = (): SupportDataReturn => {
       if (!supportStats.monthlySales || supportStats.monthlySales.length < 2) {
         if (!supportStats.monthlySales) supportStats.monthlySales = [];
         if (supportStats.monthlySales.length === 0) {
-          supportStats.monthlySales.push({ month: 'Previous', value: supportStats.totalSales * 0.9 });
+          supportStats.monthlySales.push(supportStats.totalSales * 0.9);
         }
         if (supportStats.monthlySales.length === 1) {
-          supportStats.monthlySales.push({ month: 'Current', value: supportStats.totalSales });
+          supportStats.monthlySales.push(supportStats.totalSales);
         }
       }
       

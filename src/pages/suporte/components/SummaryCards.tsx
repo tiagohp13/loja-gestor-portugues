@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
-import { SupportStats } from '../hooks/useSupportData';
+import { SupportStats } from '../types/supportTypes';
 
 interface SummaryCardsProps {
   stats: SupportStats;
@@ -45,8 +45,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
             </div>
             {stats.monthlySales && stats.monthlySales.length > 1 && 
               renderVariation(
-                stats.monthlySales[stats.monthlySales.length - 1]?.value || 0,
-                stats.monthlySales[stats.monthlySales.length - 2]?.value || 0
+                stats.monthlySales[stats.monthlySales.length - 1] || 0,
+                stats.monthlySales[stats.monthlySales.length - 2] || 0
               )
             }
           </div>
@@ -66,8 +66,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
             </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && 
               renderVariation(
-                stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0,
-                stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0
+                stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0,
+                stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0
               )
             }
           </div>
@@ -91,8 +91,8 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
             </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && 
               renderVariation(
-                (stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0),
-                (stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0)
+                (stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0),
+                (stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0)
               )
             }
           </div>
@@ -112,10 +112,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
             </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
               // Calculate current and previous profit margins
-              const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.sales || 0;
-              const currentPurchases = stats.monthlyData[stats.monthlyData.length - 1]?.purchases || 0;
-              const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.sales || 0;
-              const previousPurchases = stats.monthlyData[stats.monthlyData.length - 2]?.purchases || 0;
+              const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0;
+              const currentPurchases = stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0;
+              const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0;
+              const previousPurchases = stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0;
               
               const currentMargin = currentSales > 0 ? ((currentSales - currentPurchases) / currentSales) * 100 : 0;
               const previousMargin = previousSales > 0 ? ((previousSales - previousPurchases) / previousSales) * 100 : 0;

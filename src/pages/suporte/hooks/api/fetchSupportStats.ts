@@ -1,8 +1,7 @@
-
 import { supabase, countPendingOrders, getLowStockProducts } from '@/integrations/supabase/client';
 import { calculateRoiPercent, calculateProfitMarginPercent } from '@/pages/dashboard/hooks/utils/financialUtils';
 import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
-import { SupportStats } from '../../types/supportTypes';
+import { SupportStats, LowStockProduct } from '../../types/supportTypes';
 import { toast } from '@/components/ui/use-toast';
 
 // Cache para armazenar os resultados das consultas
@@ -111,7 +110,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       topProducts,
       topClients,
       topSuppliers,
-      lowStockProducts,
+      lowStockProductsData,
       pendingOrders,
       completedCount,
       clientsCount,
@@ -124,7 +123,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       fetchTopProducts(),
       fetchTopClients(),
       fetchTopSuppliers(),
-      getLowStockProducts(),
+      fetchLowStockProducts(),
       countPendingOrders(),
       fetchCompletedOrdersCount(),
       fetchClientsCount(),
@@ -143,7 +142,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       topProducts,
       topClients,
       topSuppliers,
-      lowStockProducts,
+      lowStockProducts: lowStockProductsData,
       pendingOrders,
       completedOrders: completedCount,
       clientsCount,
@@ -257,6 +256,30 @@ const fetchTopSuppliers = async () => {
       .slice(0, 5);
   } catch (error) {
     console.error('Error fetching top suppliers:', error);
+    return [];
+  }
+};
+
+const fetchLowStockProducts = async (): Promise<LowStockProduct[]> => {
+  try {
+    const { data: products, error } = await supabase
+      .from('products')
+      .select('id, name, current_stock, min_stock')
+      .lte('current_stock', 10);
+    
+    if (error) {
+      console.error('Error fetching low stock products:', error);
+      return [];
+    }
+    
+    return products?.map(product => ({
+      id: product.id,
+      name: product.name,
+      currentStock: product.current_stock,
+      minStock: product.min_stock
+    })) || [];
+  } catch (error) {
+    console.error('Error in fetchLowStockProducts:', error);
     return [];
   }
 };

@@ -1,17 +1,6 @@
+
 import { supabase } from '@/integrations/supabase/client';
-
-export interface MonthlyDataItem {
-  name: string;
-  vendas: number;
-  compras: number;
-  lucro: number;
-}
-
-export interface MonthlyOrderItem {
-  name: string;
-  orders: number;
-  completedExits: number;
-}
+import { MonthlyDataItem, MonthlyOrderItem } from '../../types/supportTypes';
 
 export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
   try {
@@ -80,8 +69,7 @@ export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
       monthlyMap.set(monthKey, {
         name: monthKey,
         vendas: 0,
-        compras: 0,
-        lucro: 0
+        compras: 0
       });
     }
 
@@ -134,11 +122,6 @@ export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
         }
       });
     }
-
-    // Calculate profit for each month
-    monthlyMap.forEach((monthData) => {
-      monthData.lucro = monthData.vendas - monthData.compras;
-    });
 
     // Convert to array and sort by date (most recent first)
     return Array.from(monthlyMap.values()).reverse();

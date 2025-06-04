@@ -6,7 +6,7 @@ export interface MonthlyDataItem {
 }
 
 export interface MonthlyOrderItem {
-  month: string;
+  name: string;
   orders: number;
   completedExits: number;
 }
