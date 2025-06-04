@@ -53,7 +53,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
         </CardContent>
       </Card>
 
-      {/* Total Gasto */}
+      {/* Total Gasto (incluindo despesas) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
@@ -74,7 +74,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
         </CardContent>
       </Card>
 
-      {/* Lucro */}
+      {/* Lucro (vendas - gastos incluindo despesas) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
@@ -99,7 +99,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
         </CardContent>
       </Card>
 
-      {/* Margem de Lucro */}
+      {/* Margem de Lucro (com despesas incluídas) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
@@ -111,14 +111,14 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
               <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
             </div>
             {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
-              // Calculate current and previous profit margins
+              // Calculate current and previous profit margins including expenses
               const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0;
-              const currentPurchases = stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0;
+              const currentSpent = stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0;
               const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0;
-              const previousPurchases = stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0;
+              const previousSpent = stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0;
               
-              const currentMargin = currentSales > 0 ? ((currentSales - currentPurchases) / currentSales) * 100 : 0;
-              const previousMargin = previousSales > 0 ? ((previousSales - previousPurchases) / previousSales) * 100 : 0;
+              const currentMargin = currentSales > 0 ? ((currentSales - currentSpent) / currentSales) * 100 : 0;
+              const previousMargin = previousSales > 0 ? ((previousSales - previousSpent) / previousSales) * 100 : 0;
               
               return renderVariation(currentMargin, previousMargin);
             })()}
