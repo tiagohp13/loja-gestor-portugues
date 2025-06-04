@@ -1,4 +1,3 @@
-
 import { useData } from '@/contexts/DataContext';
 import { useMemo, useState, useEffect } from 'react';
 import { 
@@ -29,7 +28,8 @@ import {
   calculateTotalProfitWithExpenses,
   calculateProfitMarginPercentWithExpenses,
   calculateRoiValueWithExpenses,
-  calculateRoiPercentWithExpenses
+  calculateRoiPercentWithExpenses,
+  getMonthlyExpensesData
 } from './utils/financialUtils';
 import { 
   createAllTransactions,
@@ -45,14 +45,36 @@ export const useDashboardData = () => {
   const [profitMarginPercentWithExpenses, setProfitMarginPercentWithExpenses] = useState(0);
   const [roiValueWithExpenses, setRoiValueWithExpenses] = useState(0);
   const [roiPercentWithExpenses, setRoiPercentWithExpenses] = useState(0);
+  const [monthlyExpensesData, setMonthlyExpensesData] = useState<Record<string, number>>({});
 
-  // Prepare monthly data for charts
+  // Prepare monthly data for charts (now including expenses)
   const monthlyData = useMemo(() => {
     const dataMap = createMonthlyDataMap();
     processExitsForMonthlyData(stockExits, dataMap);
     processEntriesForMonthlyData(stockEntries, dataMap);
+    
+    // Add expenses data to monthly chart
+    Object.entries(monthlyExpensesData).forEach(([monthKey, expenseValue]) => {
+      const [year, month] = monthKey.split('-');
+      const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('pt-PT', { 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      
+      if (dataMap.has(monthName)) {
+        const existing = dataMap.get(monthName)!;
+        existing.compras += expenseValue; // Add expenses to purchases
+      } else {
+        dataMap.set(monthName, {
+          name: monthName,
+          vendas: 0,
+          compras: expenseValue
+        });
+      }
+    });
+    
     return Array.from(dataMap.values());
-  }, [stockExits, stockEntries]);
+  }, [stockExits, stockEntries, monthlyExpensesData]);
   
   // Prepare category data for charts
   const categoryData = useMemo(() => {
@@ -126,17 +148,21 @@ export const useDashboardData = () => {
   useEffect(() => {
     const calculateWithExpenses = async () => {
       try {
-        const totalSpent = await calculateTotalSpent(stockEntries);
-        const totalProfitWithExp = await calculateTotalProfitWithExpenses(totalSalesValue, stockEntries);
-        const profitMarginWithExp = await calculateProfitMarginPercentWithExpenses(totalSalesValue, stockEntries);
-        const roiValWithExp = await calculateRoiValueWithExpenses(totalSalesValue, stockEntries);
-        const roiPercWithExp = await calculateRoiPercentWithExpenses(totalSalesValue, stockEntries);
+        const [totalSpent, totalProfitWithExp, profitMarginWithExp, roiValWithExp, roiPercWithExp, expensesData] = await Promise.all([
+          calculateTotalSpent(stockEntries),
+          calculateTotalProfitWithExpenses(totalSalesValue, stockEntries),
+          calculateProfitMarginPercentWithExpenses(totalSalesValue, stockEntries),
+          calculateRoiValueWithExpenses(totalSalesValue, stockEntries),
+          calculateRoiPercentWithExpenses(totalSalesValue, stockEntries),
+          getMonthlyExpensesData()
+        ]);
         
         setTotalSpentWithExpenses(totalSpent);
         setTotalProfitWithExpenses(totalProfitWithExp);
         setProfitMarginPercentWithExpenses(profitMarginWithExp);
         setRoiValueWithExpenses(roiValWithExp);
         setRoiPercentWithExpenses(roiPercWithExp);
+        setMonthlyExpensesData(expensesData);
       } catch (error) {
         console.error('Error calculating financial metrics with expenses:', error);
       }

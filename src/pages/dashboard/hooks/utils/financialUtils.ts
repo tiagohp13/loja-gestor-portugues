@@ -27,21 +27,35 @@ export const calculateTotalPurchaseValue = (stockEntries: StockEntry[]): number 
  */
 export const calculateTotalExpensesValue = async (): Promise<number> => {
   try {
-    const { data: expenseItems, error } = await supabase
-      .from('expense_items')
-      .select('quantity, unit_price, discount_percent');
+    const { data: expenses, error } = await supabase
+      .from('expenses')
+      .select(`
+        id,
+        discount,
+        expense_items(
+          quantity,
+          unit_price,
+          discount_percent
+        )
+      `);
       
     if (error) {
-      console.error('Error fetching expense items:', error);
+      console.error('Error fetching expenses:', error);
       return 0;
     }
     
-    if (!expenseItems) return 0;
+    if (!expenses) return 0;
     
-    return expenseItems.reduce((total, item) => {
-      const itemTotal = item.quantity * item.unit_price;
-      const discountAmount = itemTotal * ((item.discount_percent || 0) / 100);
-      return total + (itemTotal - discountAmount);
+    return expenses.reduce((total, expense) => {
+      const expenseItemsTotal = (expense.expense_items || []).reduce((sum: number, item: any) => {
+        const itemTotal = item.quantity * item.unit_price;
+        const discountAmount = itemTotal * ((item.discount_percent || 0) / 100);
+        return sum + (itemTotal - discountAmount);
+      }, 0);
+      
+      // Apply expense-level discount
+      const finalTotal = expenseItemsTotal * (1 - (expense.discount || 0) / 100);
+      return total + finalTotal;
     }, 0);
   } catch (error) {
     console.error('Error calculating total expenses:', error);
@@ -144,4 +158,52 @@ export const calculateAverageProfitPerSaleWithExpenses = async (totalSalesValue:
  */
 export const calculateAverageProfitPerSale = (totalProfit: number, salesCount: number): number => {
   return salesCount > 0 ? totalProfit / salesCount : 0;
+};
+
+/**
+ * Get monthly expenses data for charts
+ */
+export const getMonthlyExpensesData = async () => {
+  try {
+    const { data: expenses, error } = await supabase
+      .from('expenses')
+      .select(`
+        date,
+        discount,
+        expense_items(
+          quantity,
+          unit_price,
+          discount_percent
+        )
+      `)
+      .order('date', { ascending: true });
+      
+    if (error) {
+      console.error('Error fetching monthly expenses:', error);
+      return {};
+    }
+    
+    if (!expenses) return {};
+    
+    const monthlyData: Record<string, number> = {};
+    
+    expenses.forEach(expense => {
+      const date = new Date(expense.date);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      
+      const expenseTotal = (expense.expense_items || []).reduce((sum: number, item: any) => {
+        const itemTotal = item.quantity * item.unit_price;
+        const discountAmount = itemTotal * ((item.discount_percent || 0) / 100);
+        return sum + (itemTotal - discountAmount);
+      }, 0);
+      
+      const finalTotal = expenseTotal * (1 - (expense.discount || 0) / 100);
+      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + finalTotal;
+    });
+    
+    return monthlyData;
+  } catch (error) {
+    console.error('Error getting monthly expenses data:', error);
+    return {};
+  }
 };

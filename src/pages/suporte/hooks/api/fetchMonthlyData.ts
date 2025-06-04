@@ -1,246 +1,212 @@
-
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
 
-// Cache para evitar múltiplas chamadas à API para o mesmo período
-const cache = {
-  monthlyData: null,
-  monthlyOrders: null,
-  lastFetch: 0
-};
+export interface MonthlyDataItem {
+  name: string;
+  vendas: number;
+  compras: number;
+  lucro: number;
+}
 
-// Tempo de cache em milissegundos (5 minutos)
-const CACHE_DURATION = 5 * 60 * 1000;
+export interface MonthlyOrderItem {
+  name: string;
+  orders: number;
+  completedExits: number;
+}
 
-export const fetchMonthlyData = async () => {
-  // Verificar se temos dados em cache válidos
-  const now = Date.now();
-  if (cache.monthlyData && (now - cache.lastFetch < CACHE_DURATION)) {
-    console.log('Using cached monthly data');
-    return cache.monthlyData;
-  }
-
+export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
   try {
-    // Obter datas para os últimos 6 meses
-    const today = new Date();
-    const months = [];
-    const data = [];
+    // Get current date and 6 months ago
+    const now = new Date();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(now.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
     
-    for (let i = 5; i >= 0; i--) {
-      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const monthName = month.toLocaleString('default', { month: 'short' });
-      months.push({ month, monthName });
-    }
-    
-    // Obter as datas de início e fim para o período completo de 6 meses
-    const startDate = new Date(months[0].month.getFullYear(), months[0].month.getMonth(), 1).toISOString();
-    const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString();
-    
-    // Consulta única para vendas no período de 6 meses
+    // Fetch sales data
     const { data: salesData, error: salesError } = await supabase
-      .from('stock_exits')
+      .from('stock_exit_items')
       .select(`
-        id,
-        date,
-        stock_exit_items:stock_exit_items(
-          quantity,
-          sale_price,
-          discount_percent
-        )
+        quantity,
+        sale_price,
+        discount_percent,
+        stock_exits!inner(date)
       `)
-      .gte('date', startDate)
-      .lte('date', endDate);
-      
+      .gte('stock_exits.date', sixMonthsAgo.toISOString())
+      .lte('stock_exits.date', now.toISOString());
+
     if (salesError) {
       console.error('Error fetching sales data:', salesError);
-      toast({
-        title: "Erro ao carregar dados de vendas",
-        description: salesError.message,
-        variant: "destructive"
-      });
     }
-    
-    // Consulta única para compras no período de 6 meses
+
+    // Fetch purchases data
     const { data: purchasesData, error: purchasesError } = await supabase
-      .from('stock_entries')
+      .from('stock_entry_items')
       .select(`
-        id,
-        date,
-        stock_entry_items:stock_entry_items(
-          quantity,
-          purchase_price,
-          discount_percent
-        )
+        quantity,
+        purchase_price,
+        discount_percent,
+        stock_entries!inner(date)
       `)
-      .gte('date', startDate)
-      .lte('date', endDate);
-      
+      .gte('stock_entries.date', sixMonthsAgo.toISOString())
+      .lte('stock_entries.date', now.toISOString());
+
     if (purchasesError) {
-      console.error('Error fetching purchase data:', purchasesError);
-      toast({
-        title: "Erro ao carregar dados de compras",
-        description: purchasesError.message,
-        variant: "destructive"
+      console.error('Error fetching purchases data:', purchasesError);
+    }
+
+    // Fetch expenses data
+    const { data: expensesData, error: expensesError } = await supabase
+      .from('expense_items')
+      .select(`
+        quantity,
+        unit_price,
+        discount_percent,
+        expenses!inner(date, discount)
+      `)
+      .gte('expenses.date', sixMonthsAgo.toISOString())
+      .lte('expenses.date', now.toISOString());
+
+    if (expensesError) {
+      console.error('Error fetching expenses data:', expensesError);
+    }
+
+    // Create monthly data structure
+    const monthlyMap = new Map<string, MonthlyDataItem>();
+    
+    // Initialize months
+    for (let i = 0; i < 6; i++) {
+      const date = new Date();
+      date.setMonth(now.getMonth() - i);
+      const monthKey = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+      monthlyMap.set(monthKey, {
+        name: monthKey,
+        vendas: 0,
+        compras: 0,
+        lucro: 0
       });
     }
-    
-    // Consulta única para encomendas no período de 6 meses
-    const { data: ordersData, error: ordersError } = await supabase
-      .from('orders')
-      .select('id, date, converted_to_stock_exit_id')
-      .gte('date', startDate)
-      .lte('date', endDate);
-      
-    if (ordersError) {
-      console.error('Error fetching orders data:', ordersError);
-      toast({
-        title: "Erro ao carregar dados de encomendas",
-        description: ordersError.message,
-        variant: "destructive"
-      });
-    }
-    
-    // Processar dados por mês
-    for (const { month, monthName } of months) {
-      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-      
-      // Filtrar vendas para o mês atual
-      let monthSales = 0;
-      if (salesData) {
-        const monthSalesData = salesData.filter(sale => {
-          const saleDate = new Date(sale.date);
-          return saleDate >= monthStart && saleDate <= monthEnd;
-        });
+
+    // Process sales data
+    if (salesData) {
+      salesData.forEach((item: any) => {
+        const date = new Date(item.stock_exits.date);
+        const monthKey = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+        const existing = monthlyMap.get(monthKey);
         
-        monthSalesData.forEach((sale) => {
-          if (sale.stock_exit_items) {
-            sale.stock_exit_items.forEach((item) => {
-              const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-              monthSales += item.quantity * item.sale_price * discountMultiplier;
-            });
-          }
-        });
-      }
-      
-      // Filtrar compras para o mês atual
-      let monthPurchases = 0;
-      if (purchasesData) {
-        const monthPurchasesData = purchasesData.filter(purchase => {
-          const purchaseDate = new Date(purchase.date);
-          return purchaseDate >= monthStart && purchaseDate <= monthEnd;
-        });
-        
-        monthPurchasesData.forEach((purchase) => {
-          if (purchase.stock_entry_items) {
-            purchase.stock_entry_items.forEach((item) => {
-              const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-              monthPurchases += item.quantity * item.purchase_price * discountMultiplier;
-            });
-          }
-        });
-      }
-      
-      // Filtrar encomendas para o mês atual
-      const monthOrders = ordersData ? ordersData.filter(order => {
-        const orderDate = new Date(order.date);
-        return orderDate >= monthStart && orderDate <= monthEnd;
-      }) : [];
-      
-      const pendingCount = monthOrders.filter(order => order.converted_to_stock_exit_id === null).length;
-      const completedCount = monthOrders.filter(order => order.converted_to_stock_exit_id !== null).length;
-      
-      data.push({
-        name: monthName,
-        vendas: monthSales,
-        compras: monthPurchases,
-        lucro: monthSales - monthPurchases,
-        encomendas: monthOrders.length,
-        pendentes: pendingCount,
-        concluidas: completedCount
+        if (existing) {
+          const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+          const itemValue = item.quantity * item.sale_price * discountMultiplier;
+          existing.vendas += itemValue;
+        }
       });
     }
-    
-    // Armazenar em cache
-    cache.monthlyData = data;
-    cache.lastFetch = now;
-    
-    return data;
-  } catch (error) {
-    console.error('Error fetching monthly data:', error);
-    toast({
-      title: "Erro ao processar dados mensais",
-      description: error.message,
-      variant: "destructive"
+
+    // Process purchases data
+    if (purchasesData) {
+      purchasesData.forEach((item: any) => {
+        const date = new Date(item.stock_entries.date);
+        const monthKey = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+        const existing = monthlyMap.get(monthKey);
+        
+        if (existing) {
+          const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+          const itemValue = item.quantity * item.purchase_price * discountMultiplier;
+          existing.compras += itemValue;
+        }
+      });
+    }
+
+    // Process expenses data
+    if (expensesData) {
+      expensesData.forEach((item: any) => {
+        const date = new Date(item.expenses.date);
+        const monthKey = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+        const existing = monthlyMap.get(monthKey);
+        
+        if (existing) {
+          const itemDiscountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+          const itemTotal = item.quantity * item.unit_price * itemDiscountMultiplier;
+          
+          // Apply expense-level discount
+          const expenseDiscountMultiplier = item.expenses.discount ? 1 - (item.expenses.discount / 100) : 1;
+          const finalItemValue = itemTotal * expenseDiscountMultiplier;
+          
+          existing.compras += finalItemValue; // Add expenses to purchases
+        }
+      });
+    }
+
+    // Calculate profit for each month
+    monthlyMap.forEach((monthData) => {
+      monthData.lucro = monthData.vendas - monthData.compras;
     });
+
+    // Convert to array and sort by date (most recent first)
+    return Array.from(monthlyMap.values()).reverse();
+    
+  } catch (error) {
+    console.error('Error in fetchMonthlyData:', error);
     return [];
   }
 };
 
-export const fetchMonthlyOrders = async () => {
-  // Verificar se temos dados em cache válidos
-  const now = Date.now();
-  if (cache.monthlyOrders && (now - cache.lastFetch < CACHE_DURATION)) {
-    console.log('Using cached monthly orders data');
-    return cache.monthlyOrders;
-  }
-  
+export const fetchMonthlyOrders = async (): Promise<MonthlyOrderItem[]> => {
   try {
-    const today = new Date();
-    const months = [];
-    const data = [];
-    
-    for (let i = 5; i >= 0; i--) {
-      const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
-      const monthName = month.toLocaleString('default', { month: 'short' });
-      months.push({ month, monthName });
-    }
-    
-    // Obter as datas de início e fim para o período completo de 6 meses
-    const startDate = new Date(months[0].month.getFullYear(), months[0].month.getMonth(), 1).toISOString();
-    const endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0).toISOString();
-    
-    // Consulta única para todas as encomendas no período
-    const { data: orders, error: ordersError } = await supabase
+    // Get current date and 6 months ago
+    const now = new Date();
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(now.getMonth() - 5);
+    sixMonthsAgo.setDate(1);
+
+    // Fetch orders data
+    const { data: ordersData, error: ordersError } = await supabase
       .from('orders')
-      .select('date, converted_to_stock_exit_id')
-      .gte('date', startDate)
-      .lte('date', endDate);
-    
+      .select(`
+        id,
+        date,
+        converted_to_stock_exit_id
+      `)
+      .gte('date', sixMonthsAgo.toISOString())
+      .lte('date', now.toISOString());
+
     if (ordersError) {
-      console.error('Error fetching orders:', ordersError);
+      console.error('Error fetching orders data:', ordersError);
       return [];
     }
-    
-    // Processar dados por mês
-    for (const { month, monthName } of months) {
-      const monthStart = new Date(month.getFullYear(), month.getMonth(), 1);
-      const monthEnd = new Date(month.getFullYear(), month.getMonth() + 1, 0);
-      
-      // Filtrar encomendas para o mês atual
-      const monthOrders = orders ? orders.filter(order => {
-        const orderDate = new Date(order.date);
-        return orderDate >= monthStart && orderDate <= monthEnd;
-      }) : [];
-      
-      const pendingCount = monthOrders.filter(order => order.converted_to_stock_exit_id === null).length;
-      const completedCount = monthOrders.filter(order => order.converted_to_stock_exit_id !== null).length;
-      
-      data.push({
-        name: monthName,
-        pendentes: pendingCount,
-        concluidas: completedCount,
-        total: pendingCount + completedCount
+
+    // Create monthly data structure
+    const monthlyMap = new Map<string, MonthlyOrderItem>();
+
+    // Initialize months
+    for (let i = 0; i < 6; i++) {
+      const date = new Date();
+      date.setMonth(now.getMonth() - i);
+      const monthKey = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+      monthlyMap.set(monthKey, {
+        name: monthKey,
+        orders: 0,
+        completedExits: 0
       });
     }
-    
-    // Armazenar em cache
-    cache.monthlyOrders = data;
-    cache.lastFetch = now;
-    
-    return data;
+
+    // Process orders data
+    ordersData.forEach((order: any) => {
+      const date = new Date(order.date);
+      const monthKey = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+      const existing = monthlyMap.get(monthKey);
+
+      if (existing) {
+        existing.orders += 1;
+        if (order.converted_to_stock_exit_id) {
+          existing.completedExits += 1;
+        }
+      }
+    });
+
+    // Convert to array and sort by date (most recent first)
+    return Array.from(monthlyMap.values()).reverse();
+
   } catch (error) {
-    console.error('Error fetching monthly orders:', error);
+    console.error('Error in fetchMonthlyOrders:', error);
     return [];
   }
 };

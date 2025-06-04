@@ -63,16 +63,30 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       });
     }
     
-    // Consulta para despesas
-    const { data: expenseItems, error: expenseError } = await supabase
-      .from('expense_items')
-      .select('quantity, unit_price, discount_percent');
+    // Consulta para despesas (incluindo desconto a nível de despesa)
+    const { data: expenses, error: expenseError } = await supabase
+      .from('expenses')
+      .select(`
+        discount,
+        expense_items(
+          quantity,
+          unit_price,
+          discount_percent
+        )
+      `);
       
     let totalExpenses = 0;
-    if (expenseItems && !expenseError) {
-      totalExpenses = expenseItems.reduce((sum, item) => {
-        const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-        return sum + (item.quantity * item.unit_price * discountMultiplier);
+    if (expenses && !expenseError) {
+      totalExpenses = expenses.reduce((sum, expense) => {
+        const expenseItemsTotal = (expense.expense_items || []).reduce((itemSum: number, item: any) => {
+          const itemTotal = item.quantity * item.unit_price;
+          const itemDiscountAmount = itemTotal * ((item.discount_percent || 0) / 100);
+          return itemSum + (itemTotal - itemDiscountAmount);
+        }, 0);
+        
+        // Apply expense-level discount
+        const finalExpenseTotal = expenseItemsTotal * (1 - (expense.discount || 0) / 100);
+        return sum + finalExpenseTotal;
       }, 0);
     } else if (expenseError) {
       console.error('Error fetching expense items:', expenseError);
