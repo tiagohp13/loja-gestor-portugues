@@ -82,6 +82,7 @@ const ExpenseDetail = () => {
     if (!expense) return;
 
     try {
+      // First delete expense items
       const { error: itemsError } = await supabase
         .from('expense_items')
         .delete()
@@ -89,6 +90,7 @@ const ExpenseDetail = () => {
 
       if (itemsError) throw itemsError;
 
+      // Then delete the expense
       const { error: expenseError } = await supabase
         .from('expenses')
         .delete()

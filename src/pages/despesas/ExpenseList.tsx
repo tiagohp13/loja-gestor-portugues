@@ -97,6 +97,7 @@ const ExpenseList = () => {
     if (!deleteDialog.expenseId) return;
 
     try {
+      // First delete expense items
       const { error: itemsError } = await supabase
         .from('expense_items')
         .delete()
@@ -104,6 +105,7 @@ const ExpenseList = () => {
 
       if (itemsError) throw itemsError;
 
+      // Then delete the expense
       const { error: expenseError } = await supabase
         .from('expenses')
         .delete()
@@ -111,7 +113,10 @@ const ExpenseList = () => {
 
       if (expenseError) throw expenseError;
 
-      setExpenses(expenses.filter(e => e.id !== deleteDialog.expenseId));
+      // Update local state to remove the deleted expense
+      setExpenses(prevExpenses => prevExpenses.filter(e => e.id !== deleteDialog.expenseId));
+      setFilteredExpenses(prevExpenses => prevExpenses.filter(e => e.id !== deleteDialog.expenseId));
+      
       toast.success('Despesa eliminada com sucesso');
     } catch (error) {
       console.error('Error deleting expense:', error);
