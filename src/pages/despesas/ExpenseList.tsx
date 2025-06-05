@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Search, Plus, Edit, Trash2, Receipt } from 'lucide-react';
 import { toast } from 'sonner';
 import { Expense } from '@/types';
@@ -42,7 +41,6 @@ const ExpenseList = () => {
   const fetchExpenses = async () => {
     try {
       setIsLoading(true);
-      
       const { data: expensesData, error: expensesError } = await supabase
         .from('expenses')
         .select(`
@@ -94,26 +92,20 @@ const ExpenseList = () => {
 
   const handleDeleteExpense = async (expenseId: string) => {
     try {
-      // First delete expense items
       const { error: itemsError } = await supabase
         .from('expense_items')
         .delete()
         .eq('expense_id', expenseId);
-
       if (itemsError) throw itemsError;
 
-      // Then delete the expense
       const { error: expenseError } = await supabase
         .from('expenses')
         .delete()
         .eq('id', expenseId);
-
       if (expenseError) throw expenseError;
 
-      // Update local state to remove the deleted expense
-      setExpenses(prevExpenses => prevExpenses.filter(e => e.id !== expenseId));
-      setFilteredExpenses(prevExpenses => prevExpenses.filter(e => e.id !== expenseId));
-      
+      setExpenses(prev => prev.filter(e => e.id !== expenseId));
+      setFilteredExpenses(prev => prev.filter(e => e.id !== expenseId));
       toast.success('Despesa eliminada com sucesso');
     } catch (error) {
       console.error('Error deleting expense:', error);
@@ -152,7 +144,6 @@ const ExpenseList = () => {
     <div className="p-6 space-y-6">
       <PageHeader title="Histórico de Despesas" description="Consulte e gerencie as suas despesas" />
 
-      {/* Card com total de despesas */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 text-gestorApp-blue">
@@ -162,7 +153,6 @@ const ExpenseList = () => {
         </CardContent>
       </Card>
 
-      {/* Campo de pesquisa e botão Nova Despesa */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray w-4 h-4" />
@@ -179,7 +169,6 @@ const ExpenseList = () => {
         </Button>
       </div>
 
-      {/* Tabela de despesas */}
       <Card>
         <CardContent className="p-0">
           {filteredExpenses.length === 0 ? (
@@ -194,30 +183,16 @@ const ExpenseList = () => {
               <table className="w-full">
                 <thead className="bg-gray-50 border-b">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      NÚMERO
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      DATA
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      FORNECEDOR
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      TOTAL
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      AÇÕES
-                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">NÚMERO</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">DATA</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">FORNECEDOR</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">TOTAL</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">AÇÕES</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredExpenses.map((expense) => (
-                    <tr 
-                      key={expense.id} 
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/despesas/${expense.id}`)}
-                    >
+                    <tr key={expense.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/despesas/${expense.id}`)}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={(e) => {
@@ -229,15 +204,9 @@ const ExpenseList = () => {
                           {expense.number}
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {formatDate(expense.date)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {expense.supplierName}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark font-medium">
-                        {formatCurrency(expense.total || 0)}
-                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">{formatDate(expense.date)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">{expense.supplierName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark font-medium">{formatCurrency(expense.total || 0)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex justify-end gap-2">
                           <Button
@@ -250,26 +219,16 @@ const ExpenseList = () => {
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
-                          <DeleteConfirmDialog
-                            open={deleteDialog.open && deleteDialog.expenseId === expense.id}
-                            onClose={() => setDeleteDialog({ open: false, expenseId: null })}
-                            onDelete={() => handleDeleteExpense(expense.id)}
-                            title="Eliminar Despesa"
-                            description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
-                            trigger={
-  <div
-    onClick={(e) => {
-      e.stopPropagation();
-      setDeleteDialog({ open: true, expenseId: expense.id });
-    }}
-  >
-    <Button variant="ghost" size="sm">
-      <Trash2 className="w-4 h-4" />
-    </Button>
-  </div>
-}
-
-                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteDialog({ open: true, expenseId: expense.id });
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -280,6 +239,19 @@ const ExpenseList = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Diálogo de Confirmação de Eliminação */}
+      <DeleteConfirmDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, expenseId: null })}
+        onDelete={() => {
+          if (deleteDialog.expenseId) {
+            handleDeleteExpense(deleteDialog.expenseId);
+          }
+        }}
+        title="Eliminar Despesa"
+        description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
+      />
     </div>
   );
 };
