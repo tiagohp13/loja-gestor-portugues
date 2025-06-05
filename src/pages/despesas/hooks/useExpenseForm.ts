@@ -134,7 +134,7 @@ export const useExpenseForm = () => {
 
       // Get next expense number
       const { data: numberData, error: numberError } = await supabase
-        .rpc('get_next_counter', { counter_id: 'expense' });
+        .rpc('get_next_counter', { counter_id: 'DESP' });
 
       if (numberError) throw numberError;
 
