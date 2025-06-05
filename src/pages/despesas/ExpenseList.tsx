@@ -234,7 +234,7 @@ const ExpenseList = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/despesas/${expense.id}`)}
+                            onClick={() => navigate(`/despesas/editar/${expense.id}`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
