@@ -135,13 +135,13 @@ const ExpenseDetail = () => {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate('/despesas/historico')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
           <Button variant="outline" onClick={() => navigate(`/despesas/editar/${expense.id}`)}>
             <Edit className="w-4 h-4 mr-2" />
             Editar
+          </Button>
+          <Button variant="outline" onClick={() => navigate('/despesas/historico')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
           </Button>
         </div>
       </div>
