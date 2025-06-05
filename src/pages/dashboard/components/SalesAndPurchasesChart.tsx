@@ -8,6 +8,7 @@ interface ChartDataItem {
   name: string;
   vendas: number;
   compras: number;
+  lucro: number;
 }
 
 interface SalesAndPurchasesChartProps {
@@ -22,7 +23,7 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="name" />
             <YAxis />
@@ -31,9 +32,10 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               labelFormatter={(label) => `Período: ${label}`} 
             />
             <Legend />
-            <Line type="monotone" dataKey="vendas" stroke="#3065ac" name="Vendas" />
-            <Line type="monotone" dataKey="compras" stroke="#ff6961" name="Compras" />
-          </LineChart>
+            <Bar dataKey="vendas" fill="#3065ac" name="Vendas" />
+            <Bar dataKey="compras" fill="#ff6961" name="Compras" />
+            <Bar dataKey="lucro" fill="#bdecb6" name="Lucro" />
+          </BarChart>
         </ResponsiveContainer>
       </CardContent>
     </Card>

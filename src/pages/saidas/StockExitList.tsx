@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
@@ -225,7 +226,14 @@ const StockExitList = () => {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleViewExit(exit.id)}
                   >
-                    <TableCell className="font-medium">{exit.number}</TableCell>
+                    <TableCell>
+                      <button
+                        onClick={() => handleViewExit(exit.id)}
+                        className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark hover:underline"
+                      >
+                        {exit.number}
+                      </button>
+                    </TableCell>
                     <TableCell>{formatDate(exit.date)}</TableCell>
                     <TableCell>{exit.clientName}</TableCell>
                     <TableCell>{exit.invoiceNumber || '-'}</TableCell>

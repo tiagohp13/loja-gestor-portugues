@@ -1,3 +1,4 @@
+
 import { useData } from '@/contexts/DataContext';
 import { useMemo, useState, useEffect } from 'react';
 import { 
@@ -47,7 +48,7 @@ export const useDashboardData = () => {
   const [roiPercentWithExpenses, setRoiPercentWithExpenses] = useState(0);
   const [monthlyExpensesData, setMonthlyExpensesData] = useState<Record<string, number>>({});
 
-  // Prepare monthly data for charts (now including expenses)
+  // Prepare monthly data for charts (now including expenses and profit)
   const monthlyData = useMemo(() => {
     const dataMap = createMonthlyDataMap();
     processExitsForMonthlyData(stockExits, dataMap);
@@ -73,7 +74,11 @@ export const useDashboardData = () => {
       }
     });
     
-    return Array.from(dataMap.values());
+    // Calculate profit for each month
+    return Array.from(dataMap.values()).map(item => ({
+      ...item,
+      lucro: item.vendas - item.compras
+    }));
   }, [stockExits, stockEntries, monthlyExpensesData]);
   
   // Prepare category data for charts
