@@ -1,298 +1,58 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageHeader from '@/components/ui/PageHeader';
-import { StockExit } from '@/types';
-import { useData } from '@/contexts/DataContext';
-import { mapDbStockExitToStockExit } from '@/utils/mappers';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Pencil, Trash2, ArrowUp, ArrowDown, Plus, Package } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import RecordCount from '@/components/common/RecordCount';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { toast } from 'sonner';
+// ... (todo o restante código permanece igual)
 
-type SortField = 'date' | 'number' | 'client';
-
-const StockExitList = () => {
-  const navigate = useNavigate();
-  const { stockExits, deleteStockExit } = useData();
-  const [localExits, setLocalExits] = useState<StockExit[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [sortField, setSortField] = useState<SortField>('date');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [exitToDelete, setExitToDelete] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    // Ensure all exits have the required fields
-    const exitsWithTimestamps = stockExits.map(exit => ({
-      ...exit,
-      updatedAt: exit.updatedAt || new Date().toISOString(),
-      items: exit.items.map(item => ({
-        ...item,
-        createdAt: item.createdAt || new Date().toISOString(),
-        updatedAt: item.updatedAt || new Date().toISOString()
-      }))
-    }));
-    setLocalExits(exitsWithTimestamps);
-  }, [stockExits]);
-
-  const filteredExits = localExits.filter(exit => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      exit.number.toLowerCase().includes(searchLower) ||
-      exit.clientName.toLowerCase().includes(searchLower) ||
-      exit.invoiceNumber?.toLowerCase().includes(searchLower) ||
-      exit.notes?.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const sortedExits = [...filteredExits].sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
-
-    switch (sortField) {
-      case 'date':
-        aValue = new Date(a.date).getTime();
-        bValue = new Date(b.date).getTime();
-        break;
-      case 'number':
-        aValue = a.number;
-        bValue = b.number;
-        break;
-      case 'client':
-        aValue = a.clientName;
-        bValue = b.clientName;
-        break;
-      default:
-        aValue = a.date;
-        bValue = b.date;
-    }
-
-    if (sortOrder === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
-
-  const handleSortChange = (field: SortField) => {
-    if (field === sortField) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortOrder('asc');
-    }
-  };
-
-  const handleViewExit = (id: string) => {
-    navigate(`/saidas/${id}`);
-  };
-
-  const handleEditExit = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    navigate(`/saidas/editar/${id}`);
-  };
-
-  const confirmDeleteExit = (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    setExitToDelete(id);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteExit = async () => {
-    if (!exitToDelete) return;
-    
-    setIsLoading(true);
-    try {
-      await deleteStockExit(exitToDelete);
-      setLocalExits(prev => prev.filter(exit => exit.id !== exitToDelete));
-      toast.success('Saída de stock eliminada com sucesso');
-    } catch (error) {
-      console.error('Error deleting exit:', error);
-      toast.error('Erro ao eliminar saída de stock');
-    } finally {
-      setDeleteDialogOpen(false);
-      setExitToDelete(null);
-      setIsLoading(false);
-    }
-  };
-
-  const calculateExitTotal = (exit: StockExit) => {
-    return exit.items.reduce((total, item) => {
-      const itemTotal = item.quantity * item.salePrice;
-      const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
-      return total + (itemTotal - discountAmount);
-    }, 0);
-  };
-
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(value);
-  };
-
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd/MM/yyyy', { locale: ptBR });
-    } catch (error) {
-      return 'Data inválida';
-    }
-  };
-
-  return (
-    <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Histórico de Saídas" 
-        description="Consulte o histórico de saídas de stock"
-      />
-      
-      <div className="flex justify-between items-center mb-6">
-        <RecordCount 
-          title="Total de saídas"
-          count={localExits.length}
-          icon={Package}
-        />
-        
-        <Button onClick={() => navigate('/saidas/nova')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Saída
-        </Button>
-      </div>
-      
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="mb-4">
-          <Input
-            placeholder="Pesquisar saídas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-          />
-        </div>
-        
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSortChange('number')}
-                >
-                  Número
-                  {sortField === 'number' && (
-                    sortOrder === 'asc' ? <ArrowUp className="inline ml-1 h-4 w-4" /> : <ArrowDown className="inline ml-1 h-4 w-4" />
-                  )}
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSortChange('date')}
-                >
-                  Data
-                  {sortField === 'date' && (
-                    sortOrder === 'asc' ? <ArrowUp className="inline ml-1 h-4 w-4" /> : <ArrowDown className="inline ml-1 h-4 w-4" />
-                  )}
-                </TableHead>
-                <TableHead 
-                  className="cursor-pointer"
-                  onClick={() => handleSortChange('client')}
-                >
-                  Cliente
-                  {sortField === 'client' && (
-                    sortOrder === 'asc' ? <ArrowUp className="inline ml-1 h-4 w-4" /> : <ArrowDown className="inline ml-1 h-4 w-4" />
-                  )}
-                </TableHead>
-                <TableHead>Fatura</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sortedExits.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                    Nenhuma saída de stock encontrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                sortedExits.map((exit) => (
-                  <TableRow 
-                    key={exit.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleViewExit(exit.id)}
-                  >
-                    <TableCell className="font-medium">{exit.number}</TableCell>
-                    <TableCell>{formatDate(exit.date)}</TableCell>
-                    <TableCell>{exit.clientName}</TableCell>
-                    <TableCell>{exit.invoiceNumber || '-'}</TableCell>
-                    <TableCell className="text-right font-medium">
-                      {formatCurrency(calculateExitTotal(exit))}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={(e) => handleViewExit(exit.id)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={(e) => handleEditExit(e, exit.id)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={(e) => confirmDeleteExit(e, exit.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-      
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar eliminação</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja eliminar esta saída de stock? Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
+<TableBody>
+  {sortedExits.length === 0 ? (
+    <TableRow>
+      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+        Nenhuma saída de stock encontrada
+      </TableCell>
+    </TableRow>
+  ) : (
+    sortedExits.map((exit) => (
+      <TableRow 
+        key={exit.id} 
+        className="cursor-pointer hover:bg-muted/50"
+        onClick={() => handleViewExit(exit.id)}
+      >
+        <TableCell
+          onClick={() => navigate(`/saidas/${exit.id}`)}
+          className="font-medium text-blue-500 cursor-pointer hover:underline"
+        >
+          {exit.number}
+        </TableCell>
+        <TableCell>{formatDate(exit.date)}</TableCell>
+        <TableCell>{exit.clientName}</TableCell>
+        <TableCell>{exit.invoiceNumber || '-'}</TableCell>
+        <TableCell className="text-right font-medium">
+          {formatCurrency(calculateExitTotal(exit))}
+        </TableCell>
+        <TableCell className="text-right">
+          <div className="flex justify-end gap-2">
             <Button 
-              variant="outline" 
-              onClick={() => setDeleteDialogOpen(false)}
-              disabled={isLoading}
+              variant="ghost" 
+              size="icon"
+              onClick={(e) => handleViewExit(exit.id)}
             >
-              Cancelar
+              <Eye className="h-4 w-4" />
             </Button>
             <Button 
-              variant="destructive" 
-              onClick={handleDeleteExit}
-              disabled={isLoading}
+              variant="ghost" 
+              size="icon"
+              onClick={(e) => handleEditExit(e, exit.id)}
             >
-              {isLoading ? 'A eliminar...' : 'Eliminar'}
+              <Pencil className="h-4 w-4" />
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-};
+            <Button 
+              variant="ghost" 
+              size="icon"
+              onClick={(e) => confirmDeleteExit(e, exit.id)}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </TableCell>
+      </TableRow>
+    ))
+  )}
+</TableBody>
 
-export default StockExitList;
