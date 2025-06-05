@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -78,15 +77,13 @@ const ExpenseDetail = () => {
     }
   };
 
-  const handleDeleteExpense = async () => {
-    if (!expense) return;
-
+  const handleDeleteExpense = async (expenseId: string) => {
     try {
       // First delete expense items
       const { error: itemsError } = await supabase
         .from('expense_items')
         .delete()
-        .eq('expense_id', expense.id);
+        .eq('expense_id', expenseId);
 
       if (itemsError) throw itemsError;
 
@@ -94,7 +91,7 @@ const ExpenseDetail = () => {
       const { error: expenseError } = await supabase
         .from('expenses')
         .delete()
-        .eq('id', expense.id);
+        .eq('id', expenseId);
 
       if (expenseError) throw expenseError;
 
@@ -172,7 +169,7 @@ const ExpenseDetail = () => {
           <DeleteConfirmDialog
             open={deleteDialog}
             onClose={() => setDeleteDialog(false)}
-            onDelete={handleDeleteExpense}
+            onDelete={() => handleDeleteExpense(expense.id)}
             title="Eliminar Despesa"
             description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
             trigger={

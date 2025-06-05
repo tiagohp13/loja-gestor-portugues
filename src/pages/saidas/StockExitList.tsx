@@ -225,7 +225,17 @@ const StockExitList = () => {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleViewExit(exit.id)}
                   >
-                    <TableCell className="font-medium">{exit.number}</TableCell>
+                    <TableCell className="font-medium">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleViewExit(exit.id);
+                        }}
+                        className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark underline"
+                      >
+                        {exit.number}
+                      </button>
+                    </TableCell>
                     <TableCell>{formatDate(exit.date)}</TableCell>
                     <TableCell>{exit.clientName}</TableCell>
                     <TableCell>{exit.invoiceNumber || '-'}</TableCell>
@@ -237,7 +247,10 @@ const StockExitList = () => {
                         <Button 
                           variant="ghost" 
                           size="icon"
-                          onClick={(e) => handleViewExit(exit.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewExit(exit.id);
+                          }}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>

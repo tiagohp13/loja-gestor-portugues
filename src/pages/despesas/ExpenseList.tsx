@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -93,15 +92,13 @@ const ExpenseList = () => {
     }
   };
 
-  const handleDeleteExpense = async () => {
-    if (!deleteDialog.expenseId) return;
-
+  const handleDeleteExpense = async (expenseId: string) => {
     try {
       // First delete expense items
       const { error: itemsError } = await supabase
         .from('expense_items')
         .delete()
-        .eq('expense_id', deleteDialog.expenseId);
+        .eq('expense_id', expenseId);
 
       if (itemsError) throw itemsError;
 
@@ -109,13 +106,13 @@ const ExpenseList = () => {
       const { error: expenseError } = await supabase
         .from('expenses')
         .delete()
-        .eq('id', deleteDialog.expenseId);
+        .eq('id', expenseId);
 
       if (expenseError) throw expenseError;
 
       // Update local state to remove the deleted expense
-      setExpenses(prevExpenses => prevExpenses.filter(e => e.id !== deleteDialog.expenseId));
-      setFilteredExpenses(prevExpenses => prevExpenses.filter(e => e.id !== deleteDialog.expenseId));
+      setExpenses(prevExpenses => prevExpenses.filter(e => e.id !== expenseId));
+      setFilteredExpenses(prevExpenses => prevExpenses.filter(e => e.id !== expenseId));
       
       toast.success('Despesa eliminada com sucesso');
     } catch (error) {
@@ -216,10 +213,17 @@ const ExpenseList = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredExpenses.map((expense) => (
-                    <tr key={expense.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={expense.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => navigate(`/despesas/${expense.id}`)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => navigate(`/despesas/${expense.id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/despesas/${expense.id}`);
+                          }}
                           className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark underline"
                         >
                           {expense.number}
@@ -239,21 +243,27 @@ const ExpenseList = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/despesas/editar/${expense.id}`)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/despesas/editar/${expense.id}`);
+                            }}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                           <DeleteConfirmDialog
                             open={deleteDialog.open && deleteDialog.expenseId === expense.id}
                             onClose={() => setDeleteDialog({ open: false, expenseId: null })}
-                            onDelete={handleDeleteExpense}
+                            onDelete={() => handleDeleteExpense(expense.id)}
                             title="Eliminar Despesa"
                             description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
                             trigger={
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => setDeleteDialog({ open: true, expenseId: expense.id })}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteDialog({ open: true, expenseId: expense.id });
+                                }}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
