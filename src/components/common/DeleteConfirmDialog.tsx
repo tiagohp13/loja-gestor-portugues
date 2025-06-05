@@ -1,4 +1,5 @@
-import React from 'react';
+
+import React, { useState } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -8,34 +9,64 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 interface DeleteConfirmDialogProps {
   title: string;
   description: string;
+  trigger: React.ReactNode;
   onDelete: () => void;
-  open: boolean;
-  onClose: () => void;
+  open?: boolean;
+  onClose?: () => void;
+  disabled?: boolean; // Added disabled prop
 }
 
 const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   title,
   description,
   onDelete,
+  trigger,
   open,
-  onClose
+  onClose,
+  disabled = false, // Set default value to false
 }) => {
+  const [openState, setOpenState] = useState(false);
+  
+  const isControlled = open !== undefined && onClose !== undefined;
+  const isOpen = isControlled ? open : openState;
+  
+  const handleOpenChange = (newOpen: boolean) => {
+    if (isControlled) {
+      onClose?.();
+    } else {
+      setOpenState(newOpen);
+    }
+  };
+  
+  const handleDelete = () => {
+    onDelete();
+    if (!isControlled) {
+      setOpenState(false);
+    }
+  };
+  
   return (
-    <AlertDialog open={open} onOpenChange={(newOpen) => !newOpen && onClose()}>
+    <AlertDialog open={isOpen} onOpenChange={disabled ? () => {} : handleOpenChange}>
+      <AlertDialogTrigger asChild disabled={disabled}>
+        {trigger}
+      </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
-          <AlertDialogDescription>{description}</AlertDialogDescription>
+          <AlertDialogDescription>
+            {description}
+          </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
           <AlertDialogAction
-            onClick={onDelete}
+            onClick={handleDelete}
             className="bg-red-500 hover:bg-red-600"
           >
             Eliminar
