@@ -216,17 +216,10 @@ const ExpenseList = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredExpenses.map((expense) => (
-                    <tr 
-                      key={expense.id} 
-                      className="hover:bg-gray-50 cursor-pointer"
-                      onClick={() => navigate(`/despesas/${expense.id}`)}
-                    >
+                    <tr key={expense.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            navigate(`/despesas/${expense.id}`);
-                          }}
+                          onClick={() => navigate(`/despesas/${expense.id}`)}
                           className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark underline"
                         >
                           {expense.number}
@@ -242,14 +235,11 @@ const ExpenseList = () => {
                         {formatCurrency(expense.total || 0)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="flex justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/despesas/editar/${expense.id}`);
-                            }}
+                            onClick={() => navigate(`/despesas/editar/${expense.id}`)}
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
@@ -263,10 +253,7 @@ const ExpenseList = () => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteDialog({ open: true, expenseId: expense.id });
-                                }}
+                                onClick={() => setDeleteDialog({ open: true, expenseId: expense.id })}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </Button>
