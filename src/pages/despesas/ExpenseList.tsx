@@ -257,17 +257,18 @@ const ExpenseList = () => {
                             title="Eliminar Despesa"
                             description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
                             trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteDialog({ open: true, expenseId: expense.id });
-                                }}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            }
+  <div
+    onClick={(e) => {
+      e.stopPropagation();
+      setDeleteDialog({ open: true, expenseId: expense.id });
+    }}
+  >
+    <Button variant="ghost" size="sm">
+      <Trash2 className="w-4 h-4" />
+    </Button>
+  </div>
+}
+
                           />
                         </div>
                       </td>
