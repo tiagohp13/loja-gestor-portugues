@@ -10,32 +10,31 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+
 const ExpenseDetail = () => {
-  const {
-    id
-  } = useParams<{
-    id: string;
-  }>();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [expense, setExpense] = useState<Expense | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState(false);
+
   useEffect(() => {
     if (id) {
       fetchExpenseDetail();
     }
   }, [id]);
+
   const fetchExpenseDetail = async () => {
     try {
       setIsLoading(true);
-      const {
-        data: expenseData,
-        error: expenseError
-      } = await supabase.from('expenses').select(`
-          *,
-          expense_items(*)
-        `).eq('id', id).single();
+      const { data: expenseData, error: expenseError } = await supabase
+        .from('expenses')
+        .select(`*, expense_items(*)`)
+        .eq('id', id)
+        .single();
+
       if (expenseError) throw expenseError;
+
       if (expenseData) {
         const formattedExpense: Expense = {
           id: expenseData.id,
@@ -72,19 +71,15 @@ const ExpenseDetail = () => {
       setIsLoading(false);
     }
   };
+
   const handleDeleteExpense = async (expenseId: string) => {
     try {
-      // First delete expense items
-      const {
-        error: itemsError
-      } = await supabase.from('expense_items').delete().eq('expense_id', expenseId);
+      const { error: itemsError } = await supabase.from('expense_items').delete().eq('expense_id', expenseId);
       if (itemsError) throw itemsError;
 
-      // Then delete the expense
-      const {
-        error: expenseError
-      } = await supabase.from('expenses').delete().eq('id', expenseId);
+      const { error: expenseError } = await supabase.from('expenses').delete().eq('id', expenseId);
       if (expenseError) throw expenseError;
+
       toast.success('Despesa eliminada com sucesso');
       navigate('/despesas/historico');
     } catch (error) {
@@ -94,24 +89,31 @@ const ExpenseDetail = () => {
       setDeleteDialog(false);
     }
   };
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-PT', {
       style: 'currency',
       currency: 'EUR'
     }).format(value);
   };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('pt-PT');
   };
+
   if (isLoading) {
-    return <div className="p-6">
+    return (
+      <div className="p-6">
         <div className="flex justify-center items-center h-64">
           <LoadingSpinner size={32} />
         </div>
-      </div>;
+      </div>
+    );
   }
+
   if (!expense) {
-    return <div className="p-6">
+    return (
+      <div className="p-6">
         <PageHeader title="Despesa não encontrada" description="A despesa solicitada não foi encontrada" />
         <div className="flex justify-center mt-8">
           <Button onClick={() => navigate('/despesas/historico')}>
@@ -119,28 +121,28 @@ const ExpenseDetail = () => {
             Voltar ao Histórico
           </Button>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="p-6 space-y-6">
+
+  return (
+    <div className="p-6 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">Despesa {expense.number}</h1>
+          <p className="text-muted-foreground">{expense.supplierName}</p>
+        </div>
+
+        <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate('/despesas/historico')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Voltar
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Despesa {expense.number}</h1>
-            <p className="text-muted-foreground">{expense.supplierName}</p>
-          </div>
-        </div>
-        
-        <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate(`/despesas/editar/${expense.id}`)}>
             <Edit className="w-4 h-4 mr-2" />
             Editar
           </Button>
-          
         </div>
       </div>
 
@@ -179,10 +181,11 @@ const ExpenseDetail = () => {
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
                     {expense.items.map(item => {
-                    const itemTotal = item.quantity * item.unitPrice;
-                    const discountAmount = itemTotal * (item.discountPercent / 100);
-                    const finalTotal = itemTotal - discountAmount;
-                    return <tr key={item.id}>
+                      const itemTotal = item.quantity * item.unitPrice;
+                      const discountAmount = itemTotal * (item.discountPercent / 100);
+                      const finalTotal = itemTotal - discountAmount;
+                      return (
+                        <tr key={item.id}>
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                             {item.productName}
                           </td>
@@ -198,8 +201,9 @@ const ExpenseDetail = () => {
                           <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
                             {formatCurrency(finalTotal)}
                           </td>
-                        </tr>;
-                  })}
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -222,22 +226,26 @@ const ExpenseDetail = () => {
                 <span className="text-sm text-gray-500">Data:</span>
                 <span className="text-sm font-medium">{formatDate(expense.date)}</span>
               </div>
-              
+
               <div className="flex items-center gap-2">
                 <User className="w-4 h-4 text-gray-500" />
                 <span className="text-sm text-gray-500">Fornecedor:</span>
                 <span className="text-sm font-medium">{expense.supplierName}</span>
               </div>
 
-              {expense.discount > 0 && <div className="flex items-center gap-2">
+              {expense.discount > 0 && (
+                <div className="flex items-center gap-2">
                   <span className="text-sm text-gray-500">Desconto Geral:</span>
                   <Badge variant="secondary">{expense.discount}%</Badge>
-                </div>}
+                </div>
+              )}
 
-              {expense.notes && <div>
+              {expense.notes && (
+                <div>
                   <span className="text-sm text-gray-500">Notas:</span>
                   <p className="text-sm mt-1">{expense.notes}</p>
-                </div>}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -254,6 +262,8 @@ const ExpenseDetail = () => {
           </Card>
         </div>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default ExpenseDetail;
