@@ -140,10 +140,7 @@ const ExpenseDetail = () => {
             <Edit className="w-4 h-4 mr-2" />
             Editar
           </Button>
-          <DeleteConfirmDialog open={deleteDialog} onClose={() => setDeleteDialog(false)} onDelete={() => handleDeleteExpense(expense.id)} title="Eliminar Despesa" description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita." trigger={<Button variant="destructive" onClick={() => setDeleteDialog(true)}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Eliminar
-              </Button>} />
+          
         </div>
       </div>
 
