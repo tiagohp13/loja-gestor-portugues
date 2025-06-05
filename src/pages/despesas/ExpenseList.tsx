@@ -246,6 +246,7 @@ const ExpenseList = () => {
         }}
         title="Eliminar Despesa"
         description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
+        trigger={<div />}
       />
     </div>
   );
