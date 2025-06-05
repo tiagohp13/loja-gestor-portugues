@@ -123,8 +123,13 @@ export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
       });
     }
 
-    // Convert to array and sort by date (most recent first)
-    return Array.from(monthlyMap.values()).reverse();
+    // Calculate profit and convert to array
+    const result = Array.from(monthlyMap.values()).map(item => ({
+      ...item,
+      lucro: item.vendas - item.compras
+    }));
+
+    return result.reverse();
     
   } catch (error) {
     console.error('Error in fetchMonthlyData:', error);
