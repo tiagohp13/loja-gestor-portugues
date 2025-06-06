@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Package, Users, Truck, TrendingUp } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
@@ -56,12 +57,7 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {cards.map((card, index) => (
-        <div 
-          key={index} 
-          className="min-h-[120px] hover:shadow-lg transition-shadow"
-        >
-          <DashboardSummaryCard cardData={card} />
-        </div>
+        <DashboardSummaryCard key={index} cardData={card} />
       ))}
     </div>
   );
