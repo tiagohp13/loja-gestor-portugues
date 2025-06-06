@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -74,7 +73,7 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-3">
             Encomendas com Stock Insuficiente
           </CardTitle>
         </CardHeader>
@@ -90,7 +89,7 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-3">
           Encomendas com Stock Insuficiente
         </CardTitle>
       </CardHeader>
