@@ -1,130 +1,136 @@
-
 import React from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
-import { formatCurrency, formatPercentage } from '@/utils/formatting';
-import { SupportStats } from '../types/supportTypes';
 
 interface SummaryCardsProps {
-  stats: SupportStats;
+  stats: {
+    totalSales: number;
+    totalSpent: number;
+    profit: number;
+    profitMargin: number; // em percentual (ex.: 72.48 para 72.48%)
+  };
 }
 
 const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
-  // Helper function to render variation indicator
-  const renderVariation = (currentValue: number, previousValue: number) => {
-    if (previousValue === 0 || !previousValue) return null;
-    
-    const diff = currentValue - previousValue;
-    const percentChange = (diff / previousValue) * 100;
-    const isPositive = percentChange >= 0;
-    
-    return (
-      <div className={`flex items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'} mt-1`}>
-        {isPositive ? (
-          <ArrowUp className="h-3 w-3 mr-1" />
-        ) : (
-          <ArrowDown className="h-3 w-3 mr-1" />
-        )}
-        <span>{isPositive ? '+' : ''}{percentChange.toFixed(1)}%</span>
-      </div>
+  const { totalSales, totalSpent, profit, profitMargin } = stats;
+
+  // Formata valores como € X,XX
+  const formatCurrency = (value: number) =>
+    `€ ${value.toFixed(2).replace('.', ',')}`;
+
+  // Formata percentual X,XX%
+  const formatPercent = (value: number) =>
+    `${value.toFixed(2).replace('.', ',')}%`;
+
+  // Define a cor do indicador (positivo/negativo)
+  const getIndicatorColor = (num: number) =>
+    num >= 0 ? 'text-gestorSuccess' : 'text-gestorDanger';
+
+  const getIndicatorIcon = (num: number) =>
+    num >= 0 ? (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 mr-1 inline-block"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+      </svg>
+    ) : (
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 mr-1 inline-block"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+      </svg>
     );
-  };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {/* Total de Vendas */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
-            </div>
-            {stats.monthlySales && stats.monthlySales.length > 1 && 
-              renderVariation(
-                stats.monthlySales[stats.monthlySales.length - 1] || 0,
-                stats.monthlySales[stats.monthlySales.length - 2] || 0
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md p-4 flex flex-col justify-between min-h-[120px]">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          Total de Vendas
+        </span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-2xl font-bold text-gestorBlue">
+            {formatCurrency(totalSales)}
+          </span>
+          <span
+            className={`flex items-center text-sm font-medium ${getIndicatorColor(
+              totalSales - totalSpent
+            )}`}
+          >
+            {getIndicatorIcon(totalSales - totalSpent)}
+            {formatPercent(
+              totalSales === 0 ? 0 : ((totalSales - totalSpent) / totalSales) * 100
+            )}
+          </span>
+        </div>
+      </div>
 
-      {/* Total Gasto (incluindo despesas) */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <DollarSign className="w-4 h-4 mr-2 text-red-500" />
-              <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
-            </div>
-            {stats.monthlyData && stats.monthlyData.length > 1 && 
-              renderVariation(
-                stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0,
-                stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
+      {/* Total Gasto */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md p-4 flex flex-col justify-between min-h-[120px]">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          Total Gasto
+        </span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-2xl font-bold text-gestorBlue">
+            {formatCurrency(totalSpent)}
+          </span>
+          <span className="flex items-center text-sm font-medium text-gestorSuccess">
+            {getIndicatorIcon(-totalSpent)}
+            {/* Se quiser indicar variação, modifique conforme necessidade */}
+            {/* Aqui, apenas mostro seta negativa para gastos */}
+            <span>{formatPercent(0)}</span>
+          </span>
+        </div>
+      </div>
 
-      {/* Lucro (vendas - gastos incluindo despesas) */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              {stats.profit >= 0 ? (
-                <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
-              ) : (
-                <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
-              )}
-              <div className="text-2xl font-bold">{formatCurrency(stats.profit)}</div>
-            </div>
-            {stats.monthlyData && stats.monthlyData.length > 1 && 
-              renderVariation(
-                (stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0),
-                (stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0)
-              )
-            }
-          </div>
-        </CardContent>
-      </Card>
+      {/* Lucro */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md p-4 flex flex-col justify-between min-h-[120px]">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          Lucro
+        </span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-2xl font-bold text-gestorBlue">
+            {formatCurrency(profit)}
+          </span>
+          <span
+            className={`flex items-center text-sm font-medium ${getIndicatorColor(
+              profit
+            )}`}
+          >
+            {getIndicatorIcon(profit)}
+            {formatPercent(profit === 0 ? 0 : (profit / totalSales) * 100)}
+          </span>
+        </div>
+      </div>
 
-      {/* Margem de Lucro (com despesas incluídas) */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <Percent className="w-4 h-4 mr-2 text-green-500" />
-              <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
-            </div>
-            {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
-              // Calculate current and previous profit margins including expenses
-              const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0;
-              const currentSpent = stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0;
-              const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0;
-              const previousSpent = stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0;
-              
-              const currentMargin = currentSales > 0 ? ((currentSales - currentSpent) / currentSales) * 100 : 0;
-              const previousMargin = previousSales > 0 ? ((previousSales - previousSpent) / previousSales) * 100 : 0;
-              
-              return renderVariation(currentMargin, previousMargin);
-            })()}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Margem de Lucro */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md p-4 flex flex-col justify-between min-h-[120px]">
+        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
+          Margem de Lucro
+        </span>
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-2xl font-bold text-gestorBlue">
+            {formatPercent(profitMargin)}
+          </span>
+          <span
+            className={`flex items-center text-sm font-medium ${getIndicatorColor(
+              profitMargin
+            )}`}
+          >
+            {getIndicatorIcon(profitMargin)}
+            {/* Se for indicar variação, calcule aqui */}
+            <span>{formatPercent(0)}</span>
+          </span>
+        </div>
+      </div>
     </div>
   );
 };
