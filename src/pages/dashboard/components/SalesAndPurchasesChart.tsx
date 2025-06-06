@@ -37,7 +37,14 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               data={chartData}
               margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
             >
-              <CartesianGrid stroke="#D1D5DB" strokeOpacity={0.2} strokeDasharray="3 3" />
+              <CartesianGrid
+- stroke="#D1D5DB"
+- strokeOpacity={0.2}
+- strokeDasharray="3 3"
++ stroke="#9CA3AF"          // cinza mais escuro que D1D5DB
++ strokeOpacity={0.4}       // opacidade maior (antes era 0.2)
++ strokeDasharray="4 4"     // traços um pouco maiores (4px) ou deixe "" para linha sólida
+/>
               <XAxis
                 dataKey="name"
                 axisLine={{ stroke: '#9CA3AF' }}
