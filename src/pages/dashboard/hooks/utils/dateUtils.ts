@@ -17,12 +17,16 @@ export const createMonthlyDataMap = (): Map<string, { name: string, vendas: numb
   const today = new Date();
   for (let i = 5; i >= 0; i--) {
     const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    const monthKey = `${month.getFullYear()}-${month.getMonth() + 1}`;
-    dataMap.set(monthKey, {
-      name: month.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' }),
-      vendas: 0,
-      compras: 0
-    });
+    const monthName = month.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
+    
+    // Use monthName as key to avoid duplicates
+    if (!dataMap.has(monthName)) {
+      dataMap.set(monthName, {
+        name: monthName,
+        vendas: 0,
+        compras: 0
+      });
+    }
   }
   
   return dataMap;
@@ -37,16 +41,13 @@ export const processExitsForMonthlyData = (
 ): void => {
   stockExits.forEach(exit => {
     const date = ensureDate(exit.date);
-    const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    const monthName = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
     
-    if (dataMap.has(monthKey)) {
-      const current = dataMap.get(monthKey)!;
+    if (dataMap.has(monthName)) {
+      const current = dataMap.get(monthName)!;
       const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
       
-      dataMap.set(monthKey, {
-        ...current,
-        vendas: current.vendas + exitTotal
-      });
+      current.vendas += exitTotal;
     }
   });
 };
@@ -60,16 +61,13 @@ export const processEntriesForMonthlyData = (
 ): void => {
   stockEntries.forEach(entry => {
     const date = ensureDate(entry.date);
-    const monthKey = `${date.getFullYear()}-${date.getMonth() + 1}`;
+    const monthName = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
     
-    if (dataMap.has(monthKey)) {
-      const current = dataMap.get(monthKey)!;
+    if (dataMap.has(monthName)) {
+      const current = dataMap.get(monthName)!;
       const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
       
-      dataMap.set(monthKey, {
-        ...current,
-        compras: current.compras + entryTotal
-      });
+      current.compras += entryTotal;
     }
   });
 };

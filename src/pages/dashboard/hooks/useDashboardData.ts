@@ -56,7 +56,8 @@ export const useDashboardData = () => {
     // Add expenses data to monthly chart
     Object.entries(monthlyExpensesData).forEach(([monthKey, expenseValue]) => {
       const [year, month] = monthKey.split('-');
-      const monthName = new Date(parseInt(year), parseInt(month) - 1).toLocaleDateString('pt-PT', { 
+      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+      const monthName = monthDate.toLocaleDateString('pt-PT', { 
         month: 'short', 
         year: 'numeric' 
       });
@@ -64,12 +65,6 @@ export const useDashboardData = () => {
       if (dataMap.has(monthName)) {
         const existing = dataMap.get(monthName)!;
         existing.compras += expenseValue; // Add expenses to purchases
-      } else {
-        dataMap.set(monthName, {
-          name: monthName,
-          vendas: 0,
-          compras: expenseValue
-        });
       }
     });
     
