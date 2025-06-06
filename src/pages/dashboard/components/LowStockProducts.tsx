@@ -1,73 +1,59 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
-interface Product {
-  id: string;
-  name: string;
-  code: string;
-  stock: number;
-  minStock: number;
-}
+import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertTriangle } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Product } from '@/types';
 
 interface LowStockProductsProps {
   lowStockProducts: Product[];
   navigateToProductDetail: (id: string) => void;
 }
 
-const LowStockProducts: React.FC<LowStockProductsProps> = ({
+const LowStockProducts: React.FC<LowStockProductsProps> = ({ 
   lowStockProducts,
-  navigateToProductDetail,
+  navigateToProductDetail
 }) => {
+  // Limit to a maximum of 5 products to match with PendingOrders
+  const displayProducts = lowStockProducts.slice(0, 5);
+  
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 max-h-[300px] overflow-y-auto">
-      {/* Apenas esta linha foi alterada */}
-      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-3">
-        Produtos com Stock Baixo
-      </h3>
-
-      {lowStockProducts.length === 0 ? (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          Nenhum produto em stock baixo.
-        </p>
-      ) : (
-        <table className="w-full table-auto">
-          <thead>
-            <tr className="text-left text-xs text-gray-500 uppercase dark:text-gray-400">
-              <th className="px-2 py-1">Produto</th>
-              <th className="px-2 py-1">Código</th>
-              <th className="px-2 py-1">Stock</th>
-              <th className="px-2 py-1">Mínimo</th>
-              <th className="px-2 py-1">Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {lowStockProducts.map((prod) => (
-              <tr
-                key={prod.id}
-                className="border-t last:border-b hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                onClick={() => navigateToProductDetail(prod.id)}
-              >
-                <td className="px-2 py-2 text-sm text-gray-700 dark:text-gray-200">
-                  {prod.name}
-                </td>
-                <td className="px-2 py-2 text-sm text-gray-700 dark:text-gray-200">
-                  {prod.code}
-                </td>
-                <td className="px-2 py-2 text-sm font-medium text-red-500">
-                  {prod.stock}
-                </td>
-                <td className="px-2 py-2 text-sm text-gray-700 dark:text-gray-200">
-                  {prod.minStock}
-                </td>
-                <td className="px-2 py-2 text-sm text-blue-500 underline">
-                  Ver Detalhes
-                </td>
-              </tr>
+    <Card className="h-full">
+      <CardHeader className="pb-3">
+        <CardTitle>Produtos com Stock Baixo</CardTitle>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {displayProducts.length > 0 ? (
+          <div className="space-y-4">
+            {displayProducts.map((product) => (
+              <div key={product.id} className="flex justify-between items-start p-3 bg-red-50 rounded-md">
+                <div className="flex items-start">
+                  <AlertTriangle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                  <div>
+                    <Button 
+                      variant="link" 
+                      className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors whitespace-normal text-left justify-start min-h-[24px]"
+                      onClick={() => navigateToProductDetail(product.id)}
+                    >
+                      {product.name}
+                    </Button>
+                    <div className="text-sm text-gray-500">Código: {product.code}</div>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-red-500 font-medium">{product.currentStock} unidades</div>
+                  <div className="text-sm text-gray-500">Mínimo: {product.minStock} unidades</div>
+                </div>
+              </div>
             ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+          </div>
+        ) : (
+          <div className="text-center py-8 text-gray-500">
+            Não existem produtos com stock baixo.
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 
