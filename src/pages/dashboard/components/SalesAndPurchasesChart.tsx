@@ -28,9 +28,10 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
   return (
     <Card className="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg font-medium text-gray-800 dark:text-gray-100">
-          Resumo Financeiro
-        </CardTitle>
+  <CardTitle className="text-lg font-medium text-gray-800 dark:text-gray-100">
+    Resumo Financeiro
+  </CardTitle>
+</CardHeader>
       </CardHeader>
       <CardContent className="p-4">
         <div className="w-full h-64">
