@@ -1,5 +1,3 @@
-// src/pages/dashboard/components/CategoryList.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
@@ -26,11 +24,11 @@ const CategoryList: React.FC = () => {
   useEffect(() => {
     if (categories && products) {
       // Calcula a quantidade de produtos para cada categoria
-      const updatedCategories: Category[] = categories.map(cat => {
+      const updated = categories.map(cat => {
         const count = products.filter(prod => prod.category === cat.name).length;
         return { id: cat.id, name: cat.name, productCount: count };
       });
-      setCategoriesWithCount(updatedCategories);
+      setCategoriesWithCount(updated);
     }
   }, [categories, products]);
 
@@ -66,10 +64,11 @@ const CategoryList: React.FC = () => {
       {/* 2. Contagem total */}
       <RecordCount title="Total de categorias" count={categories.length} />
 
-      {/* 3. Card branco onde fica a Busca e a Tabela */}
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      {/* 3. A partir daqui não usamos wrappers de fundo branco adicionais,
+             apenas esta div para agrupar busca + tabela. */}
+      <div className="mt-6">
         {/* 3.1 Campo de busca */}
-        <div className="mb-6">
+        <div className="mb-4 w-full max-w-md">
           <div className="relative">
             <Search
               className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray"
@@ -84,7 +83,7 @@ const CategoryList: React.FC = () => {
           </div>
         </div>
 
-        {/* 3.2 Tabela (ou estado vazio) */}
+        {/* 3.2 Card da tabela */}
         {filteredCategories.length > 0 ? (
           <div className="overflow-x-auto bg-white border border-gray-200 rounded-lg shadow-sm">
             <table className="min-w-full divide-y divide-gray-200">
@@ -110,21 +109,19 @@ const CategoryList: React.FC = () => {
                     } hover:bg-gray-50 cursor-pointer transition-colors`}
                     onClick={() => handleViewCategory(category.id)}
                   >
-                    <td className="px-4 py-3 text-sm text-gray-700">
-                      {category.name}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-700">{category.name}</td>
                     <td className="px-4 py-3 text-center text-sm text-gray-700">
                       {category.productCount}
                     </td>
                     <td className="px-4 py-3 text-center">
                       <div
                         className="flex justify-end space-x-2"
-                        onClick={e => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={e => {
+                          onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/categorias/editar/${category.id}`);
                           }}
@@ -140,7 +137,7 @@ const CategoryList: React.FC = () => {
                             <Button
                               variant="destructive"
                               size="icon"
-                              onClick={e => e.stopPropagation()}
+                              onClick={(e) => e.stopPropagation()}
                               className="hover:bg-red-50 transition-colors"
                             >
                               <Trash size={16} />
@@ -155,7 +152,6 @@ const CategoryList: React.FC = () => {
             </table>
           </div>
         ) : (
-          // 3.3 Estado vazio (sem categorias ou sem correspondência na pesquisa)
           <EmptyState
             title="Sem categorias"
             description="Não existem categorias cadastradas ou que correspondam à pesquisa."
@@ -173,3 +169,4 @@ const CategoryList: React.FC = () => {
 };
 
 export default CategoryList;
+
