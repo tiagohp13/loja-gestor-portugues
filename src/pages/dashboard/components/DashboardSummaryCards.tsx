@@ -56,7 +56,10 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
       {cards.map((card, index) => (
-        <div key={index} className="hover:shadow-lg transition-shadow">
+        <div
+          key={index}
+          className="w-full rounded-lg hover:shadow-lg transition-shadow"
+        >
           <DashboardSummaryCard cardData={card} />
         </div>
       ))}
