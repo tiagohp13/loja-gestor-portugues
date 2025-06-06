@@ -5,7 +5,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Order } from '@/types';
 import { formatCurrency } from '@/utils/formatting';
 import { format } from 'date-fns';
-import { Button } from '@/components/ui/button';
 
 interface PendingOrdersProps {
   pendingOrders: Order[];
@@ -65,31 +64,21 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({
                 </TableHeader>
                 <TableBody>
                   {displayOrders.map((order) => (
-                    <TableRow key={order.id}>
+                    <TableRow 
+                      key={order.id}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => navigateToOrderDetail(order.id)}
+                    >
                       <TableCell>
-                        <Button 
-                          variant="link" 
-                          className="p-0 h-auto text-blue-600 hover:underline"
-                          onClick={() => navigateToOrderDetail(order.id)}
-                        >
+                        <span className="text-blue-600 hover:underline font-medium">
                           {order.number}
-                        </Button>
+                        </span>
                       </TableCell>
                       <TableCell>
                         {format(new Date(order.date), 'dd/MM/yyyy')}
                       </TableCell>
-                      <TableCell>
-                        {order.clientId && navigateToClientDetail ? (
-                          <Button 
-                            variant="link" 
-                            className="p-0 h-auto text-blue-600 hover:underline"
-                            onClick={() => navigateToClientDetail(order.clientId)}
-                          >
-                            {order.clientName || 'Cliente desconhecido'}
-                          </Button>
-                        ) : (
-                          order.clientName || 'Cliente desconhecido'
-                        )}
+                      <TableCell className="text-gray-900">
+                        {order.clientName || 'Cliente desconhecido'}
                       </TableCell>
                       <TableCell className="text-right font-medium">
                         {formatCurrency(order.total || calculateTotal(order))}
