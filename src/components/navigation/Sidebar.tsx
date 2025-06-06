@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -120,12 +119,12 @@ const AppSidebar: React.FC = () => {
 
   return (
     <Sidebar variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="p-4 flex items-center justify-between border-b">
+      <SidebarHeader className="p-4 flex items-center border-b">
         <div className="flex items-center space-x-2">
           <img 
             src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
             alt="Aqua Paraíso Logo" 
-            className="h-8 w-auto"
+            className="h-8 w-8 object-contain"
           />
           <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
         </div>
