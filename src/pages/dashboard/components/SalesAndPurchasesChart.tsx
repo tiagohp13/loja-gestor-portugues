@@ -57,11 +57,16 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
                 formatter={(value: number) => [formatCurrency(value), '']}
                 labelFormatter={(label) => `Período: ${label}`}
               />
-              <Legend
-                verticalAlign="bottom"
-                height={36}
-                wrapperStyle={{ fontSize: 12, color: '#6B7280' }}
-              />
+-              <Legend
+-                verticalAlign="bottom"
+-                height={36}
+-                wrapperStyle={{ fontSize: 12, color: '#6B7280' }}
+-              />
++              <Legend
++                verticalAlign="bottom"
++                height={36}
++                wrapperStyle={{ fontSize: 14, color: '#6B7280' }}
++              />
               <Line 
                 type="monotone" 
                 dataKey="vendas" 
