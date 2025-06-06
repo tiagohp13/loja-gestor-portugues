@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,7 +53,7 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
 
   const sortedItems = [...insufficientItems].sort((a, b) => {
     const multiplier = sortDirection === 'asc' ? 1 : -1;
-
+    
     switch (sortField) {
       case 'order':
         return multiplier * a.order.number.localeCompare(b.order.number);
@@ -73,7 +74,7 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-3">
+          <CardTitle className="text-lg font-semibold">
             Encomendas com Stock Insuficiente
           </CardTitle>
         </CardHeader>
@@ -89,7 +90,7 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-3">
+        <CardTitle className="text-lg font-semibold">
           Encomendas com Stock Insuficiente
         </CardTitle>
       </CardHeader>
@@ -98,27 +99,42 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead onClick={() => handleSort('order')} className="cursor-pointer">
+                <TableHead 
+                  onClick={() => handleSort('order')} 
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Encomenda {getSortIcon('order')}
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('date')} className="cursor-pointer">
+                <TableHead 
+                  onClick={() => handleSort('date')} 
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Data {getSortIcon('date')}
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('product')} className="cursor-pointer">
+                <TableHead 
+                  onClick={() => handleSort('product')} 
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Produto {getSortIcon('product')}
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('missingQuantity')} className="cursor-pointer">
+                <TableHead 
+                  onClick={() => handleSort('missingQuantity')} 
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Falta Comprar {getSortIcon('missingQuantity')}
                   </div>
                 </TableHead>
-                <TableHead onClick={() => handleSort('client')} className="cursor-pointer">
+                <TableHead 
+                  onClick={() => handleSort('client')} 
+                  className="cursor-pointer"
+                >
                   <div className="flex items-center">
                     Cliente {getSortIcon('client')}
                   </div>
