@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
@@ -33,7 +32,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {/* Total de Vendas */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
         </CardHeader>
@@ -54,7 +53,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
       </Card>
 
       {/* Total Gasto (incluindo despesas) */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
         </CardHeader>
@@ -75,7 +74,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
       </Card>
 
       {/* Lucro (vendas - gastos incluindo despesas) */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
         </CardHeader>
@@ -100,7 +99,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
       </Card>
 
       {/* Margem de Lucro (com despesas incluídas) */}
-      <Card>
+      <Card className="hover:shadow-lg transition-shadow">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
         </CardHeader>
