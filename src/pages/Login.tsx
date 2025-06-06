@@ -16,7 +16,6 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
-  const [imgLoaded, setImgLoaded] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +25,7 @@ const Login: React.FC = () => {
   // Obter o caminho para onde redirecionar após login
   const from = location.state?.from?.pathname || '/dashboard';
 
-  // Ao montar, foca email e registra evento de "login page view" no caso de dark mode
+  // Ao montar, foca email
   useEffect(() => {
     emailRef.current?.focus();
   }, []);
@@ -93,23 +92,13 @@ const Login: React.FC = () => {
       {/* Container de Login */}
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden relative z-10 dark:bg-gray-800">
         <div className="p-4 sm:p-6">
-          {/* Logo com efeito blur até carregar */}
+          {/* Logo sem efeito de desfoque */}
           <div className="flex justify-center mb-2">
             <img
               src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png"
               alt="Aqua Paraíso"
-              onLoad={() => setImgLoaded(true)}
-              className={`w-auto h-32 drop-shadow-lg rounded-md transition-filter duration-300 ${
-                imgLoaded ? 'filter-none' : 'filter blur-xl'
-              }`}
+              className="w-auto h-32 drop-shadow-lg rounded-md"
             />
-          </div>
-
-          {/* Pequeno slogan abaixo do logo */}
-          <div className="text-center mb-4">
-            <p className="text-sm italic text-gestorApp-blue dark:text-blue-200">
-              Gestão simples e eficaz do teu aquário
-            </p>
           </div>
 
           {/* Título e descrição */}
