@@ -40,7 +40,7 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               {/* ALTERAÇÃO: grid mais escuro e opacidade maior */}
               <CartesianGrid
                 stroke="#9CA3AF"        // cinza mais escuro que #D1D5DB
-                strokeOpacity={0.8}     // opacidade aumentada (antes era 0.2)
+                strokeOpacity={0.6}     // opacidade aumentada (antes era 0.2)
                 strokeDasharray="4 4"   // traços de 4px, espaço de 4px (em vez de "3 3")
               />
 
