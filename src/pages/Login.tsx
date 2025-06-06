@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isCapsLockOn, setIsCapsLockOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -37,6 +38,12 @@ const Login: React.FC = () => {
     }
   };
 
+  // Verifica estado do Caps Lock
+  const handleCapsLock = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    const capsOn = e.getModifierState && e.getModifierState('CapsLock');
+    setIsCapsLockOn(capsOn);
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 via-white to-blue-100 p-4 relative">
       {/* Subtle geometric pattern overlay */}
@@ -54,12 +61,12 @@ const Login: React.FC = () => {
       {/* Login box */}
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden relative z-10">
         <div className="p-4 sm:p-6">
-          {/* Logo */}
+          {/* Logo com borda arredondada e leve contorno */}
           <div className="flex justify-center mb-2">
             <img
               src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png"
               alt="Aqua Paraíso"
-              className="w-auto h-32 drop-shadow-lg"
+              className="w-auto h-32 drop-shadow-lg rounded-md border border-blue-100"
             />
           </div>
 
@@ -86,23 +93,29 @@ const Login: React.FC = () => {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
               <Label htmlFor="password">Palavra-passe</Label>
               <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                onKeyDown={handleCapsLock}
+                onKeyUp={handleCapsLock}
                 placeholder="••••••••"
                 required
                 className="w-full"
                 autoComplete="current-password"
               />
+              {isCapsLockOn && (
+                <p className="text-xs text-red-600">Caps Lock está ativado</p>
+              )}
             </div>
 
+            {/* Botão Entrar mais pronunciado */}
             <Button
               type="submit"
-              className="w-full bg-gestorApp-blue hover:bg-gestorApp-blue-dark"
+              className="w-full py-3 bg-gestorApp-blue hover:bg-gestorApp-blue-dark shadow-md"
               disabled={isLoading}
             >
               {isLoading ? 'A processar...' : 'Entrar'}
