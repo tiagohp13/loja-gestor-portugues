@@ -61,11 +61,10 @@ const Login: React.FC = () => {
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <img 
-              src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png" 
-              alt="Aqua Paraíso" 
-              className="w-full max-w-xs h-auto drop-shadow-md"
-            />
-          </div>
+  src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png" 
+  alt="Aqua Paraíso" 
+  className="w-full max-w-[100px] h-auto drop-shadow-md"
+/>
 
           {/* Title and Description */}
           <div className="text-center mb-6">
