@@ -23,7 +23,6 @@ const CategoryList: React.FC = () => {
 
   useEffect(() => {
     if (categories && products) {
-      // Calcula a quantidade de produtos para cada categoria
       const updated = categories.map(cat => {
         const count = products.filter(prod => prod.category === cat.name).length;
         return { id: cat.id, name: cat.name, productCount: count };
@@ -64,8 +63,7 @@ const CategoryList: React.FC = () => {
       {/* 2. Contagem total */}
       <RecordCount title="Total de categorias" count={categories.length} />
 
-      {/* 3. A partir daqui não usamos wrappers de fundo branco adicionais,
-             apenas esta div para agrupar busca + tabela. */}
+      {/* 3. Área de busca e tabela */}
       <div className="mt-6">
         {/* 3.1 Campo de busca */}
         <div className="mb-4 w-full max-w-md">
@@ -89,39 +87,37 @@ const CategoryList: React.FC = () => {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gestorApp-gray-dark">
+                  <th className="px-4 py-4 text-left text-sm font-semibold text-gray-700">
                     Nome
                   </th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gestorApp-gray-dark">
+                  <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700">
                     Produtos Associados
                   </th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gestorApp-gray-dark">
+                  <th className="px-4 py-4 text-center text-sm font-semibold text-gray-700">
                     Ações
                   </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {filteredCategories.map((category, idx) => (
+                {filteredCategories.map(category => (
                   <tr
                     key={category.id}
-                    className={`${
-                      idx % 2 === 0 ? 'bg-white' : 'bg-gray-100'
-                    } hover:bg-gray-50 cursor-pointer transition-colors`}
+                    className="bg-white hover:bg-gray-100 cursor-pointer transition-colors"
                     onClick={() => handleViewCategory(category.id)}
                   >
-                    <td className="px-4 py-3 text-sm text-gray-700">{category.name}</td>
-                    <td className="px-4 py-3 text-center text-sm text-gray-700">
+                    <td className="px-4 py-4 text-sm text-gray-700">{category.name}</td>
+                    <td className="px-4 py-4 text-center text-sm text-gray-700">
                       {category.productCount}
                     </td>
-                    <td className="px-4 py-3 text-center">
+                    <td className="px-4 py-4 text-center">
                       <div
                         className="flex justify-end space-x-2"
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={e => e.stopPropagation()}
                       >
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             navigate(`/categorias/editar/${category.id}`);
                           }}
@@ -137,7 +133,7 @@ const CategoryList: React.FC = () => {
                             <Button
                               variant="destructive"
                               size="icon"
-                              onClick={(e) => e.stopPropagation()}
+                              onClick={e => e.stopPropagation()}
                               className="hover:bg-red-50 transition-colors"
                             >
                               <Trash size={16} />
@@ -169,4 +165,3 @@ const CategoryList: React.FC = () => {
 };
 
 export default CategoryList;
-
