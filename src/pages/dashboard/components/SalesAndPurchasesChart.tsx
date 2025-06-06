@@ -63,7 +63,7 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               />
               <Legend
                 verticalAlign="bottom"
-                height={36}
+                height={34}
                 wrapperStyle={{ fontSize: 14, color: '#6B7280' }}
               />
               <Line
