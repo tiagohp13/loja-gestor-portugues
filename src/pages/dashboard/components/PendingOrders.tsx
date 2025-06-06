@@ -1,104 +1,82 @@
-
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Order } from '@/types';
-import { formatCurrency } from '@/utils/formatting';
-import { format } from 'date-fns';
+
+interface Order {
+  id: string;
+  date: string; // “DD/MM/AAAA” ou ISO
+  clientName: string;
+  totalValue: number;
+}
 
 interface PendingOrdersProps {
   pendingOrders: Order[];
   navigateToOrderDetail: (id: string) => void;
-  navigateToClientDetail?: (id: string) => void;
+  navigateToClientDetail: (id: string) => void;
 }
 
-const PendingOrders: React.FC<PendingOrdersProps> = ({ 
+const PendingOrders: React.FC<PendingOrdersProps> = ({
   pendingOrders,
   navigateToOrderDetail,
-  navigateToClientDetail
+  navigateToClientDetail,
 }) => {
-  // Limit to a maximum of 5 orders for display
-  const displayOrders = pendingOrders.slice(0, 5);
-  
-  // Calculate total value for each order
-  const calculateTotal = (order: Order) => {
-    let total = 0;
-    if (order.items && order.items.length > 0) {
-      total = order.items.reduce((sum, item) => {
-        const itemPrice = item.salePrice * item.quantity;
-        const discount = item.discountPercent ? (itemPrice * (item.discountPercent / 100)) : 0;
-        return sum + (itemPrice - discount);
-      }, 0);
-    }
-    
-    // Apply order-level discount if applicable
-    if (order.discount && total > 0) {
-      total = total * (1 - (order.discount / 100));
-    }
-    
-    return total;
-  };
-  
-  // Calculate total value of all displayed pending orders
-  const totalPendingValue = displayOrders.reduce((sum, order) => {
-    return sum + (order.total || calculateTotal(order));
-  }, 0);
-  
+  // Formata total como € X,XX
+  const formatCurrency = (value: number) =>
+    `€ ${value.toFixed(2).replace('.', ',')}`;
+
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-3">
-        <CardTitle>Encomendas Pendentes</CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0 p-0">
-        {displayOrders.length > 0 ? (
-          <>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nº da Encomenda</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="text-right">Valor Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayOrders.map((order) => (
-                    <TableRow 
-                      key={order.id}
-                      className="cursor-pointer hover:bg-gray-50"
-                      onClick={() => navigateToOrderDetail(order.id)}
-                    >
-                      <TableCell>
-                        <span className="text-blue-600 hover:underline font-medium">
-                          {order.number}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        {format(new Date(order.date), 'dd/MM/yyyy')}
-                      </TableCell>
-                      <TableCell className="text-gray-900">
-                        {order.clientName || 'Cliente desconhecido'}
-                      </TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(order.total || calculateTotal(order))}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex justify-end mt-2 px-4 pb-4 text-sm text-gray-700 font-medium">
-              Total: <span className="ml-1 text-gray-900">{formatCurrency(totalPendingValue)}</span>
-            </div>
-          </>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            Não existem encomendas pendentes.
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 max-h-[300px] overflow-y-auto">
+      {/* Apenas esta linha foi alterada */}
+      <h3 className="text-lg font-medium text-gray-800 dark:text-gray-100 mb-3">
+        Encomendas Pendentes
+      </h3>
+
+      {pendingOrders.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Não há encomendas pendentes.
+        </p>
+      ) : (
+        <table className="w-full table-auto">
+          <thead>
+            <tr className="text-left text-xs text-gray-500 uppercase dark:text-gray-400">
+              <th className="px-2 py-1">Nº Encomenda</th>
+              <th className="px-2 py-1">Data</th>
+              <th className="px-2 py-1">Cliente</th>
+              <th className="px-2 py-1">Valor Total</th>
+              <th className="px-2 py-1">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            {pendingOrders.map((order) => (
+              <tr
+                key={order.id}
+                className="border-t last:border-b hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
+              >
+                <td
+                  className="px-2 py-2 text-sm text-blue-500 underline"
+                  onClick={() => navigateToOrderDetail(order.id)}
+                >
+                  {order.id}
+                </td>
+                <td className="px-2 py-2 text-sm text-gray-700 dark:text-gray-200">
+                  {order.date}
+                </td>
+                <td
+                  className="px-2 py-2 text-sm text-blue-500 underline"
+                  onClick={() => navigateToClientDetail(order.id)}
+                >
+                  {order.clientName}
+                </td>
+                <td className="px-2 py-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                  {formatCurrency(order.totalValue)}
+                </td>
+                <td className="px-2 py-2 text-sm text-blue-500 underline">
+                  Ver Detalhes
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
   );
 };
 
