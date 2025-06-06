@@ -13,9 +13,11 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Obter o caminho para onde redirecionar após login
   const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
+    // Se já estiver autenticado, redireciona imediatamente
     if (isAuthenticated) {
       navigate(from, { replace: true });
     }
@@ -53,7 +55,7 @@ const Login: React.FC = () => {
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden relative z-10">
         <div className="p-4 sm:p-6">
           {/* Logo */}
-          <div className="flex justify-center mb-2">
+          <div className="flex justify-center mb-4">
             <img
               src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png"
               alt="Aqua Paraíso"
