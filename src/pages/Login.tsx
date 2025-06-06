@@ -63,7 +63,7 @@ const Login: React.FC = () => {
             <img 
               src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png" 
               alt="Aqua Paraíso" 
-              className="h-16 w-auto"
+              className="h-20 w-auto drop-shadow-md"
             />
           </div>
 
