@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import AuthLayout from '../components/layouts/AuthLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +12,7 @@ const Login: React.FC = () => {
   const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
@@ -25,10 +24,9 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
       const success = await login(email, password);
-      
       if (success) {
         navigate(from, { replace: true });
       }
@@ -44,7 +42,7 @@ const Login: React.FC = () => {
         <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
           <defs>
             <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#1e40af" strokeWidth="1"/>
+              <path d="M 60 0 L 0 0 0 60" fill="none" stroke="#1e40af" strokeWidth="1" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#grid)" />
@@ -56,9 +54,9 @@ const Login: React.FC = () => {
         <div className="p-4 sm:p-6">
           {/* Logo */}
           <div className="flex justify-center mb-2">
-            <img 
-              src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png" 
-              alt="Aqua Paraíso" 
+            <img
+              src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png"
+              alt="Aqua Paraíso"
               className="w-auto h-32 drop-shadow-lg"
             />
           </div>
@@ -70,7 +68,7 @@ const Login: React.FC = () => {
               Aceda ao painel de controlo do seu stock e vendas.
             </p>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-4 w-full px-2 sm:px-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -85,7 +83,7 @@ const Login: React.FC = () => {
                 autoComplete="email"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="password">Palavra-passe</Label>
               <Input
@@ -99,7 +97,7 @@ const Login: React.FC = () => {
                 autoComplete="current-password"
               />
             </div>
-            
+
             <Button
               type="submit"
               className="w-full bg-gestorApp-blue hover:bg-gestorApp-blue-dark"
