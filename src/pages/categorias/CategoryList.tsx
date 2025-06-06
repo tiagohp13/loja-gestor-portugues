@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Trash, Plus, Search, Tag as TagIcon } from 'lucide-react';
+import { Edit, Trash, Plus, Search } from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
@@ -13,6 +13,7 @@ interface Category {
   id: string;
   name: string;
   productCount: number;
+  iconUrl?: string; // opcional, ícone de categoria
   status?: 'Ativa' | 'Inativa';
 }
 
@@ -30,7 +31,8 @@ const CategoryList: React.FC = () => {
           id: cat.id,
           name: cat.name,
           productCount: count,
-          status: 'Ativa', // este valor pode vir do backend
+          status: 'Ativa', // pode vir do backend
+          iconUrl: `/icons/${cat.name.toLowerCase()}.svg` // substitua conforme necessário
         } as Category;
       });
       setCategoriesWithCount(updated);
@@ -77,8 +79,13 @@ const CategoryList: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  {/* Ícone genérico de categoria */}
-                  <TagIcon className="w-8 h-8 text-gray-400 mr-3" />
+                  {cat.iconUrl && (
+                    <img
+                      src={cat.iconUrl}
+                      alt={cat.name}
+                      className="w-8 h-8 mr-3 object-contain"
+                    />
+                  )}
                   <h3 className="text-lg font-semibold text-gray-800">{cat.name}</h3>
                 </div>
                 {cat.status && (
