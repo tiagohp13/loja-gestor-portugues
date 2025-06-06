@@ -61,12 +61,12 @@ const Login: React.FC = () => {
       {/* Login box */}
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden relative z-10">
         <div className="p-4 sm:p-6">
-          {/* Logo com borda arredondada e leve contorno */}
+          {/* Logo sem borda */}
           <div className="flex justify-center mb-2">
             <img
               src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png"
               alt="Aqua Paraíso"
-              className="w-auto h-32 drop-shadow-lg rounded-md border border-blue-100"
+              className="w-auto h-32 drop-shadow-lg rounded-md"
             />
           </div>
 
