@@ -56,7 +56,8 @@ const Login: React.FC = () => {
       setIsLoading(true);
 
       try {
-        const success = await login(email, password, rememberMe);
+        // Ajuste: login agora recebe apenas email e password
+        const success = await login(email, password);
         if (!success) {
           setLoginError('Email ou palavra-passe inválidos.');
         } else {
@@ -66,7 +67,7 @@ const Login: React.FC = () => {
         setIsLoading(false);
       }
     },
-    [email, password, rememberMe, login, navigate, from, isLoading]
+    [email, password, login, navigate, from, isLoading]
   );
 
   // Verifica estado do Caps Lock em password
