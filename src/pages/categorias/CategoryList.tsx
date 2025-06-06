@@ -3,7 +3,16 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Trash, Plus, Search, Tag as TagIcon } from 'lucide-react';
+import {
+  Edit,
+  Trash,
+  Plus,
+  Search,
+  Package as PackageIcon,
+  Tag as TagIcon,
+  Leaf,
+  HeartPulse,
+} from 'lucide-react';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import EmptyState from '@/components/common/EmptyState';
@@ -15,6 +24,13 @@ interface Category {
   productCount: number;
   status?: 'Ativa' | 'Inativa';
 }
+
+const iconMap: Record<string, JSX.Element> = {
+  'Alimentação': <PackageIcon className="w-8 h-8 text-yellow-500 mr-3" />, // pacote como comida
+  'Consumíveis': <TagIcon className="w-8 h-8 text-blue-500 mr-3" />,
+  'Plantas': <Leaf className="w-8 h-8 text-green-500 mr-3" />,
+  'Vivos': <HeartPulse className="w-8 h-8 text-red-500 mr-3" />,
+};
 
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
@@ -30,7 +46,7 @@ const CategoryList: React.FC = () => {
           id: cat.id,
           name: cat.name,
           productCount: count,
-          status: 'Ativa', // este valor pode vir do backend
+          status: 'Ativa', // pode vir do back
         } as Category;
       });
       setCategoriesWithCount(updated);
@@ -77,8 +93,7 @@ const CategoryList: React.FC = () => {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  {/* Ícone genérico de categoria */}
-                  <TagIcon className="w-8 h-8 text-gray-400 mr-3" />
+                  {iconMap[cat.name] || <TagIcon className="w-8 h-8 text-gray-400 mr-3" />}
                   <h3 className="text-lg font-semibold text-gray-800">{cat.name}</h3>
                 </div>
                 {cat.status && (
