@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,11 +14,9 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Get the redirect path from location state
   const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
-    // If already authenticated, redirect to the original page or dashboard
     if (isAuthenticated) {
       navigate(from, { replace: true });
     }
@@ -33,7 +30,6 @@ const Login: React.FC = () => {
       const success = await login(email, password);
       
       if (success) {
-        // Navigate to the page they tried to visit before being redirected to login
         navigate(from, { replace: true });
       }
     } finally {
@@ -61,10 +57,11 @@ const Login: React.FC = () => {
           {/* Logo */}
           <div className="flex justify-center mb-6">
             <img 
-  src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png" 
-  alt="Aqua Paraíso" 
-  className="w-full max-w-[100px] h-auto drop-shadow-md"
-/>
+              src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png" 
+              alt="Aqua Paraíso" 
+              className="w-full max-w-[100px] h-auto drop-shadow-md"
+            />
+          </div>
 
           {/* Title and Description */}
           <div className="text-center mb-6">
