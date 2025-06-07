@@ -12,7 +12,6 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isNewEntry = !id;
 
-  // esses arrays vêm do DataContext via window
   const { suppliers, stockEntries } = window;
 
   const validateForm = (): boolean => {
@@ -41,7 +40,7 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
 
     setIsSubmitting(true);
     try {
-      const supplier = suppliers.find((s: any) => s.id === entry.supplierId);
+      const supplier = (suppliers as any[])?.find(s => s.id === entry.supplierId);
       if (!supplier) throw new Error('Fornecedor não encontrado');
 
       if (id) {
@@ -62,7 +61,6 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
   };
 
   const updateExistingEntry = async (entryId: string, supplier: any) => {
-    // Atualiza dados principais
     const existing = (stockEntries as any[])?.find(e => e.id === entryId);
     if (!existing) throw new Error('Entrada não encontrada');
 
@@ -81,14 +79,13 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
       .eq('id', entryId);
     if (eError) throw new Error('Erro ao atualizar entrada');
 
-    // IDs originais para comparação
+    // IDs originais para comparação (converte string ou number para number)
     const originalItems: StockEntryItem[] = existing.items || [];
-    const originalIds: number[] = originalItems.map(i => i.id);
+    const originalIds: number[] = originalItems.map(i => Number(i.id));
 
     // Upsert de itens
     for (const item of entry.items) {
       if (item.id == null) {
-        // novo item
         const newItem = {
           entry_id: entryId,
           product_id: item.productId,
@@ -102,7 +99,6 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
           .insert(newItem);
         if (niError) throw new Error(`Erro ao adicionar item ${item.productName}`);
       } else {
-        // atualiza item existente
         const upd = {
           product_id: item.productId,
           product_name: item.productName,
@@ -127,13 +123,12 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
       const { error: dError } = await supabase
         .from('stock_entry_items')
         .delete()
-        .in('id', deleteIds);
+        .in('id', deleteIds.map(id => id.toString())); // converte para string[]
       if (dError) throw new Error('Erro ao remover itens deletados');
     }
   };
 
   const createNewEntry = async (supplier: any) => {
-    // Cria nova entrada, gera número, etc.
     const { data: counterData, error: counterError } = await supabase
       .rpc('get_next_counter', { counter_id: 'stock_entry' });
     if (counterError) throw new Error('Erro ao gerar número da entrada');
@@ -157,7 +152,6 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
       .single();
     if (entryError || !newEntry) throw new Error('Erro ao criar entrada de stock');
 
-    // Cria itens
     for (const item of entry.items) {
       const newItem = {
         entry_id: newEntry.id,
