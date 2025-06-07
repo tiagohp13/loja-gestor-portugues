@@ -1,4 +1,4 @@
-// src/pages/compras/entradas/hooks/stockEntryEdit/useEntrySubmit.ts
+// src/pages/entradas/hooks/stockEntryEdit/useEntrySubmit.ts
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -15,21 +15,21 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
   // esses arrays vêm do DataContext via window
   const { suppliers, stockEntries } = window;
 
-  const validateForm = () => {
+  const validateForm = (): boolean => {
     if (entry.items.length === 0) {
-      toast({ title: "Erro", description: "Adicione pelo menos um produto à entrada", variant: "destructive" });
+      toast({ title: 'Erro', description: 'Adicione pelo menos um produto à entrada', variant: 'destructive' });
       return false;
     }
     if (!entry.supplierId) {
-      toast({ title: "Erro", description: "Selecione um fornecedor", variant: "destructive" });
+      toast({ title: 'Erro', description: 'Selecione um fornecedor', variant: 'destructive' });
       return false;
     }
     if (entry.items.some(item => !item.productId)) {
-      toast({ title: "Erro", description: "Selecione um produto para todos os itens", variant: "destructive" });
+      toast({ title: 'Erro', description: 'Selecione um produto para todos os itens', variant: 'destructive' });
       return false;
     }
     if (entry.items.some(item => item.quantity <= 0)) {
-      toast({ title: "Erro", description: "A quantidade deve ser maior que zero", variant: "destructive" });
+      toast({ title: 'Erro', description: 'A quantidade deve ser maior que zero', variant: 'destructive' });
       return false;
     }
     return true;
@@ -41,25 +41,21 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
 
     setIsSubmitting(true);
     try {
-      const supplier = suppliers.find(s => s.id === entry.supplierId);
+      const supplier = suppliers.find((s: any) => s.id === entry.supplierId);
       if (!supplier) throw new Error('Fornecedor não encontrado');
 
       if (id) {
         await updateExistingEntry(id, supplier);
-        toast({ title: "Sucesso", description: "Entrada atualizada com sucesso" });
+        toast({ title: 'Sucesso', description: 'Entrada atualizada com sucesso' });
       } else {
         await createNewEntry(supplier);
-        toast({ title: "Sucesso", description: "Entrada criada com sucesso" });
+        toast({ title: 'Sucesso', description: 'Entrada criada com sucesso' });
       }
 
       navigate('/entradas/historico');
-    } catch (error) {
-      console.error("Erro no submit:", error);
-      toast({
-        title: "Erro",
-        description: (error as Error).message || "Erro ao salvar entrada",
-        variant: "destructive"
-      });
+    } catch (error: any) {
+      console.error('Erro no submit:', error);
+      toast({ title: 'Erro', description: error.message || 'Erro ao salvar entrada', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
@@ -67,7 +63,7 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
 
   const updateExistingEntry = async (entryId: string, supplier: any) => {
     // Atualiza dados principais
-    const existing = stockEntries?.find(e => e.id === entryId);
+    const existing = (stockEntries as any[])?.find(e => e.id === entryId);
     if (!existing) throw new Error('Entrada não encontrada');
 
     const entryData = {
@@ -87,12 +83,12 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
 
     // IDs originais para comparação
     const originalItems: StockEntryItem[] = existing.items || [];
-    const originalIds = originalItems.map(i => i.id);
+    const originalIds: number[] = originalItems.map(i => i.id);
 
     // Upsert de itens
     for (const item of entry.items) {
-      // Novo se não possuir id
       if (item.id == null) {
+        // novo item
         const newItem = {
           entry_id: entryId,
           product_id: item.productId,
@@ -106,7 +102,7 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
           .insert(newItem);
         if (niError) throw new Error(`Erro ao adicionar item ${item.productName}`);
       } else {
-        // Update existente
+        // atualiza item existente
         const upd = {
           product_id: item.productId,
           product_name: item.productName,
@@ -123,10 +119,10 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
     }
 
     // Deletar itens removidos pelo usuário
-    const keepIds = entry.items
+    const keepIds: number[] = entry.items
       .filter(i => i.id != null)
-      .map(i => i.id as number);
-    const deleteIds = originalIds.filter(oid => !keepIds.includes(oid));
+      .map(i => Number(i.id));
+    const deleteIds: number[] = originalIds.filter(oid => !keepIds.includes(oid));
     if (deleteIds.length) {
       const { error: dError } = await supabase
         .from('stock_entry_items')
@@ -137,8 +133,45 @@ export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormStat
   };
 
   const createNewEntry = async (supplier: any) => {
-    // lógica de criação...
-    // (mantenha igual à sua versão anterior)
+    // Cria nova entrada, gera número, etc.
+    const { data: counterData, error: counterError } = await supabase
+      .rpc('get_next_counter', { counter_id: 'stock_entry' });
+    if (counterError) throw new Error('Erro ao gerar número da entrada');
+
+    const entryNumber = counterData ||
+      `${new Date().getFullYear()}/${String(Math.floor(Math.random() * 1000)).padStart(3, '0')}`;
+
+    const entryData = {
+      supplier_id: entry.supplierId,
+      supplier_name: supplier.name,
+      date: entry.date,
+      invoice_number: entry.invoiceNumber,
+      notes: entry.notes,
+      number: entryNumber
+    };
+    const securedEntryData = await withUserData(entryData);
+    const { data: newEntry, error: entryError } = await supabase
+      .from('stock_entries')
+      .insert(securedEntryData)
+      .select('id')
+      .single();
+    if (entryError || !newEntry) throw new Error('Erro ao criar entrada de stock');
+
+    // Cria itens
+    for (const item of entry.items) {
+      const newItem = {
+        entry_id: newEntry.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        purchase_price: item.purchasePrice,
+        discount_percent: item.discountPercent || 0
+      };
+      const { error: itemError } = await supabase
+        .from('stock_entry_items')
+        .insert(newItem);
+      if (itemError) throw new Error(`Erro ao adicionar item: ${item.productName}`);
+    }
   };
 
   return { handleSubmit, isSubmitting, isNewEntry };
