@@ -124,7 +124,7 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               tick={{ fill: colors.text, fontSize: 12, fontWeight: 500 }}
               axisLine={{ stroke: colors.grid, strokeWidth: 1 }}
               tickLine={{ stroke: colors.grid, strokeWidth: 1 }}
-              tickFormatter={(value) => formatCurrency(value, true)}
+              tickFormatter={(value) => formatCurrency(value)}
             />
             <Tooltip content={<CustomTooltip />} />
             <Legend content={<CustomLegend />} />
