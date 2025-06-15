@@ -34,7 +34,5 @@ export const defaultLayoutConfig: LayoutConfig = {
     { id: 'support-chart-resumo', title: 'Gráfico de Resumo Financeiro', enabled: true, order: 2 },
     { id: 'dashboard-statistics', title: 'Estatísticas do Dashboard', enabled: true, order: 3 },
     { id: 'recent-transactions', title: 'Transações Recentes', enabled: true, order: 4 },
-    { id: 'metrics-cards', title: 'Cartões de Métricas', enabled: true, order: 5 },
-    { id: 'product-category-chart', title: 'Gráfico de Produtos por Categoria', enabled: true, order: 6 },
   ],
 };

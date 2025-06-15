@@ -30,33 +30,42 @@ const WidgetsList: React.FC<WidgetsListProps> = ({
   const allChecked = items.every(item => item.enabled);
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-        <div className="flex items-center space-x-3">
-          <Checkbox
-            id={`toggle-all-${page}-${parentId || 'parent'}`}
-            checked={allChecked}
-            onCheckedChange={(checked) => onToggleAll(page, Boolean(checked), parentId)}
-          />
-          <label htmlFor={`toggle-all-${page}-${parentId || 'parent'}`} className="text-sm font-medium">
-            {allChecked ? 'Desmarcar Todos' : 'Marcar Todos'}
-          </label>
+    <div className="space-y-4">
+      {!parentId && (
+        <div className="bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg p-4 border border-primary/20">
+          <div className="flex items-center space-x-3">
+            <Checkbox
+              id={`toggle-all-${page}-global`}
+              checked={allChecked}
+              onCheckedChange={(checked) => onToggleAll(page, Boolean(checked))}
+              className="h-5 w-5"
+            />
+            <label htmlFor={`toggle-all-${page}-global`} className="text-sm font-semibold text-primary">
+              {allChecked ? 'Desmarcar Todos os Componentes' : 'Marcar Todos os Componentes'}
+            </label>
+          </div>
+          <p className="text-xs text-muted-foreground mt-1 ml-8">
+            Controle global para todos os elementos desta página
+          </p>
         </div>
-      </div>
+      )}
       
-      <div className="space-y-2">
+      <div className="space-y-3">
         {items.sort((a,b) => a.order - b.order).map((item, index) => {
           const widget = item as WidgetConfig;
 
           if (widget.children) {
+            const childrenAllChecked = widget.children.every(child => child.enabled);
+            
             return (
-              <div key={widget.id} className="border rounded-lg bg-card">
-                <div className="flex items-center space-x-3 p-3 border-b">
+              <div key={widget.id} className="border rounded-lg bg-card shadow-sm">
+                <div className="flex items-center space-x-3 p-4 border-b bg-muted/30">
                   <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                   <Checkbox
                     id={`${page}-${widget.id}`}
                     checked={widget.enabled}
                     onCheckedChange={() => onToggle(page, widget.id)}
+                    className="h-4 w-4"
                   />
                   <span className="flex-1 text-sm font-medium">{widget.title}</span>
                   <div className="flex space-x-1">
@@ -68,7 +77,20 @@ const WidgetsList: React.FC<WidgetsListProps> = ({
                     </Button>
                   </div>
                 </div>
-                <div className="p-3">
+                <div className="p-4">
+                  <div className="bg-muted/20 rounded-lg p-3 mb-3">
+                    <div className="flex items-center space-x-3">
+                      <Checkbox
+                        id={`toggle-all-${page}-${widget.id}`}
+                        checked={childrenAllChecked}
+                        onCheckedChange={(checked) => onToggleAll(page, Boolean(checked), widget.id)}
+                        className="h-4 w-4"
+                      />
+                      <label htmlFor={`toggle-all-${page}-${widget.id}`} className="text-xs font-medium text-muted-foreground">
+                        {childrenAllChecked ? 'Desmarcar Todos os Subitens' : 'Marcar Todos os Subitens'}
+                      </label>
+                    </div>
+                  </div>
                   <WidgetsList
                     items={widget.children}
                     page={page}

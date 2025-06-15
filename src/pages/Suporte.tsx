@@ -1,3 +1,4 @@
+
 import React, { useEffect, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -10,7 +11,6 @@ import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import FeaturedProducts from './dashboard/components/FeaturedProducts';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
 import RecentTransactions from './dashboard/components/RecentTransactions';
-import ProductCategoryChart from './dashboard/components/ProductCategoryChart';
 import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
 const Suporte = () => {
@@ -82,7 +82,7 @@ const Suporte = () => {
     );
   }
 
-  // Component mapping for statistics page
+  // Component mapping for statistics page - removed duplicated widgets
   const componentMap: { [key: string]: React.ReactNode } = {
     'kpi-grid': (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
@@ -145,16 +145,6 @@ const Suporte = () => {
         navigateToSupplierDetail={navigateToSupplierDetail}
         ensureDate={ensureDate}
       />
-    ),
-    'metrics-cards': (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <MetricsCards stats={stats} />
-      </div>
-    ),
-    'product-category-chart': (
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
-        <ProductCategoryChart categoryData={[]} />
-      </div>
     )
   };
 
@@ -162,7 +152,7 @@ const Suporte = () => {
     .filter(widget => widget.enabled)
     .sort((a, b) => a.order - b.order);
 
-  const singleColumnWidgets = ['kpi-grid', 'featured-products', 'support-chart-resumo', 'metrics-cards', 'product-category-chart'];
+  const singleColumnWidgets = ['kpi-grid', 'featured-products', 'support-chart-resumo'];
   
   const groupedWidgets = sortedEnabledWidgets.reduce((acc, widget, index) => {
     if (singleColumnWidgets.includes(widget.id)) {
