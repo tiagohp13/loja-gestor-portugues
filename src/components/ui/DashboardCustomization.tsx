@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -80,7 +79,7 @@ const DashboardCustomization: React.FC = () => {
         ].map((item, index) => ({...item, order: index})),
         statistics: [
           ...parsed.statistics,
-          ...defaultLayoutconfig.statistics.filter(def => !parsed.statistics.find(p => p.id === def.id))
+          ...defaultLayoutConfig.statistics.filter(def => !parsed.statistics.find(p => p.id === def.id))
         ].map((item, index) => ({...item, order: index}))
       }
     }
@@ -297,7 +296,7 @@ const DashboardCustomization: React.FC = () => {
                             <Checkbox
                                 id={`${page}-${widget.id}`}
                                 checked={widget.enabled}
-                                onCheckedChange={(e) => { e.stopPropagation(); handleToggle(page, widget.id); }}
+                                onCheckedChange={() => { handleToggle(page, widget.id); }}
                                 onClick={(e) => e.stopPropagation()}
                             />
                             <span className="flex-1 text-sm font-medium text-left">{widget.title}</span>
