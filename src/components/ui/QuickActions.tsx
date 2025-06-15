@@ -12,28 +12,28 @@ const QuickActions: React.FC = () => {
     {
       title: 'Nova Venda',
       icon: <ShoppingCart className="h-4 w-4" />,
-      onClick: () => navigate('/saidas/criar'),
+      onClick: () => navigate('/saidas/nova'),
       color: 'bg-green-600 hover:bg-green-700',
       description: 'Registrar nova saída de stock'
     },
     {
       title: 'Nova Compra',
       icon: <Package className="h-4 w-4" />,
-      onClick: () => navigate('/entradas/criar'),
+      onClick: () => navigate('/entradas/nova'),
       color: 'bg-blue-600 hover:bg-blue-700',
       description: 'Registrar nova entrada de stock'
     },
     {
       title: 'Novo Cliente',
       icon: <Users className="h-4 w-4" />,
-      onClick: () => navigate('/clientes/criar'),
+      onClick: () => navigate('/clientes/novo'),
       color: 'bg-purple-600 hover:bg-purple-700',
       description: 'Adicionar novo cliente'
     },
     {
       title: 'Novo Produto',
       icon: <Plus className="h-4 w-4" />,
-      onClick: () => navigate('/produtos/criar'),
+      onClick: () => navigate('/produtos/novo'),
       color: 'bg-orange-600 hover:bg-orange-700',
       description: 'Adicionar novo produto'
     }

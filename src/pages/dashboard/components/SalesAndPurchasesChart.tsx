@@ -19,12 +19,12 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  // Cores com melhor contraste WCAG AA
+  // Cores com melhor contraste WCAG AA - restaurando cores originais
   const colors = {
     grid: isDark ? 'hsl(217.2 32.6% 25%)' : 'hsl(210 40% 90%)',
     text: isDark ? 'hsl(210 40% 95%)' : 'hsl(222.2 84% 15%)',
-    sales: isDark ? '#4ade80' : '#16a34a', // Verde com melhor contraste
-    purchases: isDark ? '#f87171' : '#dc2626', // Vermelho com melhor contraste
+    sales: isDark ? '#60a5fa' : '#2563eb', // Azul para vendas
+    purchases: isDark ? '#f87171' : '#dc2626', // Vermelho para compras
     tooltipBg: isDark ? 'hsl(222.2 84% 8%)' : 'hsl(0 0% 98%)',
     tooltipBorder: isDark ? 'hsl(217.2 32.6% 25%)' : 'hsl(214.3 31.8% 85%)'
   };

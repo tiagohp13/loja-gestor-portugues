@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -73,7 +72,7 @@ const CardCustomization: React.FC<CardCustomizationProps> = ({
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" className="mb-4">
           <Settings className="h-4 w-4 mr-2" />
-          Personalizar Cards
+          Personalizar Cartões
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">
@@ -120,7 +119,7 @@ const CardCustomization: React.FC<CardCustomizationProps> = ({
               Cancelar
             </Button>
             <Button onClick={handleSaveConfig}>
-              Salvar
+              Guardar
             </Button>
           </div>
         </div>
