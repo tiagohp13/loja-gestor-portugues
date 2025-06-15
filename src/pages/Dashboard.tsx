@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import { useSupportData } from './suporte/hooks/useSupportData';
@@ -19,6 +19,7 @@ import SummaryCards from './suporte/components/SummaryCards';
 
 // Import KPI panel components
 import KPIPanel from '@/components/statistics/KPIPanel';
+import { WidgetConfig } from '@/components/ui/DashboardCustomization';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,18 +27,32 @@ const DashboardPage: React.FC = () => {
   
   const {
     products,
-    suppliers,
-    clients,
     orders,
     monthlyData,
     lowStockProducts,
-    totalStockValue,
     // Use new values that include expenses
-    totalSalesValue,
     totalSpentWithExpenses,
     totalProfitWithExpenses,
     profitMarginPercentWithExpenses
   } = useDashboardData();
+
+  const [dashboardConfig, setDashboardConfig] = useState<WidgetConfig[]>([]);
+
+  useEffect(() => {
+    const loadConfig = () => {
+      const savedConfig = localStorage.getItem('dashboard-layout-config');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        if (config.dashboard) {
+          setDashboardConfig(config.dashboard);
+        }
+      }
+    };
+    
+    loadConfig();
+    window.addEventListener('storage', loadConfig);
+    return () => window.removeEventListener('storage', loadConfig);
+  }, []);
   
   // Find orders with insufficient stock
   const insufficientStockItems = findInsufficientStockOrders(orders, products);
@@ -53,15 +68,10 @@ const DashboardPage: React.FC = () => {
     navigate(`/clientes/detalhe/${id}`);
   };
 
-  const navigateToSupplierDetail = (id: string) => {
-    navigate(`/fornecedores/${id}`);
-  };
-  
   const navigateToOrderDetail = (id: string) => {
     navigate(`/encomendas/${id}`);
   };
 
-  // Show loading spinner while support data is loading
   if (isLoadingSupportData) {
     return (
       <div className="flex justify-center items-center h-48">
@@ -70,13 +80,67 @@ const DashboardPage: React.FC = () => {
     );
   }
 
-  // Update support stats to include expenses
   const updatedStats = {
     ...supportStats,
     totalSpent: totalSpentWithExpenses,
     profit: totalProfitWithExpenses,
     profitMargin: profitMarginPercentWithExpenses
   };
+
+  const componentMap: { [key: string]: React.ReactNode } = {
+    'quick-actions': <QuickActions />,
+    'summary-cards': <SummaryCards stats={updatedStats} />,
+    'sales-purchases-chart': <div className="grid grid-cols-1 gap-6"><SalesAndPurchasesChart chartData={monthlyData} /></div>,
+    'low-stock-products': (
+      <LowStockProducts 
+        lowStockProducts={lowStockProducts}
+        navigateToProductDetail={navigateToProductDetail}
+      />
+    ),
+    'pending-orders': (
+      <PendingOrders 
+        pendingOrders={pendingOrders}
+        navigateToOrderDetail={navigateToOrderDetail}
+        navigateToClientDetail={navigateToClientDetail}
+      />
+    ),
+    'insufficient-stock-orders': (
+      <InsufficientStockOrders 
+        insufficientItems={insufficientStockItems}
+        navigateToProductDetail={navigateToProductDetail}
+        navigateToOrderDetail={navigateToOrderDetail}
+        navigateToClientDetail={navigateToClientDetail}
+      />
+    ),
+    'kpi-panel': (
+      <KPIPanel 
+        title="Indicadores de Performance" 
+        description="Principais KPIs do negócio" 
+        kpis={kpis} 
+      />
+    )
+  };
+
+  const sortedEnabledWidgets = dashboardConfig
+    .filter(widget => widget.enabled)
+    .sort((a, b) => a.order - b.order);
+
+  const singleColumnWidgets = ['quick-actions', 'summary-cards', 'sales-purchases-chart', 'insufficient-stock-orders', 'kpi-panel'];
+  
+  const groupedWidgets = sortedEnabledWidgets.reduce((acc, widget, index) => {
+    if (singleColumnWidgets.includes(widget.id)) {
+      acc.push([widget]);
+    } else {
+      const prevWidget = sortedEnabledWidgets[index - 1];
+      if (prevWidget && !singleColumnWidgets.includes(prevWidget.id) && acc[acc.length - 1].length === 1) {
+        acc[acc.length - 1].push(widget);
+      } else {
+        acc.push([widget]);
+      }
+    }
+    return acc;
+  }, [] as WidgetConfig[][]);
+
 
   return (
     <div className="container mx-auto px-4 py-6 bg-background min-h-screen">
@@ -85,53 +149,24 @@ const DashboardPage: React.FC = () => {
         description="Vista geral do seu negócio"
       />
       
-      {/* Quick Actions */}
-      <QuickActions />
-      
-      {/* Summary Cards with updated stats including expenses */}
-      <SummaryCards stats={updatedStats} />
-      
-      <div className="grid grid-cols-1 gap-6 mb-8">
-        <SalesAndPurchasesChart chartData={monthlyData} />
-      </div>
-      
-      {/* Products with Low Stock and Pending Orders - Side by Side */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {/* Products with Low Stock */}
-        <div>
-          <LowStockProducts 
-            lowStockProducts={lowStockProducts}
-            navigateToProductDetail={navigateToProductDetail}
-          />
-        </div>
-        
-        {/* Pending Orders */}
-        <div>
-          <PendingOrders 
-            pendingOrders={pendingOrders}
-            navigateToOrderDetail={navigateToOrderDetail}
-            navigateToClientDetail={navigateToClientDetail}
-          />
-        </div>
-      </div>
-      
-      {/* Orders with Insufficient Stock */}
-      <div className="grid grid-cols-1 gap-6 mb-8">
-        <InsufficientStockOrders 
-          insufficientItems={insufficientStockItems}
-          navigateToProductDetail={navigateToProductDetail}
-          navigateToOrderDetail={navigateToOrderDetail}
-          navigateToClientDetail={navigateToClientDetail}
-        />
-      </div>
-      
-      {/* KPI Panel at the bottom of the dashboard */}
-      <div className="mb-6">
-        <KPIPanel 
-          title="Indicadores de Performance" 
-          description="Principais KPIs do negócio" 
-          kpis={kpis} 
-        />
+      <div className="space-y-6">
+        {groupedWidgets.map((group, groupIndex) => {
+          if (group.length > 1) {
+            return (
+              <div key={groupIndex} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {group.map(widget => (
+                  <div key={widget.id}>{componentMap[widget.id]}</div>
+                ))}
+              </div>
+            );
+          }
+          const widget = group[0];
+          return (
+            <div key={widget.id}>
+              {componentMap[widget.id]}
+            </div>
+          );
+        })}
       </div>
     </div>
   );

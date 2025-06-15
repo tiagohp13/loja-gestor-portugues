@@ -22,11 +22,20 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
     return saved ? JSON.parse(saved) : defaultCardConfig;
   });
 
+  const [cardColors, setCardColors] = useState(() => {
+    const saved = localStorage.getItem('dashboard-card-colors');
+    return saved ? JSON.parse(saved) : {};
+  });
+
   useEffect(() => {
     const handleStorageChange = () => {
-        const saved = localStorage.getItem('dashboard-card-config');
-        if (saved) {
-            setCardConfig(JSON.parse(saved));
+        const savedConfig = localStorage.getItem('dashboard-card-config');
+        if (savedConfig) {
+            setCardConfig(JSON.parse(savedConfig));
+        }
+        const savedColors = localStorage.getItem('dashboard-card-colors');
+        if (savedColors) {
+            setCardColors(JSON.parse(savedColors));
         }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -56,8 +65,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
   };
 
   const getCardContent = (cardId: string) => {
-    const savedColors = JSON.parse(localStorage.getItem('dashboard-card-colors') || '{}');
-    const cardColor = savedColors[cardId] || '';
+    const cardColor = cardColors[cardId] || '';
     
     switch (cardId) {
       case 'totalSales':
