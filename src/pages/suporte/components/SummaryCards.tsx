@@ -4,7 +4,6 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { SupportStats } from '../types/supportTypes';
-import CardCustomization, { CardConfig } from '@/components/ui/CardCustomization';
 
 interface SummaryCardsProps {
   stats: SupportStats;
@@ -12,14 +11,14 @@ interface SummaryCardsProps {
 
 const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
   // Default card configuration
-  const defaultCardConfig: CardConfig[] = [
+  const defaultCardConfig = [
     { id: 'totalSales', title: 'Total de Vendas', enabled: true, order: 0 },
     { id: 'totalSpent', title: 'Total Gasto', enabled: true, order: 1 },
     { id: 'profit', title: 'Lucro', enabled: true, order: 2 },
     { id: 'profitMargin', title: 'Margem de Lucro', enabled: true, order: 3 }
   ];
 
-  const [cardConfig, setCardConfig] = useState<CardConfig[]>(() => {
+  const [cardConfig, setCardConfig] = useState(() => {
     const saved = localStorage.getItem('dashboard-card-config');
     return saved ? JSON.parse(saved) : defaultCardConfig;
   });
@@ -48,22 +47,14 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
     );
   };
 
-  const availableCards = [
-    { id: 'totalSales', title: 'Total de Vendas' },
-    { id: 'totalSpent', title: 'Total Gasto' },
-    { id: 'profit', title: 'Lucro' },
-    { id: 'profitMargin', title: 'Margem de Lucro' }
-  ];
-
-  const handleConfigChange = (newConfig: CardConfig[]) => {
-    setCardConfig(newConfig);
-  };
-
   const getCardContent = (cardId: string) => {
+    const savedColors = JSON.parse(localStorage.getItem('dashboard-card-colors') || '{}');
+    const cardColor = savedColors[cardId] || '';
+    
     switch (cardId) {
       case 'totalSales':
         return (
-          <Card className="border-border bg-card hover:shadow-md transition-shadow duration-200">
+          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
             </CardHeader>
@@ -86,7 +77,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
       case 'totalSpent':
         return (
-          <Card className="border-border bg-card hover:shadow-md transition-shadow duration-200">
+          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
             </CardHeader>
@@ -109,7 +100,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
       case 'profit':
         return (
-          <Card className="border-border bg-card hover:shadow-md transition-shadow duration-200">
+          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
             </CardHeader>
@@ -136,7 +127,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
       case 'profitMargin':
         return (
-          <Card className="border-border bg-card hover:shadow-md transition-shadow duration-200">
+          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
             </CardHeader>
@@ -173,11 +164,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
   return (
     <div className="mb-6">
-      <CardCustomization
-        availableCards={availableCards}
-        currentConfig={cardConfig}
-        onConfigChange={handleConfigChange}
-      />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {enabledCards.map((card) => (
           <div key={card.id}>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import DashboardCustomization from '@/components/ui/DashboardCustomization';
 import { ExportDataType } from '@/types';
 
 const Settings = () => {
@@ -194,6 +195,16 @@ const Settings = () => {
                     <ThemeToggle />
                   </div>
                 </div>
+              </div>
+              
+              <Separator />
+              
+              <div>
+                <h4 className="text-sm font-medium mb-3">Personalização do Dashboard</h4>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Configure a aparência e ordem dos elementos do dashboard principal
+                </p>
+                <DashboardCustomization />
               </div>
               
               <Separator />
