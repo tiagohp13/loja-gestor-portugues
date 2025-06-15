@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -99,6 +98,10 @@ const DashboardCustomization: React.FC = () => {
     };
   });
 
+  // Refs para os accordions
+  const dashboardAccordionRef = useRef<HTMLDivElement>(null);
+  const statisticsAccordionRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     localStorage.setItem('dashboard-layout-config', JSON.stringify(layoutConfig));
 
@@ -118,6 +121,51 @@ const DashboardCustomization: React.FC = () => {
     window.dispatchEvent(new Event('storage'));
 
   }, [layoutConfig, widgetColors]);
+
+  // Função para fazer scroll suave para o elemento
+  const scrollToElement = (element: HTMLElement) => {
+    try {
+      // Tentar usar scrollIntoView com opções modernas
+      element.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+        inline: 'nearest'
+      });
+    } catch (error) {
+      // Fallback para navegadores antigos
+      element.scrollIntoView();
+    }
+  };
+
+  // Handler para mudanças no accordion
+  const handleAccordionChange = (value: string | undefined) => {
+    if (!value) return;
+
+    // Usar setTimeout para aguardar a animação do accordion
+    setTimeout(() => {
+      let targetElement: HTMLElement | null = null;
+
+      switch (value) {
+        case 'dashboard-widgets':
+          targetElement = dashboardAccordionRef.current;
+          break;
+        case 'statistics-widgets':
+          targetElement = statisticsAccordionRef.current;
+          break;
+      }
+
+      if (targetElement) {
+        // Ajustar para considerar header fixo (aproximadamente 80px)
+        const elementRect = targetElement.getBoundingClientRect();
+        const offsetTop = window.pageYOffset + elementRect.top - 100;
+        
+        window.scrollTo({
+          top: offsetTop,
+          behavior: 'smooth'
+        });
+      }
+    }, 200); // Aguardar animação do accordion
+  };
 
   const handleToggle = (page: keyof LayoutConfig, widgetId: string, childId?: string) => {
     setLayoutConfig(prev => {
@@ -338,14 +386,14 @@ const DashboardCustomization: React.FC = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Accordion type="multiple" className="w-full">
-            <AccordionItem value="dashboard-widgets">
+          <Accordion type="single" collapsible className="w-full" onValueChange={handleAccordionChange}>
+            <AccordionItem value="dashboard-widgets" ref={dashboardAccordionRef}>
               <AccordionTrigger>Dashboard</AccordionTrigger>
               <AccordionContent>
                 {renderConfigList(layoutConfig.dashboard, 'dashboard')}
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="statistics-widgets">
+            <AccordionItem value="statistics-widgets" ref={statisticsAccordionRef}>
               <AccordionTrigger>Estatísticas</AccordionTrigger>
               <AccordionContent>
                 {renderConfigList(layoutConfig.statistics, 'statistics')}
