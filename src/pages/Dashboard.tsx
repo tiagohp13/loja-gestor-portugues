@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import { useSupportData } from './suporte/hooks/useSupportData';
@@ -20,6 +20,16 @@ import SummaryCards from './suporte/components/SummaryCards';
 import KPIPanel from '@/components/statistics/KPIPanel';
 import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
+const defaultDashboardConfig: WidgetConfig[] = [
+  { id: 'quick-actions',             order: 0, enabled: true },
+  { id: 'summary-cards',             order: 1, enabled: true },
+  { id: 'sales-purchases-chart',     order: 2, enabled: true },
+  { id: 'low-stock-products',        order: 3, enabled: true },
+  { id: 'pending-orders',            order: 4, enabled: true },
+  { id: 'insufficient-stock-orders', order: 5, enabled: true },
+  { id: 'kpi-panel',                 order: 6, enabled: true },
+];
+
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoading: isLoadingSupportData, stats: supportStats, kpis } = useSupportData();
@@ -35,23 +45,19 @@ const DashboardPage: React.FC = () => {
     profitMarginPercentWithExpenses
   } = useDashboardData();
 
-  const [dashboardConfig, setDashboardConfig] = useState<WidgetConfig[]>([]);
-
-  useEffect(() => {
-    const loadConfig = () => {
-      const savedConfig = localStorage.getItem('dashboard-layout-config');
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        if (config.dashboard) {
-          setDashboardConfig(config.dashboard);
-        }
+  // Initialize dashboard configuration from localStorage or use default
+  const [dashboardConfig, setDashboardConfig] = useState<WidgetConfig[]>(() => {
+    const saved = localStorage.getItem('dashboard-layout-config');
+    if (saved) {
+      try {
+        const cfg = JSON.parse(saved);
+        if (cfg.dashboard) return cfg.dashboard;
+      } catch {
+        // ignore parse errors
       }
-    };
-    
-    loadConfig();
-    window.addEventListener('storage', loadConfig);
-    return () => window.removeEventListener('storage', loadConfig);
-  }, []);
+    }
+    return defaultDashboardConfig;
+  });
   
   // Find orders with insufficient stock
   const insufficientStockItems = findInsufficientStockOrders(orders, products);
@@ -87,8 +93,8 @@ const DashboardPage: React.FC = () => {
   };
 
   const componentMap: { [key: string]: React.ReactNode } = {
-    'quick-actions': <QuickActions />,
-    'summary-cards': <SummaryCards stats={updatedStats} />,
+    'quick-actions': <QuickActions />,  
+    'summary-cards': <SummaryCards stats={updatedStats} />,  
     'sales-purchases-chart': <div className="grid grid-cols-1 gap-6"><SalesAndPurchasesChart chartData={monthlyData} /></div>,
     'low-stock-products': (
       <LowStockProducts 
@@ -139,7 +145,6 @@ const DashboardPage: React.FC = () => {
     }
     return acc;
   }, [] as WidgetConfig[][]);
-
 
   return (
     <div className="container mx-auto px-4 py-6 bg-background min-h-screen">
