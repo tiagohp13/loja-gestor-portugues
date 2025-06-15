@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -96,6 +95,10 @@ const QuickActions: React.FC = () => {
   };
 
   const actions = getQuickActionConfig();
+
+  if (actions.length === 0) {
+    return null;
+  }
 
   return (
     <Card className="mb-3">

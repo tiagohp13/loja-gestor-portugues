@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
@@ -24,8 +23,17 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
   });
 
   useEffect(() => {
-    localStorage.setItem('dashboard-card-config', JSON.stringify(cardConfig));
-  }, [cardConfig]);
+    const handleStorageChange = () => {
+        const saved = localStorage.getItem('dashboard-card-config');
+        if (saved) {
+            setCardConfig(JSON.parse(saved));
+        }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+        window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Helper function to render variation indicator
   const renderVariation = (currentValue: number, previousValue: number) => {
@@ -161,6 +169,10 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
   const enabledCards = cardConfig
     .filter(card => card.enabled)
     .sort((a, b) => a.order - b.order);
+  
+  if (enabledCards.length === 0) {
+    return null;
+  }
 
   return (
     <div className="mb-6">

@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { GripVertical, Palette, ArrowUp, ArrowDown } from 'lucide-react';
-import { Separator } from '@/components/ui/separator';
+import { Palette, ArrowUp, ArrowDown } from 'lucide-react';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export interface CardConfig {
   id: string;
@@ -137,6 +136,17 @@ const DashboardCustomization: React.FC = () => {
     setQuickActionConfig(newConfig);
   };
 
+  const handleToggleAll = (type: 'cards' | 'actions', checked: boolean) => {
+    if (type === 'cards') {
+      setCardConfig(prev => prev.map(c => ({ ...c, enabled: checked })));
+    } else {
+      setQuickActionConfig(prev => prev.map(a => ({ ...a, enabled: checked })));
+    }
+  };
+
+  const allCardsChecked = cardConfig.every(c => c.enabled);
+  const allActionsChecked = quickActionConfig.every(a => a.enabled);
+
   const colorOptions = [
     { name: 'Azul', value: 'bg-blue-600' },
     { name: 'Verde', value: 'bg-green-600' },
@@ -155,103 +165,124 @@ const DashboardCustomization: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            Personalização de Cards
+            Personalização de Cartões
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Cards Métricos */}
-          <div>
-            <h4 className="text-sm font-medium mb-3">Cards Métricos</h4>
-            <div className="space-y-2">
-              {cardConfig.map((card, index) => (
-                <div key={card.id} className="flex items-center space-x-3 p-3 border rounded-lg bg-card">
+        <CardContent>
+          <Accordion type="multiple" defaultValue={['metric-cards', 'quick-actions']} className="w-full">
+            <AccordionItem value="metric-cards">
+              <AccordionTrigger>Cartões Métricos</AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-2">
+                <div className="flex items-center space-x-3 p-3">
                   <Checkbox
-                    checked={card.enabled}
-                    onCheckedChange={() => handleToggleCard(card.id)}
+                    id="toggle-all-cards"
+                    checked={allCardsChecked}
+                    onCheckedChange={(checked) => handleToggleAll('cards', Boolean(checked))}
                   />
-                  <span className="flex-1 text-sm font-medium">{card.title}</span>
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveCard(card.id, 'up')}
-                      disabled={index === 0}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ArrowUp className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveCard(card.id, 'down')}
-                      disabled={index === cardConfig.length - 1}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ArrowDown className="h-3 w-3" />
-                    </Button>
-                  </div>
+                  <label htmlFor="toggle-all-cards" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {allCardsChecked ? 'Desmarcar Todos' : 'Marcar Todos'}
+                  </label>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Ações Rápidas */}
-          <div>
-            <h4 className="text-sm font-medium mb-3">Botões de Ações Rápidas</h4>
-            <div className="space-y-2">
-              {quickActionConfig.map((action, index) => (
-                <div key={action.id} className="flex items-center space-x-3 p-3 border rounded-lg bg-card">
+                <div className="space-y-2">
+                  {cardConfig.map((card, index) => (
+                    <div key={card.id} className="flex items-center space-x-3 p-3 border rounded-lg bg-card">
+                      <Checkbox
+                        checked={card.enabled}
+                        onCheckedChange={() => handleToggleCard(card.id)}
+                      />
+                      <span className="flex-1 text-sm font-medium">{card.title}</span>
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveCard(card.id, 'up')}
+                          disabled={index === 0}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveCard(card.id, 'down')}
+                          disabled={index === cardConfig.length - 1}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+            
+            <AccordionItem value="quick-actions">
+              <AccordionTrigger>Botões de Ações Rápidas</AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-2">
+                <div className="flex items-center space-x-3 p-3">
                   <Checkbox
-                    checked={action.enabled}
-                    onCheckedChange={() => handleToggleQuickAction(action.id)}
+                    id="toggle-all-actions"
+                    checked={allActionsChecked}
+                    onCheckedChange={(checked) => handleToggleAll('actions', Boolean(checked))}
                   />
-                  <span className="flex-1 text-sm font-medium">{action.title}</span>
-                  
-                  {/* Color selector */}
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-muted-foreground">Cor:</span>
-                    <select
-                      value={quickActionColors[action.id] || action.color}
-                      onChange={(e) => setQuickActionColors(prev => ({ ...prev, [action.id]: e.target.value }))}
-                      className="text-xs border rounded px-2 py-1"
-                    >
-                      {colorOptions.map(color => (
-                        <option key={color.value} value={color.value}>
-                          {color.name}
-                        </option>
-                      ))}
-                    </select>
-                    <div 
-                      className={`w-4 h-4 rounded ${quickActionColors[action.id] || action.color}`}
-                    />
-                  </div>
-
-                  <div className="flex space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveQuickAction(action.id, 'up')}
-                      disabled={index === 0}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ArrowUp className="h-3 w-3" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => moveQuickAction(action.id, 'down')}
-                      disabled={index === quickActionConfig.length - 1}
-                      className="h-8 w-8 p-0"
-                    >
-                      <ArrowDown className="h-3 w-3" />
-                    </Button>
-                  </div>
+                  <label htmlFor="toggle-all-actions" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    {allActionsChecked ? 'Desmarcar Todos' : 'Marcar Todos'}
+                  </label>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="space-y-2">
+                  {quickActionConfig.map((action, index) => (
+                    <div key={action.id} className="flex items-center space-x-3 p-3 border rounded-lg bg-card">
+                      <Checkbox
+                        checked={action.enabled}
+                        onCheckedChange={() => handleToggleQuickAction(action.id)}
+                      />
+                      <span className="flex-1 text-sm font-medium">{action.title}</span>
+                      
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xs text-muted-foreground">Cor:</span>
+                        <select
+                          value={quickActionColors[action.id] || action.color}
+                          onChange={(e) => setQuickActionColors(prev => ({ ...prev, [action.id]: e.target.value }))}
+                          className="text-xs border rounded px-2 py-1 bg-background"
+                        >
+                          {colorOptions.map(color => (
+                            <option key={color.value} value={color.value}>
+                              {color.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div 
+                          className={`w-4 h-4 rounded ${quickActionColors[action.id] || action.color}`}
+                        />
+                      </div>
+
+                      <div className="flex space-x-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveQuickAction(action.id, 'up')}
+                          disabled={index === 0}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ArrowUp className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => moveQuickAction(action.id, 'down')}
+                          disabled={index === quickActionConfig.length - 1}
+                          className="h-8 w-8 p-0"
+                        >
+                          <ArrowDown className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
         </CardContent>
       </Card>
     </div>
