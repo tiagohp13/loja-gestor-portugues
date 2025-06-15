@@ -1,4 +1,3 @@
-
 import React, { useEffect, Suspense, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -12,7 +11,7 @@ import FeaturedProducts from './dashboard/components/FeaturedProducts';
 import DashboardStatistics from './dashboard/components/DashboardStatistics';
 import RecentTransactions from './dashboard/components/RecentTransactions';
 import ProductCategoryChart from './dashboard/components/ProductCategoryChart';
-import { WidgetConfig } from '@/components/ui/DashboardCustomization';
+import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
 const Suporte = () => {
   useScrollToTop();

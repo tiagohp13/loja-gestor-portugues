@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
@@ -19,7 +18,7 @@ import SummaryCards from './suporte/components/SummaryCards';
 
 // Import KPI panel components
 import KPIPanel from '@/components/statistics/KPIPanel';
-import { WidgetConfig } from '@/components/ui/DashboardCustomization';
+import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
