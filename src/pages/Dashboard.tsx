@@ -5,6 +5,7 @@ import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import { useSupportData } from './suporte/hooks/useSupportData';
 import PageHeader from '../components/ui/PageHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import QuickActions from '@/components/ui/QuickActions';
 
 // Import components from dashboard
 import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
@@ -78,11 +79,14 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 bg-background min-h-screen">
       <PageHeader 
         title="Dashboard" 
         description="Vista geral do seu negócio"
       />
+      
+      {/* Quick Actions */}
+      <QuickActions />
       
       {/* Summary Cards with updated stats including expenses */}
       <SummaryCards stats={updatedStats} />

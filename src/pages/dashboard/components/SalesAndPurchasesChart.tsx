@@ -19,83 +19,132 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
-  // Cores adaptadas para modo escuro
+  // Cores com melhor contraste WCAG AA
   const colors = {
-    grid: isDark ? 'hsl(217.2 32.6% 17.5%)' : '#f0f0f0',
-    text: isDark ? 'hsl(210 40% 98%)' : '#374151',
-    sales: '#3065ac',
-    purchases: '#ff6961',
-    tooltipBg: isDark ? 'hsl(222.2 84% 4.9%)' : '#ffffff',
-    tooltipBorder: isDark ? 'hsl(217.2 32.6% 17.5%)' : '#e5e7eb'
+    grid: isDark ? 'hsl(217.2 32.6% 25%)' : 'hsl(210 40% 90%)',
+    text: isDark ? 'hsl(210 40% 95%)' : 'hsl(222.2 84% 15%)',
+    sales: isDark ? '#4ade80' : '#16a34a', // Verde com melhor contraste
+    purchases: isDark ? '#f87171' : '#dc2626', // Vermelho com melhor contraste
+    tooltipBg: isDark ? 'hsl(222.2 84% 8%)' : 'hsl(0 0% 98%)',
+    tooltipBorder: isDark ? 'hsl(217.2 32.6% 25%)' : 'hsl(214.3 31.8% 85%)'
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const currentData = chartData.find(item => item.name === label);
+      const currentIndex = chartData.findIndex(item => item.name === label);
+      const previousData = currentIndex > 0 ? chartData[currentIndex - 1] : null;
+      
       return (
         <div 
-          className="bg-card border border-border rounded-lg shadow-lg p-3"
+          className="bg-card border border-border rounded-lg shadow-lg p-4 min-w-[250px]"
           style={{ 
             backgroundColor: colors.tooltipBg,
-            borderColor: colors.tooltipBorder 
+            borderColor: colors.tooltipBorder,
+            boxShadow: isDark ? '0 10px 25px rgba(0,0,0,0.3)' : '0 10px 25px rgba(0,0,0,0.1)'
           }}
         >
-          <p className="text-foreground font-medium">{`Período: ${label}`}</p>
-          {payload.map((item: any, index: number) => (
-            <p key={index} className="text-sm" style={{ color: item.color }}>
-              {`${item.name}: ${formatCurrency(item.value)}`}
-            </p>
-          ))}
+          <p className="text-foreground font-semibold mb-2 text-base">{`Período: ${label}`}</p>
+          {payload.map((item: any, index: number) => {
+            const isVendas = item.dataKey === 'vendas';
+            const currentValue = item.value;
+            const previousValue = previousData ? (isVendas ? previousData.vendas : previousData.compras) : 0;
+            const variation = previousValue > 0 ? ((currentValue - previousValue) / previousValue) * 100 : 0;
+            
+            return (
+              <div key={index} className="mb-2 last:mb-0">
+                <p className="text-sm font-medium" style={{ color: item.color }}>
+                  {`${item.name}: ${formatCurrency(item.value)}`}
+                </p>
+                {previousValue > 0 && (
+                  <p className={`text-xs ${variation >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {variation >= 0 ? '↗' : '↘'} {Math.abs(variation).toFixed(1)}% vs mês anterior
+                  </p>
+                )}
+              </div>
+            );
+          })}
+          
+          {currentData && (
+            <div className="border-t border-border mt-2 pt-2">
+              <p className="text-xs text-muted-foreground">
+                Lucro: {formatCurrency(currentData.vendas - currentData.compras)}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Margem: {currentData.vendas > 0 ? (((currentData.vendas - currentData.compras) / currentData.vendas) * 100).toFixed(1) : '0'}%
+              </p>
+            </div>
+          )}
         </div>
       );
     }
     return null;
   };
 
+  const CustomLegend = (props: any) => {
+    const { payload } = props;
+    return (
+      <div className="flex justify-center mt-4 space-x-6">
+        {payload.map((entry: any, index: number) => (
+          <div key={index} className="flex items-center">
+            <div 
+              className="w-3 h-3 mr-2 rounded-sm"
+              style={{ backgroundColor: entry.color }}
+            />
+            <span className="text-sm font-medium text-foreground">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">
       <CardHeader>
-        <CardTitle className="text-foreground">Resumo Financeiro</CardTitle>
+        <CardTitle className="text-foreground text-xl font-semibold">Resumo Financeiro</CardTitle>
+        <p className="text-muted-foreground text-sm">Evolução mensal de vendas, compras e tendências</p>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={400}>
-          <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+        <ResponsiveContainer width="100%" height={450}>
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
             <CartesianGrid 
               strokeDasharray="3 3" 
               stroke={colors.grid}
-              opacity={0.5}
+              opacity={0.6}
+              strokeWidth={1}
             />
             <XAxis 
               dataKey="name" 
-              tick={{ fill: colors.text, fontSize: 12 }}
-              axisLine={{ stroke: colors.grid }}
-              tickLine={{ stroke: colors.grid }}
+              tick={{ fill: colors.text, fontSize: 12, fontWeight: 500 }}
+              axisLine={{ stroke: colors.grid, strokeWidth: 1 }}
+              tickLine={{ stroke: colors.grid, strokeWidth: 1 }}
+              height={60}
             />
             <YAxis 
-              tick={{ fill: colors.text, fontSize: 12 }}
-              axisLine={{ stroke: colors.grid }}
-              tickLine={{ stroke: colors.grid }}
+              tick={{ fill: colors.text, fontSize: 12, fontWeight: 500 }}
+              axisLine={{ stroke: colors.grid, strokeWidth: 1 }}
+              tickLine={{ stroke: colors.grid, strokeWidth: 1 }}
+              tickFormatter={(value) => formatCurrency(value, true)}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend 
-              wrapperStyle={{ color: colors.text }}
-            />
+            <Legend content={<CustomLegend />} />
             <Line 
               type="monotone" 
               dataKey="vendas" 
               stroke={colors.sales} 
               name="Vendas"
-              strokeWidth={2}
-              dot={{ fill: colors.sales, r: 4 }}
-              activeDot={{ r: 6, fill: colors.sales }}
+              strokeWidth={3}
+              dot={{ fill: colors.sales, r: 5, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
+              activeDot={{ r: 7, fill: colors.sales, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
             />
             <Line 
               type="monotone" 
               dataKey="compras" 
               stroke={colors.purchases} 
               name="Compras"
-              strokeWidth={2}
-              dot={{ fill: colors.purchases, r: 4 }}
-              activeDot={{ r: 6, fill: colors.purchases }}
+              strokeWidth={3}
+              dot={{ fill: colors.purchases, r: 5, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
+              activeDot={{ r: 7, fill: colors.purchases, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
             />
           </LineChart>
         </ResponsiveContainer>
