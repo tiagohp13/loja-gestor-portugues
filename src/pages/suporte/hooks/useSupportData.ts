@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { KPI } from '@/components/statistics/KPIPanel';
 import { fetchSupportStats } from './api/fetchSupportStats';
@@ -5,7 +6,6 @@ import { generateKPIs } from './utils/kpiUtils';
 import { SupportStats } from '../types/supportTypes';
 import { loadKpiTargets } from '@/services/kpiService';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuery } from '@tanstack/react-query';
 
 export type { SupportStats } from '../types/supportTypes';
 
@@ -40,68 +40,79 @@ export const useSupportData = (): SupportDataReturn => {
   
   const [kpis, setKpis] = useState<KPI[]>([]);
   
-  // Usar React Query para cache automático do fetchSupportStats
-  const { data: supportStats, isLoading: queryLoading } = useQuery({
-    queryKey: ['supportStats'],
-    queryFn: fetchSupportStats,
-    staleTime: 1000 * 60 * 5, // cache por 5 minutos
-    cacheTime: 1000 * 60 * 10,
-    refetchOnWindowFocus: false
-  });
-
-  useEffect(() => {
-    if (!queryLoading && supportStats) {
-      // Só atualiza se houver stats novos
-      let sStats = supportStats;
-      // ... existing fallback para monthlyData/monthlySales ...
-      if (!sStats.monthlyData || sStats.monthlyData.length < 2) {
-        if (!sStats.monthlyData) sStats.monthlyData = [];
-        if (sStats.monthlyData.length === 0) {
-          sStats.monthlyData.push({
+  const loadData = async () => {
+    setIsLoading(true);
+    try {
+      // Primeiro carregamos as estatísticas gerais
+      const supportStats = await fetchSupportStats();
+      
+      // Ensure we have the necessary monthly data for comparisons
+      if (!supportStats.monthlyData || supportStats.monthlyData.length < 2) {
+        // Add dummy data for comparison if we don't have enough real data
+        // This is just for demonstration purposes
+        if (!supportStats.monthlyData) supportStats.monthlyData = [];
+        if (supportStats.monthlyData.length === 0) {
+          // Add a previous month with slightly lower values
+          const previousMonth = {
             name: 'Previous',
-            vendas: sStats.totalSales * 0.9,
-            compras: sStats.totalSpent * 0.9
-          });
+            vendas: supportStats.totalSales * 0.9,
+            compras: supportStats.totalSpent * 0.9
+          };
+          supportStats.monthlyData.push(previousMonth);
         }
-        if (sStats.monthlyData.length === 1) {
-          sStats.monthlyData.push({
+        if (supportStats.monthlyData.length === 1) {
+          // Add current month
+          const currentMonth = {
             name: 'Current',
-            vendas: sStats.totalSales,
-            compras: sStats.totalSpent
-          });
+            vendas: supportStats.totalSales,
+            compras: supportStats.totalSpent
+          };
+          supportStats.monthlyData.push(currentMonth);
         }
       }
-      if (!sStats.monthlySales || sStats.monthlySales.length < 2) {
-        if (!sStats.monthlySales) sStats.monthlySales = [];
-        if (sStats.monthlySales.length === 0) {
-          sStats.monthlySales.push(sStats.totalSales * 0.9);
+      
+      // Similarly ensure we have monthlySales data
+      if (!supportStats.monthlySales || supportStats.monthlySales.length < 2) {
+        if (!supportStats.monthlySales) supportStats.monthlySales = [];
+        if (supportStats.monthlySales.length === 0) {
+          supportStats.monthlySales.push(supportStats.totalSales * 0.9);
         }
-        if (sStats.monthlySales.length === 1) {
-          sStats.monthlySales.push(sStats.totalSales);
+        if (supportStats.monthlySales.length === 1) {
+          supportStats.monthlySales.push(supportStats.totalSales);
         }
       }
-      setStats(sStats);
-
-      // KPIs dependem dos stats atualizados
-      (async () => {
-        const calculatedKpis = generateKPIs(sStats);
-        const savedTargets = await loadKpiTargets();
-        if (Object.keys(savedTargets).length > 0) {
-          const updatedKpis = calculatedKpis.map(kpi => ({
-            ...kpi,
-            target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
-            belowTarget: kpi.isInverseKPI
-              ? kpi.value > (savedTargets[kpi.name] ?? kpi.target)
-              : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
-          }));
-          setKpis(updatedKpis);
-        } else {
-          setKpis(calculatedKpis);
-        }
-      })();
+      
+      setStats(supportStats);
+      
+      // Depois geramos os KPIs base
+      const calculatedKpis = generateKPIs(supportStats);
+      
+      // Em seguida carregamos as metas personalizadas da base de dados
+      const savedTargets = await loadKpiTargets();
+      
+      // Atualizamos os KPIs com as metas personalizadas da DB
+      if (Object.keys(savedTargets).length > 0) {
+        const updatedKpis = calculatedKpis.map(kpi => ({
+          ...kpi,
+          target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
+          belowTarget: kpi.isInverseKPI 
+            ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) 
+            : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
+        }));
+        setKpis(updatedKpis);
+      } else {
+        setKpis(calculatedKpis);
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(queryLoading);
-  }, [queryLoading, supportStats]);
+  };
+  
+  useEffect(() => {
+    loadData();
+  }, []);
 
   // Set up realtime subscriptions for automatic updates
   useEffect(() => {
