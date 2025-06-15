@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -61,10 +62,13 @@ const defaultLayoutConfig: LayoutConfig = {
   statistics: [
     { id: 'kpi-grid', title: 'Grelha de KPIs', enabled: true, order: 0 },
     { id: 'featured-products', title: 'Tabela de Top Produtos', enabled: true, order: 1 },
-    // NOTE: Add more statistics widgets here when available
+    { id: 'support-chart-resumo', title: 'Gráfico de Resumo Financeiro', enabled: true, order: 2 },
+    { id: 'dashboard-statistics', title: 'Estatísticas do Dashboard', enabled: true, order: 3 },
+    { id: 'recent-transactions', title: 'Transações Recentes', enabled: true, order: 4 },
+    { id: 'metrics-cards', title: 'Cartões de Métricas', enabled: true, order: 5 },
+    { id: 'product-category-chart', title: 'Gráfico de Produtos por Categoria', enabled: true, order: 6 },
   ],
 };
-
 
 const DashboardCustomization: React.FC = () => {
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(() => {
@@ -94,7 +98,6 @@ const DashboardCustomization: React.FC = () => {
         'summary-cards': cardColors ? JSON.parse(cardColors) : {},
     };
   });
-
 
   useEffect(() => {
     localStorage.setItem('dashboard-layout-config', JSON.stringify(layoutConfig));
@@ -331,11 +334,11 @@ const DashboardCustomization: React.FC = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Palette className="h-5 w-5" />
-            Personalização do Dashboard
+            Personalização de Cartões
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Accordion type="multiple" className="w-full" defaultValue={['dashboard-widgets']}>
+          <Accordion type="multiple" className="w-full">
             <AccordionItem value="dashboard-widgets">
               <AccordionTrigger>Dashboard</AccordionTrigger>
               <AccordionContent>
