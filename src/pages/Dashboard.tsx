@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
@@ -83,9 +84,9 @@ const DashboardPage: React.FC = () => {
         description="Vista geral do seu negócio"
       />
       
-      {/* Summary Cards agora sem prop stats */}
-      <SummaryCards />
-
+      {/* Summary Cards with updated stats including expenses */}
+      <SummaryCards stats={updatedStats} />
+      
       <div className="grid grid-cols-1 gap-6 mb-8">
         <SalesAndPurchasesChart chartData={monthlyData} />
       </div>

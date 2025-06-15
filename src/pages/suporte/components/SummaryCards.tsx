@@ -1,34 +1,35 @@
+
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { SupportStats } from '../types/supportTypes';
-import { useDashboardSummary } from '../../dashboard/hooks/useDashboardSummary';
 
-const SummaryCards: React.FC = () => {
-  // Use o hook otimizado para buscar os KPIs resumidos
-  const { data: summary, isLoading, error } = useDashboardSummary();
+interface SummaryCardsProps {
+  stats: SupportStats;
+}
 
-  // Helper para spinner e erro
-  if (isLoading) {
+const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
+  // Helper function to render variation indicator
+  const renderVariation = (currentValue: number, previousValue: number) => {
+    if (previousValue === 0 || !previousValue) return null;
+    
+    const diff = currentValue - previousValue;
+    const percentChange = (diff / previousValue) * 100;
+    const isPositive = percentChange >= 0;
+    
     return (
-      <div className="flex gap-4 mb-6">
-        <div className="h-24 w-60 bg-gray-100 animate-pulse rounded" />
-        <div className="h-24 w-60 bg-gray-100 animate-pulse rounded" />
-        <div className="h-24 w-60 bg-gray-100 animate-pulse rounded" />
-        <div className="h-24 w-60 bg-gray-100 animate-pulse rounded" />
+      <div className={`flex items-center text-sm ${isPositive ? 'text-green-500' : 'text-red-500'} mt-1`}>
+        {isPositive ? (
+          <ArrowUp className="h-3 w-3 mr-1" />
+        ) : (
+          <ArrowDown className="h-3 w-3 mr-1" />
+        )}
+        <span>{isPositive ? '+' : ''}{percentChange.toFixed(1)}%</span>
       </div>
     );
-  }
-  if (error || !summary) {
-    return (
-      <div className="text-center text-destructive mb-6">
-        Erro ao carregar dados do resumo do dashboard.
-      </div>
-    );
-  }
+  };
 
-  // Render cards apenas com os 4 KPIs necessários e dados do hook otimizado
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
       {/* Total de Vendas */}
@@ -37,49 +38,90 @@ const SummaryCards: React.FC = () => {
           <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-2 text-green-500" />
-            <div className="text-2xl font-bold">{formatCurrency(summary.totalSales)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 mr-2 text-green-500" />
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalSales)}</div>
+            </div>
+            {stats.monthlySales && stats.monthlySales.length > 1 && 
+              renderVariation(
+                stats.monthlySales[stats.monthlySales.length - 1] || 0,
+                stats.monthlySales[stats.monthlySales.length - 2] || 0
+              )
+            }
           </div>
         </CardContent>
       </Card>
-      {/* Total Gasto */}
+
+      {/* Total Gasto (incluindo despesas) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            <DollarSign className="w-4 h-4 mr-2 text-red-500" />
-            <div className="text-2xl font-bold">{formatCurrency(summary.totalSpent)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <DollarSign className="w-4 h-4 mr-2 text-red-500" />
+              <div className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</div>
+            </div>
+            {stats.monthlyData && stats.monthlyData.length > 1 && 
+              renderVariation(
+                stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0,
+                stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0
+              )
+            }
           </div>
         </CardContent>
       </Card>
-      {/* Lucro */}
+
+      {/* Lucro (vendas - gastos incluindo despesas) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            {summary.profit >= 0 ? (
-              <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
-            ) : (
-              <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
-            )}
-            <div className="text-2xl font-bold">{formatCurrency(summary.profit)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              {stats.profit >= 0 ? (
+                <TrendingUp className="w-4 h-4 mr-2 text-blue-500" />
+              ) : (
+                <TrendingDown className="w-4 h-4 mr-2 text-red-500" />
+              )}
+              <div className="text-2xl font-bold">{formatCurrency(stats.profit)}</div>
+            </div>
+            {stats.monthlyData && stats.monthlyData.length > 1 && 
+              renderVariation(
+                (stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0),
+                (stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0)
+              )
+            }
           </div>
         </CardContent>
       </Card>
-      {/* Margem de Lucro */}
+
+      {/* Margem de Lucro (com despesas incluídas) */}
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center">
-            <Percent className="w-4 h-4 mr-2 text-green-500" />
-            <div className="text-2xl font-bold">{formatPercentage(summary.profitMargin)}</div>
+          <div className="flex flex-col">
+            <div className="flex items-center">
+              <Percent className="w-4 h-4 mr-2 text-green-500" />
+              <div className="text-2xl font-bold">{formatPercentage(stats.profitMargin)}</div>
+            </div>
+            {stats.monthlyData && stats.monthlyData.length > 1 && (() => {
+              // Calculate current and previous profit margins including expenses
+              const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0;
+              const currentSpent = stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0;
+              const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0;
+              const previousSpent = stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0;
+              
+              const currentMargin = currentSales > 0 ? ((currentSales - currentSpent) / currentSales) * 100 : 0;
+              const previousMargin = previousSales > 0 ? ((previousSales - previousSpent) / previousSales) * 100 : 0;
+              
+              return renderVariation(currentMargin, previousMargin);
+            })()}
           </div>
         </CardContent>
       </Card>
