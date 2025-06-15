@@ -1,5 +1,4 @@
-
-import React, { useEffect, Suspense, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageHeader from '@/components/ui/PageHeader';
@@ -13,11 +12,19 @@ import DashboardStatistics from './dashboard/components/DashboardStatistics';
 import RecentTransactions from './dashboard/components/RecentTransactions';
 import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
-const Suporte = () => {
+// Default configuration for statistics widgets
+const defaultStatisticsConfig: WidgetConfig[] = [
+  { id: 'kpi-grid',             title: 'KPIs',                    order: 0, enabled: true },
+  { id: 'featured-products',    title: 'Produtos em Destaque',    order: 1, enabled: true },
+  { id: 'support-chart-resumo', title: 'Resumo Mensal',           order: 2, enabled: true },
+  { id: 'dashboard-statistics', title: 'Estatísticas Gerais',      order: 3, enabled: true },
+  { id: 'recent-transactions',  title: 'Transações Recentes',      order: 4, enabled: true },
+];
+
+const Suporte: React.FC = () => {
   useScrollToTop();
   const navigate = useNavigate();
   
-  // Get data from both support and dashboard hooks
   const { isLoading: isSupportDataLoading, stats } = useSupportData();
   const { 
     products, 
@@ -36,7 +43,6 @@ const Suporte = () => {
     roiValue,
     roiPercent,
     recentTransactions,
-    // New values including expenses
     totalSpentWithExpenses,
     totalProfitWithExpenses,
     profitMarginPercentWithExpenses,
@@ -44,35 +50,25 @@ const Suporte = () => {
     roiPercentWithExpenses
   } = useDashboardData();
 
-  const [statisticsConfig, setStatisticsConfig] = useState<WidgetConfig[]>([]);
-
-  useEffect(() => {
-    const loadConfig = () => {
-      const savedConfig = localStorage.getItem('dashboard-layout-config');
-      if (savedConfig) {
-        const config = JSON.parse(savedConfig);
-        if (config.statistics) {
-          setStatisticsConfig(config.statistics);
+  // Initialize statistics configuration from localStorage or default
+  const [statisticsConfig, setStatisticsConfig] = useState<WidgetConfig[]>(() => {
+    const saved = localStorage.getItem('dashboard-layout-config');
+    if (saved) {
+      try {
+        const cfg = JSON.parse(saved);
+        if (cfg.statistics) {
+          return cfg.statistics;
         }
+      } catch {
+        // ignore
       }
-    };
-    
-    loadConfig();
-    window.addEventListener('storage', loadConfig);
-    return () => window.removeEventListener('storage', loadConfig);
-  }, []);
-  
-  const navigateToProductDetail = (id: string) => {
-    navigate(`/produtos/${id}`);
-  };
+    }
+    return defaultStatisticsConfig;
+  });
 
-  const navigateToClientDetail = (id: string) => {
-    navigate(`/clientes/${id}`);
-  };
-
-  const navigateToSupplierDetail = (id: string) => {
-    navigate(`/fornecedores/${id}`);
-  };
+  const navigateToProductDetail = (id: string) => navigate(`/produtos/${id}`);
+  const navigateToClientDetail = (id: string) => navigate(`/clientes/${id}`);
+  const navigateToSupplierDetail = (id: string) => navigate(`/fornecedores/${id}`);
   
   if (isSupportDataLoading) {
     return (
@@ -82,11 +78,10 @@ const Suporte = () => {
     );
   }
 
-  // Component mapping for statistics page - removed duplicated widgets
   const componentMap: { [key: string]: React.ReactNode } = {
     'kpi-grid': (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <MetricsCards stats={stats} showSummaryCardsOnly={true} />
+        <MetricsCards stats={stats} showSummaryCardsOnly />
       </div>
     ),
     'featured-products': (
@@ -158,8 +153,8 @@ const Suporte = () => {
     if (singleColumnWidgets.includes(widget.id)) {
       acc.push([widget]);
     } else {
-      const prevWidget = sortedEnabledWidgets[index - 1];
-      if (prevWidget && !singleColumnWidgets.includes(prevWidget.id) && acc[acc.length - 1].length === 1) {
+      const prev = sortedEnabledWidgets[index - 1];
+      if (prev && !singleColumnWidgets.includes(prev.id) && acc[acc.length - 1].length === 1) {
         acc[acc.length - 1].push(widget);
       } else {
         acc.push([widget]);
@@ -176,23 +171,11 @@ const Suporte = () => {
       />
       
       <div className="space-y-6">
-        {groupedWidgets.map((group, groupIndex) => {
-          if (group.length > 1) {
-            return (
-              <div key={groupIndex} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {group.map(widget => (
-                  <div key={widget.id}>{componentMap[widget.id]}</div>
-                ))}
-              </div>
-            );
-          }
-          const widget = group[0];
-          return (
-            <div key={widget.id}>
-              {componentMap[widget.id]}
-            </div>
-          );
-        })}
+        {groupedWidgets.map((group, idx) => (
+          <div key={idx} className={`${group.length > 1 ? 'grid grid-cols-1 lg:grid-cols-2 gap-6' : ''}`}>            
+            {group.map(w => <div key={w.id}>{componentMap[w.id]}</div>)}
+          </div>
+        ))}
       </div>
     </div>
   );
