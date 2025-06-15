@@ -92,19 +92,61 @@
     @apply border-border;
   }
 
+  html {
+    @apply transition-colors duration-300;
+  }
+
   body {
     @apply bg-background text-foreground font-inter transition-colors duration-300;
+    /* Força aplicação consistente do tema */
+    color-scheme: light dark;
+  }
+
+  /* Força tema escuro em elementos nativos do browser */
+  .dark {
+    color-scheme: dark;
   }
 
   /* Melhorar transições para modo escuro */
   .dashboard-card, .stat-card {
     @apply transition-colors duration-300;
   }
+
+  /* Scrollbars personalizadas para modo escuro */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/30 rounded-md;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  .dark ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/40;
+  }
+
+  .dark ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/60;
+  }
 }
 
 .table-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  @apply bg-background transition-colors duration-300;
 }
 
 .dashboard-card {
@@ -132,6 +174,24 @@
   @apply bg-card;
 }
 
+/* Garantir que todas as tabelas tenham fundo apropriado */
+table {
+  @apply bg-card text-foreground transition-colors duration-300;
+}
+
+/* Headers de tabela */
+thead {
+  @apply bg-muted/50 transition-colors duration-300;
+}
+
+tbody tr {
+  @apply border-b border-border transition-colors duration-300;
+}
+
+tbody tr:hover {
+  @apply bg-muted/50;
+}
+
 /* Melhor contraste para gráficos no modo escuro */
 .dark .recharts-cartesian-grid-horizontal line,
 .dark .recharts-cartesian-grid-vertical line {
@@ -141,4 +201,70 @@
 
 .dark .recharts-legend-wrapper {
   color: hsl(var(--foreground));
+}
+
+.dark .recharts-tooltip-wrapper {
+  @apply bg-card border border-border rounded-md shadow-lg;
+}
+
+.dark .recharts-default-tooltip {
+  @apply bg-card border-border text-foreground;
+}
+
+/* Melhorar aparência de inputs e formulários */
+input, select, textarea {
+  @apply bg-background border-border text-foreground transition-colors duration-300;
+}
+
+input:focus, select:focus, textarea:focus {
+  @apply ring-ring;
+}
+
+/* Melhorar dropdowns e menus */
+[role="menu"], [role="listbox"] {
+  @apply bg-popover border-border shadow-lg;
+}
+
+/* Cards e containers */
+.bg-white {
+  @apply bg-card;
+}
+
+.bg-gray-50 {
+  @apply bg-muted/30;
+}
+
+.bg-gray-100 {
+  @apply bg-muted/50;
+}
+
+/* Textos e cores específicas */
+.text-gray-700 {
+  @apply text-foreground;
+}
+
+.text-gray-600 {
+  @apply text-muted-foreground;
+}
+
+.text-gray-500 {
+  @apply text-muted-foreground;
+}
+
+/* Bordas */
+.border-gray-300 {
+  @apply border-border;
+}
+
+.border-gray-200 {
+  @apply border-border;
+}
+
+/* Hover states */
+.hover\:bg-gray-50:hover {
+  @apply hover:bg-muted/50;
+}
+
+.hover\:bg-gray-100:hover {
+  @apply hover:bg-muted/70;
 }

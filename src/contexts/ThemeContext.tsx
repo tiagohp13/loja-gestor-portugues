@@ -33,15 +33,34 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     // Aplicar o tema ao documento
     const root = document.documentElement;
+    const body = document.body;
     
     if (theme === 'dark') {
       root.classList.add('dark');
+      body.classList.add('dark');
     } else {
       root.classList.remove('dark');
+      body.classList.remove('dark');
     }
+    
+    // Aplicar meta tag para color-scheme
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaThemeColor);
+    }
+    
+    // Definir cor do tema baseado no modo
+    metaThemeColor.setAttribute('content', theme === 'dark' ? '#0f172a' : '#ffffff');
     
     // Salvar tema no localStorage
     localStorage.setItem('theme', theme);
+    
+    // Forçar re-render de componentes que dependem do tema
+    setTimeout(() => {
+      window.dispatchEvent(new Event('themechange'));
+    }, 0);
   }, [theme]);
 
   const toggleTheme = () => {

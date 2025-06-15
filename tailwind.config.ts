@@ -70,9 +70,9 @@ export default {
 						dark: '#1e429f'
 					},
 					gray: {
-						light: '#f3f4f6',
-						DEFAULT: '#6b7280',
-						dark: '#374151'
+						light: 'hsl(var(--muted))',
+						DEFAULT: 'hsl(var(--muted-foreground))',
+						dark: 'hsl(var(--foreground))'
 					}
 				}
 			},
