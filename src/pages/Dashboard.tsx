@@ -20,14 +20,15 @@ import SummaryCards from './suporte/components/SummaryCards';
 import KPIPanel from '@/components/statistics/KPIPanel';
 import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
+// Default configuration for dashboard widgets, including titles
 const defaultDashboardConfig: WidgetConfig[] = [
-  { id: 'quick-actions',             order: 0, enabled: true },
-  { id: 'summary-cards',             order: 1, enabled: true },
-  { id: 'sales-purchases-chart',     order: 2, enabled: true },
-  { id: 'low-stock-products',        order: 3, enabled: true },
-  { id: 'pending-orders',            order: 4, enabled: true },
-  { id: 'insufficient-stock-orders', order: 5, enabled: true },
-  { id: 'kpi-panel',                 order: 6, enabled: true },
+  { id: 'quick-actions',             title: 'Ações Rápidas',                    order: 0, enabled: true },
+  { id: 'summary-cards',             title: 'Cartões de Resumo',                order: 1, enabled: true },
+  { id: 'sales-purchases-chart',     title: 'Resumo Financeiro',                order: 2, enabled: true },
+  { id: 'low-stock-products',        title: 'Produtos com Stock Baixo',         order: 3, enabled: true },
+  { id: 'pending-orders',            title: 'Encomendas Pendentes',             order: 4, enabled: true },
+  { id: 'insufficient-stock-orders', title: 'Encomendas com Stock Insuficiente',order: 5, enabled: true },
+  { id: 'kpi-panel',                 title: 'Indicadores de Performance',       order: 6, enabled: true },
 ];
 
 const DashboardPage: React.FC = () => {
