@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useData } from '@/contexts/DataContext';
 import PageHeader from '@/components/ui/PageHeader';
@@ -200,9 +201,9 @@ const Settings = () => {
               <Separator />
               
               <div>
-                <h4 className="text-sm font-medium mb-3">Personalização do Dashboard</h4>
+                <h4 className="text-sm font-medium mb-3">Personalização de Componentes</h4>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Configure a aparência e ordem dos elementos do dashboard principal
+                  Configure a aparência e a ordem dos elementos em todas as páginas do CRM
                 </p>
                 <DashboardCustomization />
               </div>
