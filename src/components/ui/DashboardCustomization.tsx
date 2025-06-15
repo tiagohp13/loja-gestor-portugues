@@ -1,9 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Palette, ArrowUp, ArrowDown, GripVertical } from 'lucide-react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Palette, ArrowUp, ArrowDown, GripVertical, ChevronDown, ChevronRight } from 'lucide-react';
 
 // Types
 export interface ChildConfig {
@@ -98,9 +98,14 @@ const DashboardCustomization: React.FC = () => {
     };
   });
 
-  // Refs para os accordions
-  const dashboardAccordionRef = useRef<HTMLDivElement>(null);
-  const statisticsAccordionRef = useRef<HTMLDivElement>(null);
+  const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({
+    dashboard: false,
+    statistics: false
+  });
+
+  // Refs para os cartões de página
+  const dashboardCardRef = useRef<HTMLDivElement>(null);
+  const statisticsCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     localStorage.setItem('dashboard-layout-config', JSON.stringify(layoutConfig));
@@ -124,47 +129,32 @@ const DashboardCustomization: React.FC = () => {
 
   // Função para fazer scroll suave para o elemento
   const scrollToElement = (element: HTMLElement) => {
-    try {
-      // Tentar usar scrollIntoView com opções modernas
-      element.scrollIntoView({
-        behavior: 'smooth',
-        block: 'start',
-        inline: 'nearest'
+    setTimeout(() => {
+      const elementRect = element.getBoundingClientRect();
+      const offsetTop = window.pageYOffset + elementRect.top - 120;
+      
+      window.scrollTo({
+        top: offsetTop,
+        behavior: 'smooth'
       });
-    } catch (error) {
-      // Fallback para navegadores antigos
-      element.scrollIntoView();
-    }
+    }, 300);
   };
 
-  // Handler para mudanças no accordion
-  const handleAccordionChange = (value: string | undefined) => {
-    if (!value) return;
-
-    // Usar setTimeout para aguardar a animação do accordion
-    setTimeout(() => {
-      let targetElement: HTMLElement | null = null;
-
-      switch (value) {
-        case 'dashboard-widgets':
-          targetElement = dashboardAccordionRef.current;
-          break;
-        case 'statistics-widgets':
-          targetElement = statisticsAccordionRef.current;
-          break;
+  // Handler para expansão/colapso de seções
+  const handleSectionToggle = (section: string) => {
+    setExpandedSections(prev => {
+      const newExpanded = { ...prev, [section]: !prev[section] };
+      
+      // Se a seção foi expandida, fazer scroll
+      if (newExpanded[section]) {
+        const targetRef = section === 'dashboard' ? dashboardCardRef.current : statisticsCardRef.current;
+        if (targetRef) {
+          scrollToElement(targetRef);
+        }
       }
-
-      if (targetElement) {
-        // Ajustar para considerar header fixo (aproximadamente 80px)
-        const elementRect = targetElement.getBoundingClientRect();
-        const offsetTop = window.pageYOffset + elementRect.top - 100;
-        
-        window.scrollTo({
-          top: offsetTop,
-          behavior: 'smooth'
-        });
-      }
-    }, 200); // Aguardar animação do accordion
+      
+      return newExpanded;
+    });
   };
 
   const handleToggle = (page: keyof LayoutConfig, widgetId: string, childId?: string) => {
@@ -273,21 +263,24 @@ const DashboardCustomization: React.FC = () => {
     { name: 'Cinza', value: 'bg-gray-600' }
   ];
 
-  const renderConfigList = (items: (WidgetConfig | ChildConfig)[], page: keyof LayoutConfig, parentId?: string) => {
+  const renderWidgetsList = (items: (WidgetConfig | ChildConfig)[], page: keyof LayoutConfig, parentId?: string) => {
     const allChecked = items.every(item => item.enabled);
 
     return (
-      <div className="space-y-4 pt-2">
-        <div className="flex items-center space-x-3 p-3">
-          <Checkbox
-            id={`toggle-all-${page}-${parentId || 'parent'}`}
-            checked={allChecked}
-            onCheckedChange={(checked) => handleToggleAll(page, Boolean(checked), parentId)}
-          />
-          <label htmlFor={`toggle-all-${page}-${parentId || 'parent'}`} className="text-sm font-medium leading-none">
-            {allChecked ? 'Desmarcar Todos' : 'Marcar Todos'}
-          </label>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+          <div className="flex items-center space-x-3">
+            <Checkbox
+              id={`toggle-all-${page}-${parentId || 'parent'}`}
+              checked={allChecked}
+              onCheckedChange={(checked) => handleToggleAll(page, Boolean(checked), parentId)}
+            />
+            <label htmlFor={`toggle-all-${page}-${parentId || 'parent'}`} className="text-sm font-medium">
+              {allChecked ? 'Desmarcar Todos' : 'Marcar Todos'}
+            </label>
+          </div>
         </div>
+        
         <div className="space-y-2">
           {items.sort((a,b) => a.order - b.order).map((item, index) => {
             const isChild = 'color' in item || parentId;
@@ -296,9 +289,36 @@ const DashboardCustomization: React.FC = () => {
             const defaultColor = (isChild && child.color) ? child.color : '';
             const selectedColor = parentId && widgetColors[parentId]?.[child.id] ? widgetColors[parentId]?.[child.id] : defaultColor;
 
-            const itemContent = (
-              <div key={item.id} className="flex items-center space-x-3 p-2 border rounded-lg bg-card hover:bg-muted/50">
-                <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
+            if (widget.children) {
+              return (
+                <div key={widget.id} className="border rounded-lg bg-card">
+                  <div className="flex items-center space-x-3 p-3 border-b">
+                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
+                    <Checkbox
+                      id={`${page}-${widget.id}`}
+                      checked={widget.enabled}
+                      onCheckedChange={() => handleToggle(page, widget.id)}
+                    />
+                    <span className="flex-1 text-sm font-medium">{widget.title}</span>
+                    <div className="flex space-x-1">
+                      <Button variant="ghost" size="sm" onClick={() => handleMove(page, widget.id, 'up')} disabled={index === 0} className="h-7 w-7 p-0">
+                        <ArrowUp className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleMove(page, widget.id, 'down')} disabled={index === items.length - 1} className="h-7 w-7 p-0">
+                        <ArrowDown className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="p-3">
+                    {renderWidgetsList(widget.children, page, widget.id)}
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={item.id} className="flex items-center space-x-3 p-3 border rounded-lg bg-card hover:bg-muted/30 transition-colors">
+                <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
                 <Checkbox
                   id={`${page}-${parentId || ''}-${item.id}`}
                   checked={item.enabled}
@@ -320,88 +340,71 @@ const DashboardCustomization: React.FC = () => {
                         </option>
                       ))}
                     </select>
-                    <div 
-                      className={`w-4 h-4 rounded ${selectedColor || defaultColor}`}
-                    />
+                    <div className={`w-3 h-3 rounded ${selectedColor || defaultColor}`} />
                   </div>
                 )}
                 
                 <div className="flex space-x-1">
-                  <Button variant="ghost" size="sm" onClick={() => handleMove(page, parentId || item.id, 'up', parentId ? item.id : undefined)} disabled={index === 0} className="h-8 w-8 p-0">
+                  <Button variant="ghost" size="sm" onClick={() => handleMove(page, parentId || item.id, 'up', parentId ? item.id : undefined)} disabled={index === 0} className="h-7 w-7 p-0">
                     <ArrowUp className="h-3 w-3" />
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={() => handleMove(page, parentId || item.id, 'down', parentId ? item.id : undefined)} disabled={index === items.length - 1} className="h-8 w-8 p-0">
+                  <Button variant="ghost" size="sm" onClick={() => handleMove(page, parentId || item.id, 'down', parentId ? item.id : undefined)} disabled={index === items.length - 1} className="h-7 w-7 p-0">
                     <ArrowDown className="h-3 w-3" />
                   </Button>
                 </div>
               </div>
             );
-
-            if (widget.children) {
-              return (
-                <Accordion key={widget.id} type="single" collapsible className="w-full border rounded-lg">
-                   <AccordionItem value={widget.id} className="border-b-0">
-                      <AccordionTrigger className="p-2 hover:no-underline">
-                        <div className="flex items-center space-x-3 w-full">
-                            <GripVertical className="h-5 w-5 text-muted-foreground cursor-grab" />
-                            <Checkbox
-                                id={`${page}-${widget.id}`}
-                                checked={widget.enabled}
-                                onCheckedChange={() => { handleToggle(page, widget.id); }}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                            <span className="flex-1 text-sm font-medium text-left">{widget.title}</span>
-                             <div className="flex space-x-1">
-                              <Button variant="ghost" size="sm" onClick={(e) => {e.stopPropagation(); handleMove(page, widget.id, 'up')}} disabled={index === 0} className="h-8 w-8 p-0">
-                                <ArrowUp className="h-3 w-3" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={(e) => {e.stopPropagation(); handleMove(page, widget.id, 'down')}} disabled={index === items.length - 1} className="h-8 w-8 p-0">
-                                <ArrowDown className="h-3 w-3" />
-                              </Button>
-                            </div>
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent className="px-2 pb-2">
-                        {renderConfigList(widget.children, page, widget.id)}
-                      </AccordionContent>
-                   </AccordionItem>
-                </Accordion>
-              )
-            }
-
-            return itemContent;
           })}
         </div>
       </div>
     );
   };
-  
-  return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Palette className="h-5 w-5" />
-            Personalização de Cartões
+
+  const renderPageCard = (page: keyof LayoutConfig, title: string, ref: React.RefObject<HTMLDivElement>) => {
+    const isExpanded = expandedSections[page];
+    const ChevronIcon = isExpanded ? ChevronDown : ChevronRight;
+
+    return (
+      <Card ref={ref} className="border-l-4 border-l-primary">
+        <CardHeader 
+          className="cursor-pointer hover:bg-muted/50 transition-colors"
+          onClick={() => handleSectionToggle(page)}
+        >
+          <CardTitle className="flex items-center justify-between text-lg">
+            <div className="flex items-center gap-3">
+              <ChevronIcon className="h-5 w-5 text-primary" />
+              {title}
+            </div>
+            <span className="text-sm font-normal text-muted-foreground">
+              {layoutConfig[page].filter(w => w.enabled).length} ativos
+            </span>
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Accordion type="single" collapsible className="w-full" onValueChange={handleAccordionChange}>
-            <AccordionItem value="dashboard-widgets" ref={dashboardAccordionRef}>
-              <AccordionTrigger>Dashboard</AccordionTrigger>
-              <AccordionContent>
-                {renderConfigList(layoutConfig.dashboard, 'dashboard')}
-              </AccordionContent>
-            </AccordionItem>
-            <AccordionItem value="statistics-widgets" ref={statisticsAccordionRef}>
-              <AccordionTrigger>Estatísticas</AccordionTrigger>
-              <AccordionContent>
-                {renderConfigList(layoutConfig.statistics, 'statistics')}
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-        </CardContent>
+        {isExpanded && (
+          <CardContent className="pt-0">
+            {renderWidgetsList(layoutConfig[page], page)}
+          </CardContent>
+        )}
       </Card>
+    );
+  };
+  
+  return (
+    <div className="space-y-4">
+      <div className="text-center space-y-1 mb-6">
+        <h3 className="text-xl font-semibold flex items-center justify-center gap-2">
+          <Palette className="h-5 w-5" />
+          Personalização de Componentes
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Selecione e ordene elementos por página
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {renderPageCard('dashboard', 'Dashboard', dashboardCardRef)}
+        {renderPageCard('statistics', 'Estatísticas', statisticsCardRef)}
+      </div>
     </div>
   );
 };
