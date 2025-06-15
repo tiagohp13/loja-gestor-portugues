@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
@@ -16,8 +15,8 @@ export const useStockExitDetail = () => {
   // Function to clean notes from the English "Converted from order" text
   const cleanNotes = (notes: string | undefined): string => {
     if (!notes) return '';
-    // Remove the English text "Converted from order X" if present
-    return notes.replace(/Converted from order \d+\/\d+\s*/g, '');
+    // Remove the English text "Converted from order X" completely
+    return notes.replace(/Converted from order \d+\/\d+\s*/g, '').trim();
   };
 
   useEffect(() => {

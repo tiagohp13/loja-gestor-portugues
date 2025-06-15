@@ -1,8 +1,9 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
+import { ArrowLeft } from 'lucide-react';
+import PageHeader from '@/components/ui/PageHeader';
 
 interface StockEntryEditHeaderProps {
   isNewEntry: boolean;
@@ -10,20 +11,23 @@ interface StockEntryEditHeaderProps {
 
 const StockEntryEditHeader: React.FC<StockEntryEditHeaderProps> = ({ isNewEntry }) => {
   const navigate = useNavigate();
-  
+
   return (
-    <PageHeader 
-      title={isNewEntry ? "Nova Entrada de Stock" : "Editar Entrada de Stock"} 
-      description={isNewEntry 
-        ? "Registe uma nova entrada de produtos no stock" 
-        : "Atualize os detalhes da entrada de stock"
-      } 
-      actions={
-        <Button variant="outline" onClick={() => navigate('/entradas/historico')}>
-          Voltar ao Histórico
-        </Button>
-      }
-    />
+    <div className="flex items-center gap-4">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={() => navigate('/entradas/historico')}
+        className="flex items-center gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Voltar à Lista
+      </Button>
+      <PageHeader
+        title={isNewEntry ? 'Nova Compra' : 'Editar Compra'}
+        description={isNewEntry ? 'Criar uma nova compra de stock' : 'Modificar detalhes da compra'}
+      />
+    </div>
   );
 };
 

@@ -1,16 +1,16 @@
 
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatDateString } from '@/utils/formatting';
+import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
 
-type EntryInformationCardProps = {
+interface EntryInformationCardProps {
   entryNumber: string;
   entryDate: string;
   totalValue: number;
-  status: string;
+  status?: string;
   notes?: string;
-};
+}
 
 const EntryInformationCard: React.FC<EntryInformationCardProps> = ({
   entryNumber,
@@ -37,10 +37,12 @@ const EntryInformationCard: React.FC<EntryInformationCardProps> = ({
           <p className="text-sm font-medium mb-1">Total</p>
           <p className="font-semibold">{formatCurrency(totalValue)}</p>
         </div>
-        <div>
-          <p className="text-sm font-medium mb-1">Estado</p>
-          <StatusBadge status={status} />
-        </div>
+        {status && (
+          <div>
+            <p className="text-sm font-medium mb-1">Estado</p>
+            <StatusBadge status={status} />
+          </div>
+        )}
         {notes && (
           <div className="col-span-1 md:col-span-2">
             <p className="text-sm font-medium mb-1">Notas</p>
