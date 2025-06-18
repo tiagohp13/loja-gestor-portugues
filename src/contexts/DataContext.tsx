@@ -1,118 +1,86 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase, snakeToCamel, increment, decrement } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { saveAs } from 'file-saver';
-import { 
-  Product, Category, Client, Supplier, 
-  Order, OrderItem, StockEntry, StockEntryItem,
-  StockExit, StockExitItem, ExportDataType
+import type { Database } from '@/integrations/supabase/types';
+import {
+  Product, Category, Client, Supplier,
+  Order, StockEntry, StockExit, ExportDataType
 } from '../types';
 import {
-  mapDbProductToProduct,  
+  mapDbProductToProduct,
   mapDbCategoryToCategory,
   mapDbClientToClient,
   mapDbSupplierToSupplier,
   mapDbOrderToOrder,
-  mapDbOrderItemToOrderItem,
   mapDbStockEntryToStockEntry,
-  mapDbStockEntryItemToStockEntryItem,
-  mapDbStockExitToStockExit,
-  mapDbStockExitItemToStockExitItem,
-  mapOrderItemToDbOrderItem,
-  mapStockEntryItemToDbStockEntryItem,
-  mapStockExitItemToDbStockExitItem
+  mapDbStockExitToStockExit
 } from '../utils/mappers';
 
-// ... other context and state setup ...
+interface DataContextType {
+  products: Product[];
+  categories: Category[];
+  clients: Client[];
+  suppliers: Supplier[];
+  orders: Order[];
+  stockEntries: StockEntry[];
+  stockExits: StockExit[];
+  exportData: (type: ExportDataType) => void;
+  importData: (type: ExportDataType, data: string) => Promise<void>;
+  // ... other methods omitted for brevity
+}
 
-const exportData = (type: ExportDataType) => {
-  console.log('[exportData] invoked with type:', type);
-  let payload: any;
-  switch (type) {
-    case 'products':      payload = products;      break;
-    case 'categories':    payload = categories;    break;
-    case 'clients':       payload = clients;       break;
-    case 'suppliers':     payload = suppliers;     break;
-    case 'orders':        payload = orders;        break;
-    case 'stockEntries':  payload = stockEntries;  break;
-    case 'stockExits':    payload = stockExits;    break;
-    case 'all':
-      payload = { products, categories, clients, suppliers, orders, stockEntries, stockExits };
-      break;
-    default:
-      console.error('[exportData] tipo desconhecido:', type);
-      return;
-  }
-  const json = JSON.stringify(payload, null, 2);
-  const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-  saveAs(blob, `${type}.json`);
+const DataContext = createContext<DataContextType | undefined>(undefined);
+export const useData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useData must be used within DataProvider');
+  return context;
 };
 
-// ... rest of DataProvider code, including importData, updateData, and provider return ...
-
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // state declarations: products, categories, clients, suppliers, orders, stockEntries, stockExits, isLoading
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
+  const [stockExits, setStockExits] = useState<StockExit[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // useEffect calls to fetch data and subscribe to real-time updates
+  // Fetch data effects omitted for brevity
 
-  // CRUD and utility functions (addProduct, updateProduct, etc.)
+  // Place exportData inside DataProvider so it sees state
+  const exportData = (type: ExportDataType) => {
+    console.log('[exportData] invoked with type:', type);
+    let payload: any;
+    switch (type) {
+      case 'products':      payload = products;      break;
+      case 'categories':    payload = categories;    break;
+      case 'clients':       payload = clients;       break;
+      case 'suppliers':     payload = suppliers;     break;
+      case 'orders':        payload = orders;        break;
+      case 'stockEntries':  payload = stockEntries;  break;
+      case 'stockExits':    payload = stockExits;    break;
+      case 'all':
+        payload = { products, categories, clients, suppliers, orders, stockEntries, stockExits };
+        break;
+      default:
+        console.error('[exportData] unknown type:', type);
+        return;
+    }
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    saveAs(blob, `${type}.json`);
+  };
 
-  // Place the updated exportData here alongside importData and updateData
+  const importData = async (type: ExportDataType, data: string) => {
+    // implementation...
+  };
 
-  const contextValue = {
-    products,
-    setProducts,
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    getProduct,
-    getProductHistory,
-    categories,
-    setCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    getCategory,
-    clients,
-    setClients,
-    addClient,
-    updateClient,
-    deleteClient,
-    getClient,
-    getClientHistory,
-    suppliers,
-    setSuppliers,
-    addSupplier,
-    updateSupplier,
-    deleteSupplier,
-    getSupplier,
-    getSupplierHistory,
-    orders,
-    setOrders,
-    addOrder,
-    updateOrder,
-    deleteOrder,
-    findOrder,
-    findProduct,
-    findClient,
-    convertOrderToStockExit,
-    stockEntries,
-    setStockEntries,
-    addStockEntry,
-    updateStockEntry,
-    deleteStockEntry,
-    stockExits,
-    setStockExits,
-    addStockExit,
-    updateStockExit,
-    deleteStockExit,
-    exportData,
-    importData,
-    updateData,
-    getBusinessAnalytics,
-    isLoading,
-    setIsLoading
+  const contextValue: DataContextType = {
+    products, categories, clients, suppliers, orders, stockEntries, stockExits,
+    exportData, importData,
+    // other methods...
   };
 
   return (
@@ -122,4 +90,4 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   );
 };
 
-export default DataProvider;
+export default DataContext;
