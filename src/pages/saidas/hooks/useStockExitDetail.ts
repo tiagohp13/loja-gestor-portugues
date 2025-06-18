@@ -23,17 +23,19 @@ export const useStockExitDetail = () => {
     if (id) {
       const exit = stockExits.find(exit => exit.id === id);
       if (exit) {
-        setStockExit(exit);
+        // Clean notes immediately to avoid showing English text
+        const cleanedExit = { ...exit, notes: cleanNotes(exit.notes) };
+        setStockExit(cleanedExit);
         
         // Calculate total
-        if (exit.items && exit.items.length > 0) {
-          const sum = exit.items.reduce((acc, item) => acc + (item.quantity * item.salePrice), 0);
+        if (cleanedExit.items && cleanedExit.items.length > 0) {
+          const sum = cleanedExit.items.reduce((acc, item) => acc + (item.quantity * item.salePrice), 0);
           setTotalValue(sum);
         }
         
         // Check if the exit has a clientId and fetch the corresponding client
-        if (exit.clientId) {
-          const foundClient = clients.find(c => c.id === exit.clientId);
+        if (cleanedExit.clientId) {
+          const foundClient = clients.find(c => c.id === cleanedExit.clientId);
           if (foundClient) {
             // Create a ClientWithAddress object from the client data
             const clientWithAddress: ClientWithAddress = {
