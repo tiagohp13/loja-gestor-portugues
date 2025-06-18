@@ -12,11 +12,11 @@ export const useStockExitDetail = () => {
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
 
-  // Function to clean notes from the English "Converted from order" text
+  // Function to clean notes from any "Converted from order" text (including codes with letters)
   const cleanNotes = (notes: string | undefined): string => {
     if (!notes) return '';
-    // Remove the English text "Converted from order X" completely
-    return notes.replace(/Converted from order \d+\/\d+\s*/g, '').trim();
+    // Remove any "Converted from order <identifier>" up to the line break
+    return notes.replace(/Converted from order[^\n]*\n?/g, '').trim();
   };
 
   useEffect(() => {
@@ -33,11 +33,10 @@ export const useStockExitDetail = () => {
           setTotalValue(sum);
         }
         
-        // Check if the exit has a clientId and fetch the corresponding client
+        // Fetch and set client
         if (cleanedExit.clientId) {
           const foundClient = clients.find(c => c.id === cleanedExit.clientId);
           if (foundClient) {
-            // Create a ClientWithAddress object from the client data
             const clientWithAddress: ClientWithAddress = {
               ...foundClient,
               address: foundClient.address ? {
@@ -51,9 +50,9 @@ export const useStockExitDetail = () => {
         }
       } else {
         toast({
-          title: "Erro",
-          description: "Venda não encontrada",
-          variant: "destructive",
+          title: 'Erro',
+          description: 'Venda não encontrada',
+          variant: 'destructive',
         });
         navigate('/saidas/historico');
       }
