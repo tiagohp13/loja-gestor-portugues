@@ -1,11 +1,12 @@
-
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { StockEntry, StockEntryItem } from '@/types';
+import { updateStockEntry } from '@/services/stockService'; // NOVO
 
 interface UseSubmitProps {
   entryDetails: {
+    id?: string; // NOVO: permitir edição
     supplierId: string;
     supplierName: string;
     invoiceNumber: string;
@@ -61,10 +62,10 @@ export const useSubmit = ({
     try {
       setIsSubmitting(true);
       
-      // Calculate total value
+      // Calcular total
       const total = items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
       
-      // Get supplier details
+      // Buscar info do fornecedor
       const supplier = suppliers.find(s => s.id === entryDetails.supplierId);
       
       const stockEntry = {
@@ -74,11 +75,15 @@ export const useSubmit = ({
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
         notes: entryDetails.notes,
-        total: total  // Add total value
+        total
       };
 
-      await addStockEntry(stockEntry);
-      
+      if (entryDetails.id) {
+        await updateStockEntry(entryDetails.id, stockEntry); // EDIÇÃO
+      } else {
+        await addStockEntry(stockEntry); // NOVA ENTRADA
+      }
+
       toast({
         title: "Sucesso",
         description: "Entrada de stock guardada com sucesso"
