@@ -25,18 +25,20 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
     setItems
   } = useStockEntryForm({ entryId: id });
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
     setEntryDetails(prev => ({
       ...prev,
-      [field]: value
+      [name]: value
     }));
   };
 
-  const handleSupplierChange = (supplierId: string, supplierName: string) => {
+  const handleSupplierChange = (supplierId: string) => {
+    const supplier = suppliers.find(s => s.id === supplierId);
     setEntryDetails(prev => ({
       ...prev,
       supplierId,
-      supplierName
+      supplierName: supplier ? supplier.name : ''
     }));
   };
 
@@ -84,7 +86,7 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
         />
         
         <StockEntryEditDetails
-          date={entryDetails.date || new Date().toISOString()}
+          date={entryDetails.date || new Date().toISOString().split('T')[0]}
           invoiceNumber={entryDetails.invoiceNumber}
           notes={entryDetails.notes}
           onDetailsChange={handleChange}

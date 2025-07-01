@@ -25,6 +25,7 @@ interface UseSubmitProps {
     notes: string;
     total: number;
   }) => Promise<StockEntry>;
+  updateStockEntry?: (id: string, entry: any) => Promise<any>; // Add updateStockEntry parameter
 }
 
 export const useSubmit = ({
@@ -32,11 +33,11 @@ export const useSubmit = ({
   items,
   entryDate,
   suppliers,
-  addStockEntry
+  addStockEntry,
+  updateStockEntry
 }: UseSubmitProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { updateStockEntry } = useData();
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
@@ -81,7 +82,7 @@ export const useSubmit = ({
       };
 
       // Check if we're editing an existing entry or creating a new one
-      if (entryDetails.id) {
+      if (entryDetails.id && updateStockEntry) {
         // Editing existing entry
         await updateStockEntry(entryDetails.id, {
           ...stockEntry,

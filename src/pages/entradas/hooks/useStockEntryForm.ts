@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useFormState } from './stockEntryForm/useFormState';
@@ -48,6 +49,7 @@ export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntry
           id: existingEntry.id,
           supplierId: existingEntry.supplierId,
           supplierName: existingEntry.supplierName,
+          date: existingEntry.date ? new Date(existingEntry.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           invoiceNumber: existingEntry.invoiceNumber || '',
           notes: existingEntry.notes || ''
         });
@@ -105,7 +107,8 @@ export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntry
         updatedAt: new Date().toISOString()
       };
       return addStockEntry(stockEntryData);
-    }
+    },
+    updateStockEntry
   });
 
   return {
@@ -124,6 +127,7 @@ export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntry
     totalValue,
     isSubmitting,
     setEntryDetails,
+    setItems, // Now included in return
     setCurrentItem,
     setSearchTerm,
     setSelectedProductDisplay,
