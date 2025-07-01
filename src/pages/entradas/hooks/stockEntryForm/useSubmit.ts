@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { StockEntry, StockEntryItem } from '@/types';
+import { useData } from '@/contexts/DataContext';
 
 interface UseSubmitProps {
   entryDetails: {
+    id?: string; // Add id field to support editing
     supplierId: string;
     supplierName: string;
     invoiceNumber: string;
@@ -34,6 +36,7 @@ export const useSubmit = ({
 }: UseSubmitProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { updateStockEntry } = useData();
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) {
@@ -74,15 +77,30 @@ export const useSubmit = ({
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
         notes: entryDetails.notes,
-        total: total  // Add total value
+        total: total
       };
 
-      await addStockEntry(stockEntry);
-      
-      toast({
-        title: "Sucesso",
-        description: "Entrada de stock guardada com sucesso"
-      });
+      // Check if we're editing an existing entry or creating a new one
+      if (entryDetails.id) {
+        // Editing existing entry
+        await updateStockEntry(entryDetails.id, {
+          ...stockEntry,
+          updatedAt: new Date().toISOString()
+        });
+        
+        toast({
+          title: "Sucesso",
+          description: "Entrada de stock atualizada com sucesso"
+        });
+      } else {
+        // Creating new entry
+        await addStockEntry(stockEntry);
+        
+        toast({
+          title: "Sucesso",
+          description: "Entrada de stock guardada com sucesso"
+        });
+      }
       
       navigate('/entradas/historico');
     } catch (error) {
