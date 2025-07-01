@@ -1,4 +1,3 @@
-
 import { useData } from '@/contexts/DataContext';
 import { useFormState } from './stockEntryForm/useFormState';
 import { useFormHandlers } from './stockEntryForm/useFormHandlers';
@@ -8,9 +7,14 @@ import { useSubmit } from './stockEntryForm/useSubmit';
 import { useCalculations } from './stockEntryForm/useCalculations';
 import { UseStockEntryFormReturn } from './stockEntryForm/types';
 
-export const useStockEntryForm = (): UseStockEntryFormReturn => {
-  const { addStockEntry, products, suppliers } = useData();
-  
+export const useStockEntryForm = () => {
+  const { 
+    products, 
+    suppliers, 
+    addStockEntry, 
+    updateStockEntry 
+  } = useData();
+
   const {
     entryDetails,
     setEntryDetails,
@@ -71,20 +75,14 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
   
   const { totalValue } = useCalculations(items);
   
-  // Fix type compatibility by creating the entry object with proper typing
-  const { handleSubmit, isSubmitting } = useSubmit({
+  // Form submission
+  const { handleSubmit: onSubmit, isSubmitting } = useSubmit({
     entryDetails,
     items,
     entryDate,
     suppliers,
-    addStockEntry: (entry) => {
-      // Ensure the entry has all required fields for StockEntry
-      const stockEntryData = {
-        ...entry,
-        updatedAt: new Date().toISOString()
-      };
-      return addStockEntry(stockEntryData);
-    }
+    addStockEntry,
+    updateStockEntry
   });
 
   return {
@@ -119,6 +117,6 @@ export const useStockEntryForm = (): UseStockEntryFormReturn => {
     handleSupplierSelect,
     addItemToEntry,
     removeItem,
-    handleSubmit
+    onSubmit
   };
 };
