@@ -87,8 +87,8 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
     
     try {
       setIsConverting(true);
-      // Use the context function to convert order to stock exit
-      const result = await convertOrderToStockExit(order.id, invoiceNumber);
+      // Use the context function to convert order to stock exit - fix the call to match expected signature
+      const result = await convertOrderToStockExit(order.id);
       
       if (result) {
         toast({
