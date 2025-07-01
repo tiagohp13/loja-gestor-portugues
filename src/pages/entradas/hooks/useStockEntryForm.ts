@@ -1,5 +1,4 @@
 
-import React from 'react';
 import { useData } from '@/contexts/DataContext';
 import { useFormState } from './stockEntryForm/useFormState';
 import { useFormHandlers } from './stockEntryForm/useFormHandlers';
@@ -9,13 +8,8 @@ import { useSubmit } from './stockEntryForm/useSubmit';
 import { useCalculations } from './stockEntryForm/useCalculations';
 import { UseStockEntryFormReturn } from './stockEntryForm/types';
 
-interface UseStockEntryFormProps {
-  entryId?: string; // Add entryId parameter for editing
-}
-
-export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntryFormReturn => {
-  const { addStockEntry, products, suppliers, stockEntries, updateStockEntry } = useData();
-  const entryId = props?.entryId;
+export const useStockEntryForm = (): UseStockEntryFormReturn => {
+  const { addStockEntry, products, suppliers } = useData();
   
   const {
     entryDetails,
@@ -39,25 +33,6 @@ export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntry
     calendarOpen,
     setCalendarOpen
   } = useFormState();
-  
-  // Load entry data when editing
-  React.useEffect(() => {
-    if (entryId) {
-      const existingEntry = stockEntries.find(entry => entry.id === entryId);
-      if (existingEntry) {
-        setEntryDetails({
-          id: existingEntry.id,
-          supplierId: existingEntry.supplierId,
-          supplierName: existingEntry.supplierName,
-          date: existingEntry.date ? new Date(existingEntry.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-          invoiceNumber: existingEntry.invoiceNumber || '',
-          notes: existingEntry.notes || ''
-        });
-        setItems(existingEntry.items || []);
-        setEntryDate(new Date(existingEntry.date));
-      }
-    }
-  }, [entryId, stockEntries, setEntryDetails, setItems, setEntryDate]);
   
   const {
     handleEntryDetailsChange,
@@ -96,19 +71,20 @@ export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntry
   
   const { totalValue } = useCalculations(items);
   
+  // Fix type compatibility by creating the entry object with proper typing
   const { handleSubmit, isSubmitting } = useSubmit({
     entryDetails,
     items,
     entryDate,
     suppliers,
     addStockEntry: (entry) => {
+      // Ensure the entry has all required fields for StockEntry
       const stockEntryData = {
         ...entry,
         updatedAt: new Date().toISOString()
       };
       return addStockEntry(stockEntryData);
-    },
-    updateStockEntry
+    }
   });
 
   return {
@@ -127,7 +103,6 @@ export const useStockEntryForm = (props?: UseStockEntryFormProps): UseStockEntry
     totalValue,
     isSubmitting,
     setEntryDetails,
-    setItems, // Now included in return
     setCurrentItem,
     setSearchTerm,
     setSelectedProductDisplay,

@@ -2,7 +2,6 @@
 import { StockEntryItem } from '@/types';
 
 export interface EntryDetails {
-  id?: string; // Add id for editing support
   supplierId: string;
   supplierName: string;
   date: string;
@@ -31,7 +30,12 @@ export interface StockEntryFormState {
 }
 
 export interface UseStockEntryFormReturn {
-  entryDetails: EntryDetails;
+  entryDetails: {
+    supplierId: string;
+    supplierName: string;
+    invoiceNumber: string;
+    notes: string;
+  };
   items: StockEntryItem[];
   currentItem: StockEntryItem;
   searchTerm: string;
@@ -45,8 +49,7 @@ export interface UseStockEntryFormReturn {
   filteredSuppliers: any[];
   totalValue: number;
   isSubmitting: boolean;
-  setEntryDetails: React.Dispatch<React.SetStateAction<EntryDetails>>;
-  setItems: React.Dispatch<React.SetStateAction<StockEntryItem[]>>; // Add missing setItems
+  setEntryDetails: React.Dispatch<React.SetStateAction<any>>;
   setCurrentItem: React.Dispatch<React.SetStateAction<StockEntryItem>>;
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setSelectedProductDisplay: React.Dispatch<React.SetStateAction<string>>;

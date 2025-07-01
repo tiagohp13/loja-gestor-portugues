@@ -3,11 +3,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
 import { StockEntry, StockEntryItem } from '@/types';
-import { useData } from '@/contexts/DataContext';
 
 interface UseSubmitProps {
   entryDetails: {
-    id?: string; // Add id field to support editing
     supplierId: string;
     supplierName: string;
     invoiceNumber: string;
@@ -25,7 +23,6 @@ interface UseSubmitProps {
     notes: string;
     total: number;
   }) => Promise<StockEntry>;
-  updateStockEntry?: (id: string, entry: any) => Promise<any>; // Add updateStockEntry parameter
 }
 
 export const useSubmit = ({
@@ -33,8 +30,7 @@ export const useSubmit = ({
   items,
   entryDate,
   suppliers,
-  addStockEntry,
-  updateStockEntry
+  addStockEntry
 }: UseSubmitProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -78,30 +74,15 @@ export const useSubmit = ({
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
         notes: entryDetails.notes,
-        total: total
+        total: total  // Add total value
       };
 
-      // Check if we're editing an existing entry or creating a new one
-      if (entryDetails.id && updateStockEntry) {
-        // Editing existing entry
-        await updateStockEntry(entryDetails.id, {
-          ...stockEntry,
-          updatedAt: new Date().toISOString()
-        });
-        
-        toast({
-          title: "Sucesso",
-          description: "Entrada de stock atualizada com sucesso"
-        });
-      } else {
-        // Creating new entry
-        await addStockEntry(stockEntry);
-        
-        toast({
-          title: "Sucesso",
-          description: "Entrada de stock guardada com sucesso"
-        });
-      }
+      await addStockEntry(stockEntry);
+      
+      toast({
+        title: "Sucesso",
+        description: "Entrada de stock guardada com sucesso"
+      });
       
       navigate('/entradas/historico');
     } catch (error) {
