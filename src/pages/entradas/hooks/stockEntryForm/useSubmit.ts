@@ -6,7 +6,6 @@ import { StockEntry, StockEntryItem } from '@/types';
 
 interface UseSubmitProps {
   entryDetails: {
-    id?: string;
     supplierId: string;
     supplierName: string;
     invoiceNumber: string;
@@ -24,15 +23,6 @@ interface UseSubmitProps {
     notes: string;
     total: number;
   }) => Promise<StockEntry>;
-  updateStockEntry?: (id: string, entry: {
-    supplierId: string;
-    supplierName: string;
-    items: StockEntryItem[];
-    date: string;
-    invoiceNumber: string;
-    notes: string;
-    total: number;
-  }) => Promise<StockEntry>;
 }
 
 export const useSubmit = ({
@@ -40,8 +30,7 @@ export const useSubmit = ({
   items,
   entryDate,
   suppliers,
-  addStockEntry,
-  updateStockEntry
+  addStockEntry
 }: UseSubmitProps) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,23 +74,15 @@ export const useSubmit = ({
         date: entryDate.toISOString(),
         invoiceNumber: entryDetails.invoiceNumber,
         notes: entryDetails.notes,
-        total: total
+        total: total  // Add total value
       };
 
-      // Use conditional logic based on whether we're editing or creating
-      if (entryDetails.id && updateStockEntry) {
-        await updateStockEntry(entryDetails.id, stockEntry);
-        toast({
-          title: "Sucesso",
-          description: "Entrada de stock atualizada com sucesso"
-        });
-      } else {
-        await addStockEntry(stockEntry);
-        toast({
-          title: "Sucesso",
-          description: "Entrada de stock guardada com sucesso"
-        });
-      }
+      await addStockEntry(stockEntry);
+      
+      toast({
+        title: "Sucesso",
+        description: "Entrada de stock guardada com sucesso"
+      });
       
       navigate('/entradas/historico');
     } catch (error) {
