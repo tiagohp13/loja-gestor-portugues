@@ -1,4 +1,3 @@
-
 import { useData } from '@/contexts/DataContext';
 import { useExitState } from './stockExit/useExitState';
 import { useFilters } from './stockExit/useFilters';
@@ -38,11 +37,11 @@ export const useStockExit = (exitId?: string) => {
   const calculations = useCalculations(state.items);
   
   // Here we ensure that addStockExit and updateStockExit match the types expected by useSubmit
-  const typedAddStockExit = (exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
+  const typedAddStockExit = (exit: Omit<StockExit, "id" | "createdAt" | "updatedAt">) => {
     return addStockExit(exit);
   };
   
-  const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "number" | "id" | "createdAt">) => {
+  const typedUpdateStockExit = (id: string, exit: Omit<StockExit, "id" | "createdAt" | "updatedAt">) => {
     // First cast to unknown, then to Promise<StockExit | void> to avoid direct casting error
     return updateStockExit(id, exit as any) as unknown as Promise<StockExit | void>;
   };
