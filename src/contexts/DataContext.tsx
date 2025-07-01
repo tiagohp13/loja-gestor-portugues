@@ -56,7 +56,15 @@ interface DataContextType {
   
   // CRUD operations for stock entries
   addStockEntry: (entry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<StockEntry>;
-  updateStockEntry: (id: string, updatedEntry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt'>) => Promise<StockEntry>;
+  updateStockEntry: (id: string, updatedEntry: {
+    supplierId: string;
+    supplierName: string;
+    items: StockEntryItem[];
+    date: string;
+    invoiceNumber: string;
+    notes: string;
+    total: number;
+  }) => Promise<StockEntry>;
   deleteStockEntry: (id: string) => Promise<void>;
   
   // CRUD operations for stock exits
@@ -776,8 +784,22 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
     }
   };
 
-  const updateStockEntry = async (id: string, updatedEntry: Omit<StockEntry, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const updateStockEntry = async (id: string, updatedEntry: {
+    supplierId: string;
+    supplierName: string;
+    items: StockEntryItem[];
+    date: string;
+    invoiceNumber: string;
+    notes: string;
+    total: number;
+  }): Promise<StockEntry> => {
     try {
+      // Get the existing entry to preserve the number field
+      const existingEntry = stockEntries.find(e => e.id === id);
+      if (!existingEntry) {
+        throw new Error('Stock entry not found');
+      }
+
       // Update the main stock entry
       const { data: entryData, error: entryError } = await supabase
         .from('stock_entries')
@@ -786,7 +808,9 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
           supplier_name: updatedEntry.supplierName,
           date: updatedEntry.date,
           invoice_number: updatedEntry.invoiceNumber,
-          notes: updatedEntry.notes
+          notes: updatedEntry.notes,
+          // Keep the existing number
+          number: existingEntry.number
         })
         .eq('id', id)
         .select()
@@ -818,19 +842,26 @@ export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
         discount_percent: item.discountPercent || 0
       }));
 
-      const { error: itemsError } = await supabase
+      const { data: itemsResult, error: itemsError } = await supabase
         .from('stock_entry_items')
-        .insert(itemsToInsert);
+        .insert(itemsToInsert)
+        .select();
 
       if (itemsError) {
         console.error('Error inserting updated items:', itemsError);
         throw itemsError;
       }
 
-      // Refresh stock entries data
-      await fetchStockEntries();
+      // Transform the response to match StockEntry type
+      const updatedStockEntry = {
+        ...snakeToCamel(entryData),
+        items: snakeToCamel(itemsResult || [])
+      } as StockEntry;
+
+      // Update local state
+      setStockEntries(prev => prev.map(e => e.id === id ? updatedStockEntry : e));
       
-      return { ...entryData, items: updatedEntry.items };
+      return updatedStockEntry;
     } catch (error) {
       console.error('Error in updateStockEntry:', error);
       throw error;

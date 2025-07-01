@@ -42,7 +42,7 @@ const StockEntryNew = () => {
     handleSupplierSelect,
     addItemToEntry,
     removeItem,
-    handleSubmit
+    onSubmit
   } = useStockEntryForm();
 
   const selectedSupplier = suppliers.find(s => s.id === entryDetails.supplierId);
@@ -66,7 +66,7 @@ const StockEntryNew = () => {
           Cancelar
         </Button>
         <Button 
-          onClick={handleSubmit}
+          onClick={onSubmit}
           disabled={items.length === 0 || !entryDetails.supplierId || isSubmitting}
           className="flex items-center gap-2"
         >
@@ -85,7 +85,7 @@ const StockEntryNew = () => {
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
-        <form className="space-y-6" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={onSubmit}>
           <div className="grid md:grid-cols-2 gap-6">
             <SupplierSelector
               supplierSearchTerm={supplierSearchTerm}
