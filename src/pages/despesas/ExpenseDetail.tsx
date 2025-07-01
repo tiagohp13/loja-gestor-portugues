@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -160,45 +161,45 @@ const ExpenseDetail = () => {
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
-                  <thead className="bg-gray-50 border-b">
+                  <thead className="bg-muted/50 border-b border-border">
                     <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Item
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Quantidade
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Preço Unitário
                       </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Desconto
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">
                         Total
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-card">
                     {expense.items.map(item => {
                       const itemTotal = item.quantity * item.unitPrice;
                       const discountAmount = itemTotal * (item.discountPercent / 100);
                       const finalTotal = itemTotal - discountAmount;
                       return (
-                        <tr key={item.id}>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <tr key={item.id} className="border-b border-border">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground font-medium">
                             {item.productName}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {item.quantity}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {formatCurrency(item.unitPrice)}
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-muted-foreground">
                             {item.discountPercent}%
                           </td>
-                          <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 text-right font-medium">
+                          <td className="px-4 py-4 whitespace-nowrap text-sm text-foreground text-right font-medium">
                             {formatCurrency(finalTotal)}
                           </td>
                         </tr>
@@ -222,28 +223,28 @@ const ExpenseDetail = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-500">Data:</span>
-                <span className="text-sm font-medium">{formatDate(expense.date)}</span>
+                <Calendar className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Data:</span>
+                <span className="text-sm font-medium text-foreground">{formatDate(expense.date)}</span>
               </div>
 
               <div className="flex items-center gap-2">
-                <User className="w-4 h-4 text-gray-500" />
-                <span className="text-sm text-gray-500">Fornecedor:</span>
-                <span className="text-sm font-medium">{expense.supplierName}</span>
+                <User className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Fornecedor:</span>
+                <span className="text-sm font-medium text-foreground">{expense.supplierName}</span>
               </div>
 
               {expense.discount > 0 && (
                 <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Desconto Geral:</span>
+                  <span className="text-sm text-muted-foreground">Desconto Geral:</span>
                   <Badge variant="secondary">{expense.discount}%</Badge>
                 </div>
               )}
 
               {expense.notes && (
                 <div>
-                  <span className="text-sm text-gray-500">Notas:</span>
-                  <p className="text-sm mt-1">{expense.notes}</p>
+                  <span className="text-sm text-muted-foreground">Notas:</span>
+                  <p className="text-sm mt-1 text-foreground">{expense.notes}</p>
                 </div>
               )}
             </CardContent>

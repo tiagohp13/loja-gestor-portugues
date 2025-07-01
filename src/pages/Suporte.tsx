@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -12,11 +13,11 @@ import DashboardStatistics from './dashboard/components/DashboardStatistics';
 import RecentTransactions from './dashboard/components/RecentTransactions';
 import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
 
-// Default configuration for statistics widgets
+// Default configuration for statistics widgets - reordered to show chart before products
 const defaultStatisticsConfig: WidgetConfig[] = [
   { id: 'kpi-grid',             title: 'KPIs',                    order: 0, enabled: true },
-  { id: 'featured-products',    title: 'Produtos em Destaque',    order: 1, enabled: true },
-  { id: 'support-chart-resumo', title: 'Resumo Mensal',           order: 2, enabled: true },
+  { id: 'support-chart-resumo', title: 'Resumo Financeiro',       order: 1, enabled: true },
+  { id: 'featured-products',    title: 'Produtos em Destaque',    order: 2, enabled: true },
   { id: 'dashboard-statistics', title: 'Estatísticas Gerais',      order: 3, enabled: true },
   { id: 'recent-transactions',  title: 'Transações Recentes',      order: 4, enabled: true },
 ];
@@ -84,16 +85,6 @@ const Suporte: React.FC = () => {
         <MetricsCards stats={stats} showSummaryCardsOnly />
       </div>
     ),
-    'featured-products': (
-      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
-        <FeaturedProducts 
-          products={products}
-          productSales={productSales}
-          navigateToProductDetail={navigateToProductDetail}
-          maxItems={5}
-        />
-      </div>
-    ),
     'support-chart-resumo': (
       <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
         <SupportChart 
@@ -108,6 +99,16 @@ const Suporte: React.FC = () => {
           }}
           isLoading={isSupportDataLoading}
           navigateToProduct={navigateToProductDetail}
+        />
+      </div>
+    ),
+    'featured-products': (
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6 mb-6">
+        <FeaturedProducts 
+          products={products}
+          productSales={productSales}
+          navigateToProductDetail={navigateToProductDetail}
+          maxItems={5}
         />
       </div>
     ),

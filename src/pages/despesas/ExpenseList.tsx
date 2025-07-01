@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -177,18 +178,18 @@ const ExpenseList = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">NÚMERO</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">DATA</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">FORNECEDOR</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">TOTAL</th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">AÇÕES</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">NÚMERO</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">DATA</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">FORNECEDOR</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">TOTAL</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-muted-foreground uppercase tracking-wider">AÇÕES</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-card">
                   {filteredExpenses.map((expense) => (
-                    <tr key={expense.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => navigate(`/despesas/${expense.id}`)}>
+                    <tr key={expense.id} className="border-b border-border hover:bg-muted/50 cursor-pointer transition-colors" onClick={() => navigate(`/despesas/${expense.id}`)}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
                           onClick={(e) => {
@@ -200,9 +201,9 @@ const ExpenseList = () => {
                           {expense.number}
                         </button>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">{formatDate(expense.date)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">{expense.supplierName}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark font-medium">{formatCurrency(expense.total || 0)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{formatDate(expense.date)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground">{expense.supplierName}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{formatCurrency(expense.total || 0)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex justify-end gap-2">
                           <Button
