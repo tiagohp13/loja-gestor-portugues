@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Edit, Trash, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Edit, Trash, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Package } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -107,7 +108,7 @@ const CategoryList: React.FC = () => {
           count={categories.length}
         />
         
-        <div className="bg-white rounded-lg shadow p-6 mt-6">
+        <div className="bg-white dark:bg-card rounded-lg shadow p-6 mt-6">
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" size={18} />
@@ -119,87 +120,93 @@ const CategoryList: React.FC = () => {
               />
             </div>
           </div>
+
+          {/* Sort Controls */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSort('name')}
+              className="flex items-center gap-1"
+            >
+              Nome
+              {getSortIcon('name')}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleSort('productCount')}
+              className="flex items-center gap-1"
+            >
+              Produtos
+              {getSortIcon('productCount')}
+            </Button>
+          </div>
           
           {sortedCategories && sortedCategories.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 border-b">
-                    <th 
-                      className="px-4 py-3 text-left text-sm font-medium text-gestorApp-gray-dark cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('name')}
-                    >
-                      <div className="flex items-center">
-                        Nome
-                        {getSortIcon('name')}
-                      </div>
-                    </th>
-                    <th 
-                      className="px-4 py-3 text-left text-sm font-medium text-gestorApp-gray-dark cursor-pointer hover:bg-gray-100 transition-colors"
-                      onClick={() => handleSort('productCount')}
-                    >
-                      <div className="flex items-center">
-                        Produtos Associados
-                        {getSortIcon('productCount')}
-                      </div>
-                    </th>
-                    <th className="px-4 py-3 text-right text-sm font-medium text-gestorApp-gray-dark">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sortedCategories.map(category => (
-                    <tr 
-                      key={category.id} 
-                      className="border-b hover:bg-gray-50 cursor-pointer"
-                      onClick={() => handleViewCategory(category.id)}
-                    >
-                      <td className="px-4 py-3 text-sm">
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <span className="cursor-pointer">
-                              {category.name}
-                            </span>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p className="max-w-xs">
-                              {category.description || 'Sem descrição disponível'}
-                            </p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </td>
-                      <td className="px-4 py-3 text-sm">{category.productCount}</td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex justify-end space-x-2" onClick={(e) => e.stopPropagation()}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {sortedCategories.map(category => (
+                <Card 
+                  key={category.id} 
+                  className="cursor-pointer hover:shadow-md transition-all duration-200 hover:bg-muted/50"
+                  onClick={() => handleViewCategory(category.id)}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-lg font-semibold text-foreground">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-pointer line-clamp-1">
+                            {category.name}
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs">
+                            {category.description || 'Sem descrição disponível'}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </CardTitle>
+                  </CardHeader>
+                  
+                  <CardContent className="pt-0">
+                    <div className="flex items-center gap-2 text-muted-foreground mb-4">
+                      <Package size={16} />
+                      <span className="text-sm">
+                        {category.productCount} produto{category.productCount !== 1 ? 's' : ''} associado{category.productCount !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+                    
+                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/categorias/editar/${category.id}`);
+                        }}
+                      >
+                        <Edit size={14} className="mr-1" />
+                        Editar
+                      </Button>
+                      <DeleteConfirmDialog
+                        title="Eliminar Categoria"
+                        description="Tem certeza que deseja eliminar esta categoria? Esta ação não pode ser desfeita."
+                        onDelete={() => deleteCategory(category.id)}
+                        trigger={
                           <Button 
-                            variant="outline" 
-                            size="icon" 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/categorias/editar/${category.id}`);
-                            }}
+                            variant="destructive" 
+                            size="sm"
+                            onClick={(e) => e.stopPropagation()}
                           >
-                            <Edit size={16} />
+                            <Trash size={14} />
                           </Button>
-                          <DeleteConfirmDialog
-                            title="Eliminar Categoria"
-                            description="Tem certeza que deseja eliminar esta categoria? Esta ação não pode ser desfeita."
-                            onDelete={() => deleteCategory(category.id)}
-                            trigger={
-                              <Button 
-                                variant="destructive" 
-                                size="icon"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <Trash size={16} />
-                              </Button>
-                            }
-                          />
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        }
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           ) : (
             <EmptyState
