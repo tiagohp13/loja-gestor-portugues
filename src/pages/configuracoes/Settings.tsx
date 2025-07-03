@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import DashboardCustomization from '@/components/ui/DashboardCustomization';
+import UserProfileForm from '@/components/profile/UserProfileForm';
 import { ExportDataType } from '@/types';
 
 const Settings = () => {
@@ -38,8 +39,9 @@ const Settings = () => {
       />
       
       <Tabs defaultValue="data" className="mt-6">
-        <TabsList className="grid grid-cols-2 w-[400px]">
+        <TabsList className="grid grid-cols-3 w-[600px]">
           <TabsTrigger value="data">Dados</TabsTrigger>
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="settings">Sistema</TabsTrigger>
         </TabsList>
         
@@ -172,6 +174,10 @@ const Settings = () => {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        
+        <TabsContent value="profile" className="space-y-4 mt-4">
+          <UserProfileForm />
         </TabsContent>
         
         <TabsContent value="settings" className="space-y-4 mt-4">

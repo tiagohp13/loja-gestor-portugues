@@ -2,10 +2,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
   UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt
 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
@@ -20,6 +22,7 @@ import { toast } from "sonner";
  */
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
+  const { profile } = useUserProfile();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
@@ -112,10 +115,16 @@ const AppSidebar: React.FC = () => {
   };
 
   const getUserDisplayName = () => {
+    if (profile?.name) return profile.name;
     if (!user) return '';
     
     const userName = user.user_metadata?.name;
     return userName || user.email?.split('@')[0] || '';
+  };
+
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   return (
@@ -156,9 +165,14 @@ const AppSidebar: React.FC = () => {
       <SidebarFooter className="p-4 border-t">
         <div className="flex flex-col space-y-4">
           {user && (
-            <div className="flex items-center space-x-2 text-sm">
-              <UserIcon className="w-5 h-5 text-gestorApp-gray" />
-              <span className="text-gestorApp-gray-dark">{getUserDisplayName()}</span>
+            <div className="flex items-center space-x-3 text-sm">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={profile?.avatar_url} alt="Profile picture" />
+                <AvatarFallback className="text-xs">
+                  {getInitials(getUserDisplayName())}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-gestorApp-gray-dark truncate">{getUserDisplayName()}</span>
             </div>
           )}
           <button
