@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/utils/formatting';
 import { TransactionItem } from '../hooks/utils/transactionUtils';
-import { useNavigate } from 'react-router-dom';
+
 
 interface RecentTransactionsProps {
   recentTransactions: TransactionItem[];
@@ -22,8 +22,6 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   navigateToSupplierDetail,
   ensureDate
 }) => {
-  const navigate = useNavigate();
-  
   // Limit the number of transactions to display
   const displayLimit = 6;
   
@@ -35,21 +33,11 @@ const RecentTransactions: React.FC<RecentTransactionsProps> = ({
   const filteredEntryTransactions = limitTransactions(recentTransactions.filter(t => t.type === 'entry'));
   const filteredExitTransactions = limitTransactions(recentTransactions.filter(t => t.type === 'exit'));
 
-  const handleViewAllTransactions = () => {
-    navigate('/transacoes');
-  };
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3 flex flex-row items-center justify-between">
+      <CardHeader className="pb-3">
         <CardTitle>Transações Recentes</CardTitle>
-        <Button 
-          variant="link" 
-          onClick={handleViewAllTransactions}
-          className="text-blue-500 h-auto p-0 text-sm"
-        >
-          Ver todas
-        </Button>
       </CardHeader>
       <CardContent className="pt-0">
         <Tabs defaultValue="all">
