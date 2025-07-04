@@ -35,7 +35,21 @@ const AdminUserManagement: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setUsers(data || []);
+      
+      // Sort users: admin first, then by access level alphabetically
+      const sortedUsers = (data || []).sort((a, b) => {
+        const aLevel = a.access_level || 'viewer';
+        const bLevel = b.access_level || 'viewer';
+        
+        // Admin always comes first
+        if (aLevel === 'admin' && bLevel !== 'admin') return -1;
+        if (bLevel === 'admin' && aLevel !== 'admin') return 1;
+        
+        // For non-admin users, sort alphabetically by access level
+        return aLevel.localeCompare(bLevel);
+      });
+      
+      setUsers(sortedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Erro ao carregar utilizadores');
@@ -56,10 +70,25 @@ const AdminUserManagement: React.FC = () => {
         throw error;
       }
 
-      // Update local state
-      setUsers(prev => prev.map(u => 
-        u.user_id === userId ? { ...u, access_level: newAccessLevel } : u
-      ));
+      // Update local state and re-sort
+      setUsers(prev => {
+        const updatedUsers = prev.map(u => 
+          u.user_id === userId ? { ...u, access_level: newAccessLevel } : u
+        );
+        
+        // Re-sort after update
+        return updatedUsers.sort((a, b) => {
+          const aLevel = a.access_level || 'viewer';
+          const bLevel = b.access_level || 'viewer';
+          
+          // Admin always comes first
+          if (aLevel === 'admin' && bLevel !== 'admin') return -1;
+          if (bLevel === 'admin' && aLevel !== 'admin') return 1;
+          
+          // For non-admin users, sort alphabetically by access level
+          return aLevel.localeCompare(bLevel);
+        });
+      });
       
       toast.success(`Nível de acesso atualizado para ${newAccessLevel}`);
     } catch (error: any) {
