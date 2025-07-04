@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
-import { Users, Trash2, Shield } from 'lucide-react';
+import { Users, Trash2, Shield, UserCheck, Eye } from 'lucide-react';
 
 interface UserProfile {
   id: string;
@@ -51,16 +51,23 @@ const AdminUserManagement: React.FC = () => {
         .update({ access_level: newAccessLevel })
         .eq('user_id', userId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
 
+      // Update local state
       setUsers(prev => prev.map(u => 
         u.user_id === userId ? { ...u, access_level: newAccessLevel } : u
       ));
       
-      toast.success('Nível de acesso atualizado');
-    } catch (error) {
+      toast.success(`Nível de acesso atualizado para ${newAccessLevel}`);
+    } catch (error: any) {
       console.error('Error updating access level:', error);
-      toast.error('Erro ao atualizar nível de acesso');
+      toast.error(`Erro ao atualizar nível de acesso: ${error.message || 'Erro desconhecido'}`);
+      
+      // Refresh users to revert any optimistic updates
+      fetchUsers();
     }
   };
 
@@ -71,16 +78,26 @@ const AdminUserManagement: React.FC = () => {
     }
 
     try {
-      // First delete from auth.users which will cascade to user_profiles
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // Delete from user_profiles first
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .delete()
+        .eq('user_id', userId);
 
-      if (error) throw error;
+      if (profileError) {
+        console.error('Error deleting user profile:', profileError);
+        throw profileError;
+      }
 
+      // Update local state
       setUsers(prev => prev.filter(u => u.user_id !== userId));
       toast.success('Utilizador removido com sucesso');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting user:', error);
-      toast.error('Erro ao remover utilizador');
+      toast.error(`Erro ao remover utilizador: ${error.message || 'Erro desconhecido'}`);
+      
+      // Refresh users in case of partial failure
+      fetchUsers();
     }
   };
 
@@ -99,16 +116,16 @@ const AdminUserManagement: React.FC = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
-          Gestão de Utilizadores
+          Configuração de Acessos
         </CardTitle>
         <CardDescription>
-          Gerencie utilizadores e níveis de acesso (apenas administradores)
+          Gerencie utilizadores e níveis de acesso do sistema
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
           {users.map((userProfile) => (
-            <div key={userProfile.id} className="flex items-center justify-between p-4 border rounded-lg">
+            <div key={userProfile.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
               <div className="flex-1">
                 <div className="font-medium">
                   {userProfile.name || 'Nome não definido'}
@@ -123,10 +140,10 @@ const AdminUserManagement: React.FC = () => {
               
               <div className="flex items-center gap-2">
                 <Select
-                  value={userProfile.access_level || 'visualizador'}
+                  value={userProfile.access_level || 'viewer'}
                   onValueChange={(value) => handleAccessLevelChange(userProfile.user_id, value)}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -136,8 +153,18 @@ const AdminUserManagement: React.FC = () => {
                         Admin
                       </div>
                     </SelectItem>
-                    <SelectItem value="editor">Editor</SelectItem>
-                    <SelectItem value="visualizador">Visualizador</SelectItem>
+                    <SelectItem value="editor">
+                      <div className="flex items-center gap-2">
+                        <UserCheck className="h-4 w-4" />
+                        Editor
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="viewer">
+                      <div className="flex items-center gap-2">
+                        <Eye className="h-4 w-4" />
+                        Visualizador
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
 

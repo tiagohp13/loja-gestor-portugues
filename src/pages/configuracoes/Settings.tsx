@@ -9,6 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import ThemeToggle from '@/components/ui/ThemeToggle';
 import DashboardCustomization from '@/components/ui/DashboardCustomization';
 import UserProfileForm from '@/components/profile/UserProfileForm';
+import AdminUserManagement from '@/components/profile/AdminUserManagement';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ExportDataType } from '@/types';
 
 const Settings = () => {
@@ -16,6 +18,7 @@ const Settings = () => {
     products, categories, clients, suppliers, orders, stockEntries, stockExits, 
     exportData, importData, updateData
   } = useData();
+  const { isAdmin } = usePermissions();
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: ExportDataType) => {
     const file = e.target.files?.[0];
@@ -39,9 +42,10 @@ const Settings = () => {
       />
       
       <Tabs defaultValue="settings" className="mt-6">
-        <TabsList className="grid grid-cols-3 w-[600px]">
+        <TabsList className="grid grid-cols-4 w-[800px]">
           <TabsTrigger value="settings">Sistema</TabsTrigger>
           <TabsTrigger value="profile">Perfil</TabsTrigger>
+          <TabsTrigger value="access">Configuração de Acessos</TabsTrigger>
           <TabsTrigger value="data">Dados</TabsTrigger>
         </TabsList>
         
@@ -178,6 +182,20 @@ const Settings = () => {
         
         <TabsContent value="profile" className="space-y-4 mt-4">
           <UserProfileForm />
+        </TabsContent>
+        
+        <TabsContent value="access" className="space-y-4 mt-4">
+          {isAdmin ? (
+            <AdminUserManagement />
+          ) : (
+            <Card>
+              <CardContent className="flex items-center justify-center p-6">
+                <div className="text-center text-muted-foreground">
+                  Apenas administradores podem aceder a esta secção
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
         
         <TabsContent value="settings" className="space-y-4 mt-4">

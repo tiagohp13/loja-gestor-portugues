@@ -7,11 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import { User, Upload, Shield } from 'lucide-react';
-import PasswordChangeForm from './PasswordChangeForm';
-import AdminUserManagement from './AdminUserManagement';
 
 interface UserProfile {
   id?: string;
@@ -34,7 +31,7 @@ const UserProfileForm: React.FC = () => {
     phone: '',
     language: 'pt',
     theme: 'system',
-    access_level: 'visualizador',
+    access_level: 'viewer',
     avatar_url: ''
   });
   const [loading, setLoading] = useState(false);
@@ -300,7 +297,7 @@ const UserProfileForm: React.FC = () => {
               Nível de Acesso
             </Label>
             <Select
-              value={profile.access_level || 'visualizador'}
+              value={profile.access_level || 'viewer'}
               onValueChange={(value) => handleInputChange('access_level', value)}
               disabled={!isAdmin}
             >
@@ -310,7 +307,7 @@ const UserProfileForm: React.FC = () => {
               <SelectContent>
                 <SelectItem value="admin">Administrador</SelectItem>
                 <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="visualizador">Visualizador</SelectItem>
+                <SelectItem value="viewer">Visualizador</SelectItem>
               </SelectContent>
             </Select>
             {!isAdmin && (
@@ -325,19 +322,6 @@ const UserProfileForm: React.FC = () => {
             {loading ? 'A guardar...' : 'Guardar alterações'}
           </Button>
         </form>
-
-        <Separator className="my-6" />
-
-        {/* Password Change Section */}
-        <PasswordChangeForm />
-
-        {/* Admin User Management Section */}
-        {isAdmin && (
-          <>
-            <Separator className="my-6" />
-            <AdminUserManagement />
-          </>
-        )}
       </CardContent>
     </Card>
   );
