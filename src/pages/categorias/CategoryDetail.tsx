@@ -5,6 +5,8 @@ import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
 import { Edit, ChevronUp, ChevronDown } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 import { formatDate } from '@/utils/formatting';
 import { 
   Table,
@@ -21,6 +23,7 @@ const CategoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getCategory, products } = useData();
+  const { canEdit, canCreate } = usePermissions();
   const [category, setCategory] = useState<any | null>(null);
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const [sortField, setSortField] = useState<SortField>('code');
@@ -91,13 +94,18 @@ const CategoryDetail: React.FC = () => {
         description={`Detalhes da categoria`}
         actions={
           <div className="flex space-x-2">
-            <Button 
-              onClick={() => navigate(`/categorias/editar/${id}`)}
-              className="flex items-center gap-2"
-            >
-              <Edit size={16} />
-              Editar
-            </Button>
+            {canEdit && (
+              <Button 
+                onClick={() => {
+                  if (!validatePermission(canEdit, 'editar categorias')) return;
+                  navigate(`/categorias/editar/${id}`);
+                }}
+                className="flex items-center gap-2"
+              >
+                <Edit size={16} />
+                Editar
+              </Button>
+            )}
             <Button variant="outline" onClick={() => navigate('/categorias/consultar')}>
               Voltar à Lista
             </Button>
@@ -195,9 +203,11 @@ const CategoryDetail: React.FC = () => {
           ) : (
             <div className="text-center py-6 bg-gray-50 rounded-lg">
               <p className="text-gestorApp-gray-dark mb-2">Nenhum produto nesta categoria</p>
-              <Link to="/produtos/novo" className="text-gestorApp-blue hover:underline">
-                Adicionar produto
-              </Link>
+              {canCreate && (
+                <Link to="/produtos/novo" className="text-gestorApp-blue hover:underline">
+                  Adicionar produto
+                </Link>
+              )}
             </div>
           )}
         </div>
