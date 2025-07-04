@@ -127,7 +127,6 @@ const UserProfileForm: React.FC = () => {
       const profileData: any = {
         user_id: user.id,
         name: profile.name,
-        email: profile.email,
         phone: profile.phone,
         language: profile.language,
         theme: profile.theme,
@@ -204,10 +203,15 @@ const UserProfileForm: React.FC = () => {
             <Input id="name" value={profile.name || ''} onChange={e => handleInputChange('name', e.target.value)} placeholder="Introduza o seu nome" />
           </div>
 
-          {/* Email Field */}
+          {/* Email Field (read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={profile.email || ''} onChange={e => handleInputChange('email', e.target.value)} placeholder="Introduza o seu email" />
+            <Label>Email</Label>
+            <div className="px-3 py-2 border border-input rounded-md bg-muted text-sm">
+              {profile.email || 'Nenhum email associado'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O email não pode ser alterado e está associado à sua conta
+            </p>
           </div>
 
           {/* Phone Field */}
