@@ -36,7 +36,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
     phone: '',
     language: 'pt',
     theme: 'system',
-    access_level: 'visualizador',
+    access_level: 'viewer',
     avatar_url: ''
   });
   const [loading, setLoading] = useState(false);
