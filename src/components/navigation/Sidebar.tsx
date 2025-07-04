@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
+import UserProfileModal from '@/components/profile/UserProfileModal';
 
 /**
  * Main navigation sidebar component 
@@ -26,6 +27,7 @@ const AppSidebar: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
   const navigationItems = [
     { 
@@ -165,7 +167,10 @@ const AppSidebar: React.FC = () => {
       <SidebarFooter className="p-4 border-t">
         <div className="flex flex-col space-y-4">
           {user && (
-            <div className="flex items-center space-x-3 text-sm">
+            <button
+              onClick={() => setIsProfileModalOpen(true)}
+              className="flex items-center space-x-3 text-sm hover:bg-accent hover:text-accent-foreground p-2 rounded-md transition-colors cursor-pointer"
+            >
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profile?.avatar_url} alt="Profile picture" />
                 <AvatarFallback className="text-xs">
@@ -173,7 +178,7 @@ const AppSidebar: React.FC = () => {
                 </AvatarFallback>
               </Avatar>
               <span className="text-gestorApp-gray-dark truncate">{getUserDisplayName()}</span>
-            </div>
+            </button>
           )}
           <button
             onClick={handleLogout}
@@ -184,6 +189,11 @@ const AppSidebar: React.FC = () => {
           </button>
         </div>
       </SidebarFooter>
+      
+      <UserProfileModal 
+        open={isProfileModalOpen} 
+        onOpenChange={setIsProfileModalOpen} 
+      />
     </Sidebar>
   );
 };

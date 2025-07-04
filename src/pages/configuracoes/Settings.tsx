@@ -38,11 +38,11 @@ const Settings = () => {
         description="Gerencie as configurações do sistema"
       />
       
-      <Tabs defaultValue="data" className="mt-6">
+      <Tabs defaultValue="settings" className="mt-6">
         <TabsList className="grid grid-cols-3 w-[600px]">
-          <TabsTrigger value="data">Dados</TabsTrigger>
-          <TabsTrigger value="profile">Perfil</TabsTrigger>
           <TabsTrigger value="settings">Sistema</TabsTrigger>
+          <TabsTrigger value="profile">Perfil</TabsTrigger>
+          <TabsTrigger value="data">Dados</TabsTrigger>
         </TabsList>
         
         <TabsContent value="data" className="space-y-4 mt-4">
