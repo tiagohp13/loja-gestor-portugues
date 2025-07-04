@@ -20,6 +20,8 @@ interface StockEntryTableProps {
   onEditEntry: (e: React.MouseEvent, id: string) => void;
   onDeleteEntry: (id: string) => void;
   calculateEntryTotal: (entry: StockEntry) => number;
+  canEdit?: boolean;
+  canDelete?: boolean;
 }
 
 const StockEntryTable: React.FC<StockEntryTableProps> = ({
@@ -30,7 +32,9 @@ const StockEntryTable: React.FC<StockEntryTableProps> = ({
   onViewEntry,
   onEditEntry,
   onDeleteEntry,
-  calculateEntryTotal
+  calculateEntryTotal,
+  canEdit = true,
+  canDelete = true
 }) => {
   const navigate = useNavigate();
   
@@ -65,6 +69,8 @@ const StockEntryTable: React.FC<StockEntryTableProps> = ({
               onEdit={onEditEntry}
               onDelete={onDeleteEntry}
               calculateEntryTotal={calculateEntryTotal}
+              canEdit={canEdit}
+              canDelete={canDelete}
             />
           ))}
         </tbody>

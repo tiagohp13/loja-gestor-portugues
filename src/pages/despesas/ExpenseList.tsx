@@ -11,9 +11,12 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const ExpenseList = () => {
   const navigate = useNavigate();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [filteredExpenses, setFilteredExpenses] = useState<Expense[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,6 +92,11 @@ const ExpenseList = () => {
   };
 
   const handleDeleteExpense = async (expenseId: string) => {
+    if (!validatePermission(canDelete, 'eliminar despesas')) {
+      setDeleteDialog({ open: false, expenseId: null });
+      return;
+    }
+
     try {
       const { error: itemsError } = await supabase
         .from('expense_items')
@@ -161,10 +169,15 @@ const ExpenseList = () => {
             className="pl-10"
           />
         </div>
-        <Button onClick={() => navigate('/despesas/nova')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Despesa
-        </Button>
+        {canCreate && (
+          <Button onClick={() => {
+            if (!validatePermission(canCreate, 'criar despesas')) return;
+            navigate('/despesas/nova');
+          }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Despesa
+          </Button>
+        )}
       </div>
       <Card>
         <CardContent className="p-0">
@@ -206,26 +219,31 @@ const ExpenseList = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-foreground font-medium">{formatCurrency(expense.total || 0)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              navigate(`/despesas/editar/${expense.id}`);
-                            }}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setDeleteDialog({ open: true, expenseId: expense.id });
-                            }}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (!validatePermission(canEdit, 'editar despesas')) return;
+                                navigate(`/despesas/editar/${expense.id}`);
+                              }}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeleteDialog({ open: true, expenseId: expense.id });
+                              }}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

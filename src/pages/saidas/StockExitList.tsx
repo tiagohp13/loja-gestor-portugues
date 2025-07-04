@@ -13,12 +13,15 @@ import { ptBR } from 'date-fns/locale';
 import RecordCount from '@/components/common/RecordCount';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 type SortField = 'date' | 'number' | 'client';
 
 const StockExitList = () => {
   const navigate = useNavigate();
   const { stockExits, deleteStockExit } = useData();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('date');
@@ -95,11 +98,13 @@ const StockExitList = () => {
 
   const handleEditExit = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (!validatePermission(canEdit, 'editar vendas')) return;
     navigate(`/saidas/editar/${id}`);
   };
 
   const confirmDeleteExit = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (!validatePermission(canDelete, 'eliminar vendas')) return;
     setExitToDelete(id);
     setDeleteDialogOpen(true);
   };
@@ -159,10 +164,15 @@ const StockExitList = () => {
           icon={Package}
         />
         
-        <Button onClick={() => navigate('/saidas/nova')}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Saída
-        </Button>
+        {canCreate && (
+          <Button onClick={() => {
+            if (!validatePermission(canCreate, 'criar vendas')) return;
+            navigate('/saidas/nova');
+          }}>
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Saída
+          </Button>
+        )}
       </div>
       
       <div className="bg-white rounded-lg shadow p-6">
@@ -254,20 +264,24 @@ const StockExitList = () => {
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={(e) => handleEditExit(e, exit.id)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={(e) => confirmDeleteExit(e, exit.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {canEdit && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => handleEditExit(e, exit.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={(e) => confirmDeleteExit(e, exit.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

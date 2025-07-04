@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import RecordCount from '@/components/common/RecordCount';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 import {
   Table,
   TableBody,
@@ -20,6 +22,7 @@ import {
 const SupplierList = () => {
   const navigate = useNavigate();
   const { suppliers, deleteSupplier } = useData();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
 
   const filteredSuppliers = suppliers.filter(supplier => 
@@ -34,10 +37,12 @@ const SupplierList = () => {
 
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!validatePermission(canEdit, 'editar fornecedores')) return;
     navigate(`/fornecedores/editar/${id}`);
   };
 
   const handleDelete = (id: string) => {
+    if (!validatePermission(canDelete, 'eliminar fornecedores')) return;
     deleteSupplier(id);
   };
 
@@ -47,10 +52,15 @@ const SupplierList = () => {
         title="Fornecedores" 
         description="Consultar e gerir todos os fornecedores" 
         actions={
-          <Button onClick={() => navigate('/fornecedores/novo')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Fornecedor
-          </Button>
+          canCreate && (
+            <Button onClick={() => {
+              if (!validatePermission(canCreate, 'criar fornecedores')) return;
+              navigate('/fornecedores/novo');
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Fornecedor
+            </Button>
+          )
         }
       />
       
@@ -113,24 +123,28 @@ const SupplierList = () => {
                         >
                           <History className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          title="Editar"
-                          onClick={(e) => handleEdit(supplier.id, e)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <DeleteConfirmDialog
-                          title="Eliminar Fornecedor"
-                          description="Tem a certeza que deseja eliminar este fornecedor?"
-                          onDelete={() => handleDelete(supplier.id)}
-                          trigger={
-                            <Button variant="outline" size="sm" title="Eliminar">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
+                        {canEdit && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            title="Editar"
+                            onClick={(e) => handleEdit(supplier.id, e)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <DeleteConfirmDialog
+                            title="Eliminar Fornecedor"
+                            description="Tem a certeza que deseja eliminar este fornecedor?"
+                            onDelete={() => handleDelete(supplier.id)}
+                            trigger={
+                              <Button variant="outline" size="sm" title="Eliminar">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

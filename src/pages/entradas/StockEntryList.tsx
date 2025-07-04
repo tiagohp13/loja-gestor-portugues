@@ -8,9 +8,12 @@ import RecordCount from '@/components/common/RecordCount';
 import { useStockEntries } from './hooks/useStockEntries';
 import { StockEntrySortField } from './hooks/stockEntryForm/types';
 import { Package } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const StockEntryList = () => {
   const navigate = useNavigate();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const { 
     searchTerm, 
     setSearchTerm,
@@ -30,7 +33,13 @@ const StockEntryList = () => {
   
   const handleEditEntry = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
+    if (!validatePermission(canEdit, 'editar compras')) return;
     navigate(`/entradas/editar/${id}`);
+  };
+
+  const handleDeleteEntryWithPermission = (id: string) => {
+    if (!validatePermission(canDelete, 'eliminar compras')) return;
+    handleDeleteEntry(id);
   };
 
   if (isLoading) {
@@ -73,8 +82,10 @@ const StockEntryList = () => {
           onSortChange={handleSortChange}
           onViewEntry={handleViewEntry}
           onEditEntry={handleEditEntry}
-          onDeleteEntry={handleDeleteEntry}
+          onDeleteEntry={handleDeleteEntryWithPermission}
           calculateEntryTotal={calculateEntryTotal}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       </div>
     </div>

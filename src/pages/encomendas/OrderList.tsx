@@ -12,9 +12,12 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const OrderList = () => {
   const navigate = useNavigate();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -99,6 +102,10 @@ const OrderList = () => {
 
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
+    if (!validatePermission(canDelete, 'eliminar encomendas')) {
+      setDeleteDialog({ open: false, orderId: null });
+      return;
+    }
 
     try {
       const { error: itemsError } = await supabase
@@ -175,10 +182,15 @@ const OrderList = () => {
             className="pl-10"
           />
         </div>
-        <Button onClick={() => navigate('/encomendas/nova')}>
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Encomenda
-        </Button>
+        {canCreate && (
+          <Button onClick={() => {
+            if (!validatePermission(canCreate, 'criar encomendas')) return;
+            navigate('/encomendas/nova');
+          }}>
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Encomenda
+          </Button>
+        )}
       </div>
 
       {/* Tabela de encomendas */}
@@ -250,33 +262,40 @@ const OrderList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate(`/encomendas/${order.id}`)}
-                            disabled={order.convertedToStockExitId !== null}
-                            className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <DeleteConfirmDialog
-                            open={deleteDialog.open && deleteDialog.orderId === order.id}
-                            onClose={() => setDeleteDialog({ open: false, orderId: null })}
-                            onDelete={handleDeleteOrder}
-                            title="Eliminar Encomenda"
-                            description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDeleteDialog({ open: true, orderId: order.id })}
-                                disabled={order.convertedToStockExitId !== null}
-                                className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            }
-                          />
+                          {canEdit && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                if (!validatePermission(canEdit, 'editar encomendas')) return;
+                                navigate(`/encomendas/${order.id}`);
+                              }}
+                              disabled={order.convertedToStockExitId !== null}
+                              className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
+                          {canDelete && (
+                            <DeleteConfirmDialog
+                              open={deleteDialog.open && deleteDialog.orderId === order.id}
+                              onClose={() => setDeleteDialog({ open: false, orderId: null })}
+                              onDelete={handleDeleteOrder}
+                              title="Eliminar Encomenda"
+                              description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
+                              trigger={
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setDeleteDialog({ open: true, orderId: order.id })}
+                                  disabled={order.convertedToStockExitId !== null}
+                                  className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              }
+                            />
+                          )}
                         </div>
                       </td>
                     </tr>
