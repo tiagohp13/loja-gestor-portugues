@@ -23,7 +23,16 @@ type SortDirection = 'asc' | 'desc';
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
   const { categories, deleteCategory, products } = useData();
-  const { canCreate, canEdit, canDelete, loading } = usePermissions();
+  const { accessLevel, canCreate, canEdit, canDelete, loading } = usePermissions();
+
+  // DEBUG: imprime no console as permissões do utilizador
+  console.log('PERMISSIONS:', {
+    accessLevel,
+    canCreate,
+    canEdit,
+    canDelete
+  });
+
   const [searchTerm, setSearchTerm] = useState('');
   const [categoriesWithCount, setCategoriesWithCount] = useState(categories);
   const [sortField, setSortField] = useState<SortField>('name');
