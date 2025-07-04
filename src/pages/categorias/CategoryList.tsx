@@ -1,7 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ type SortDirection = 'asc' | 'desc';
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
   const { categories, deleteCategory, products } = useData();
+  const { canCreate, canEdit, canDelete, loading } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoriesWithCount, setCategoriesWithCount] = useState(categories);
   const [sortField, setSortField] = useState<SortField>('name');
@@ -30,63 +31,32 @@ const CategoryList: React.FC = () => {
   
   useEffect(() => {
     if (categories && products) {
-      // Calculate product counts for each category
-      const updatedCategories = categories.map(category => {
-        const productCount = products.filter(product => product.category === category.name).length;
-        return { ...category, productCount };
-      });
-      setCategoriesWithCount(updatedCategories);
+      const updated = categories.map(cat => ({
+        ...cat,
+        productCount: products.filter(p => p.category === cat.name).length
+      }));
+      setCategoriesWithCount(updated);
     }
   }, [categories, products]);
   
-  const filteredCategories = categoriesWithCount?.filter(category => 
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  if (loading) return null; // ou spinner
+  
+  const filtered = categoriesWithCount.filter(cat =>
+    cat.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
-  // Sort categories based on current sort field and direction
-  const sortedCategories = filteredCategories?.sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
-    
-    if (sortField === 'name') {
-      aValue = a.name.toLowerCase();
-      bValue = b.name.toLowerCase();
-    } else {
-      aValue = a.productCount || 0;
-      bValue = b.productCount || 0;
-    }
-    
-    if (sortDirection === 'asc') {
-      return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-    } else {
-      return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-    }
+  const sorted = filtered.sort((a, b) => {
+    const aVal = sortField === 'name' ? a.name.toLowerCase() : a.productCount || 0;
+    const bVal = sortField === 'name' ? b.name.toLowerCase() : b.productCount || 0;
+    if (sortDirection === 'asc') return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
   });
   
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  };
-  
-  const handleSort = (field: SortField) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortField(field);
-      setSortDirection('asc');
-    }
-  };
-  
   const getSortIcon = (field: SortField) => {
-    if (sortField !== field) {
-      return <ArrowUpDown size={16} className="ml-1" />;
-    }
-    return sortDirection === 'asc' ? 
-      <ArrowUp size={16} className="ml-1" /> : 
-      <ArrowDown size={16} className="ml-1" />;
-  };
-  
-  const handleViewCategory = (id: string) => {
-    navigate(`/categorias/${id}`);
+    if (sortField !== field) return <ArrowUpDown size={16} className="ml-1" />;
+    return sortDirection === 'asc'
+      ? <ArrowUp size={16} className="ml-1" />
+      : <ArrowDown size={16} className="ml-1" />;
   };
   
   return (
@@ -96,10 +66,11 @@ const CategoryList: React.FC = () => {
           title="Categorias"
           description="Consultar e gerir todas as categorias"
           actions={
-            <Button onClick={() => navigate('/categorias/nova')} className="flex items-center gap-2">
-              <Plus size={16} />
-              Nova Categoria
-            </Button>
+            canCreate && (
+              <Button onClick={() => navigate('/categorias/nova')} className="flex items-center gap-2">
+                <Plus size={16} /> Nova Categoria
+              </Button>
+            )
           }
         />
         
@@ -109,60 +80,47 @@ const CategoryList: React.FC = () => {
         />
         
         <div className="bg-white dark:bg-card rounded-lg shadow p-6 mt-6">
-          <div className="mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" size={18} />
-              <Input
-                placeholder="Pesquisar por nome de categoria"
-                value={searchTerm}
-                onChange={handleSearch}
-                className="pl-10"
-              />
-            </div>
+          <div className="mb-6 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" size={18} />
+            <Input
+              placeholder="Pesquisar por nome de categoria"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
 
-          {/* Sort Controls */}
           <div className="flex flex-wrap gap-2 mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleSort('name')}
-              className="flex items-center gap-1"
-            >
-              Nome
-              {getSortIcon('name')}
+            <Button variant="outline" size="sm" onClick={() => {
+              setSortField('name');
+              setSortDirection(sortField === 'name' && sortDirection === 'asc' ? 'desc' : 'asc');
+            }} className="flex items-center gap-1">
+              Nome {getSortIcon('name')}
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleSort('productCount')}
-              className="flex items-center gap-1"
-            >
-              Produtos
-              {getSortIcon('productCount')}
+            <Button variant="outline" size="sm" onClick={() => {
+              setSortField('productCount');
+              setSortDirection(sortField === 'productCount' && sortDirection === 'asc' ? 'desc' : 'asc');
+            }} className="flex items-center gap-1">
+              Produtos {getSortIcon('productCount')}
             </Button>
           </div>
           
-          {sortedCategories && sortedCategories.length > 0 ? (
+          {sorted.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {sortedCategories.map(category => (
+              {sorted.map(category => (
                 <Card 
-                  key={category.id} 
+                  key={category.id}
                   className="cursor-pointer hover:shadow-md transition-all duration-200 hover:bg-muted/50"
-                  onClick={() => handleViewCategory(category.id)}
+                  onClick={() => navigate(`/categorias/${category.id}`)}
                 >
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg font-semibold text-foreground">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span className="cursor-pointer line-clamp-1">
-                            {category.name}
-                          </span>
+                          <span className="cursor-pointer line-clamp-1">{category.name}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p className="max-w-xs">
-                            {category.description || 'Sem descrição disponível'}
-                          </p>
+                          <p className="max-w-xs">{category.description || 'Sem descrição disponível'}</p>
                         </TooltipContent>
                       </Tooltip>
                     </CardTitle>
@@ -176,33 +134,35 @@ const CategoryList: React.FC = () => {
                       </span>
                     </div>
                     
-                    <div className="flex gap-2" onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="flex-1"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          navigate(`/categorias/editar/${category.id}`);
-                        }}
-                      >
-                        <Edit size={14} className="mr-1" />
-                        Editar
-                      </Button>
-                      <DeleteConfirmDialog
-                        title="Eliminar Categoria"
-                        description="Tem certeza que deseja eliminar esta categoria? Esta ação não pode ser desfeita."
-                        onDelete={() => deleteCategory(category.id)}
-                        trigger={
-                          <Button 
-                            variant="destructive" 
-                            size="sm"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Trash size={14} />
-                          </Button>
-                        }
-                      />
+                    <div className="flex gap-2" onClick={e => e.stopPropagation()}>
+                      {canEdit && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={e => {
+                            e.stopPropagation();
+                            navigate(`/categorias/editar/${category.id}`);
+                          }}
+                        >
+                          <Edit size={14} className="mr-1" /> Editar
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <DeleteConfirmDialog
+                          title="Eliminar Categoria"
+                          description="Tem certeza que deseja eliminar esta categoria? Esta ação não pode ser desfeita."
+                          onDelete={() => deleteCategory(category.id)}
+                          trigger={
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Trash size={14} />
+                            </Button>
+                          }
+                        />
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -214,7 +174,11 @@ const CategoryList: React.FC = () => {
               description="Não existem categorias cadastradas ou que correspondam à pesquisa."
               icon="tag"
               action={
-                <Button onClick={() => navigate('/categorias/nova')}>Criar Nova Categoria</Button>
+                canCreate && (
+                  <Button onClick={() => navigate('/categorias/nova')}>
+                    Criar Nova Categoria
+                  </Button>
+                )
               }
             />
           )}
