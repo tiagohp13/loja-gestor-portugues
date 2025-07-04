@@ -2,6 +2,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 
 interface StockEntryEditActionsProps {
   isSubmitting: boolean;
@@ -9,6 +10,7 @@ interface StockEntryEditActionsProps {
 
 const StockEntryEditActions: React.FC<StockEntryEditActionsProps> = ({ isSubmitting }) => {
   const navigate = useNavigate();
+  const { canCreate, canEdit } = usePermissions();
   
   return (
     <div className="flex justify-end space-x-4">
@@ -20,12 +22,14 @@ const StockEntryEditActions: React.FC<StockEntryEditActionsProps> = ({ isSubmitt
       >
         Cancelar
       </Button>
-      <Button 
-        type="submit"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? 'A guardar...' : 'Guardar Entrada'}
-      </Button>
+      {(canCreate || canEdit) && (
+        <Button 
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'A guardar...' : 'Guardar Entrada'}
+        </Button>
+      )}
     </div>
   );
 };

@@ -1087,6 +1087,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_delete_data: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
+      can_write_data: {
+        Args: { user_id?: string }
+        Returns: boolean
+      }
       generate_padded_sequence: {
         Args: { items: Json; prefix: string } | { items: Json; prefix?: string }
         Returns: {
@@ -1202,6 +1210,10 @@ export type Database = {
           created_at: string
           updated_at: string
         }[]
+      }
+      get_user_access_level: {
+        Args: { user_id?: string }
+        Returns: string
       }
       is_admin: {
         Args: Record<PropertyKey, never>

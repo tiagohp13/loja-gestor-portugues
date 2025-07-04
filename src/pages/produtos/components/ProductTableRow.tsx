@@ -13,6 +13,8 @@ interface ProductTableRowProps {
   onViewHistory: (id: string, e: React.MouseEvent) => void;
   onEdit: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string) => void;
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
 const ProductTableRow = ({ 
@@ -20,7 +22,9 @@ const ProductTableRow = ({
   onViewProduct, 
   onViewHistory, 
   onEdit, 
-  onDelete 
+  onDelete,
+  canEdit,
+  canDelete
 }: ProductTableRowProps) => {
   return (
     <TableRow 
@@ -56,24 +60,28 @@ const ProductTableRow = ({
           >
             <History className="w-4 h-4" />
           </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            title="Editar"
-            onClick={(e) => onEdit(product.id, e)}
-          >
-            <Edit className="w-4 h-4" />
-          </Button>
-          <DeleteConfirmDialog
-            title="Eliminar Produto"
-            description={`Tem a certeza que deseja eliminar o produto "${product.name}"?`}
-            onDelete={() => onDelete(product.id)}
-            trigger={
-              <Button variant="outline" size="sm" title="Eliminar">
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            }
-          />
+          {canEdit && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              title="Editar"
+              onClick={(e) => onEdit(product.id, e)}
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+          )}
+          {canDelete && (
+            <DeleteConfirmDialog
+              title="Eliminar Produto"
+              description={`Tem a certeza que deseja eliminar o produto "${product.name}"?`}
+              onDelete={() => onDelete(product.id)}
+              trigger={
+                <Button variant="outline" size="sm" title="Eliminar">
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              }
+            />
+          )}
         </div>
       </TableCell>
     </TableRow>

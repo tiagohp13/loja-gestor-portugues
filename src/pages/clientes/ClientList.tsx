@@ -9,6 +9,8 @@ import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import RecordCount from '@/components/common/RecordCount';
 import { useToast } from '@/hooks/use-toast';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 import {
   Table,
   TableBody,
@@ -23,6 +25,7 @@ import { formatCurrency } from '@/utils/formatting';
 const ClientList = () => {
   const navigate = useNavigate();
   const { clients, deleteClient } = useData();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [clientsWithSpent, setClientsWithSpent] = useState<Array<any>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,10 +78,12 @@ const ClientList = () => {
 
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!validatePermission(canEdit, 'editar clientes')) return;
     navigate(`/clientes/editar/${id}`);
   };
 
   const handleDelete = (id: string) => {
+    if (!validatePermission(canDelete, 'eliminar clientes')) return;
     deleteClient(id);
   };
 
@@ -88,10 +93,15 @@ const ClientList = () => {
         title="Clientes" 
         description="Consultar e gerir todos os clientes" 
         actions={
-          <Button onClick={() => navigate('/clientes/novo')}>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Cliente
-          </Button>
+          canCreate && (
+            <Button onClick={() => {
+              if (!validatePermission(canCreate, 'criar clientes')) return;
+              navigate('/clientes/novo');
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Cliente
+            </Button>
+          )
         }
       />
       
@@ -161,24 +171,28 @@ const ClientList = () => {
                         >
                           <History className="w-4 h-4" />
                         </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          title="Editar"
-                          onClick={(e) => handleEdit(client.id, e)}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <DeleteConfirmDialog
-                          title="Eliminar Cliente"
-                          description={`Tem a certeza que deseja eliminar o cliente "${client.name}"?`}
-                          onDelete={() => handleDelete(client.id)}
-                          trigger={
-                            <Button variant="outline" size="sm" title="Eliminar">
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          }
-                        />
+                        {canEdit && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            title="Editar"
+                            onClick={(e) => handleEdit(client.id, e)}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {canDelete && (
+                          <DeleteConfirmDialog
+                            title="Eliminar Cliente"
+                            description={`Tem a certeza que deseja eliminar o cliente "${client.name}"?`}
+                            onDelete={() => handleDelete(client.id)}
+                            trigger={
+                              <Button variant="outline" size="sm" title="Eliminar">
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            }
+                          />
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>

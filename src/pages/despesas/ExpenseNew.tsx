@@ -6,6 +6,8 @@ import ExpenseBasicInfo from './components/ExpenseBasicInfo';
 import ExpenseItemsTable from './components/ExpenseItemsTable';
 import ExpenseTotalCard from './components/ExpenseTotalCard';
 import ExpenseFormActions from './components/ExpenseFormActions';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const ExpenseNew = () => {
   const {
@@ -21,16 +23,26 @@ const ExpenseNew = () => {
     updateFormData,
     navigate
   } = useExpenseForm();
+  
+  const { canCreate } = usePermissions();
 
   const handleCancel = () => {
     navigate('/despesas/historico');
+  };
+
+  const handleFormSubmit = (e: React.FormEvent) => {
+    if (!validatePermission(canCreate, 'criar despesas')) {
+      e.preventDefault();
+      return;
+    }
+    handleSubmit(e);
   };
 
   return (
     <div className="p-6 space-y-6">
       <ExpenseFormHeader />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <ExpenseBasicInfo
           suppliers={suppliers}
           supplierId={formData.supplierId}

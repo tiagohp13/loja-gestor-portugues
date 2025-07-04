@@ -10,11 +10,14 @@ import ClientInfoCard from './components/ClientInfoCard';
 import ClientHistoryStats from './components/ClientHistoryStats';
 import ClientOrdersTable from './components/ClientOrdersTable';
 import ClientExitsTable from './components/ClientExitsTable';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getClient, getClientHistory, isLoading } = useData();
+  const { canEdit } = usePermissions();
   const [clientHistory, setClientHistory] = useState<{ orders: any[], exits: any[] }>({ orders: [], exits: [] });
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLoadingTotal, setIsLoadingTotal] = useState(false);
@@ -64,9 +67,14 @@ const ClientDetail = () => {
         description="Detalhes do cliente"
         actions={
           <div className="flex space-x-2">
-            <Button onClick={() => navigate(`/clientes/editar/${id}`)}>
-              Editar Cliente
-            </Button>
+            {canEdit && (
+              <Button onClick={() => {
+                if (!validatePermission(canEdit, 'editar clientes')) return;
+                navigate(`/clientes/editar/${id}`);
+              }}>
+                Editar Cliente
+              </Button>
+            )}
             <Button variant="outline" onClick={() => navigate('/clientes/consultar')}>
               Voltar à Lista
             </Button>

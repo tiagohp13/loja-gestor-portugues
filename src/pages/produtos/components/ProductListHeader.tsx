@@ -13,6 +13,7 @@ interface ProductListHeaderProps {
   sortDirection: SortDirection;
   setSortDirection: (value: SortDirection) => void;
   onAddProduct: () => void;
+  canCreate: boolean;
 }
 
 const ProductListHeader = ({
@@ -22,7 +23,8 @@ const ProductListHeader = ({
   setSortField,
   sortDirection,
   setSortDirection,
-  onAddProduct
+  onAddProduct,
+  canCreate
 }: ProductListHeaderProps) => {
   return (
     <div className="flex flex-col md:flex-row gap-4 mb-4 justify-between items-start">
@@ -36,10 +38,12 @@ const ProductListHeader = ({
         />
       </div>
       
-      <Button onClick={onAddProduct}>
-        <Plus className="h-4 w-4" />
-        Novo Produto
-      </Button>
+      {canCreate && (
+        <Button onClick={onAddProduct}>
+          <Plus className="h-4 w-4" />
+          Novo Produto
+        </Button>
+      )}
     </div>
   );
 };

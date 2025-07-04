@@ -22,6 +22,8 @@ interface ProductTableProps {
   onViewHistory: (id: string, e: React.MouseEvent) => void;
   onEdit: (id: string, e: React.MouseEvent) => void;
   onDelete: (id: string) => void;
+  canEdit: boolean;
+  canDelete: boolean;
 }
 
 const ProductTable = ({
@@ -32,7 +34,9 @@ const ProductTable = ({
   onViewProduct,
   onViewHistory,
   onEdit,
-  onDelete
+  onDelete,
+  canEdit,
+  canDelete
 }: ProductTableProps) => {
 
   const getSortIcon = (field: SortField) => {
@@ -109,6 +113,8 @@ const ProductTable = ({
                 onViewHistory={onViewHistory}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                canEdit={canEdit}
+                canDelete={canDelete}
               />
             ))
           )}

@@ -7,6 +7,8 @@ import StockEntryEditActions from './StockEntryEditActions';
 import { useStockEntryEdit } from '../hooks/useStockEntryEdit';
 import { useData } from '@/contexts/DataContext';
 import { StockEntryItem } from '@/types';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 interface StockEntryEditFormProps {
   id?: string;
@@ -14,6 +16,7 @@ interface StockEntryEditFormProps {
 
 const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
   const { products, suppliers } = useData();
+  const { canCreate, canEdit } = usePermissions();
   const {
     entry,
     isNewEntry,
@@ -28,8 +31,19 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
     calculateTotal
   } = useStockEntryEdit(id);
 
+  const handleFormSubmit = (e: React.FormEvent) => {
+    const requiredPermission = isNewEntry ? canCreate : canEdit;
+    const action = isNewEntry ? 'criar entradas de stock' : 'editar entradas de stock';
+    
+    if (!validatePermission(requiredPermission, action)) {
+      e.preventDefault();
+      return;
+    }
+    handleSubmit(e);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="grid gap-6">
+    <form onSubmit={handleFormSubmit} className="grid gap-6">
       <div className="grid md:grid-cols-2 gap-4">
         <StockEntryEditSupplier
           supplierId={entry.supplierId}

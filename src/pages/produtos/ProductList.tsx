@@ -10,12 +10,15 @@ import ProductTable from './components/ProductTable';
 import RecordCount from '@/components/common/RecordCount';
 import { Plus, Box } from 'lucide-react';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const ProductList = () => {
   const navigate = useNavigate();
   const { products, deleteProduct } = useData();
   const [searchTerm, setSearchTerm] = useState('');
   const { sortField, sortDirection, handleSort, setSortField, setSortDirection } = useProductSort();
+  const { canCreate, canEdit, canDelete } = usePermissions();
 
   // Add useScrollToTop hook to ensure page starts at the top
   useScrollToTop();
@@ -60,14 +63,17 @@ const ProductList = () => {
 
   const handleEdit = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!validatePermission(canEdit, 'editar produtos')) return;
     navigate(`/produtos/editar/${id}`);
   };
 
   const handleDelete = (id: string) => {
+    if (!validatePermission(canDelete, 'eliminar produtos')) return;
     deleteProduct(id);
   };
 
   const handleAddProduct = () => {
+    if (!validatePermission(canCreate, 'criar produtos')) return;
     navigate('/produtos/novo');
   };
 
@@ -93,6 +99,7 @@ const ProductList = () => {
           sortDirection={sortDirection}
           setSortDirection={setSortDirection}
           onAddProduct={handleAddProduct}
+          canCreate={canCreate}
         />
         
         <ProductTable
@@ -104,6 +111,8 @@ const ProductList = () => {
           onViewHistory={handleViewHistory}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          canEdit={canEdit}
+          canDelete={canDelete}
         />
       </div>
     </div>
