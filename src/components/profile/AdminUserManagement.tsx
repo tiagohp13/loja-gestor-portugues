@@ -49,7 +49,6 @@ const AdminUserManagement: React.FC = () => {
         if (aLevel !== 'admin' && bLevel !== 'admin') {
           return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
         }
-
         return 0;
       });
       setUsers(sortedUsers);
@@ -92,7 +91,6 @@ const AdminUserManagement: React.FC = () => {
           if (aLevel !== 'admin' && bLevel !== 'admin') {
             return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
           }
-
           return 0;
         });
       });
@@ -164,17 +162,10 @@ const AdminUserManagement: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                {userProfile.access_level === 'admin' ? (
-                  <Badge variant="secondary" className="w-40 justify-center">
+                {userProfile.access_level === 'admin' ? <Badge variant="secondary" className="w-40 justify-center">
                     <Shield className="h-4 w-4 mr-2" />
                     Admin
-                  </Badge>
-                ) : (
-                  <Select 
-                    value={userProfile.access_level || 'viewer'} 
-                    onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)}
-                    disabled={userProfile.access_level === 'admin'}
-                  >
+                  </Badge> : <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)} disabled={userProfile.access_level === 'admin'}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
@@ -198,15 +189,11 @@ const AdminUserManagement: React.FC = () => {
                         </div>
                       </SelectItem>
                     </SelectContent>
-                  </Select>
-                )}
+                  </Select>}
 
-                {userProfile.user_id !== user?.id && userProfile.access_level !== 'admin' && (
-                  <AlertDialog>
+                {userProfile.user_id !== user?.id && userProfile.access_level !== 'admin' && <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -222,8 +209,7 @@ const AdminUserManagement: React.FC = () => {
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
-                  </AlertDialog>
-                )}
+                  </AlertDialog>}
               </div>
             </div>)}
 
