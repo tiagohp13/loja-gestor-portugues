@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 import { Users, Trash2, Shield, UserCheck, Eye } from 'lucide-react';
-
 interface UserProfile {
   id: string;
   user_id: string;
@@ -16,39 +15,38 @@ interface UserProfile {
   access_level?: string;
   created_at: string;
 }
-
 const AdminUserManagement: React.FC = () => {
-  const { user } = useAuth();
+  const {
+    user
+  } = useAuth();
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
-
   useEffect(() => {
     fetchUsers();
   }, []);
-
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
+      const {
+        data,
+        error
+      } = await supabase.from('user_profiles').select('*').order('created_at', {
+        ascending: false
+      });
       if (error) throw error;
-      
+
       // Sort users: admin first, then by access level alphabetically
       const sortedUsers = (data || []).sort((a, b) => {
         const aLevel = a.access_level || 'viewer';
         const bLevel = b.access_level || 'viewer';
-        
+
         // Admin always comes first
         if (aLevel === 'admin' && bLevel !== 'admin') return -1;
         if (bLevel === 'admin' && aLevel !== 'admin') return 1;
-        
+
         // For non-admin users, sort alphabetically by access level
         return aLevel.localeCompare(bLevel);
       });
-      
       setUsers(sortedUsers);
     } catch (error) {
       console.error('Error fetching users:', error);
@@ -57,14 +55,13 @@ const AdminUserManagement: React.FC = () => {
       setLoading(false);
     }
   };
-
   const handleAccessLevelChange = async (userId: string, newAccessLevel: string) => {
     try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ access_level: newAccessLevel })
-        .eq('user_id', userId);
-
+      const {
+        error
+      } = await supabase.from('user_profiles').update({
+        access_level: newAccessLevel
+      }).eq('user_id', userId);
       if (error) {
         console.error('Supabase error:', error);
         throw error;
@@ -72,47 +69,43 @@ const AdminUserManagement: React.FC = () => {
 
       // Update local state and re-sort
       setUsers(prev => {
-        const updatedUsers = prev.map(u => 
-          u.user_id === userId ? { ...u, access_level: newAccessLevel } : u
-        );
-        
+        const updatedUsers = prev.map(u => u.user_id === userId ? {
+          ...u,
+          access_level: newAccessLevel
+        } : u);
+
         // Re-sort after update
         return updatedUsers.sort((a, b) => {
           const aLevel = a.access_level || 'viewer';
           const bLevel = b.access_level || 'viewer';
-          
+
           // Admin always comes first
           if (aLevel === 'admin' && bLevel !== 'admin') return -1;
           if (bLevel === 'admin' && aLevel !== 'admin') return 1;
-          
+
           // For non-admin users, sort alphabetically by access level
           return aLevel.localeCompare(bLevel);
         });
       });
-      
       toast.success(`Nível de acesso atualizado para ${newAccessLevel}`);
     } catch (error: any) {
       console.error('Error updating access level:', error);
       toast.error(`Erro ao atualizar nível de acesso: ${error.message || 'Erro desconhecido'}`);
-      
+
       // Refresh users to revert any optimistic updates
       fetchUsers();
     }
   };
-
   const handleDeleteUser = async (userId: string) => {
     if (userId === user?.id) {
       toast.error('Não pode remover o seu próprio utilizador');
       return;
     }
-
     try {
       // Delete from user_profiles first
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .delete()
-        .eq('user_id', userId);
-
+      const {
+        error: profileError
+      } = await supabase.from('user_profiles').delete().eq('user_id', userId);
       if (profileError) {
         console.error('Error deleting user profile:', profileError);
         throw profileError;
@@ -124,24 +117,19 @@ const AdminUserManagement: React.FC = () => {
     } catch (error: any) {
       console.error('Error deleting user:', error);
       toast.error(`Erro ao remover utilizador: ${error.message || 'Erro desconhecido'}`);
-      
+
       // Refresh users in case of partial failure
       fetchUsers();
     }
   };
-
   if (loading) {
-    return (
-      <Card>
+    return <Card>
         <CardContent className="flex items-center justify-center p-6">
           <div className="text-center">A carregar utilizadores...</div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card>
+  return <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Users className="h-5 w-5" />
@@ -153,8 +141,7 @@ const AdminUserManagement: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {users.map((userProfile) => (
-            <div key={userProfile.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+          {users.map(userProfile => <div key={userProfile.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
               <div className="flex-1">
                 <div className="font-medium">
                   {userProfile.name || 'Nome não definido'}
@@ -168,10 +155,7 @@ const AdminUserManagement: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Select
-                  value={userProfile.access_level || 'viewer'}
-                  onValueChange={(value) => handleAccessLevelChange(userProfile.user_id, value)}
-                >
+                <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
@@ -197,12 +181,9 @@ const AdminUserManagement: React.FC = () => {
                   </SelectContent>
                 </Select>
 
-                {userProfile.user_id !== user?.id && (
-                  <AlertDialog>
+                {userProfile.user_id !== user?.id && <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      <Button variant="outline" size="sm">
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -213,29 +194,20 @@ const AdminUserManagement: React.FC = () => {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => handleDeleteUser(userProfile.user_id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
+                        <AlertDialogAction onClick={() => handleDeleteUser(userProfile.user_id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                           Remover
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
-                  </AlertDialog>
-                )}
+                  </AlertDialog>}
               </div>
-            </div>
-          ))}
+            </div>)}
 
-          {users.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
+          {users.length === 0 && <div className="text-center text-muted-foreground py-8">
               Nenhum utilizador encontrado
-            </div>
-          )}
+            </div>}
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default AdminUserManagement;
