@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { User, Upload, Shield } from 'lucide-react';
 interface UserProfile {
@@ -130,7 +131,6 @@ const UserProfileForm: React.FC = () => {
         phone: profile.phone,
         language: profile.language,
         theme: profile.theme,
-        access_level: profile.access_level,
         avatar_url: profile.avatar_url
       };
 
@@ -222,25 +222,20 @@ const UserProfileForm: React.FC = () => {
           {/* Theme Field */}
           
 
-          {/* Access Level (readonly for non-admins) */}
+          {/* Access Level (read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="access-level" className="flex items-center gap-2">
+            <Label className="flex items-center gap-2">
               <Shield className="h-4 w-4" />
               Nível de Acesso
             </Label>
-            <Select value={profile.access_level || 'viewer'} onValueChange={value => handleInputChange('access_level', value)} disabled={!isAdmin}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o nível de acesso" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="admin">Administrador</SelectItem>
-                <SelectItem value="editor">Editor</SelectItem>
-                <SelectItem value="viewer">Visualizador</SelectItem>
-              </SelectContent>
-            </Select>
-            {!isAdmin && <p className="text-xs text-muted-foreground">
-                Apenas administradores podem alterar níveis de acesso
-              </p>}
+            <Badge variant={profile.access_level === 'admin' ? 'default' : 'secondary'} className="w-fit">
+              <Shield className="h-4 w-4 mr-2" />
+              {profile.access_level === 'admin' ? 'Administrador' : 
+               profile.access_level === 'editor' ? 'Editor' : 'Visualizador'}
+            </Badge>
+            <p className="text-xs text-muted-foreground">
+              O nível de acesso só pode ser alterado por um administrador na secção "Configuração de Acessos"
+            </p>
           </div>
 
           {/* Submit Button */}

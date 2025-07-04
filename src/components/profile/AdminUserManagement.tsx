@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Users, Trash2, Shield, UserCheck, Eye } from 'lucide-react';
 interface UserProfile {
@@ -31,11 +32,11 @@ const AdminUserManagement: React.FC = () => {
         data,
         error
       } = await supabase.from('user_profiles').select('*').order('created_at', {
-        ascending: false
+        ascending: true // Oldest first for non-admins
       });
       if (error) throw error;
 
-      // Sort users: admin first, then by access level alphabetically
+      // Sort users: admin first, then by registration date (oldest first)
       const sortedUsers = (data || []).sort((a, b) => {
         const aLevel = a.access_level || 'viewer';
         const bLevel = b.access_level || 'viewer';
@@ -44,8 +45,12 @@ const AdminUserManagement: React.FC = () => {
         if (aLevel === 'admin' && bLevel !== 'admin') return -1;
         if (bLevel === 'admin' && aLevel !== 'admin') return 1;
 
-        // For non-admin users, sort alphabetically by access level
-        return aLevel.localeCompare(bLevel);
+        // For non-admin users, sort by registration date (oldest first)
+        if (aLevel !== 'admin' && bLevel !== 'admin') {
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        }
+
+        return 0;
       });
       setUsers(sortedUsers);
     } catch (error) {
@@ -74,7 +79,7 @@ const AdminUserManagement: React.FC = () => {
           access_level: newAccessLevel
         } : u);
 
-        // Re-sort after update
+        // Re-sort after update using same logic as fetchUsers
         return updatedUsers.sort((a, b) => {
           const aLevel = a.access_level || 'viewer';
           const bLevel = b.access_level || 'viewer';
@@ -83,8 +88,12 @@ const AdminUserManagement: React.FC = () => {
           if (aLevel === 'admin' && bLevel !== 'admin') return -1;
           if (bLevel === 'admin' && aLevel !== 'admin') return 1;
 
-          // For non-admin users, sort alphabetically by access level
-          return aLevel.localeCompare(bLevel);
+          // For non-admin users, sort by registration date (oldest first)
+          if (aLevel !== 'admin' && bLevel !== 'admin') {
+            return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          }
+
+          return 0;
         });
       });
       toast.success(`Nível de acesso atualizado para ${newAccessLevel}`);
@@ -155,35 +164,49 @@ const AdminUserManagement: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="admin">
-                      <div className="flex items-center gap-2">
-                        <Shield className="h-4 w-4" />
-                        Admin
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="editor">
-                      <div className="flex items-center gap-2">
-                        <UserCheck className="h-4 w-4" />
-                        Editor
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="viewer">
-                      <div className="flex items-center gap-2">
-                        <Eye className="h-4 w-4" />
-                        Visualizador
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+                {userProfile.access_level === 'admin' ? (
+                  <Badge variant="secondary" className="w-40 justify-center">
+                    <Shield className="h-4 w-4 mr-2" />
+                    Admin
+                  </Badge>
+                ) : (
+                  <Select 
+                    value={userProfile.access_level || 'viewer'} 
+                    onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)}
+                    disabled={userProfile.access_level === 'admin'}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          Admin
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="editor">
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="h-4 w-4" />
+                          Editor
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="viewer">
+                        <div className="flex items-center gap-2">
+                          <Eye className="h-4 w-4" />
+                          Visualizador
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                )}
 
-                {userProfile.user_id !== user?.id && <AlertDialog>
+                {userProfile.user_id !== user?.id && userProfile.access_level !== 'admin' && (
+                  <AlertDialog>
                     <AlertDialogTrigger asChild>
-                      
+                      <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
@@ -199,7 +222,8 @@ const AdminUserManagement: React.FC = () => {
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
-                  </AlertDialog>}
+                  </AlertDialog>
+                )}
               </div>
             </div>)}
 
