@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { usePermissions } from '@/hooks/usePermissions';
+import { useUserProfile } from '@/hooks/useUserProfile';  // <-- usamos este diretamente
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,15 +23,18 @@ type SortDirection = 'asc' | 'desc';
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
   const { categories, deleteCategory, products } = useData();
-  const { accessLevel, canCreate, canEdit, canDelete, loading } = usePermissions();
+  const { profile, loading } = useUserProfile();        // 🔴 read profile directly
+  if (loading) return null;
+  
+  // 🔴 define flags simples
+  const accessLevel = profile?.access_level;
+  const isViewer   = accessLevel === 'viewer';
+  const canCreate  = !isViewer;
+  const canEdit    = !isViewer;
+  const canDelete  = accessLevel === 'admin';
 
-  // DEBUG: imprime no console as permissões do utilizador
-  console.log('PERMISSIONS:', {
-    accessLevel,
-    canCreate,
-    canEdit,
-    canDelete
-  });
+  // debug rápido (podes remover depois)
+  console.log('🎛️ ACCESS LEVEL', accessLevel, 'canCreate', canCreate, 'canEdit', canEdit, 'canDelete', canDelete);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoriesWithCount, setCategoriesWithCount] = useState(categories);
@@ -40,15 +43,14 @@ const CategoryList: React.FC = () => {
   
   useEffect(() => {
     if (categories && products) {
-      const updated = categories.map(cat => ({
-        ...cat,
-        productCount: products.filter(p => p.category === cat.name).length
-      }));
-      setCategoriesWithCount(updated);
+      setCategoriesWithCount(
+        categories.map(cat => ({
+          ...cat,
+          productCount: products.filter(p => p.category === cat.name).length
+        }))
+      );
     }
   }, [categories, products]);
-  
-  if (loading) return null; // ou spinner
   
   const filtered = categoriesWithCount.filter(cat =>
     cat.name.toLowerCase().includes(searchTerm.toLowerCase())
