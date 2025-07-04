@@ -101,19 +101,40 @@ const UserProfileForm: React.FC = () => {
 
     setLoading(true);
     try {
-      const { error } = await supabase
+      const profileData: any = {
+        user_id: user.id,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        language: profile.language,
+        avatar_url: profile.avatar_url
+      };
+
+      // Include id if profile already exists
+      if (profile.id) {
+        profileData.id = profile.id;
+      }
+
+      console.log('Updating profile with data:', profileData);
+
+      const { data, error } = await supabase
         .from('user_profiles')
-        .upsert({
-          user_id: user.id,
-          name: profile.name,
-          email: profile.email,
-          phone: profile.phone,
-          language: profile.language,
-          avatar_url: profile.avatar_url
+        .upsert(profileData, {
+          onConflict: 'user_id'
+        })
+        .select();
+
+      if (error) {
+        console.error('Supabase error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
         });
+        throw error;
+      }
 
-      if (error) throw error;
-
+      console.log('Profile updated successfully:', data);
       toast.success('Perfil atualizado com sucesso');
     } catch (error) {
       console.error('Error updating profile:', error);
