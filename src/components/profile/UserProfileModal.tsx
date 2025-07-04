@@ -17,6 +17,8 @@ interface UserProfile {
   email?: string;
   phone?: string;
   language?: string;
+  theme?: string;
+  access_level?: string;
   avatar_url?: string;
 }
 
@@ -30,9 +32,11 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
   const [profile, setProfile] = useState<UserProfile>({
     user_id: user?.id || '',
     name: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     language: 'pt',
+    theme: 'system',
+    access_level: 'visualizador',
     avatar_url: ''
   });
   const [loading, setLoading] = useState(false);
@@ -60,7 +64,16 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
       }
 
       if (data) {
-        setProfile(data);
+        setProfile({
+          ...data,
+          email: data.email || user.email || ''
+        });
+      } else {
+        // If no profile exists, set default values with user's email
+        setProfile(prev => ({
+          ...prev,
+          email: user.email || ''
+        }));
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -112,6 +125,8 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
         email: profile.email,
         phone: profile.phone,
         language: profile.language,
+        theme: profile.theme,
+        access_level: profile.access_level,
         avatar_url: profile.avatar_url
       };
 

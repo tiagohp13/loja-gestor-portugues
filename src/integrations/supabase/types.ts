@@ -1021,6 +1021,7 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          access_level: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
@@ -1028,10 +1029,12 @@ export type Database = {
           language: string | null
           name: string | null
           phone: string | null
+          theme: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          access_level?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -1039,10 +1042,12 @@ export type Database = {
           language?: string | null
           name?: string | null
           phone?: string | null
+          theme?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          access_level?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -1050,6 +1055,7 @@ export type Database = {
           language?: string | null
           name?: string | null
           phone?: string | null
+          theme?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -1199,6 +1205,10 @@ export type Database = {
       }
       is_admin: {
         Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_user_admin: {
+        Args: { user_id?: string }
         Returns: boolean
       }
       table_exists: {

@@ -9,6 +9,8 @@ interface UserProfile {
   email?: string;
   phone?: string;
   language?: string;
+  theme?: string;
+  access_level?: string;
   avatar_url?: string;
 }
 

@@ -7,8 +7,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { User, Upload } from 'lucide-react';
+import { User, Upload, Shield } from 'lucide-react';
+import PasswordChangeForm from './PasswordChangeForm';
+import AdminUserManagement from './AdminUserManagement';
 
 interface UserProfile {
   id?: string;
@@ -17,6 +20,8 @@ interface UserProfile {
   email?: string;
   phone?: string;
   language?: string;
+  theme?: string;
+  access_level?: string;
   avatar_url?: string;
 }
 
@@ -25,17 +30,21 @@ const UserProfileForm: React.FC = () => {
   const [profile, setProfile] = useState<UserProfile>({
     user_id: user?.id || '',
     name: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     language: 'pt',
+    theme: 'system',
+    access_level: 'visualizador',
     avatar_url: ''
   });
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchProfile();
+      checkAdminStatus();
     }
   }, [user]);
 
@@ -55,10 +64,32 @@ const UserProfileForm: React.FC = () => {
       }
 
       if (data) {
-        setProfile(data);
+        setProfile({
+          ...data,
+          email: data.email || user.email || ''
+        });
+      } else {
+        // If no profile exists, set default values with user's email
+        setProfile(prev => ({
+          ...prev,
+          email: user.email || ''
+        }));
       }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const checkAdminStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase.rpc('is_user_admin');
+      if (!error) {
+        setIsAdmin(data);
+      }
+    } catch (error) {
+      console.error('Error checking admin status:', error);
     }
   };
 
@@ -107,6 +138,8 @@ const UserProfileForm: React.FC = () => {
         email: profile.email,
         phone: profile.phone,
         language: profile.language,
+        theme: profile.theme,
+        access_level: profile.access_level,
         avatar_url: profile.avatar_url
       };
 
@@ -242,11 +275,69 @@ const UserProfileForm: React.FC = () => {
             </Select>
           </div>
 
+          {/* Theme Field */}
+          <div className="space-y-2">
+            <Label htmlFor="theme">Tema</Label>
+            <Select
+              value={profile.theme || 'system'}
+              onValueChange={(value) => handleInputChange('theme', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tema" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="light">Claro</SelectItem>
+                <SelectItem value="dark">Escuro</SelectItem>
+                <SelectItem value="system">Sistema</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Access Level (readonly for non-admins) */}
+          <div className="space-y-2">
+            <Label htmlFor="access-level" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Nível de Acesso
+            </Label>
+            <Select
+              value={profile.access_level || 'visualizador'}
+              onValueChange={(value) => handleInputChange('access_level', value)}
+              disabled={!isAdmin}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o nível de acesso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="editor">Editor</SelectItem>
+                <SelectItem value="visualizador">Visualizador</SelectItem>
+              </SelectContent>
+            </Select>
+            {!isAdmin && (
+              <p className="text-xs text-muted-foreground">
+                Apenas administradores podem alterar níveis de acesso
+              </p>
+            )}
+          </div>
+
           {/* Submit Button */}
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? 'A guardar...' : 'Guardar alterações'}
           </Button>
         </form>
+
+        <Separator className="my-6" />
+
+        {/* Password Change Section */}
+        <PasswordChangeForm />
+
+        {/* Admin User Management Section */}
+        {isAdmin && (
+          <>
+            <Separator className="my-6" />
+            <AdminUserManagement />
+          </>
+        )}
       </CardContent>
     </Card>
   );
