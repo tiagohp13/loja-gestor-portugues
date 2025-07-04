@@ -217,20 +217,7 @@ const UserProfileForm: React.FC = () => {
           </div>
 
           {/* Language Field */}
-          <div className="space-y-2">
-            <Label htmlFor="language">Idioma Preferido</Label>
-            <Select value={profile.language || 'pt'} onValueChange={value => handleInputChange('language', value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o idioma" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pt">Português</SelectItem>
-                <SelectItem value="en">Inglês</SelectItem>
-                <SelectItem value="es">Espanhol</SelectItem>
-                <SelectItem value="fr">Francês</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          
 
           {/* Theme Field */}
           
