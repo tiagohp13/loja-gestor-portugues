@@ -1,33 +1,28 @@
 import { useUserProfile } from './useUserProfile';
 
-export type AccessLevel = 'admin' | 'editor' | 'visualizador';
+export type AccessLevel = 'admin' | 'editor' | 'viewer';
 
 export const usePermissions = () => {
   const { profile, loading } = useUserProfile();
   
-  const accessLevel = profile?.access_level as AccessLevel || 'visualizador';
+  const accessLevel = (profile?.access_level as AccessLevel) || 'viewer';
   
-  const isAdmin = accessLevel === 'admin';
+  const isAdmin  = accessLevel === 'admin';
   const isEditor = accessLevel === 'editor';
-  const isViewer = accessLevel === 'visualizador';
+  const isViewer = accessLevel === 'viewer';
   
   const canCreate = isAdmin || isEditor;
-  const canEdit = isAdmin || isEditor;
+  const canEdit   = isAdmin || isEditor;
   const canDelete = isAdmin;
-  const canView = true; // All authenticated users can view
+  const canView   = true; // todos os autenticados podem ver
   
   const checkPermission = (action: 'create' | 'edit' | 'delete' | 'view') => {
     switch (action) {
-      case 'create':
-        return canCreate;
-      case 'edit':
-        return canEdit;
-      case 'delete':
-        return canDelete;
-      case 'view':
-        return canView;
-      default:
-        return false;
+      case 'create': return canCreate;
+      case 'edit':   return canEdit;
+      case 'delete': return canDelete;
+      case 'view':   return canView;
+      default:       return false;
     }
   };
   
