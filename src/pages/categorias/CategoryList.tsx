@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
-import { useUserProfile } from '@/hooks/useUserProfile';  // <-- usamos este diretamente
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,18 +23,18 @@ type SortDirection = 'asc' | 'desc';
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
   const { categories, deleteCategory, products } = useData();
-  const { profile, loading } = useUserProfile();        // 🔴 read profile directly
+  const { profile, loading } = useUserProfile();
   if (loading) return null;
-  
-  // 🔴 define flags simples
+
+  // 👉️ Simplest permissions directly from profile
   const accessLevel = profile?.access_level;
   const isViewer   = accessLevel === 'viewer';
   const canCreate  = !isViewer;
   const canEdit    = !isViewer;
   const canDelete  = accessLevel === 'admin';
 
-  // debug rápido (podes remover depois)
-  console.log('🎛️ ACCESS LEVEL', accessLevel, 'canCreate', canCreate, 'canEdit', canEdit, 'canDelete', canDelete);
+  // DEBUG (opcional — remove depois)
+  console.log('ACCESS LEVEL:', accessLevel, { canCreate, canEdit, canDelete });
 
   const [searchTerm, setSearchTerm] = useState('');
   const [categoriesWithCount, setCategoriesWithCount] = useState(categories);
@@ -43,12 +43,11 @@ const CategoryList: React.FC = () => {
   
   useEffect(() => {
     if (categories && products) {
-      setCategoriesWithCount(
-        categories.map(cat => ({
-          ...cat,
-          productCount: products.filter(p => p.category === cat.name).length
-        }))
-      );
+      const updated = categories.map(cat => ({
+        ...cat,
+        productCount: products.filter(p => p.category === cat.name).length
+      }));
+      setCategoriesWithCount(updated);
     }
   }, [categories, products]);
   
@@ -62,6 +61,15 @@ const CategoryList: React.FC = () => {
     if (sortDirection === 'asc') return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
     return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
   });
+  
+  const toggleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sd => sd === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortDirection('asc');
+    }
+  };
   
   const getSortIcon = (field: SortField) => {
     if (sortField !== field) return <ArrowUpDown size={16} className="ml-1" />;
@@ -85,10 +93,7 @@ const CategoryList: React.FC = () => {
           }
         />
         
-        <RecordCount 
-          title="Total de categorias"
-          count={categories.length}
-        />
+        <RecordCount title="Total de categorias" count={categories.length} />
         
         <div className="bg-white dark:bg-card rounded-lg shadow p-6 mt-6">
           <div className="mb-6 relative">
@@ -102,16 +107,10 @@ const CategoryList: React.FC = () => {
           </div>
 
           <div className="flex flex-wrap gap-2 mb-6">
-            <Button variant="outline" size="sm" onClick={() => {
-              setSortField('name');
-              setSortDirection(sortField === 'name' && sortDirection === 'asc' ? 'desc' : 'asc');
-            }} className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => toggleSort('name')} className="flex items-center gap-1">
               Nome {getSortIcon('name')}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => {
-              setSortField('productCount');
-              setSortDirection(sortField === 'productCount' && sortDirection === 'asc' ? 'desc' : 'asc');
-            }} className="flex items-center gap-1">
+            <Button variant="outline" size="sm" onClick={() => toggleSort('productCount')} className="flex items-center gap-1">
               Produtos {getSortIcon('productCount')}
             </Button>
           </div>
