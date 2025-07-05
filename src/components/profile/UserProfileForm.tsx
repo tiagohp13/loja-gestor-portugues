@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { User, Upload, Shield } from 'lucide-react';
+import { User, Upload, Shield, Trash } from 'lucide-react';
 interface UserProfile {
   id?: string;
   user_id: string;
@@ -119,6 +119,29 @@ const UserProfileForm: React.FC = () => {
       setUploading(false);
     }
   };
+  const handleAvatarRemove = async () => {
+    if (!user) return;
+    setUploading(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ avatar_url: null })
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      setProfile(prev => ({
+        ...prev,
+        avatar_url: null
+      }));
+      toast.success('Foto removida com sucesso');
+    } catch (error) {
+      console.error('Error removing avatar:', error);
+      toast.error('Erro ao remover foto');
+    } finally {
+      setUploading(false);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -183,15 +206,30 @@ const UserProfileForm: React.FC = () => {
                 {getInitials(profile.name)}
               </AvatarFallback>
             </Avatar>
-            <div>
-              <Label htmlFor="avatar" className="cursor-pointer">
-                <div className="flex items-center space-x-2 px-4 py-2 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground">
-                  <Upload className="h-4 w-4" />
-                  <span>{uploading ? 'A carregar...' : 'Alterar foto'}</span>
-                </div>
-              </Label>
+            <div className="flex flex-col space-y-2">
+              <div className="flex space-x-2">
+                <Label htmlFor="avatar" className="cursor-pointer">
+                  <div className="flex items-center space-x-2 px-4 py-2 border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground">
+                    <Upload className="h-4 w-4" />
+                    <span>{uploading ? 'A carregar...' : 'Alterar foto'}</span>
+                  </div>
+                </Label>
+                {profile.avatar_url && profile.avatar_url !== '' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAvatarRemove}
+                    disabled={uploading}
+                    className="px-3 py-2 h-auto"
+                  >
+                    <Trash className="h-4 w-4" />
+                    <span className="ml-2">Remover foto</span>
+                  </Button>
+                )}
+              </div>
               <input id="avatar" type="file" accept="image/*" onChange={handleAvatarUpload} className="hidden" disabled={uploading} />
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground">
                 Imagens quadradas recomendadas (1:1)
               </p>
             </div>
