@@ -8,6 +8,7 @@ import KPIGrid from './KPIGrid';
 import KPIPanelSkeleton from './KPIPanelSkeleton';
 import { loadKpiTargets } from '@/services/kpiService';
 import { toast } from '@/components/ui/use-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 
 export interface KPI {
   name: string;
@@ -30,6 +31,7 @@ interface KPIPanelProps {
 }
 
 const KPIPanel = ({ kpis: initialKpis, title = "KPIs", description = "Indicadores-chave de desempenho" }: KPIPanelProps) => {
+  const { isAdmin } = usePermissions();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [kpisState, setKpisState] = useState<KPI[]>(initialKpis);
   const [isLoading, setIsLoading] = useState(true);
@@ -97,15 +99,17 @@ const KPIPanel = ({ kpis: initialKpis, title = "KPIs", description = "Indicadore
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          onClick={() => setIsEditModalOpen(true)}
-          className="flex items-center gap-1"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          Editar Metas
-        </Button>
+        {isAdmin && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setIsEditModalOpen(true)}
+            className="flex items-center gap-1"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Editar Metas
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <KPIGrid kpis={kpisState} />
