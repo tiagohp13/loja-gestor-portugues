@@ -42,10 +42,10 @@ const Settings = () => {
       />
       
       <Tabs defaultValue="settings" className="mt-6">
-        <TabsList className={`grid ${canEdit ? 'grid-cols-4 w-[800px]' : 'grid-cols-3 w-[600px]'}`}>
+        <TabsList className={`grid ${isAdmin ? (canEdit ? 'grid-cols-4 w-[800px]' : 'grid-cols-3 w-[600px]') : (canEdit ? 'grid-cols-3 w-[600px]' : 'grid-cols-2 w-[400px]')}`}>
           <TabsTrigger value="settings">Sistema</TabsTrigger>
           <TabsTrigger value="profile">Perfil</TabsTrigger>
-          <TabsTrigger value="access">Configuração de Acessos</TabsTrigger>
+          {isAdmin && <TabsTrigger value="access">Configuração de Acessos</TabsTrigger>}
           {canEdit && <TabsTrigger value="data">Dados</TabsTrigger>}
         </TabsList>
         
