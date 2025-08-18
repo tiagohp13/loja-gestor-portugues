@@ -101,6 +101,7 @@ const OrderList = () => {
   };
 
   const handleDeleteOrder = async () => {
+    console.log('handleDeleteOrder called with orderId:', deleteDialog.orderId);
     if (!deleteDialog.orderId) return;
     if (!validatePermission(canDelete, 'eliminar encomendas')) {
       setDeleteDialog({ open: false, orderId: null });
@@ -108,19 +109,29 @@ const OrderList = () => {
     }
 
     try {
+      console.log('Starting delete process for order:', deleteDialog.orderId);
+      
       const { error: itemsError } = await supabase
         .from('order_items')
         .delete()
         .eq('order_id', deleteDialog.orderId);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Error deleting order items:', itemsError);
+        throw itemsError;
+      }
+      console.log('Order items deleted successfully');
 
       const { error: orderError } = await supabase
         .from('orders')
         .delete()
         .eq('id', deleteDialog.orderId);
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Error deleting order:', orderError);
+        throw orderError;
+      }
+      console.log('Order deleted successfully');
 
       setOrders(orders.filter(o => o.id !== deleteDialog.orderId));
       toast.success('Encomenda eliminada com sucesso');
@@ -287,7 +298,12 @@ const OrderList = () => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => setDeleteDialog({ open: true, orderId: order.id })}
+                                  onClick={() => {
+                                    console.log('Delete button clicked for order:', order.id);
+                                    console.log('Order convertedToStockExitId:', order.convertedToStockExitId);
+                                    console.log('canDelete permission:', canDelete);
+                                    setDeleteDialog({ open: true, orderId: order.id });
+                                  }}
                                   disabled={order.convertedToStockExitId !== null}
                                   className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
                                 >

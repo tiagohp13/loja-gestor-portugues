@@ -45,6 +45,7 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   };
   
   const handleDelete = () => {
+    console.log('Delete button clicked in DeleteConfirmDialog');
     onDelete();
     if (!isControlled) {
       setOpenState(false);
