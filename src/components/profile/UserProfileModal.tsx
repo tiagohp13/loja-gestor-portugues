@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { toast } from 'sonner';
-import { Upload } from 'lucide-react';
+import { Upload, Shield } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface UserProfile {
   id?: string;
@@ -122,11 +123,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
       const profileData: any = {
         user_id: user.id,
         name: profile.name,
-        email: profile.email,
         phone: profile.phone,
-        language: profile.language,
-        theme: profile.theme,
-        access_level: profile.access_level,
         avatar_url: profile.avatar_url
       };
 
@@ -221,16 +218,15 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
             />
           </div>
 
-          {/* Email Field */}
+          {/* Email Field (read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="email-modal">Email</Label>
-            <Input
-              id="email-modal"
-              type="email"
-              value={profile.email || ''}
-              onChange={(e) => handleInputChange('email', e.target.value)}
-              placeholder="Introduza o seu email"
-            />
+            <Label>Email</Label>
+            <div className="px-3 py-2 border border-input rounded-md bg-muted text-sm">
+              {profile.email || 'Nenhum email associado'}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              O email não pode ser alterado e está associado à sua conta
+            </p>
           </div>
 
           {/* Phone Field */}
@@ -245,23 +241,20 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
             />
           </div>
 
-          {/* Language Field */}
+          {/* Access Level (read-only) */}
           <div className="space-y-2">
-            <Label htmlFor="language-modal">Idioma Preferido</Label>
-            <Select
-              value={profile.language || 'pt'}
-              onValueChange={(value) => handleInputChange('language', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o idioma" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pt">Português</SelectItem>
-                <SelectItem value="en">Inglês</SelectItem>
-                <SelectItem value="es">Espanhol</SelectItem>
-                <SelectItem value="fr">Francês</SelectItem>
-              </SelectContent>
-            </Select>
+            <Label className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Nível de Acesso
+            </Label>
+            <Badge variant={profile.access_level === 'admin' ? 'default' : 'secondary'} className="w-fit">
+              <Shield className="h-4 w-4 mr-2" />
+              {profile.access_level === 'admin' ? 'Administrador' : 
+               profile.access_level === 'editor' ? 'Editor' : 'Visualizador'}
+            </Badge>
+            <p className="text-xs text-muted-foreground">
+              O nível de acesso só pode ser alterado por um administrador na secção "Configuração de Acessos"
+            </p>
           </div>
 
           {/* Submit Button */}

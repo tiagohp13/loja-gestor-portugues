@@ -151,8 +151,6 @@ const UserProfileForm: React.FC = () => {
         user_id: user.id,
         name: profile.name,
         phone: profile.phone,
-        language: profile.language,
-        theme: profile.theme,
         avatar_url: profile.avatar_url
       };
 
