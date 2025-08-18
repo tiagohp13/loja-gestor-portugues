@@ -16,6 +16,7 @@ export const useOrderHandlers = (
   orderItems: OrderItem[],
   setOrderItems: (items: OrderItem[]) => void,
   setCurrentQuantity: (quantity: number) => void,
+  setCurrentSalePrice: (price: number) => void,
 ) => {
   const handleSelectClient = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
@@ -30,11 +31,12 @@ export const useOrderHandlers = (
     if (product) {
       setCurrentProduct(product);
       setProductSearchTerm(`${product.code} - ${product.name}`);
+      setCurrentSalePrice(product.salePrice);
     }
     setProductSearchOpen(false);
   };
   
-  const handleAddProduct = (currentProduct: Product | null, currentQuantity: number) => {
+  const handleAddProduct = (currentProduct: Product | null, currentQuantity: number, currentSalePrice: number) => {
     if (!currentProduct) {
       toast({
         title: "Erro",
@@ -53,7 +55,7 @@ export const useOrderHandlers = (
       return;
     }
 
-    if (currentProduct.salePrice <= 0) {
+    if (currentSalePrice <= 0) {
       toast({
         title: "Erro",
         description: "O produto deve ter um preço de venda válido",
@@ -73,13 +75,14 @@ export const useOrderHandlers = (
         productId: currentProduct.id,
         productName: `${currentProduct.code} - ${currentProduct.name}`,
         quantity: currentQuantity,
-        salePrice: currentProduct.salePrice
+        salePrice: currentSalePrice
       }]);
     }
     
     setCurrentProduct(null);
     setProductSearchTerm('');
     setCurrentQuantity(1);
+    setCurrentSalePrice(0);
     
     toast({
       title: "Sucesso",

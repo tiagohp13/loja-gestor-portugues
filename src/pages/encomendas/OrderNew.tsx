@@ -31,9 +31,11 @@ const OrderNew = () => {
     productSearchOpen,
     currentProduct,
     currentQuantity,
+    currentSalePrice,
     setProductSearchTerm,
     setProductSearchOpen,
     setCurrentQuantity,
+    setCurrentSalePrice,
     filteredProducts,
     handleSelectProduct,
     handleAddProduct,
@@ -120,7 +122,9 @@ const OrderNew = () => {
             handleSelectProduct={handleSelectProduct}
             currentProduct={currentProduct}
             currentQuantity={currentQuantity}
+            currentSalePrice={currentSalePrice}
             setCurrentQuantity={setCurrentQuantity}
+            setCurrentSalePrice={setCurrentSalePrice}
             handleAddProduct={handleAddProduct}
           />
           

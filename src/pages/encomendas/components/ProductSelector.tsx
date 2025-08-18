@@ -18,7 +18,9 @@ interface ProductSelectorProps {
   handleSelectProduct: (productId: string) => void;
   currentProduct: any;
   currentQuantity: number;
+  currentSalePrice: number;
   setCurrentQuantity: (quantity: number) => void;
+  setCurrentSalePrice: (price: number) => void;
   handleAddProduct: () => void;
 }
 
@@ -31,7 +33,9 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
   handleSelectProduct,
   currentProduct,
   currentQuantity,
+  currentSalePrice,
   setCurrentQuantity,
+  setCurrentSalePrice,
   handleAddProduct
 }) => {
   const navigate = useNavigate();
@@ -121,8 +125,8 @@ const ProductSelector: React.FC<ProductSelectorProps> = ({
           type="number" 
           min="0"
           step="0.01"
-          value={currentProduct?.salePrice || 0}
-          readOnly
+          value={currentSalePrice}
+          onChange={(e) => setCurrentSalePrice(Number(e.target.value))}
           className="mt-1"
         />
       </div>

@@ -29,6 +29,7 @@ export const useOrderForm = () => {
   const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<any>(null);
   const [currentQuantity, setCurrentQuantity] = useState(1);
+  const [currentSalePrice, setCurrentSalePrice] = useState(0);
   
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,7 +57,8 @@ export const useOrderForm = () => {
     setProductSearchOpen,
     orderItems,
     setOrderItems,
-    setCurrentQuantity
+    setCurrentQuantity,
+    setCurrentSalePrice
   );
   
   // Wrapper handlers that use the current state
@@ -65,7 +67,7 @@ export const useOrderForm = () => {
   };
   
   const handleAddProduct = () => {
-    baseHandleAddProduct(currentProduct, currentQuantity);
+    baseHandleAddProduct(currentProduct, currentQuantity, currentSalePrice);
   };
   
   // Submission
@@ -97,9 +99,11 @@ export const useOrderForm = () => {
     productSearchOpen,
     currentProduct,
     currentQuantity,
+    currentSalePrice,
     setProductSearchTerm,
     setProductSearchOpen,
     setCurrentQuantity,
+    setCurrentSalePrice,
     filteredProducts,
     handleSelectProduct,
     handleAddProduct,
