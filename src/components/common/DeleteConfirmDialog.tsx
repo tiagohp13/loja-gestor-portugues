@@ -38,7 +38,8 @@ const DeleteConfirmDialog: React.FC<DeleteConfirmDialogProps> = ({
   
   const handleOpenChange = (newOpen: boolean) => {
     if (isControlled) {
-      onClose?.();
+      // In controlled mode, only call onClose when closing
+      if (!newOpen) onClose?.();
     } else {
       setOpenState(newOpen);
     }
