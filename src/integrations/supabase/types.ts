@@ -7,6 +7,11 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
+  __InternalSupabase: {
+    PostgrestVersion: "12.2.3 (519615d)"
+  }
   public: {
     Tables: {
       categories: {
@@ -52,6 +57,7 @@ export type Database = {
           notes: string | null
           phone: string | null
           taxId: string | null
+          user_id: string | null
         }
         Insert: {
           address?: string | null
@@ -62,6 +68,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           taxId?: string | null
+          user_id?: string | null
         }
         Update: {
           address?: string | null
@@ -72,6 +79,7 @@ export type Database = {
           notes?: string | null
           phone?: string | null
           taxId?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -148,6 +156,7 @@ export type Database = {
           ordernumber: string
           status: string
           updatedat: string | null
+          user_id: string | null
         }
         Insert: {
           clientid: string
@@ -161,6 +170,7 @@ export type Database = {
           ordernumber: string
           status: string
           updatedat?: string | null
+          user_id?: string | null
         }
         Update: {
           clientid?: string
@@ -174,6 +184,7 @@ export type Database = {
           ordernumber?: string
           status?: string
           updatedat?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -773,6 +784,7 @@ export type Database = {
           supplierid: string
           suppliername: string
           updatedat: string | null
+          user_id: string | null
         }
         Insert: {
           createdat?: string | null
@@ -786,6 +798,7 @@ export type Database = {
           supplierid: string
           suppliername: string
           updatedat?: string | null
+          user_id?: string | null
         }
         Update: {
           createdat?: string | null
@@ -799,6 +812,7 @@ export type Database = {
           supplierid?: string
           suppliername?: string
           updatedat?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -855,6 +869,7 @@ export type Database = {
           reason: string
           status: string
           updatedat: string | null
+          user_id: string | null
         }
         Insert: {
           clientid?: string | null
@@ -870,6 +885,7 @@ export type Database = {
           reason: string
           status: string
           updatedat?: string | null
+          user_id?: string | null
         }
         Update: {
           clientid?: string | null
@@ -885,6 +901,7 @@ export type Database = {
           reason?: string
           status?: string
           updatedat?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1124,69 +1141,69 @@ export type Database = {
       get_orders: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
           client_id: string
           client_name: string
-          order_number: string
-          date: string
-          notes: string
-          status: string
-          discount: number
-          created_at: string
-          updated_at: string
           converted_to_exit_id: string
+          created_at: string
+          date: string
+          discount: number
+          id: string
+          notes: string
+          order_number: string
+          status: string
+          updated_at: string
         }[]
       }
       get_stock_entries: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
-          supplier_id: string
-          supplier_name: string
-          entry_number: string
+          created_at: string
           date: string
+          discount: number
+          entry_number: string
+          id: string
           invoice_number: string
           notes: string
           status: string
-          discount: number
-          created_at: string
+          supplier_id: string
+          supplier_name: string
           updated_at: string
         }[]
       }
       get_stock_entry_items: {
         Args: { p_entry_id: string }
         Returns: {
-          id: string
           entry_id: string
+          id: string
           product_id: string
           product_name: string
-          quantity: number
           purchase_price: number
+          quantity: number
         }[]
       }
       get_stock_exit: {
         Args: { p_exit_id: number } | { p_exit_id: string }
         Returns: {
-          id: number
           clientid: number
           clientname: string
-          reason: string
-          exitnumber: string
+          createdat: string
           date: string
+          discount: number
+          exitnumber: string
+          fromorderid: number
+          id: number
           invoicenumber: string
           notes: string
+          reason: string
           status: string
-          discount: number
-          fromorderid: number
-          createdat: string
           updatedat: string
         }[]
       }
       get_stock_exit_items: {
         Args: { p_exit_id: number } | { p_exit_id: string }
         Returns: {
-          id: string
           exit_id: string
+          id: string
           product_id: string
           product_name: string
           quantity: number
@@ -1196,18 +1213,18 @@ export type Database = {
       get_stock_exits: {
         Args: Record<PropertyKey, never>
         Returns: {
-          id: string
           client_id: string
           client_name: string
-          reason: string
-          exit_number: string
+          created_at: string
           date: string
+          discount: number
+          exit_number: string
+          from_order_id: string
+          id: string
           invoice_number: string
           notes: string
+          reason: string
           status: string
-          discount: number
-          from_order_id: string
-          created_at: string
           updated_at: string
         }[]
       }
@@ -1239,21 +1256,25 @@ export type Database = {
   }
 }
 
-type DefaultSchema = Database[Extract<keyof Database, "public">]
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
@@ -1271,14 +1292,16 @@ export type Tables<
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
@@ -1294,14 +1317,16 @@ export type TablesInsert<
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
@@ -1317,14 +1342,16 @@ export type TablesUpdate<
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+> = DefaultSchemaEnumNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
@@ -1332,14 +1359,16 @@ export type Enums<
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof Database },
+    | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof Database
+    schema: keyof DatabaseWithoutInternals
   }
-    ? keyof Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+> = PublicCompositeTypeNameOrOptions extends {
+  schema: keyof DatabaseWithoutInternals
+}
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
