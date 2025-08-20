@@ -560,7 +560,7 @@ export type Database = {
           supplier_id: string | null
           supplier_name: string
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           created_at?: string
@@ -574,7 +574,7 @@ export type Database = {
           supplier_id?: string | null
           supplier_name: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           created_at?: string
@@ -588,7 +588,7 @@ export type Database = {
           supplier_id?: string | null
           supplier_name?: string
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -718,7 +718,7 @@ export type Database = {
           number: string
           reference_old: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           client_id?: string | null
@@ -735,7 +735,7 @@ export type Database = {
           number: string
           reference_old?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           client_id?: string | null
@@ -752,7 +752,7 @@ export type Database = {
           number?: string
           reference_old?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: [
           {
@@ -956,7 +956,7 @@ export type Database = {
           status: string | null
           tax_id: string | null
           updated_at: string
-          user_id: string | null
+          user_id: string
         }
         Insert: {
           address?: string | null
@@ -970,7 +970,7 @@ export type Database = {
           status?: string | null
           tax_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Update: {
           address?: string | null
@@ -984,7 +984,7 @@ export type Database = {
           status?: string | null
           tax_id?: string | null
           updated_at?: string
-          user_id?: string | null
+          user_id?: string
         }
         Relationships: []
       }
