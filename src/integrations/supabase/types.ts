@@ -1112,6 +1112,14 @@ export type Database = {
         Args: { user_id?: string }
         Returns: boolean
       }
+      check_rate_limit: {
+        Args: {
+          max_attempts?: number
+          operation_type: string
+          window_minutes?: number
+        }
+        Returns: boolean
+      }
       generate_padded_sequence: {
         Args: { items: Json; prefix: string } | { items: Json; prefix?: string }
         Returns: {
@@ -1182,21 +1190,21 @@ export type Database = {
         }[]
       }
       get_stock_exit: {
-        Args: { p_exit_id: number } | { p_exit_id: string }
+        Args: { p_exit_id: string }
         Returns: {
-          clientid: number
-          clientname: string
-          createdat: string
+          client_id: string
+          client_name: string
+          created_at: string
           date: string
           discount: number
-          exitnumber: string
-          fromorderid: number
-          id: number
-          invoicenumber: string
+          exit_number: string
+          from_order_id: string
+          id: string
+          invoice_number: string
           notes: string
           reason: string
           status: string
-          updatedat: string
+          updated_at: string
         }[]
       }
       get_stock_exit_items: {
@@ -1239,6 +1247,15 @@ export type Database = {
       is_user_admin: {
         Args: { user_id?: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          affected_id?: string
+          affected_table?: string
+          event_description: string
+          event_type: string
+        }
+        Returns: undefined
       }
       table_exists: {
         Args:
