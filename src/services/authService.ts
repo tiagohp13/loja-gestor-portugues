@@ -22,36 +22,35 @@ export async function loginUser(email: string, password: string) {
 
 export async function registerUser(email: string, password: string, name: string) {
   try {
-    // Check if user already exists - we can't use getUserByEmail since it's not available
-    // Use signInWithPassword with a try/catch to check if the user exists
-    try {
-      const { data } = await supabase.auth.signInWithPassword({
-        email,
-        password: password + "_check_existence_only", // Use an invalid password to ensure it fails but checks email
-      });
-      
-      if (data.user) {
-        throw new Error('Este email já está registado');
-      }
-    } catch (error: any) {
-      // If the error is not about invalid credentials, then the email doesn't exist
-      if (!error.message.includes('Invalid login credentials')) {
-        throw error;
-      }
+    // Validate input parameters
+    if (!email || !email.includes('@')) {
+      throw new Error('Email inválido');
+    }
+    
+    if (!password || password.length < 6) {
+      throw new Error('A palavra-passe deve ter pelo menos 6 caracteres');
     }
     
     // Create new user with Supabase Auth
+    // Supabase will handle duplicate email detection automatically
     const { data, error } = await supabase.auth.signUp({
-      email,
+      email: email.toLowerCase().trim(),
       password,
       options: {
+        emailRedirectTo: `${window.location.origin}/`,
         data: {
-          name: name || email.split('@')[0],
+          name: name?.trim() || email.split('@')[0],
         }
       }
     });
     
-    if (error) throw error;
+    // Handle Supabase-specific errors
+    if (error) {
+      if (error.message.includes('User already registered')) {
+        throw new Error('Este email já está registado');
+      }
+      throw error;
+    }
     
     return { 
       user: data.user,
