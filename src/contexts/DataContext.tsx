@@ -448,14 +448,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const fetchClients = async () => {
     try {
+      console.log('Fetching clients...');
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .order('name');
       
+      console.log('Clients query result:', { data, error });
+      
       if (error) throw error;
       
       if (data) {
+        console.log('Found clients:', data.length);
         const formattedClients = data.map(mapDbClientToClient);
         setClients(formattedClients);
       }
@@ -467,14 +471,18 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const fetchSuppliers = async () => {
     try {
+      console.log('Fetching suppliers...');
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
         .order('name');
       
+      console.log('Suppliers query result:', { data, error });
+      
       if (error) throw error;
       
       if (data) {
+        console.log('Found suppliers:', data.length);
         const formattedSuppliers = data.map(mapDbSupplierToSupplier);
         setSuppliers(formattedSuppliers);
       }
