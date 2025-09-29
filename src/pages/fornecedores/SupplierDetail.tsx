@@ -21,6 +21,8 @@ const SupplierDetail = () => {
   const [isLoadingTotal, setIsLoadingTotal] = useState(true);
   const [supplierDocuments, setSupplierDocuments] = useState<any[]>([]);
 
+  console.log('SupplierDetail render - isLoadingTotal:', isLoadingTotal);
+
   useEffect(() => {
     const fetchSupplierData = async () => {
       if (id) {
@@ -28,22 +30,6 @@ const SupplierDetail = () => {
         try {
           const spent = await getSupplierTotalSpent(id);
           setTotalSpent(spent);
-          
-          // Combine documents from stock entries and expenses
-          const allDocuments = [
-            ...supplierEntries.map(entry => ({
-              ...entry,
-              type: 'Compra',
-              value: 0 // We'll calculate this if needed
-            })),
-            ...supplierExpenses.map(expense => ({
-              ...expense,
-              type: 'Despesa',
-              value: 0 // We'll calculate this if needed
-            }))
-          ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-          
-          setSupplierDocuments(allDocuments);
         } catch (error) {
           console.error('Error fetching supplier total spent:', error);
         } finally {
@@ -53,7 +39,28 @@ const SupplierDetail = () => {
     };
 
     fetchSupplierData();
-  }, [id, supplierEntries, supplierExpenses]);
+  }, [id]);
+
+  // Separate effect for combining documents when supplier data is loaded
+  useEffect(() => {
+    if (!isLoading && supplierEntries && supplierExpenses) {
+      // Combine documents from stock entries and expenses
+      const allDocuments = [
+        ...supplierEntries.map(entry => ({
+          ...entry,
+          type: 'Compra',
+          value: 0 // We'll calculate this if needed
+        })),
+        ...supplierExpenses.map(expense => ({
+          ...expense,
+          type: 'Despesa',
+          value: 0 // We'll calculate this if needed
+        }))
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      
+      setSupplierDocuments(allDocuments);
+    }
+  }, [isLoading, supplierEntries, supplierExpenses]);
 
   if (isLoading) return <LoadingSpinner />;
 
