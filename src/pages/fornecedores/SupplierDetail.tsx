@@ -1,11 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom'; 
 import { getSupplierTotalSpent } from '@/integrations/supabase/client';
-import { useData } from '../../contexts/DataContext';
+import { useSupplierDetail } from './hooks/useSupplierDetail';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard } from 'lucide-react';
+import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, ShoppingCart, Receipt } from 'lucide-react';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -15,7 +15,7 @@ import { useParams } from 'react-router-dom';
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getSupplier, isLoading } = useData();
+  const { supplier, supplierEntries, supplierExpenses, isLoading } = useSupplierDetail();
   const [totalSpent, setTotalSpent] = useState<number>(0);
 	const [isLoadingTotal, setIsLoadingTotal] = useState(true);
 
@@ -35,11 +35,9 @@ const SupplierDetail = () => {
     };
 
     fetchSupplierData();
-  }, [id, getSupplier, getSupplierTotalSpent]);
+  }, [id]);
 
   if (isLoading) return <LoadingSpinner />;
-
-  const supplier = id ? getSupplier(id) : null;
 
   if (!supplier) {
     return (
@@ -160,7 +158,71 @@ const SupplierDetail = () => {
           </CardContent>
         </Card>
 
-        {/* Additional cards can be added here */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Documentos</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Stock Entries */}
+            {supplierEntries.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                  <ShoppingCart className="h-4 w-4 mr-1" />
+                  Compras ({supplierEntries.length})
+                </h4>
+                <div className="space-y-2">
+                  {supplierEntries.map((entry) => (
+                    <div 
+                      key={entry.id} 
+                      className="p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate(`/entradas/${entry.id}`)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{entry.number}</p>
+                          <p className="text-xs text-gray-500">{formatDateString(entry.date)}</p>
+                        </div>
+                        {entry.invoice_number && (
+                          <p className="text-xs text-gray-400">Fatura: {entry.invoice_number}</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Expenses */}
+            {supplierExpenses.length > 0 && (
+              <div>
+                <h4 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
+                  <Receipt className="h-4 w-4 mr-1" />
+                  Despesas ({supplierExpenses.length})
+                </h4>
+                <div className="space-y-2">
+                  {supplierExpenses.map((expense) => (
+                    <div 
+                      key={expense.id} 
+                      className="p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors"
+                      onClick={() => navigate(`/despesas/${expense.id}`)}
+                    >
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="font-medium text-sm">{expense.number}</p>
+                          <p className="text-xs text-gray-500">{formatDateString(expense.date)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {supplierEntries.length === 0 && supplierExpenses.length === 0 && (
+              <p className="text-gray-500 text-sm">Nenhum documento encontrado para este fornecedor.</p>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
