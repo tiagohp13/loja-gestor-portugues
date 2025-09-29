@@ -29,19 +29,6 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false })
     return saved ? JSON.parse(saved) : {};
   });
 
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(4)].map((_, index) => (
-            <SummaryCardSkeleton key={index} />
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     const handleStorageChange = () => {
         const savedConfig = localStorage.getItem('dashboard-card-config');
@@ -58,6 +45,19 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false })
         window.removeEventListener('storage', handleStorageChange);
     };
   }, []);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, index) => (
+            <SummaryCardSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   // Helper function to render variation indicator (month to month)
   const renderVariation = (currentValue: number, previousValue: number) => {
