@@ -413,7 +413,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .neq('status', 'deleted') // Filter out deleted products
+        .or('status.is.null,status.neq.deleted') // Show products with null status or not deleted
         .order('name');
       
       if (error) throw error;
