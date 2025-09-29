@@ -228,7 +228,9 @@ const OrderEdit = () => {
       return sum + (itemTotal - discountAmount);
     }, 0);
 
-    return itemsTotal;
+    // Apply global discount
+    const globalDiscountAmount = itemsTotal * ((formData.discount || 0) / 100);
+    return itemsTotal - globalDiscountAmount;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -319,12 +321,18 @@ const OrderEdit = () => {
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="client">Cliente *</Label>
-              <Input
-                id="client"
-                type="text"
-                value={formData.clientName}
-                disabled
-              />
+              <Select value={formData.clientId} onValueChange={handleClientChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div>
@@ -333,7 +341,22 @@ const OrderEdit = () => {
                 id="date"
                 type="date"
                 value={formData.date}
-                disabled
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="discount">Desconto Global (%)</Label>
+              <Input
+                id="discount"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                value={formData.discount}
+                onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                placeholder="0"
               />
             </div>
 
