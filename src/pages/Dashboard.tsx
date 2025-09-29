@@ -60,7 +60,7 @@ const DashboardPage: React.FC = () => {
     // Inline the order utils function to avoid unnecessary import
     const findInsufficientStockOrders = (orders: any[], products: any[]) => {
       return orders.reduce((acc: any[], order) => {
-        if (order.convertedToStockExitId) return acc;
+        if (order.convertedToStockExitId || order.status === 'deleted') return acc;
         
         order.items.forEach((item: any) => {
           const product = products.find(p => p.id === item.productId);
@@ -79,7 +79,7 @@ const DashboardPage: React.FC = () => {
 
     return {
       insufficientStockItems: findInsufficientStockOrders(orders, products),
-      pendingOrders: orders.filter(order => !order.convertedToStockExitId)
+      pendingOrders: orders.filter(order => !order.convertedToStockExitId && order.status !== 'deleted')
     };
   }, [orders, products]);
 

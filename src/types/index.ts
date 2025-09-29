@@ -126,6 +126,7 @@ export interface StockExit {
   updatedAt: string;
   discount?: number;
   total?: number;
+  status?: string;
 }
 
 export interface StockExitItem {
@@ -151,6 +152,7 @@ export interface StockEntry {
   createdAt: string;
   updatedAt: string;
   total?: number;
+  status?: string;
 }
 
 export interface Order {
@@ -167,6 +169,7 @@ export interface Order {
   total?: number;
   createdAt: string;
   updatedAt: string;
+  status?: string;
 }
 
 export interface OrderItem {
@@ -192,6 +195,7 @@ export interface Expense {
   createdAt: string;
   updatedAt: string;
   total?: number;
+  status?: string;
 }
 
 export interface ExpenseItem {
