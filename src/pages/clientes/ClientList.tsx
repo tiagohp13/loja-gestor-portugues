@@ -21,10 +21,14 @@ import {
 } from "@/components/ui/table";
 import { getClientTotalSpent } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/formatting';
+import { calculateClientTag } from '@/utils/clientTags';
+import ClientTag from '@/components/common/ClientTag';
+import { useClientTags } from '@/hooks/useClientTags';
 
 const ClientList = () => {
   const navigate = useNavigate();
-  const { clients, deleteClient } = useData();
+  const { clients, deleteClient, stockExits } = useData();
+  const { config: tagConfig } = useClientTags();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
   const [clientsWithSpent, setClientsWithSpent] = useState<Array<any>>([]);
@@ -129,7 +133,7 @@ const ClientList = () => {
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Telefone</TableHead>
-                <TableHead>Morada</TableHead>
+                <TableHead>Etiqueta</TableHead>
                 <TableHead>Valor Gasto</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -157,7 +161,9 @@ const ClientList = () => {
                     <TableCell className="font-medium">{client.name}</TableCell>
                     <TableCell>{client.email || '-'}</TableCell>
                     <TableCell>{client.phone || '-'}</TableCell>
-                    <TableCell>{client.address || '-'}</TableCell>
+                    <TableCell>
+                      <ClientTag tag={calculateClientTag(client, stockExits, tagConfig)} />
+                    </TableCell>
                     <TableCell className="font-medium text-blue-600">
                       {formatCurrency(client.totalSpent)}
                     </TableCell>

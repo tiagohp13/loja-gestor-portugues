@@ -3,8 +3,12 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/common/StatusBadge';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
-import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, TrendingUp } from 'lucide-react';
+import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, TrendingUp, Tag } from 'lucide-react';
 import { Client } from '@/types';
+import { useData } from '@/contexts/DataContext';
+import { calculateClientTag } from '@/utils/clientTags';
+import ClientTag from '@/components/common/ClientTag';
+import { useClientTags } from '@/hooks/useClientTags';
 
 interface ClientInfoCardProps {
   client: Client;
@@ -13,6 +17,9 @@ interface ClientInfoCardProps {
 }
 
 const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ client, totalSpent, isLoadingTotal }) => {
+  const { stockExits } = useData();
+  const { config: tagConfig } = useClientTags();
+  const clientTag = calculateClientTag(client, stockExits, tagConfig);
   return (
     <Card className="md:col-span-2">
       <CardHeader>
@@ -22,6 +29,14 @@ const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ client, totalSpent, isL
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="flex items-start">
+          <Tag className="h-5 w-5 mr-2 text-gray-500" />
+          <div>
+            <p className="text-sm font-medium text-gray-500">Etiqueta</p>
+            <ClientTag tag={clientTag} />
+          </div>
+        </div>
+
         {client.address && (
           <div className="flex items-start">
             <MapPin className="h-5 w-5 mr-2 text-gray-500" />

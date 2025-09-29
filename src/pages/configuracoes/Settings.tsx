@@ -12,6 +12,8 @@ import UserProfileForm from '@/components/profile/UserProfileForm';
 import AdminUserManagement from '@/components/profile/AdminUserManagement';
 import { usePermissions } from '@/hooks/usePermissions';
 import { ExportDataType } from '@/types';
+import ClientTagSettings from '@/components/ui/ClientTagSettings';
+import { useClientTags } from '@/hooks/useClientTags';
 
 const Settings = () => {
   const { 
@@ -19,6 +21,7 @@ const Settings = () => {
     exportData, importData, updateData
   } = useData();
   const { isAdmin, canEdit } = usePermissions();
+  const { config: tagConfig, updateConfig: updateTagConfig } = useClientTags();
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: ExportDataType) => {
     const file = e.target.files?.[0];
@@ -247,10 +250,14 @@ const Settings = () => {
               <Separator />
               
               <div>
-                <h4 className="text-sm font-medium mb-3">Outras Configurações</h4>
-                <p className="text-sm text-muted-foreground">
-                  Mais opções de configuração estarão disponíveis em breve...
+                <h4 className="text-sm font-medium mb-3">Etiquetas de Clientes</h4>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Configure as regras para classificação automática de clientes
                 </p>
+                <ClientTagSettings 
+                  config={tagConfig}
+                  onConfigChange={updateTagConfig}
+                />
               </div>
             </CardContent>
           </Card>
