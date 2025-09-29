@@ -383,23 +383,25 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const order = orders.find(o => o.id === orderId);
     if (!order) return undefined;
     
+    // CRÍTICO: Preservar os preços EXATOS da encomenda, incluindo ofertas (preço 0)
     const stockExit: Omit<StockExit, 'id' | 'number' | 'createdAt'> = {
       clientId: order.clientId,
       clientName: order.clientName || '',
-      date: new Date().toISOString(),
+      date: order.date, // Usar data da encomenda, não data atual
       invoiceNumber: invoiceNumber || '',
       notes: `Converted from order ${order.number}`,
       fromOrderId: order.id,
       fromOrderNumber: order.number,
-      discount: order.discount,
+      discount: order.discount || 0,
       updatedAt: new Date().toISOString(),
       items: order.items.map(item => ({
         id: crypto.randomUUID(),
         productId: item.productId,
         productName: item.productName,
         quantity: item.quantity,
+        // IMPORTANTE: Usar preços da encomenda, NÃO buscar do produto
         salePrice: item.salePrice,
-        discountPercent: item.discountPercent,
+        discountPercent: item.discountPercent || 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }))
