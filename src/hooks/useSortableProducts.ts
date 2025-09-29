@@ -3,6 +3,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useSortableTable } from './useSortableTable';
 import { mapDbProductToProduct } from '@/utils/mappers';
 import { Product } from '@/types';
+import { naturalSort } from '@/pages/produtos/hooks/useProductSort';
 
 export const useSortableProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,39 +16,71 @@ export const useSortableProducts = () => {
   const fetchProducts = async () => {
     setIsLoading(true);
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('products')
         .select('*')
         .or('status.is.null,status.neq.deleted');
 
-      // Apply sorting
-      const order = getSupabaseOrder();
-      if (order) {
-        // Map frontend column names to database column names
-        const columnMap: Record<string, string> = {
-          'name': 'name',
-          'code': 'code',
-          'category': 'category',
-          'currentStock': 'current_stock',
-          'minStock': 'min_stock',
-          'salePrice': 'sale_price',
-          'purchasePrice': 'purchase_price',
-          'created_at': 'created_at'
-        };
-        
-        const dbColumn = columnMap[order.column] || order.column;
-        query = query.order(dbColumn, { ascending: order.ascending });
-      } else {
-        // Default sorting by code
-        query = query.order('code', { ascending: true });
-      }
-
-      const { data, error } = await query;
-
       if (error) throw error;
 
       if (data) {
-        const formattedProducts = data.map(mapDbProductToProduct);
+        let formattedProducts = data.map(mapDbProductToProduct);
+        
+        // Apply client-side sorting with natural sort for codes
+        const order = getSupabaseOrder();
+        if (order) {
+          formattedProducts.sort((a, b) => {
+            const { column, ascending } = order;
+            const direction = ascending ? 'asc' : 'desc';
+            
+            let aValue: any, bValue: any;
+            
+            // Map frontend column names to product properties
+            switch (column) {
+              case 'code':
+                return naturalSort(a.code, b.code, direction);
+              case 'name':
+                return naturalSort(a.name, b.name, direction);
+              case 'category':
+                aValue = a.category || '';
+                bValue = b.category || '';
+                break;
+              case 'currentStock':
+                aValue = a.currentStock;
+                bValue = b.currentStock;
+                break;
+              case 'minStock':
+                aValue = a.minStock;
+                bValue = b.minStock;
+                break;
+              case 'salePrice':
+                aValue = a.salePrice;
+                bValue = b.salePrice;
+                break;
+              case 'purchasePrice':
+                aValue = a.purchasePrice;
+                bValue = b.purchasePrice;
+                break;
+              default:
+                return 0;
+            }
+            
+            // Handle non-string comparisons
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+              return naturalSort(aValue, bValue, direction);
+            } else {
+              if (direction === 'asc') {
+                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+              } else {
+                return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+              }
+            }
+          });
+        } else {
+          // Default sorting by code (natural sort)
+          formattedProducts.sort((a, b) => naturalSort(a.code, b.code, 'asc'));
+        }
+        
         setProducts(formattedProducts);
       }
     } catch (error) {
