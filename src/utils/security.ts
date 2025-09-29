@@ -115,15 +115,18 @@ export const getSecurityHeaders = () => ({
     "script-src 'self'", // Removed unsafe-inline and unsafe-eval for security
     "style-src 'self' 'unsafe-inline'", // Keep for CSS, but minimize inline styles
     "img-src 'self' data: https:",
-    "connect-src 'self' https://*.supabase.co",
-    "font-src 'self'",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+    "font-src 'self' data:",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
+    "frame-ancestors 'none'",
     "upgrade-insecure-requests"
   ].join('; '),
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin'
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()'
 });
