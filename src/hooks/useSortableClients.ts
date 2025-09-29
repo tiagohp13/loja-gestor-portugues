@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useSortableTable } from './useSortableTable';
-import { getClientTotalSpent } from '@/integrations/supabase/client';
+import { getClientTotalSpent, getClientLastPurchaseDate } from '@/integrations/supabase/utils/financialUtils';
 import { mapDbClientToClient } from '@/utils/mappers';
 import { Client } from '@/types';
 
@@ -50,10 +50,14 @@ export const useSortableClients = () => {
         
         const clientsWithTotals = await Promise.all(
           formattedClients.map(async (client) => {
-            const totalSpent = await getClientTotalSpent(client.id);
+            const [totalSpent, lastPurchaseDate] = await Promise.all([
+              getClientTotalSpent(client.id),
+              getClientLastPurchaseDate(client.id)
+            ]);
             return {
               ...client,
-              totalSpent
+              totalSpent,
+              lastPurchaseDate
             };
           })
         );

@@ -183,7 +183,7 @@ const ClientList = () => {
                           {format(new Date(client.lastPurchaseDate), 'dd/MM/yyyy', { locale: ptBR })}
                         </span>
                       ) : (
-                        <span className="text-muted-foreground text-sm">Nunca comprou</span>
+                        <span className="text-muted-foreground text-sm">Nunca</span>
                       )}
                     </TableCell>
                     <TableCell className="font-medium text-blue-600">

@@ -122,3 +122,33 @@ export const getSupplierTotalSpent = async (supplierId: string): Promise<number>
     return 0;
   }
 };
+
+/**
+ * Get client's last purchase date from stock exits (real sales)
+ */
+export const getClientLastPurchaseDate = async (clientId: string): Promise<string | null> => {
+  try {
+    // Fetch the most recent stock exit for this client
+    const { data, error } = await supabase
+      .from('stock_exits')
+      .select('date')
+      .eq('client_id', clientId)
+      .neq('status', 'deleted')
+      .order('date', { ascending: false })
+      .limit(1);
+    
+    if (error) {
+      console.error('Error fetching client last purchase date:', error);
+      return null;
+    }
+    
+    if (!data || data.length === 0) {
+      return null; // No purchases found
+    }
+    
+    return data[0].date;
+  } catch (err) {
+    console.error('Exception fetching client last purchase date:', err);
+    return null;
+  }
+};
