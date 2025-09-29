@@ -62,6 +62,7 @@ export const useOrderForm = () => {
     handleSelectProduct: baseHandleSelectProduct,
     handleAddProduct: baseHandleAddProduct,
     handleRemoveProduct,
+    handleUpdateItem,
     calculateTotal
   } = useOrderHandlers(
     clients,
@@ -127,6 +128,7 @@ export const useOrderForm = () => {
     
     orderItems,
     handleRemoveProduct,
+    handleUpdateItem,
     calculateTotal,
     
     notes,

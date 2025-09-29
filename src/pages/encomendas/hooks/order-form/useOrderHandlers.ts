@@ -96,6 +96,15 @@ export const useOrderHandlers = (
     setOrderItems(updatedItems);
   };
   
+  const handleUpdateItem = (index: number, field: 'quantity' | 'salePrice', value: number) => {
+    const updatedItems = [...orderItems];
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value
+    };
+    setOrderItems(updatedItems);
+  };
+  
   const calculateTotal = () => {
     return orderItems.reduce((total, item) => total + (item.quantity * item.salePrice), 0);
   };
@@ -105,6 +114,7 @@ export const useOrderHandlers = (
     handleSelectProduct,
     handleAddProduct,
     handleRemoveProduct,
+    handleUpdateItem,
     calculateTotal
   };
 };

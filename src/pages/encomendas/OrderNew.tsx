@@ -42,6 +42,7 @@ const OrderNew = () => {
     
     orderItems,
     handleRemoveProduct,
+    handleUpdateItem,
     calculateTotal,
     
     notes,
@@ -136,6 +137,7 @@ const OrderNew = () => {
             <OrderProductsTable 
               orderItems={orderItems}
               handleRemoveProduct={handleRemoveProduct}
+              handleUpdateItem={handleUpdateItem}
               calculateTotal={calculateTotal}
             />
           )}

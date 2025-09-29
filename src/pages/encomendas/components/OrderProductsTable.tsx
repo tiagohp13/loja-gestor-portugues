@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Trash2 } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
 import { OrderItem } from '../hooks/order-form/types';
@@ -8,12 +9,14 @@ import { OrderItem } from '../hooks/order-form/types';
 interface OrderProductsTableProps {
   orderItems: OrderItem[];
   handleRemoveProduct: (index: number) => void;
+  handleUpdateItem: (index: number, field: 'quantity' | 'salePrice', value: number) => void;
   calculateTotal: () => number;
 }
 
 const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
   orderItems,
   handleRemoveProduct,
+  handleUpdateItem,
   calculateTotal
 }) => {
   return (
@@ -42,10 +45,23 @@ const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
                   {item.productName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {item.quantity}
+                  <Input
+                    type="number"
+                    min="1"
+                    value={item.quantity}
+                    onChange={(e) => handleUpdateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                    className="w-20"
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {formatCurrency(item.salePrice)}
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={item.salePrice}
+                    onChange={(e) => handleUpdateItem(index, 'salePrice', parseFloat(e.target.value) || 0)}
+                    className="w-24"
+                  />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-blue font-medium">
                   {formatCurrency(item.quantity * item.salePrice)}
