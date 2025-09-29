@@ -18,6 +18,8 @@ export const useOrderDetail = (id: string | undefined) => {
   const [relatedStockExit, setRelatedStockExit] = useState<StockExit | null>(null);
 
   useEffect(() => {
+    console.log("useOrderDetail - Effect triggered with ID:", id);
+    console.log("useOrderDetail - Available orders:", orders.length);
     if (id) {
       const fetchedOrder = orders.find(o => o.id === id);
       if (fetchedOrder) {
@@ -59,6 +61,8 @@ export const useOrderDetail = (id: string | undefined) => {
           }
         }
       } else {
+        console.log("useOrderDetail - Order not found with ID:", id);
+        console.log("useOrderDetail - Available order IDs:", orders.map(o => o.id));
         toast({
           title: "Erro",
           description: "Encomenda não encontrada",
@@ -66,6 +70,8 @@ export const useOrderDetail = (id: string | undefined) => {
         });
         navigate('/encomendas/consultar');
       }
+    } else {
+      console.log("useOrderDetail - No ID provided");
     }
   }, [id, orders, clients, navigate, stockExits]);
 
