@@ -99,23 +99,16 @@ const ExpenseList = () => {
     }
 
     try {
-      const { error: itemsError } = await supabase
-        .from('expense_items')
-        .delete()
-        .eq('expense_id', expenseId);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'expenses',
+        record_id: expenseId
+      });
 
-      if (itemsError) throw itemsError;
-
-      const { error: expenseError } = await supabase
-        .from('expenses')
-        .delete()
-        .eq('id', expenseId);
-
-      if (expenseError) throw expenseError;
+      if (error) throw error;
 
       setExpenses(prev => prev.filter(e => e.id !== expenseId));
       setFilteredExpenses(prev => prev.filter(e => e.id !== expenseId));
-      toast.success('Despesa eliminada com sucesso');
+      toast.success('Despesa movida para a reciclagem');
     } catch (error) {
       console.error('Error deleting expense:', error);
       toast.error('Erro ao eliminar despesa');

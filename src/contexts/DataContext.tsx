@@ -715,14 +715,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteCategory = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('categories')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'categories',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setCategories(categories.filter(c => c.id !== id));
+      toast.success('Categoria movida para a reciclagem');
     } catch (error) {
       console.error('Error deleting category:', error);
       toast.error('Erro ao eliminar categoria');
@@ -791,14 +793,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteClient = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('clients')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'clients',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setClients(clients.filter(c => c.id !== id));
+      toast.success('Cliente movido para a reciclagem');
     } catch (error) {
       console.error('Error deleting client:', error);
       toast.error('Erro ao eliminar cliente');
@@ -869,14 +873,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteSupplier = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('suppliers')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'suppliers',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setSuppliers(suppliers.filter(s => s.id !== id));
+      toast.success('Fornecedor movido para a reciclagem');
     } catch (error) {
       console.error('Error deleting supplier:', error);
       toast.error('Erro ao eliminar fornecedor');
@@ -998,28 +1004,23 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteOrder = async (id: string) => {
     try {
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .delete()
-        .eq('order_id', id);
-      
-      if (itemsError) throw itemsError;
-      
-      const { error } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'orders',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setOrders(orders.filter(o => o.id !== id));
-      toast.success('Encomenda eliminada com sucesso');
+      toast.success('Encomenda movida para a reciclagem');
     } catch (error) {
       console.error('Error deleting order:', error);
       toast.error('Erro ao eliminar encomenda');
       throw error;
     }
   };
+  
   
   const addStockEntry = async (entry: Omit<StockEntry, 'id' | 'number' | 'createdAt'>) => {
     try {
@@ -1177,56 +1178,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteStockEntry = async (id: string) => {
     try {
-      const entry = stockEntries.find(e => e.id === id);
-      if (entry && entry.items) {
-        for (const item of entry.items) {
-          try {
-            console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
-            
-            // Update product stock by using direct arithmetic instead of raw function
-            const { error: updateError } = await supabase
-              .from('products')
-              .select('current_stock')
-              .eq('id', item.productId)
-              .single()
-              .then(({ data, error }) => {
-                if (!error && data) {
-                  return supabase
-                    .from('products')
-                    .update({ 
-                      current_stock: Math.max(0, data.current_stock - item.quantity) 
-                    })
-                    .eq('id', item.productId);
-                }
-                return { error };
-              });
-              
-            if (updateError) {
-              console.error('Error updating product stock:', updateError);
-            }
-          } catch (error) {
-            console.error('Error updating product stock:', error);
-          }
-        }
-      }
-      
-      const { error: itemsError } = await supabase
-        .from('stock_entry_items')
-        .delete()
-        .eq('entry_id', id);
-      
-      if (itemsError) throw itemsError;
-      
-      const { error } = await supabase
-        .from('stock_entries')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'stock_entries',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setStockEntries(stockEntries.filter(e => e.id !== id));
-      await fetchProducts();
-      toast.success('Entrada eliminada com sucesso');
+      toast.success('Compra movida para a reciclagem');
     } catch (error) {
       console.error('Error deleting stock entry:', error);
       toast.error('Erro ao eliminar entrada de stock');
@@ -1384,74 +1345,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteStockExit = async (id: string) => {
     try {
-      const exit = stockExits.find(e => e.id === id);
-      
-      if (exit) {
-        if (exit.items) {
-          for (const item of exit.items) {
-            try {
-              console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
-              
-              // Update product stock by using direct arithmetic instead of raw function
-              const { error: updateError } = await supabase
-                .from('products')
-                .select('current_stock')
-                .eq('id', item.productId)
-                .single()
-                .then(({ data, error }) => {
-                  if (!error && data) {
-                    return supabase
-                      .from('products')
-                      .update({ 
-                        current_stock: data.current_stock + item.quantity 
-                      })
-                      .eq('id', item.productId);
-                  }
-                  return { error };
-                });
-                
-              if (updateError) {
-                console.error('Error updating product stock:', updateError);
-              }
-            } catch (error) {
-              console.error('Error updating product stock:', error);
-            }
-          }
-        }
-        
-        if (exit.fromOrderId) {
-          const { error: orderUpdateError } = await supabase
-            .from('orders')
-            .update({
-              converted_to_stock_exit_id: null,
-              converted_to_stock_exit_number: null
-            })
-            .eq('id', exit.fromOrderId);
-          
-          if (orderUpdateError) {
-            console.error('Error updating order conversion status:', orderUpdateError);
-          }
-        }
-      }
-      
-      const { error: itemsError } = await supabase
-        .from('stock_exit_items')
-        .delete()
-        .eq('exit_id', id);
-      
-      if (itemsError) throw itemsError;
-      
-      const { error } = await supabase
-        .from('stock_exits')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'stock_exits',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setStockExits(stockExits.filter(e => e.id !== id));
-      await fetchProducts();
-      await fetchOrders();
-      toast.success('Saída eliminada com sucesso');
+      toast.success('Venda movida para a reciclagem');
     } catch (error) {
       console.error('Error deleting stock exit:', error);
       toast.error('Erro ao eliminar saída de stock');

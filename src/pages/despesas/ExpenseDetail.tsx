@@ -76,13 +76,14 @@ const ExpenseDetail = () => {
 
   const handleDeleteExpense = async (expenseId: string) => {
     try {
-      const { error: itemsError } = await supabase.from('expense_items').delete().eq('expense_id', expenseId);
-      if (itemsError) throw itemsError;
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'expenses',
+        record_id: expenseId
+      });
 
-      const { error: expenseError } = await supabase.from('expenses').delete().eq('id', expenseId);
-      if (expenseError) throw expenseError;
+      if (error) throw error;
 
-      toast.success('Despesa eliminada com sucesso');
+      toast.success('Despesa movida para a reciclagem');
       navigate('/despesas/historico');
     } catch (error) {
       console.error('Error deleting expense:', error);
