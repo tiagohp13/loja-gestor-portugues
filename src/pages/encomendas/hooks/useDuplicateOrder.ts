@@ -25,7 +25,7 @@ export const useDuplicateOrder = () => {
       if (data) {
         toast.success('Encomenda duplicada com sucesso!');
         // Navigate to the edit page of the new order
-        navigate(`/encomendas/${data}/editar`);
+        navigate(`/encomendas/editar/${data}`);
       }
     } catch (error) {
       console.error('Erro ao duplicar encomenda:', error);
