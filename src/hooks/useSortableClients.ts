@@ -29,6 +29,7 @@ export const useSortableClients = () => {
           'name': 'name',
           'email': 'email',
           'phone': 'phone',
+          'lastPurchaseDate': 'last_purchase_date',
           'created_at': 'created_at'
         };
         
@@ -57,10 +58,17 @@ export const useSortableClients = () => {
           })
         );
 
-        // If sorting by totalSpent, we need to sort on the frontend since it's calculated
+        // If sorting by totalSpent or lastPurchaseDate that need frontend sorting
         if (order?.column === 'totalSpent') {
           clientsWithTotals.sort((a, b) => {
             const diff = a.totalSpent - b.totalSpent;
+            return order.ascending ? diff : -diff;
+          });
+        } else if (order?.column === 'lastPurchaseDate') {
+          clientsWithTotals.sort((a, b) => {
+            const aDate = a.lastPurchaseDate ? new Date(a.lastPurchaseDate).getTime() : 0;
+            const bDate = b.lastPurchaseDate ? new Date(b.lastPurchaseDate).getTime() : 0;
+            const diff = aDate - bDate;
             return order.ascending ? diff : -diff;
           });
         }
