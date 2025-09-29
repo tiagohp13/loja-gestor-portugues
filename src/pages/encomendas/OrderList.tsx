@@ -101,7 +101,6 @@ const OrderList = () => {
   };
 
   const handleDeleteOrder = async () => {
-    console.log('handleDeleteOrder called with orderId:', deleteDialog.orderId);
     if (!deleteDialog.orderId) return;
     if (!validatePermission(canDelete, 'eliminar encomendas')) {
       setDeleteDialog({ open: false, orderId: null });
@@ -109,7 +108,7 @@ const OrderList = () => {
     }
 
     try {
-      console.log('Starting delete process for order:', deleteDialog.orderId);
+      // Starting delete process for order
       
       const { error: itemsError } = await supabase
         .from('order_items')
@@ -299,9 +298,7 @@ const OrderList = () => {
                                   variant="ghost"
                                   size="sm"
                                   onClick={() => {
-                                    console.log('Delete button clicked for order:', order.id);
-                                    console.log('Order convertedToStockExitId:', order.convertedToStockExitId);
-                                    console.log('canDelete permission:', canDelete);
+                                    // Delete button clicked for order
                                     setDeleteDialog({ open: true, orderId: order.id });
                                   }}
                                   disabled={order.convertedToStockExitId !== null}

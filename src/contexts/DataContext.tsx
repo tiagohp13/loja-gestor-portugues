@@ -471,19 +471,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const fetchSuppliers = async () => {
     try {
-      console.log('Fetching suppliers...');
+      // Fetching suppliers
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
         .neq('status', 'deleted') // Filter out deleted suppliers
         .order('name');
       
-      console.log('Suppliers query result:', { data, error });
-      
       if (error) throw error;
       
       if (data) {
-        console.log('Found suppliers:', data.length);
         const formattedSuppliers = data.map(mapDbSupplierToSupplier);
         setSuppliers(formattedSuppliers);
       }
@@ -521,7 +518,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   const fetchStockEntries = async () => {
-    console.log("Fetching stock entries...");
+    // Fetching stock entries
     try {
       const { data, error } = await supabase
         .from('stock_entries')
@@ -538,7 +535,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       }
       
       if (data) {
-        console.log("Received stock entries data:", data);
+        // Received stock entries data
         const formattedEntries = data.map(entry => {
           const items = entry.stock_entry_items || [];
           return mapDbStockEntryToStockEntry(entry, items);
