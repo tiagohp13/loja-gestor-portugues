@@ -1,25 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, Suspense, lazy } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDashboardData } from './dashboard/hooks/useDashboardData';
 import { useSupportData } from './suporte/hooks/useSupportData';
 import PageHeader from '../components/ui/PageHeader';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import QuickActions from '@/components/ui/QuickActions';
 import TableSkeleton from '@/components/ui/TableSkeleton';
-
-// Import components from dashboard
-import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
-import LowStockProducts from './dashboard/components/LowStockProducts';
-import InsufficientStockOrders from './dashboard/components/InsufficientStockOrders';
-import PendingOrders from './dashboard/components/PendingOrders';
-import { findInsufficientStockOrders } from './dashboard/hooks/utils/orderUtils';
-
-// Import the SummaryCards from support page
-import SummaryCards from './suporte/components/SummaryCards';
-
-// Import KPI panel components
-import KPIPanel from '@/components/statistics/KPIPanel';
+import ChartSkeleton from '@/components/ui/ChartSkeleton';
 import { WidgetConfig } from '@/components/ui/DashboardCustomization/types';
+
+// Lazy load heavy components for better performance
+const SalesAndPurchasesChart = lazy(() => import('./dashboard/components/SalesAndPurchasesChart'));
+const LowStockProducts = lazy(() => import('./dashboard/components/LowStockProducts'));
+const InsufficientStockOrders = lazy(() => import('./dashboard/components/InsufficientStockOrders'));
+const PendingOrders = lazy(() => import('./dashboard/components/PendingOrders'));
+const SummaryCards = lazy(() => import('./suporte/components/SummaryCards'));
+const KPIPanel = lazy(() => import('@/components/statistics/KPIPanel'));
 
 // Default configuration for dashboard widgets, including titles
 const defaultDashboardConfig: WidgetConfig[] = [
@@ -41,14 +36,13 @@ const DashboardPage: React.FC = () => {
     orders,
     monthlyData,
     lowStockProducts,
-    // Use new values that include expenses
     totalSpentWithExpenses,
     totalProfitWithExpenses,
     profitMarginPercentWithExpenses
   } = useDashboardData();
 
-  // Initialize dashboard configuration from localStorage or use default
-  const [dashboardConfig, setDashboardConfig] = useState<WidgetConfig[]>(() => {
+  // Initialize dashboard configuration from localStorage or use default - memoized
+  const [dashboardConfig] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem('dashboard-layout-config');
     if (saved) {
       try {
@@ -61,11 +55,33 @@ const DashboardPage: React.FC = () => {
     return defaultDashboardConfig;
   });
   
-  // Find orders with insufficient stock
-  const insufficientStockItems = findInsufficientStockOrders(orders, products);
+  // Memoize expensive calculations
+  const { insufficientStockItems, pendingOrders } = useMemo(() => {
+    // Inline the order utils function to avoid unnecessary import
+    const findInsufficientStockOrders = (orders: any[], products: any[]) => {
+      return orders.reduce((acc: any[], order) => {
+        if (order.convertedToStockExitId) return acc;
+        
+        order.items.forEach((item: any) => {
+          const product = products.find(p => p.id === item.productId);
+          if (product && product.currentStock < item.quantity) {
+            acc.push({
+              product,
+              order,
+              item,
+              shortfall: item.quantity - product.currentStock
+            });
+          }
+        });
+        return acc;
+      }, []);
+    };
 
-  // Filter for pending orders (not converted to stock exit)
-  const pendingOrders = orders.filter(order => !order.convertedToStockExitId);
+    return {
+      insufficientStockItems: findInsufficientStockOrders(orders, products),
+      pendingOrders: orders.filter(order => !order.convertedToStockExitId)
+    };
+  }, [orders, products]);
 
   const navigateToProductDetail = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -81,56 +97,64 @@ const DashboardPage: React.FC = () => {
 
   const isLoading = isLoadingSupportData;
 
-  const updatedStats = {
+  // Memoize updated stats to prevent unnecessary re-renders
+  const updatedStats = useMemo(() => ({
     ...supportStats,
     totalSpent: totalSpentWithExpenses,
     profit: totalProfitWithExpenses,
     profitMargin: profitMarginPercentWithExpenses
-  };
+  }), [supportStats, totalSpentWithExpenses, totalProfitWithExpenses, profitMarginPercentWithExpenses]);
 
-  const componentMap: { [key: string]: React.ReactNode } = {
+  // Memoize component map to prevent unnecessary re-renders
+  const componentMap: { [key: string]: React.ReactNode } = useMemo(() => ({
     'quick-actions': <QuickActions />,  
-    'summary-cards': <SummaryCards stats={updatedStats} isLoading={isLoading} />,  
+    'summary-cards': (
+      <Suspense fallback={<TableSkeleton title="Cartões de Resumo" rows={2} columns={2} />}>
+        <SummaryCards stats={updatedStats} isLoading={isLoading} />
+      </Suspense>
+    ),  
     'sales-purchases-chart': (
-      <div className="grid grid-cols-1 gap-6">
+      <Suspense fallback={<ChartSkeleton />}>
         <SalesAndPurchasesChart chartData={monthlyData} isLoading={isLoading} />
-      </div>
+      </Suspense>
     ),
-    'low-stock-products': isLoading ? (
-      <TableSkeleton title="Produtos com Stock Baixo" rows={3} columns={3} />
-    ) : (
-      <LowStockProducts 
-        lowStockProducts={lowStockProducts}
-        navigateToProductDetail={navigateToProductDetail}
-      />
+    'low-stock-products': (
+      <Suspense fallback={<TableSkeleton title="Produtos com Stock Baixo" rows={3} columns={3} />}>
+        <LowStockProducts 
+          lowStockProducts={lowStockProducts}
+          navigateToProductDetail={navigateToProductDetail}
+        />
+      </Suspense>
     ),
-    'pending-orders': isLoading ? (
-      <TableSkeleton title="Encomendas Pendentes" rows={4} columns={4} />
-    ) : (
-      <PendingOrders 
-        pendingOrders={pendingOrders}
-        navigateToOrderDetail={navigateToOrderDetail}
-        navigateToClientDetail={navigateToClientDetail}
-      />
+    'pending-orders': (
+      <Suspense fallback={<TableSkeleton title="Encomendas Pendentes" rows={4} columns={4} />}>
+        <PendingOrders 
+          pendingOrders={pendingOrders}
+          navigateToOrderDetail={navigateToOrderDetail}
+          navigateToClientDetail={navigateToClientDetail}
+        />
+      </Suspense>
     ),
-    'insufficient-stock-orders': isLoading ? (
-      <TableSkeleton title="Encomendas com Stock Insuficiente" rows={3} columns={5} />
-    ) : (
-      <InsufficientStockOrders 
-        insufficientItems={insufficientStockItems}
-        navigateToProductDetail={navigateToProductDetail}
-        navigateToOrderDetail={navigateToOrderDetail}
-        navigateToClientDetail={navigateToClientDetail}
-      />
+    'insufficient-stock-orders': (
+      <Suspense fallback={<TableSkeleton title="Encomendas com Stock Insuficiente" rows={3} columns={5} />}>
+        <InsufficientStockOrders 
+          insufficientItems={insufficientStockItems}
+          navigateToProductDetail={navigateToProductDetail}
+          navigateToOrderDetail={navigateToOrderDetail}
+          navigateToClientDetail={navigateToClientDetail}
+        />
+      </Suspense>
     ),
     'kpi-panel': (
-      <KPIPanel 
-        title="Indicadores de Performance" 
-        description="Principais KPIs do negócio" 
-        kpis={kpis} 
-      />
+      <Suspense fallback={<TableSkeleton title="Indicadores de Performance" rows={4} columns={2} />}>
+        <KPIPanel 
+          title="Indicadores de Performance" 
+          description="Principais KPIs do negócio" 
+          kpis={kpis} 
+        />
+      </Suspense>
     )
-  };
+  }), [updatedStats, isLoading, monthlyData, lowStockProducts, pendingOrders, insufficientStockItems, kpis, navigateToProductDetail, navigateToOrderDetail, navigateToClientDetail]);
 
   const sortedEnabledWidgets = dashboardConfig
     .filter(widget => widget.enabled)

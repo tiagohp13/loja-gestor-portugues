@@ -1,29 +1,17 @@
 import { useData } from '@/contexts/DataContext';
 import { useMemo, useState, useEffect } from 'react';
 import { 
-  ensureDate, 
   createMonthlyDataMap, 
   processExitsForMonthlyData,
   processEntriesForMonthlyData 
 } from './utils/dateUtils';
 import { 
-  createCategoryData, 
-  identifyLowStockProducts, 
-  calculateProductSales,
-  findMostSoldProduct,
+  identifyLowStockProducts,
   calculateTotalStockValue
 } from './utils/productUtils';
 import { 
-  findMostFrequentClient,
-  findMostUsedSupplier 
-} from './utils/clientSupplierUtils';
-import { 
   calculateTotalSalesValue,
   calculateTotalPurchaseValue,
-  calculateTotalProfit,
-  calculateProfitMarginPercent,
-  calculateRoiValue,
-  calculateRoiPercent,
   calculateTotalSpent,
   calculateTotalProfitWithExpenses,
   calculateProfitMarginPercentWithExpenses,
@@ -31,13 +19,9 @@ import {
   calculateRoiPercentWithExpenses,
   getMonthlyExpensesData
 } from './utils/financialUtils';
-import { 
-  createAllTransactions,
-  getRecentTransactions
-} from './utils/transactionUtils';
 
 export const useDashboardData = () => {
-  const { products, suppliers, clients, stockEntries, stockExits, orders } = useData();
+  const { products, stockEntries, stockExits, orders } = useData();
   
   // State for values that include expenses
   const [totalSpentWithExpenses, setTotalSpentWithExpenses] = useState(0);
@@ -71,75 +55,19 @@ export const useDashboardData = () => {
     return Array.from(dataMap.values());
   }, [stockExits, stockEntries, monthlyExpensesData]);
   
-  // Prepare category data for charts
-  const categoryData = useMemo(() => {
-    return createCategoryData(products);
-  }, [products]);
-  
-  // Calculate low stock products
+  // Calculate low stock products (only needed for dashboard)
   const lowStockProducts = useMemo(() => {
     return identifyLowStockProducts(products);
   }, [products]);
   
-  // Prepare transactions data
-  const allTransactions = useMemo(() => {
-    return createAllTransactions(stockEntries, stockExits, products, suppliers, clients);
-  }, [stockEntries, stockExits, products, suppliers, clients]);
-  
-  const recentTransactions = useMemo(() => {
-    return getRecentTransactions(allTransactions);
-  }, [allTransactions]);
-  
-  // Calculate product sales
-  const productSales = useMemo(() => {
-    return calculateProductSales(stockExits);
-  }, [stockExits]);
-  
-  // Find most sold product
-  const mostSoldProduct = useMemo(() => {
-    return findMostSoldProduct(productSales, products);
-  }, [productSales, products]);
-  
-  // Find most frequent client
-  const mostFrequentClient = useMemo(() => {
-    return findMostFrequentClient(stockExits, clients);
-  }, [stockExits, clients]);
-  
-  // Find most used supplier
-  const mostUsedSupplier = useMemo(() => {
-    return findMostUsedSupplier(stockEntries, suppliers);
-  }, [stockEntries, suppliers]);
-  
-  // Calculate financial metrics (original without expenses)
-  const totalSalesValue = useMemo(() => {
-    return calculateTotalSalesValue(stockExits);
-  }, [stockExits]);
-  
-  const totalPurchaseValue = useMemo(() => {
-    return calculateTotalPurchaseValue(stockEntries);
-  }, [stockEntries]);
-  
-  const totalStockValue = useMemo(() => {
-    return calculateTotalStockValue(products);
-  }, [products]);
+  // Calculate basic financial metrics (optimized)
+  const { totalSalesValue, totalPurchaseValue, totalStockValue } = useMemo(() => ({
+    totalSalesValue: calculateTotalSalesValue(stockExits),
+    totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
+    totalStockValue: calculateTotalStockValue(products)
+  }), [stockExits, stockEntries, products]);
 
-  const totalProfit = useMemo(() => {
-    return calculateTotalProfit(totalSalesValue, totalPurchaseValue);
-  }, [totalSalesValue, totalPurchaseValue]);
-  
-  const profitMarginPercent = useMemo(() => {
-    return calculateProfitMarginPercent(totalProfit, totalSalesValue);
-  }, [totalProfit, totalSalesValue]);
-  
-  const roiValue = useMemo(() => {
-    return calculateRoiValue(totalProfit, totalPurchaseValue);
-  }, [totalProfit, totalPurchaseValue]);
-  
-  const roiPercent = useMemo(() => {
-    return calculateRoiPercent(totalProfit, totalPurchaseValue);
-  }, [totalProfit, totalPurchaseValue]);
-
-  // Calculate financial metrics including expenses
+  // Calculate financial metrics including expenses - debounced for performance
   useEffect(() => {
     const calculateWithExpenses = async () => {
       try {
@@ -163,32 +91,20 @@ export const useDashboardData = () => {
       }
     };
     
-    calculateWithExpenses();
+    // Debounce expensive calculations
+    const timer = setTimeout(calculateWithExpenses, 300);
+    return () => clearTimeout(timer);
   }, [stockEntries, totalSalesValue]);
 
   return {
     products,
-    suppliers,
-    clients,
-    ensureDate,
+    orders,
     monthlyData,
-    categoryData,
     lowStockProducts,
-    allTransactions,
-    recentTransactions,
-    mostSoldProduct,
-    mostFrequentClient,
-    mostUsedSupplier,
     totalSalesValue,
     totalPurchaseValue,
     totalStockValue,
-    totalProfit,
-    profitMarginPercent,
-    roiValue,
-    roiPercent,
-    productSales,
-    orders,
-    // New values including expenses
+    // Values including expenses
     totalSpentWithExpenses,
     totalProfitWithExpenses,
     profitMarginPercentWithExpenses,
