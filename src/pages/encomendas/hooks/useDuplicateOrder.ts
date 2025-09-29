@@ -11,21 +11,44 @@ export const useDuplicateOrder = () => {
     try {
       setIsLoading(true);
       
-      // Call the duplicate_order function
-      const { data, error } = await supabase.rpc('duplicate_order', {
-        order_id_to_duplicate: orderId
-      });
+      // Fetch the original order and its items
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(*)
+        `)
+        .eq('id', orderId)
+        .single();
 
-      if (error) {
-        console.error('Erro ao duplicar encomenda:', error);
-        toast.error(error.message || 'Erro ao duplicar a encomenda');
+      if (orderError) {
+        console.error('Erro ao buscar encomenda:', orderError);
+        toast.error(orderError.message || 'Erro ao buscar a encomenda');
         return;
       }
 
-      if (data) {
-        toast.success('Encomenda duplicada com sucesso!');
-        // Navigate to the edit page of the new order
-        navigate(`/encomendas/editar/${data}`);
+      if (orderData) {
+        // Navigate to new order page with pre-filled data
+        navigate('/encomendas/nova', {
+          state: {
+            duplicateData: {
+              clientId: orderData.client_id,
+              clientName: orderData.client_name,
+              date: orderData.date,
+              notes: `Duplicada de ${orderData.number}`,
+              discount: orderData.discount || 0,
+              items: (orderData.order_items || []).map((item: any) => ({
+                id: crypto.randomUUID(), // New ID for the form
+                productId: item.product_id,
+                productName: item.product_name,
+                quantity: item.quantity,
+                salePrice: Number(item.sale_price),
+                discountPercent: item.discount_percent ? Number(item.discount_percent) : 0
+              }))
+            }
+          }
+        });
+        toast.success('Dados da encomenda carregados para duplicação');
       }
     } catch (error) {
       console.error('Erro ao duplicar encomenda:', error);

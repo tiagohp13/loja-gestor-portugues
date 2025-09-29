@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
 import { OrderItem } from './order-form/types';
 import { useOrderFormState } from './order-form/useOrderFormState';
@@ -12,18 +12,24 @@ export type { OrderItem };
 
 export const useOrderForm = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { clients, products, addOrder } = useData();
   
-  // State management
-  const [selectedClientId, setSelectedClientId] = useState<string>('');
+  // Check if we have duplicate data from navigation state
+  const duplicateData = location.state?.duplicateData;
+  
+  // State management with potential pre-filled data
+  const [selectedClientId, setSelectedClientId] = useState<string>(duplicateData?.clientId || '');
   const [selectedClient, setSelectedClient] = useState<any>(null);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   
-  const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [orderDate, setOrderDate] = useState<Date>(
+    duplicateData?.date ? new Date(duplicateData.date) : new Date()
+  );
   const [calendarOpen, setCalendarOpen] = useState(false);
   
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [orderItems, setOrderItems] = useState<OrderItem[]>(duplicateData?.items || []);
   
   const [productSearchTerm, setProductSearchTerm] = useState('');
   const [productSearchOpen, setProductSearchOpen] = useState(false);
@@ -31,8 +37,19 @@ export const useOrderForm = () => {
   const [currentQuantity, setCurrentQuantity] = useState(1);
   const [currentSalePrice, setCurrentSalePrice] = useState(0);
   
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState(duplicateData?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Effect to set selected client when duplicating
+  useEffect(() => {
+    if (duplicateData?.clientId && clients.length > 0) {
+      const client = clients.find(c => c.id === duplicateData.clientId);
+      if (client) {
+        setSelectedClient(client);
+        setClientSearchTerm(client.name);
+      }
+    }
+  }, [duplicateData, clients]);
   
   // Filters
   const { filterClients, filterProducts } = useOrderFilters(clients, products);
