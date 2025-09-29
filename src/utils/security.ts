@@ -112,14 +112,15 @@ export const checkClientRateLimit = (
 export const getSecurityHeaders = () => ({
   'Content-Security-Policy': [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self'", // Removed unsafe-inline and unsafe-eval for security
+    "style-src 'self' 'unsafe-inline'", // Keep for CSS, but minimize inline styles
     "img-src 'self' data: https:",
     "connect-src 'self' https://*.supabase.co",
     "font-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
-    "form-action 'self'"
+    "form-action 'self'",
+    "upgrade-insecure-requests"
   ].join('; '),
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
