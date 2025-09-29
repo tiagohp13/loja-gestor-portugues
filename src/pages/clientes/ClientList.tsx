@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Search, Edit, Trash2, History, Plus, Users } from 'lucide-react';
@@ -8,18 +8,18 @@ import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import RecordCount from '@/components/common/RecordCount';
+import SortableTableHeader from '@/components/ui/SortableTableHeader';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
+import { useSortableClients } from '@/hooks/useSortableClients';
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getClientTotalSpent } from '@/integrations/supabase/client';
 import { formatCurrency } from '@/utils/formatting';
 import { calculateClientTag } from '@/utils/clientTags';
 import ClientTag from '@/components/common/ClientTag';
@@ -27,45 +27,16 @@ import { useClientTags } from '@/hooks/useClientTags';
 
 const ClientList = () => {
   const navigate = useNavigate();
-  const { clients, deleteClient, stockExits } = useData();
+  const { stockExits, deleteClient } = useData();
   const { config: tagConfig } = useClientTags();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');
-  const [clientsWithSpent, setClientsWithSpent] = useState<Array<any>>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  
+  // Use sortable clients hook
+  const { clients, isLoading, handleSort, getSortIcon } = useSortableClients();
 
-  useEffect(() => {
-    const fetchClientTotals = async () => {
-      setIsLoading(true);
-      try {
-        const clientsWithTotals = await Promise.all(
-          clients.map(async (client) => {
-            const totalSpent = await getClientTotalSpent(client.id);
-            return {
-              ...client,
-              totalSpent
-            };
-          })
-        );
-        setClientsWithSpent(clientsWithTotals);
-      } catch (error) {
-        console.error('Error fetching client totals:', error);
-        toast({
-          title: "Erro",
-          description: "Ocorreu um erro ao carregar os valores gastos pelos clientes",
-          variant: "destructive",
-        });
-        setClientsWithSpent(clients.map(client => ({ ...client, totalSpent: 0 })));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchClientTotals();
-  }, [clients]);
-
-  const filteredClients = clientsWithSpent.filter(client => 
+  const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (client.email && client.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (client.phone && client.phone.includes(searchTerm))
@@ -130,12 +101,45 @@ const ClientList = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Etiqueta</TableHead>
-                <TableHead>Valor Gasto</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <SortableTableHeader
+                  column="name"
+                  label="Nome"
+                  sortDirection={getSortIcon('name')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="email"
+                  label="Email"
+                  sortDirection={getSortIcon('email')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="phone"
+                  label="Telefone"
+                  sortDirection={getSortIcon('phone')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="tag"
+                  label="Etiqueta"
+                  sortDirection={getSortIcon('tag')}
+                  onSort={handleSort}
+                  sortable={false}
+                />
+                <SortableTableHeader
+                  column="totalSpent"
+                  label="Valor Gasto"
+                  sortDirection={getSortIcon('totalSpent')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="actions"
+                  label="Ações"
+                  sortDirection={getSortIcon('actions')}
+                  onSort={handleSort}
+                  sortable={false}
+                  className="text-right"
+                />
               </TableRow>
             </TableHeader>
             <TableBody>

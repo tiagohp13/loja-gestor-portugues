@@ -1,28 +1,42 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
+import { Search, Plus, Package, Filter, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import PageHeader from '@/components/ui/PageHeader';
-import { useProductSort, naturalSort } from './hooks/useProductSort';
-import ProductListHeader from './components/ProductListHeader';
-import ProductTable from './components/ProductTable';
 import RecordCount from '@/components/common/RecordCount';
-import { Plus, Box } from 'lucide-react';
+import SortableTableHeader from '@/components/ui/SortableTableHeader';
+import { useSortableProducts } from '@/hooks/useSortableProducts';
+import ProductTableRow from './components/ProductTableRow';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
 
 const ProductList = () => {
   const navigate = useNavigate();
-  const { products, deleteProduct } = useData();
   const [searchParams] = useSearchParams();
+  const { categories, deleteProduct } = useData();
+  const { products: allProducts, isLoading, handleSort, getSortIcon } = useSortableProducts();
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('');
-  const { sortField, sortDirection, handleSort, setSortField, setSortDirection } = useProductSort();
   const { canCreate, canEdit, canDelete } = usePermissions();
 
-  // Add useScrollToTop hook to ensure page starts at the top
   useScrollToTop();
 
   // Handle category filter from URL params
@@ -33,36 +47,12 @@ const ProductList = () => {
     }
   }, [searchParams]);
 
-  const filteredProducts = products
-    .filter(product => {
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        product.code.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = !categoryFilter || product.category === categoryFilter;
-      return matchesSearch && matchesCategory;
-    })
-    .sort((a, b) => {
-      if (sortField === 'name') {
-        return sortDirection === 'asc' 
-          ? a.name.localeCompare(b.name) 
-          : b.name.localeCompare(a.name);
-      } else if (sortField === 'code') {
-        // Use natural sort for code field
-        return naturalSort(a.code, b.code, sortDirection);
-      } else if (sortField === 'category') {
-        return sortDirection === 'asc' 
-          ? a.category.localeCompare(b.category) 
-          : b.category.localeCompare(a.category);
-      } else if (sortField === 'currentStock') {
-        return sortDirection === 'asc' 
-          ? a.currentStock - b.currentStock 
-          : b.currentStock - a.currentStock;
-      } else if (sortField === 'salePrice') {
-        return sortDirection === 'asc' 
-          ? a.salePrice - b.salePrice 
-          : b.salePrice - a.salePrice;
-      }
-      return 0;
-    });
+  const filteredProducts = allProducts.filter(product => {
+    const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      product.code.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = !categoryFilter || product.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const handleViewProduct = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -84,48 +74,181 @@ const ProductList = () => {
     deleteProduct(id);
   };
 
-  const handleAddProduct = () => {
-    if (!validatePermission(canCreate, 'criar produtos')) return;
-    navigate('/produtos/novo');
+  const clearFilters = () => {
+    setSearchTerm('');
+    setCategoryFilter('');
   };
+
+  const uniqueCategories = [...new Set(categories.map(cat => cat.name))].sort();
 
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader 
         title="Produtos" 
         description="Consultar e gerir todos os produtos" 
+        actions={
+          canCreate && (
+            <Button onClick={() => {
+              if (!validatePermission(canCreate, 'criar produtos')) return;
+              navigate('/produtos/novo');
+            }}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Produto
+            </Button>
+          )
+        }
       />
       
       <RecordCount 
         title="Total de produtos"
-        count={products.length}
-        icon={Box}
+        count={allProducts.length}
+        icon={Package}
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <ProductListHeader
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-          sortField={sortField}
-          setSortField={setSortField}
-          sortDirection={sortDirection}
-          setSortDirection={setSortDirection}
-          onAddProduct={handleAddProduct}
-          canCreate={canCreate}
-        />
+        <div className="flex flex-col lg:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
+            <Input
+              className="pl-10"
+              placeholder="Pesquisar por nome ou código"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          
+          <div className="flex gap-2">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-[200px]">
+                <Filter className="w-4 h-4 mr-2" />
+                <SelectValue placeholder="Filtrar por categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Todas as categorias</SelectItem>
+                {uniqueCategories.map(category => (
+                  <SelectItem key={category} value={category}>
+                    {category}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            {(searchTerm || categoryFilter) && (
+              <Button 
+                variant="outline" 
+                onClick={clearFilters}
+                title="Limpar filtros"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+
+        {/* Active filters */}
+        {(searchTerm || categoryFilter) && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {searchTerm && (
+              <Badge variant="secondary">
+                Pesquisa: {searchTerm}
+                <X 
+                  className="w-3 h-3 ml-1 cursor-pointer" 
+                  onClick={() => setSearchTerm('')}
+                />
+              </Badge>
+            )}
+            {categoryFilter && (
+              <Badge variant="secondary">
+                Categoria: {categoryFilter}
+                <X 
+                  className="w-3 h-3 ml-1 cursor-pointer" 
+                  onClick={() => setCategoryFilter('')}
+                />
+              </Badge>
+            )}
+          </div>
+        )}
         
-        <ProductTable
-          filteredProducts={filteredProducts}
-          sortField={sortField}
-          sortDirection={sortDirection}
-          handleSort={handleSort}
-          onViewProduct={handleViewProduct}
-          onViewHistory={handleViewHistory}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          canEdit={canEdit}
-          canDelete={canDelete}
-        />
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <SortableTableHeader
+                  column="code"
+                  label="Código"
+                  sortDirection={getSortIcon('code')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="name"
+                  label="Nome"
+                  sortDirection={getSortIcon('name')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="category"
+                  label="Categoria"
+                  sortDirection={getSortIcon('category')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="currentStock"
+                  label="Stock Atual"
+                  sortDirection={getSortIcon('currentStock')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="minStock"
+                  label="Stock Mínimo"
+                  sortDirection={getSortIcon('minStock')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="salePrice"
+                  label="Preço de Venda"
+                  sortDirection={getSortIcon('salePrice')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
+                  column="actions"
+                  label="Ações"
+                  sortDirection={getSortIcon('actions')}
+                  onSort={handleSort}
+                  sortable={false}
+                  className="text-right"
+                />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
+                    A carregar produtos...
+                  </TableCell>
+                </TableRow>
+              ) : filteredProducts.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
+                    Nenhum produto encontrado
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredProducts.map((product) => (
+                  <ProductTableRow
+                    key={product.id}
+                    product={product}
+                    onViewProduct={handleViewProduct}
+                    onViewHistory={handleViewHistory}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    canEdit={canEdit}
+                    canDelete={canDelete}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
