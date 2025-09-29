@@ -55,6 +55,7 @@ const OrderEdit = () => {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
+        .neq('status', 'deleted')
         .order('name');
 
       if (error) throw error;
@@ -85,6 +86,7 @@ const OrderEdit = () => {
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .neq('status', 'deleted')
         .order('name');
 
       if (error) throw error;
