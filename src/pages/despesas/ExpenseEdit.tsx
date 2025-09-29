@@ -60,6 +60,10 @@ const ExpenseEdit = () => {
       if (suppliersError) throw suppliersError;
 
       if (expenseData) {
+        // Converter data para formato YYYY-MM-DD para o input type="date"
+        const dateObj = new Date(expenseData.date);
+        const formattedDate = dateObj.toISOString().split('T')[0];
+        
         const formattedExpense: Expense = {
           id: expenseData.id,
           number: expenseData.number,
@@ -72,10 +76,10 @@ const ExpenseEdit = () => {
           updatedAt: expenseData.updated_at,
           items: (expenseData.expense_items || []).map((item: any) => ({
             id: item.id,
-            productName: item.product_name,
-            quantity: item.quantity,
-            unitPrice: Number(item.unit_price),
-            discountPercent: Number(item.discount_percent || 0),
+            productName: item.product_name || '',
+            quantity: Number(item.quantity) || 0,
+            unitPrice: Number(item.unit_price) || 0,
+            discountPercent: Number(item.discount_percent) || 0,
             createdAt: item.created_at,
             updatedAt: item.updated_at
           })),
@@ -86,7 +90,7 @@ const ExpenseEdit = () => {
         setFormData({
           supplierId: formattedExpense.supplierId || '',
           supplierName: formattedExpense.supplierName,
-          date: formattedExpense.date,
+          date: formattedDate,
           notes: formattedExpense.notes,
           items: formattedExpense.items.map(item => ({
             productName: item.productName,

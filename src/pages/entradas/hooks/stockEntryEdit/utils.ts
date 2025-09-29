@@ -19,15 +19,15 @@ export const createInitialState = () => ({
 
 export const mapApiDataToFormState = (data: any) => ({
   supplierId: data.supplier_id || '',
-  items: data.stock_entry_items.map((item: any) => ({
+  items: (data.stock_entry_items || []).map((item: any) => ({
     id: item.id,
-    productId: item.product_id,
-    productName: item.product_name,
-    quantity: item.quantity,
-    purchasePrice: item.purchase_price,
-    discountPercent: item.discount_percent || 0
+    productId: item.product_id || '',
+    productName: item.product_name || '',
+    quantity: Number(item.quantity) || 0,
+    purchasePrice: Number(item.purchase_price) || 0,
+    discountPercent: Number(item.discount_percent) || 0
   })),
-  date: data.date ? new Date(data.date).toISOString().split('T')[0] : '',
+  date: data.date ? new Date(data.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
   invoiceNumber: data.invoice_number || '',
   notes: data.notes || ''
 });

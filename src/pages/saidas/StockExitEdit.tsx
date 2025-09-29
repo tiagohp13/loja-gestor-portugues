@@ -61,10 +61,14 @@ const StockExitEdit = () => {
       }
   
       if (exitData) {
+        // Converter data para formato YYYY-MM-DD para o input type="date"
+        const dateObj = new Date(exitData.date);
+        const formattedDate = dateObj.toISOString().split('T')[0];
+        
         const formattedExit: StockExitFormData = {
           clientId: exitData.client_id || '',
           clientName: exitData.client_name || '',
-          date: exitData.date,
+          date: formattedDate,
           invoiceNumber: exitData.invoice_number || '',
           notes: exitData.notes || '',
           fromOrderId: exitData.from_order_id,
@@ -73,9 +77,9 @@ const StockExitEdit = () => {
             id: item.id,
             productId: item.product_id || '',
             productName: item.product_name,
-            quantity: item.quantity,
-            salePrice: Number(item.sale_price),
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined,
+            quantity: Number(item.quantity) || 0,
+            salePrice: Number(item.sale_price) || 0,
+            discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
             createdAt: item.created_at,
             updatedAt: item.updated_at
           }))
