@@ -34,7 +34,7 @@ const ProductList = () => {
   const { categories, deleteProduct } = useData();
   const { products: allProducts, isLoading, handleSort, getSortIcon } = useSortableProducts();
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('ALL_CATEGORIES');
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   useScrollToTop();
@@ -50,7 +50,7 @@ const ProductList = () => {
   const filteredProducts = allProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       product.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !categoryFilter || product.category === categoryFilter;
+    const matchesCategory = categoryFilter === 'ALL_CATEGORIES' || product.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
@@ -76,7 +76,7 @@ const ProductList = () => {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setCategoryFilter('');
+    setCategoryFilter('ALL_CATEGORIES');
   };
 
   const uniqueCategories = [...new Set(categories.map(cat => cat.name))].sort();
@@ -124,7 +124,7 @@ const ProductList = () => {
                 <SelectValue placeholder="Filtrar por categoria" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todas as categorias</SelectItem>
+                <SelectItem value="ALL_CATEGORIES">Todas as categorias</SelectItem>
                 {uniqueCategories.map(category => (
                   <SelectItem key={category} value={category}>
                     {category}
@@ -133,7 +133,7 @@ const ProductList = () => {
               </SelectContent>
             </Select>
             
-            {(searchTerm || categoryFilter) && (
+            {(searchTerm || categoryFilter !== 'ALL_CATEGORIES') && (
               <Button 
                 variant="outline" 
                 onClick={clearFilters}
@@ -146,7 +146,7 @@ const ProductList = () => {
         </div>
 
         {/* Active filters */}
-        {(searchTerm || categoryFilter) && (
+        {(searchTerm || categoryFilter !== 'ALL_CATEGORIES') && (
           <div className="flex flex-wrap gap-2 mb-4">
             {searchTerm && (
               <Badge variant="secondary">
@@ -157,12 +157,12 @@ const ProductList = () => {
                 />
               </Badge>
             )}
-            {categoryFilter && (
+            {categoryFilter !== 'ALL_CATEGORIES' && (
               <Badge variant="secondary">
                 Categoria: {categoryFilter}
                 <X 
                   className="w-3 h-3 ml-1 cursor-pointer" 
-                  onClick={() => setCategoryFilter('')}
+                  onClick={() => setCategoryFilter('ALL_CATEGORIES')}
                 />
               </Badge>
             )}
