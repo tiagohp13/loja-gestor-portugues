@@ -8,7 +8,7 @@ export const useSortableProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { sortState, handleSort, getSortIcon, getSupabaseOrder } = useSortableTable({
-    column: 'name',
+    column: 'code',
     direction: 'asc'
   });
 
@@ -38,8 +38,8 @@ export const useSortableProducts = () => {
         const dbColumn = columnMap[order.column] || order.column;
         query = query.order(dbColumn, { ascending: order.ascending });
       } else {
-        // Default sorting
-        query = query.order('name', { ascending: true });
+        // Default sorting by code
+        query = query.order('code', { ascending: true });
       }
 
       const { data, error } = await query;
