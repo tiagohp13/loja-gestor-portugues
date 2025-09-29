@@ -30,7 +30,7 @@ export function DuplicateOrderButton({ orderId, orderNumber }: DuplicateOrderBut
       ) : (
         <Copy className="h-4 w-4" />
       )}
-      Duplicar Encomenda
+      Duplicar
     </Button>
   );
 }

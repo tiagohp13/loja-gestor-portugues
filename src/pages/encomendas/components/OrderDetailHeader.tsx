@@ -124,7 +124,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               onClick={handleExportToPdf}
             >
               <FileText className="h-4 w-4 text-red-500" />
-              Exportar para PDF
+              PDF
             </Button>
             
             {isPending && (
@@ -133,7 +133,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
                 className="text-white bg-blue-500 hover:bg-blue-600"
               >
                 <ShoppingCart className="h-4 w-4" />
-                Converter para Venda
+                Converter
               </Button>
             )}
             
@@ -151,7 +151,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               variant="outline"
               onClick={() => navigate('/encomendas/consultar')}
             >
-              Voltar à Lista
+              Voltar
             </Button>
           </>
         }
