@@ -48,6 +48,7 @@ export interface Client {
   createdAt: string;
   updatedAt: string;
   status?: string;
+  lastPurchaseDate?: string;
 }
 
 export interface ClientWithAddress {

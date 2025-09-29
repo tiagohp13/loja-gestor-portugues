@@ -12,6 +12,8 @@ import SortableTableHeader from '@/components/ui/SortableTableHeader';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
+import { useClientTags } from '@/hooks/useClientTags';
+import { ptBR } from 'date-fns/locale';
 import { checkClientDependencies } from '@/utils/dependencyUtils';
 import { useSortableClients } from '@/hooks/useSortableClients';
 import {
@@ -24,7 +26,7 @@ import {
 import { formatCurrency } from '@/utils/formatting';
 import { calculateClientTag } from '@/utils/clientTags';
 import ClientTag from '@/components/common/ClientTag';
-import { useClientTags } from '@/hooks/useClientTags';
+import { format } from 'date-fns';
 
 const ClientList = () => {
   const navigate = useNavigate();
@@ -128,6 +130,12 @@ const ClientList = () => {
                   sortable={false}
                 />
                 <SortableTableHeader
+                  column="lastPurchaseDate"
+                  label="Última Compra"
+                  sortDirection={getSortIcon('lastPurchaseDate')}
+                  onSort={handleSort}
+                />
+                <SortableTableHeader
                   column="totalSpent"
                   label="Valor Gasto"
                   sortDirection={getSortIcon('totalSpent')}
@@ -146,13 +154,13 @@ const ClientList = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
                     A carregar dados...
                   </TableCell>
                 </TableRow>
               ) : filteredClients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
                     Nenhum cliente encontrado
                   </TableCell>
                 </TableRow>
@@ -168,6 +176,15 @@ const ClientList = () => {
                     <TableCell>{client.phone || '-'}</TableCell>
                     <TableCell>
                       <ClientTag tag={calculateClientTag(client, stockExits, tagConfig)} />
+                    </TableCell>
+                    <TableCell>
+                      {client.lastPurchaseDate ? (
+                        <span className="text-sm">
+                          {format(new Date(client.lastPurchaseDate), 'dd/MM/yyyy', { locale: ptBR })}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">Nunca comprou</span>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium text-blue-600">
                       {formatCurrency(client.totalSpent)}

@@ -7,6 +7,7 @@ import OrderDetailHeader from './components/OrderDetailHeader';
 import OrderInformationCard from './components/OrderInformationCard';
 import OrderClientCard from './components/OrderClientCard';
 import OrderProductsTableDetail from './components/OrderProductsTableDetail';
+import { DuplicateOrderButton } from './components/DuplicateOrderButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 
 /**
@@ -31,7 +32,10 @@ const OrderDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <OrderDetailHeader order={order} relatedStockExit={relatedStockExit} />
+      <div className="flex justify-between items-center mb-6">
+        <OrderDetailHeader order={order} relatedStockExit={relatedStockExit} />
+        <DuplicateOrderButton orderId={order.id} orderNumber={order.number} />
+      </div>
 
       <div className="pdf-content" ref={contentRef}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

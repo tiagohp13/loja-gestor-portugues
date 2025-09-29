@@ -57,6 +57,7 @@ export type Database = {
           deleted_at: string | null
           email: string | null
           id: string
+          last_purchase_date: string | null
           name: string
           notes: string | null
           phone: string | null
@@ -71,6 +72,7 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id?: string
+          last_purchase_date?: string | null
           name: string
           notes?: string | null
           phone?: string | null
@@ -85,6 +87,7 @@ export type Database = {
           deleted_at?: string | null
           email?: string | null
           id?: string
+          last_purchase_date?: string | null
           name?: string
           notes?: string | null
           phone?: string | null
@@ -346,6 +349,53 @@ export type Database = {
             columns: ["client_id"]
             isOneToOne: false
             referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      product_price_history: {
+        Row: {
+          change_date: string
+          change_reason: string | null
+          created_at: string
+          id: string
+          new_purchase_price: number | null
+          new_sale_price: number | null
+          old_purchase_price: number | null
+          old_sale_price: number | null
+          product_id: string
+          user_id: string
+        }
+        Insert: {
+          change_date?: string
+          change_reason?: string | null
+          created_at?: string
+          id?: string
+          new_purchase_price?: number | null
+          new_sale_price?: number | null
+          old_purchase_price?: number | null
+          old_sale_price?: number | null
+          product_id: string
+          user_id?: string
+        }
+        Update: {
+          change_date?: string
+          change_reason?: string | null
+          created_at?: string
+          id?: string
+          new_purchase_price?: number | null
+          new_sale_price?: number | null
+          old_purchase_price?: number | null
+          old_sale_price?: number | null
+          product_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_product_price_history_product"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
             referencedColumns: ["id"]
           },
         ]
@@ -802,6 +852,10 @@ export type Database = {
       cleanup_old_deleted_records: {
         Args: Record<PropertyKey, never>
         Returns: number
+      }
+      duplicate_order: {
+        Args: { order_id_to_duplicate: string }
+        Returns: string
       }
       generate_padded_sequence: {
         Args: { items: Json; prefix: string } | { items: Json; prefix?: string }

@@ -9,6 +9,7 @@ import ProductDetailCard from './components/ProductDetailCard';
 import ProductStockCard from './components/ProductStockCard';
 import ProductNotFound from './components/ProductNotFound';
 import HistoryTables from './components/HistoryTables';
+import { ProductPriceHistory } from './components/ProductPriceHistory';
 import { useProductHistory } from './hooks/useProductHistory';
 
 const ProductDetail: React.FC = () => {
@@ -65,6 +66,11 @@ const ProductDetail: React.FC = () => {
           minStock={product.minStock}
           hasImage={!!product.image} 
         />
+      </div>
+      
+      {/* Price History */}
+      <div className="mt-6">
+        <ProductPriceHistory productId={id!} />
       </div>
       
       {/* History Tables */}
