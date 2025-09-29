@@ -5,6 +5,7 @@ import { useSupportData } from './suporte/hooks/useSupportData';
 import PageHeader from '../components/ui/PageHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import QuickActions from '@/components/ui/QuickActions';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 
 // Import components from dashboard
 import SalesAndPurchasesChart from './dashboard/components/SalesAndPurchasesChart';
@@ -78,13 +79,7 @@ const DashboardPage: React.FC = () => {
     navigate(`/encomendas/${id}`);
   };
 
-  if (isLoadingSupportData) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <LoadingSpinner size={32} />
-      </div>
-    );
-  }
+  const isLoading = isLoadingSupportData;
 
   const updatedStats = {
     ...supportStats,
@@ -95,22 +90,32 @@ const DashboardPage: React.FC = () => {
 
   const componentMap: { [key: string]: React.ReactNode } = {
     'quick-actions': <QuickActions />,  
-    'summary-cards': <SummaryCards stats={updatedStats} />,  
-    'sales-purchases-chart': <div className="grid grid-cols-1 gap-6"><SalesAndPurchasesChart chartData={monthlyData} /></div>,
-    'low-stock-products': (
+    'summary-cards': <SummaryCards stats={updatedStats} isLoading={isLoading} />,  
+    'sales-purchases-chart': (
+      <div className="grid grid-cols-1 gap-6">
+        <SalesAndPurchasesChart chartData={monthlyData} isLoading={isLoading} />
+      </div>
+    ),
+    'low-stock-products': isLoading ? (
+      <TableSkeleton title="Produtos com Stock Baixo" rows={3} columns={3} />
+    ) : (
       <LowStockProducts 
         lowStockProducts={lowStockProducts}
         navigateToProductDetail={navigateToProductDetail}
       />
     ),
-    'pending-orders': (
+    'pending-orders': isLoading ? (
+      <TableSkeleton title="Encomendas Pendentes" rows={4} columns={4} />
+    ) : (
       <PendingOrders 
         pendingOrders={pendingOrders}
         navigateToOrderDetail={navigateToOrderDetail}
         navigateToClientDetail={navigateToClientDetail}
       />
     ),
-    'insufficient-stock-orders': (
+    'insufficient-stock-orders': isLoading ? (
+      <TableSkeleton title="Encomendas com Stock Insuficiente" rows={3} columns={5} />
+    ) : (
       <InsufficientStockOrders 
         insufficientItems={insufficientStockItems}
         navigateToProductDetail={navigateToProductDetail}
@@ -148,13 +153,13 @@ const DashboardPage: React.FC = () => {
   }, [] as WidgetConfig[][]);
 
   return (
-    <div className="container mx-auto px-4 py-6 bg-background min-h-screen">
-      <PageHeader 
+    <div className="container mx-auto px-4 py-6 bg-background min-h-screen animate-fade-in">
+      <PageHeader
         title="Dashboard" 
         description="Vista geral do seu negócio"
       />
       
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fade-in" style={{ animationDelay: '0.1s' }}>
         {groupedWidgets.map((group, groupIndex) => {
           if (group.length > 1) {
             return (

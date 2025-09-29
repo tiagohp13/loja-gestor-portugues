@@ -3,12 +3,14 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { TrendingUp, TrendingDown, DollarSign, Percent, ArrowUp, ArrowDown } from 'lucide-react';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { SupportStats } from '../types/supportTypes';
+import SummaryCardSkeleton from '@/components/ui/SummaryCardSkeleton';
 
 interface SummaryCardsProps {
   stats: SupportStats;
+  isLoading?: boolean;
 }
 
-const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
+const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false }) => {
   // Default card configuration
   const defaultCardConfig = [
     { id: 'totalSales', title: 'Total de Vendas', enabled: true, order: 0 },
@@ -26,6 +28,19 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
     const saved = localStorage.getItem('dashboard-card-colors');
     return saved ? JSON.parse(saved) : {};
   });
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, index) => (
+            <SummaryCardSkeleton key={index} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   useEffect(() => {
     const handleStorageChange = () => {
@@ -70,15 +85,17 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
     switch (cardId) {
       case 'totalSales':
         return (
-          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
+          <Card className={`border-border bg-card hover:shadow-md transition-all duration-300 animate-fade-in ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total de Vendas</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col">
                 <div className="flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2 text-green-600 dark:text-green-400" />
-                  <div className="text-2xl font-bold text-foreground">{formatCurrency(stats.totalSales)}</div>
+                  <DollarSign className="w-4 h-4 mr-2 text-green-600 dark:text-green-400 transition-colors duration-200" />
+                  <div className="text-2xl font-bold text-foreground transition-all duration-500 ease-out">
+                    {formatCurrency(stats.totalSales)}
+                  </div>
                 </div>
                 {stats.monthlySales && stats.monthlySales.length >= 6 && 
                   renderVariation(
@@ -93,15 +110,17 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
       case 'totalSpent':
         return (
-          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
+          <Card className={`border-border bg-card hover:shadow-md transition-all duration-300 animate-fade-in ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total Gasto</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col">
                 <div className="flex items-center">
-                  <DollarSign className="w-4 h-4 mr-2 text-red-600 dark:text-red-400" />
-                  <div className="text-2xl font-bold text-foreground">{formatCurrency(stats.totalSpent)}</div>
+                  <DollarSign className="w-4 h-4 mr-2 text-red-600 dark:text-red-400 transition-colors duration-200" />
+                  <div className="text-2xl font-bold text-foreground transition-all duration-500 ease-out">
+                    {formatCurrency(stats.totalSpent)}
+                  </div>
                 </div>
                 {stats.monthlyData && stats.monthlyData.length >= 6 && 
                   renderVariation(
@@ -116,7 +135,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
       case 'profit':
         return (
-          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
+          <Card className={`border-border bg-card hover:shadow-md transition-all duration-300 animate-fade-in ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Lucro</CardTitle>
             </CardHeader>
@@ -124,11 +143,13 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
               <div className="flex flex-col">
                 <div className="flex items-center">
                   {stats.profit >= 0 ? (
-                    <TrendingUp className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400" />
+                    <TrendingUp className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400 transition-colors duration-200" />
                   ) : (
-                    <TrendingDown className="w-4 h-4 mr-2 text-red-600 dark:text-red-400" />
+                    <TrendingDown className="w-4 h-4 mr-2 text-red-600 dark:text-red-400 transition-colors duration-200" />
                   )}
-                  <div className="text-2xl font-bold text-foreground">{formatCurrency(stats.profit)}</div>
+                  <div className="text-2xl font-bold text-foreground transition-all duration-500 ease-out">
+                    {formatCurrency(stats.profit)}
+                  </div>
                 </div>
                 {stats.monthlyData && stats.monthlyData.length >= 6 && 
                   renderVariation(
@@ -143,15 +164,17 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
       case 'profitMargin':
         return (
-          <Card className={`border-border bg-card hover:shadow-md transition-shadow duration-200 ${cardColor}`}>
+          <Card className={`border-border bg-card hover:shadow-md transition-all duration-300 animate-fade-in ${cardColor}`}>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Margem de Lucro</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col">
                 <div className="flex items-center">
-                  <Percent className="w-4 h-4 mr-2 text-green-600 dark:text-green-400" />
-                  <div className="text-2xl font-bold text-foreground">{formatPercentage(stats.profitMargin)}</div>
+                  <Percent className="w-4 h-4 mr-2 text-green-600 dark:text-green-400 transition-colors duration-200" />
+                  <div className="text-2xl font-bold text-foreground transition-all duration-500 ease-out">
+                    {formatPercentage(stats.profitMargin)}
+                  </div>
                 </div>
                 {stats.monthlyData && stats.monthlyData.length >= 6 && (() => {
                   const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0;
@@ -184,7 +207,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats }) => {
 
   return (
     <div className="mb-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-fade-in">
         {enabledCards.map((card) => (
           <div key={card.id}>
             {getCardContent(card.id)}

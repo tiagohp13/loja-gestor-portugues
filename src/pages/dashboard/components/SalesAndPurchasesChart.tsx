@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, LineChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, Bar, Line, ResponsiveContainer } from 'recharts';
 import { formatCurrency } from '@/utils/formatting';
 import { useTheme } from '@/contexts/ThemeContext';
+import ChartSkeleton from '@/components/ui/ChartSkeleton';
 
 interface ChartDataItem {
   name: string;
@@ -13,9 +14,10 @@ interface ChartDataItem {
 
 interface SalesAndPurchasesChartProps {
   chartData: ChartDataItem[];
+  isLoading?: boolean;
 }
 
-const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartData }) => {
+const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartData, isLoading = false }) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   
@@ -98,15 +100,23 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
     );
   };
 
+  // Show loading state
+  if (isLoading || !chartData || chartData.length === 0) {
+    return <ChartSkeleton />;
+  }
+
   return (
-    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-shadow duration-200">
+    <Card className="bg-card border-border shadow-sm hover:shadow-md transition-all duration-300 animate-fade-in">
       <CardHeader>
         <CardTitle className="text-foreground text-xl font-semibold">Resumo Financeiro</CardTitle>
         <p className="text-muted-foreground text-sm">Evolução mensal de vendas, compras e tendências</p>
       </CardHeader>
       <CardContent>
         <ResponsiveContainer width="100%" height={450}>
-          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+          <LineChart 
+            data={chartData} 
+            margin={{ top: 20, right: 30, left: 20, bottom: 60 }}
+          >
             <CartesianGrid 
               strokeDasharray="3 3" 
               stroke={colors.grid}
@@ -136,6 +146,9 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               strokeWidth={3}
               dot={{ fill: colors.sales, r: 5, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
               activeDot={{ r: 7, fill: colors.sales, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
+              connectNulls={false}
+              animationDuration={1500}
+              animationEasing="ease-out"
             />
             <Line 
               type="monotone" 
@@ -145,6 +158,10 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
               strokeWidth={3}
               dot={{ fill: colors.purchases, r: 5, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
               activeDot={{ r: 7, fill: colors.purchases, strokeWidth: 2, stroke: isDark ? '#000' : '#fff' }}
+              connectNulls={false}
+              animationDuration={1500}
+              animationEasing="ease-out"
+              animationBegin={200}
             />
           </LineChart>
         </ResponsiveContainer>
