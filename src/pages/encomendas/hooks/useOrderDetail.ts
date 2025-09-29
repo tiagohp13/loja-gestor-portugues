@@ -11,19 +11,21 @@ import { toast } from '@/components/ui/use-toast';
  */
 export const useOrderDetail = (id: string | undefined) => {
   const navigate = useNavigate();
-  const { orders, clients, stockExits } = useData();
+  const { orders, clients, stockExits, isLoading } = useData();
   const [order, setOrder] = useState<Order | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
   const [relatedStockExit, setRelatedStockExit] = useState<StockExit | null>(null);
 
   useEffect(() => {
-    console.log("useOrderDetail - Effect triggered with ID:", id);
-    console.log("useOrderDetail - Available orders:", orders.length);
+    // Don't proceed if still loading data
+    if (isLoading) {
+      return;
+    }
+    
     if (id) {
       const fetchedOrder = orders.find(o => o.id === id);
       if (fetchedOrder) {
-        console.log("Order found:", fetchedOrder);
         setOrder(fetchedOrder);
         
         // Calculate order total
@@ -34,13 +36,9 @@ export const useOrderDetail = (id: string | undefined) => {
 
         // Find related stock exit
         if (fetchedOrder.convertedToStockExitId) {
-          console.log("Looking for related stock exit:", fetchedOrder.convertedToStockExitId);
           const exit = stockExits.find(e => e.id === fetchedOrder.convertedToStockExitId);
           if (exit) {
-            console.log("Related stock exit found:", exit);
             setRelatedStockExit(exit);
-          } else {
-            console.log("Related stock exit not found");
           }
         }
         
@@ -61,8 +59,6 @@ export const useOrderDetail = (id: string | undefined) => {
           }
         }
       } else {
-        console.log("useOrderDetail - Order not found with ID:", id);
-        console.log("useOrderDetail - Available order IDs:", orders.map(o => o.id));
         toast({
           title: "Erro",
           description: "Encomenda não encontrada",
@@ -70,10 +66,8 @@ export const useOrderDetail = (id: string | undefined) => {
         });
         navigate('/encomendas/consultar');
       }
-    } else {
-      console.log("useOrderDetail - No ID provided");
     }
-  }, [id, orders, clients, navigate, stockExits]);
+  }, [id, orders, clients, navigate, stockExits, isLoading]);
 
   return {
     order,

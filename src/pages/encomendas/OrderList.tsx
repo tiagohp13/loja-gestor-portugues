@@ -244,10 +244,7 @@ const OrderList = () => {
                     <tr key={order.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <button
-                          onClick={() => {
-                            console.log("OrderList - Navigating to order detail with ID:", order.id);
-                            navigate(`/encomendas/${order.id}`);
-                          }}
+                          onClick={() => navigate(`/encomendas/${order.id}`)}
                           className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark underline"
                         >
                           {order.number}

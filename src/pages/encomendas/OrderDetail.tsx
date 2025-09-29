@@ -18,19 +18,14 @@ const OrderDetail = () => {
   const contentRef = useRef<HTMLDivElement>(null);
   const { order, client, totalValue, relatedStockExit } = useOrderDetail(id);
   
-  console.log("OrderDetail - ID from params:", id);
-  console.log("OrderDetail - Order data:", order);
-  
   // Scroll to top on component mount
   useScrollToTop();
 
   if (!id) {
-    console.log("OrderDetail - No ID provided, redirecting to order list");
     return <div>ID não fornecido</div>;
   }
 
   if (!order) {
-    console.log("OrderDetail - Order not found or still loading");
     return <div>Carregando...</div>;
   }
 
