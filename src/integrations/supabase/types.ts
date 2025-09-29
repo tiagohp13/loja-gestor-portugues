@@ -10,13 +10,14 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "12.2.3 (519615d)"
+    PostgrestVersion: "13.0.4"
   }
   public: {
     Tables: {
       categories: {
         Row: {
           created_at: string
+          deleted_at: string | null
           description: string | null
           id: string
           name: string
@@ -27,6 +28,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           name: string
@@ -37,6 +39,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           description?: string | null
           id?: string
           name?: string
@@ -87,6 +90,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           id: string
           name: string
@@ -100,6 +104,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           id?: string
           name: string
@@ -113,6 +118,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           id?: string
           name?: string
@@ -271,10 +277,12 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          deleted_at: string | null
           discount: number | null
           id: string
           notes: string | null
           number: string
+          status: string | null
           supplier_id: string | null
           supplier_name: string
           updated_at: string
@@ -283,10 +291,12 @@ export type Database = {
         Insert: {
           created_at?: string
           date?: string
+          deleted_at?: string | null
           discount?: number | null
           id?: string
           notes?: string | null
           number: string
+          status?: string | null
           supplier_id?: string | null
           supplier_name: string
           updated_at?: string
@@ -295,10 +305,12 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          deleted_at?: string | null
           discount?: number | null
           id?: string
           notes?: string | null
           number?: string
+          status?: string | null
           supplier_id?: string | null
           supplier_name?: string
           updated_at?: string
@@ -400,12 +412,14 @@ export type Database = {
           converted_to_stock_exit_number: string | null
           created_at: string
           date: string
+          deleted_at: string | null
           discount: number | null
           id: string
           migrated_at: string | null
           notes: string | null
           number: string
           reference_old: string | null
+          status: string | null
           updated_at: string
           user_id: string | null
         }
@@ -416,12 +430,14 @@ export type Database = {
           converted_to_stock_exit_number?: string | null
           created_at?: string
           date?: string
+          deleted_at?: string | null
           discount?: number | null
           id?: string
           migrated_at?: string | null
           notes?: string | null
           number: string
           reference_old?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -432,12 +448,14 @@ export type Database = {
           converted_to_stock_exit_number?: string | null
           created_at?: string
           date?: string
+          deleted_at?: string | null
           discount?: number | null
           id?: string
           migrated_at?: string | null
           notes?: string | null
           number?: string
           reference_old?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -457,6 +475,7 @@ export type Database = {
           code: string
           created_at: string
           current_stock: number
+          deleted_at: string | null
           description: string | null
           id: string
           image: string | null
@@ -473,6 +492,7 @@ export type Database = {
           code: string
           created_at?: string
           current_stock?: number
+          deleted_at?: string | null
           description?: string | null
           id?: string
           image?: string | null
@@ -489,6 +509,7 @@ export type Database = {
           code?: string
           created_at?: string
           current_stock?: number
+          deleted_at?: string | null
           description?: string | null
           id?: string
           image?: string | null
@@ -551,12 +572,14 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          deleted_at: string | null
           id: string
           invoice_number: string | null
           migrated_at: string | null
           notes: string | null
           number: string
           reference_old: string | null
+          status: string | null
           supplier_id: string | null
           supplier_name: string
           updated_at: string
@@ -565,12 +588,14 @@ export type Database = {
         Insert: {
           created_at?: string
           date?: string
+          deleted_at?: string | null
           id?: string
           invoice_number?: string | null
           migrated_at?: string | null
           notes?: string | null
           number: string
           reference_old?: string | null
+          status?: string | null
           supplier_id?: string | null
           supplier_name: string
           updated_at?: string
@@ -579,12 +604,14 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          deleted_at?: string | null
           id?: string
           invoice_number?: string | null
           migrated_at?: string | null
           notes?: string | null
           number?: string
           reference_old?: string | null
+          status?: string | null
           supplier_id?: string | null
           supplier_name?: string
           updated_at?: string
@@ -708,6 +735,7 @@ export type Database = {
           client_name: string
           created_at: string
           date: string
+          deleted_at: string | null
           discount: number | null
           from_order_id: string | null
           from_order_number: string | null
@@ -717,6 +745,7 @@ export type Database = {
           notes: string | null
           number: string
           reference_old: string | null
+          status: string | null
           updated_at: string
           user_id: string
         }
@@ -725,6 +754,7 @@ export type Database = {
           client_name: string
           created_at?: string
           date?: string
+          deleted_at?: string | null
           discount?: number | null
           from_order_id?: string | null
           from_order_number?: string | null
@@ -734,6 +764,7 @@ export type Database = {
           notes?: string | null
           number: string
           reference_old?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -742,6 +773,7 @@ export type Database = {
           client_name?: string
           created_at?: string
           date?: string
+          deleted_at?: string | null
           discount?: number | null
           from_order_id?: string | null
           from_order_number?: string | null
@@ -751,6 +783,7 @@ export type Database = {
           notes?: string | null
           number?: string
           reference_old?: string | null
+          status?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -947,6 +980,7 @@ export type Database = {
         Row: {
           address: string | null
           created_at: string
+          deleted_at: string | null
           email: string | null
           id: string
           name: string
@@ -961,6 +995,7 @@ export type Database = {
         Insert: {
           address?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           id?: string
           name: string
@@ -975,6 +1010,7 @@ export type Database = {
         Update: {
           address?: string | null
           created_at?: string
+          deleted_at?: string | null
           email?: string | null
           id?: string
           name?: string
@@ -1120,11 +1156,25 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_old_deleted_records: {
+        Args: Record<PropertyKey, never>
+        Returns: number
+      }
       generate_padded_sequence: {
         Args: { items: Json; prefix: string } | { items: Json; prefix?: string }
         Returns: {
           id: string
           new_number: string
+        }[]
+      }
+      get_deleted_records: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          additional_info: Json
+          deleted_at: string
+          id: string
+          name: string
+          table_type: string
         }[]
       }
       get_next_counter: {
@@ -1256,6 +1306,18 @@ export type Database = {
           event_type: string
         }
         Returns: undefined
+      }
+      permanent_delete_record: {
+        Args: { record_id: string; table_name: string }
+        Returns: boolean
+      }
+      restore_record: {
+        Args: { record_id: string; table_name: string }
+        Returns: boolean
+      }
+      soft_delete_record: {
+        Args: { record_id: string; table_name: string }
+        Returns: boolean
       }
       table_exists: {
         Args:

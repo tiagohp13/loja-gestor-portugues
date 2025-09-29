@@ -67,6 +67,9 @@ import Settings from './pages/configuracoes/Settings';
 // Statistics (Previously Support)
 import Support from './pages/Suporte';
 
+// Recycle bin
+import Reciclagem from './pages/Reciclagem';
+
 // Error pages
 import NotFound from './pages/NotFound';
 
@@ -145,6 +148,8 @@ function App() {
                     <Route path="/saidas/editar/:id" element={<StockExitEdit />} />
                     
                     <Route path="/configuracoes" element={<Settings />} />
+                    
+                    <Route path="/reciclagem" element={<Reciclagem />} />
                     
                     <Route path="/suporte" element={<Support />} />
                   </Route>

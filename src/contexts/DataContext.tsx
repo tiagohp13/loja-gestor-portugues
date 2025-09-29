@@ -413,6 +413,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('products')
         .select('*')
+        .neq('status', 'deleted') // Filter out deleted products
         .order('name');
       
       if (error) throw error;
@@ -432,6 +433,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('categories')
         .select('*')
+        .neq('status', 'deleted') // Filter out deleted categories
         .order('name');
       
       if (error) throw error;
@@ -452,6 +454,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('clients')
         .select('*')
+        .neq('status', 'deleted') // Filter out deleted clients
         .order('name');
       
       console.log('Clients query result:', { data, error });
@@ -475,6 +478,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
+        .neq('status', 'deleted') // Filter out deleted suppliers
         .order('name');
       
       console.log('Suppliers query result:', { data, error });
@@ -500,6 +504,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           *,
           order_items(*)
         `)
+        .neq('status', 'deleted') // Filter out deleted orders
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -527,6 +532,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           *,
           stock_entry_items(*)
         `)
+        .neq('status', 'deleted') // Filter out deleted stock entries
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -557,6 +563,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           *,
           stock_exit_items(*)
         `)
+        .neq('status', 'deleted') // Filter out deleted stock exits
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -642,17 +649,19 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteProduct = async (id: string) => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
+      const { data, error } = await supabase.rpc('soft_delete_record', {
+        table_name: 'products',
+        record_id: id
+      });
       
       if (error) throw error;
       
+      // Remove from local state
       setProducts(products.filter(p => p.id !== id));
+      toast.success('Produto movido para a reciclagem');
     } catch (error) {
-      console.error('Error deleting product:', error);
-      toast.error('Erro ao eliminar produto');
+      console.error('Error soft deleting product:', error);
+      toast.error('Erro ao apagar produto');
       throw error;
     }
   };
