@@ -32,14 +32,7 @@ const OrderDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="flex justify-between items-start mb-6">
-        <div>
-          <OrderDetailHeader order={order} relatedStockExit={relatedStockExit} />
-        </div>
-        <div className="flex items-center gap-3">
-          <DuplicateOrderButton orderId={order.id} orderNumber={order.number} />
-        </div>
-      </div>
+      <OrderDetailHeader order={order} relatedStockExit={relatedStockExit} orderId={order.id} orderNumber={order.number} />
 
       <div className="pdf-content" ref={contentRef}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

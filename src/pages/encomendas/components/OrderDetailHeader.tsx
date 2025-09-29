@@ -6,6 +6,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { FileText, ShoppingCart, Pencil } from 'lucide-react';
 import { Order, StockExit, Product } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
+import { DuplicateOrderButton } from './DuplicateOrderButton';
 import {
   Dialog,
   DialogContent,
@@ -21,9 +22,11 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 interface OrderDetailHeaderProps {
   order: Order;
   relatedStockExit: StockExit | null;
+  orderId: string;
+  orderNumber: string;
 }
 
-const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit }) => {
+const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit, orderId, orderNumber }) => {
   const navigate = useNavigate();
   const { convertOrderToStockExit, products } = useData();
   const isPending = !order.convertedToStockExitId;
@@ -119,6 +122,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
         description="Detalhes da encomenda"
         actions={
           <div className="flex items-center gap-3">
+            <DuplicateOrderButton orderId={orderId} orderNumber={orderNumber} />
             <Button 
               variant="outline" 
               onClick={handleExportToPdf}
