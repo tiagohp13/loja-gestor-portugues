@@ -145,7 +145,7 @@ const CategoryList: React.FC = () => {
               {sortedCategories.map((category) => {
                 const productCount = getCategoryProductCount(category.name);
                 return (
-                  <Card key={category.id} className="hover:shadow-md transition-shadow">
+                  <Card key={category.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/produtos/consultar?categoria=${encodeURIComponent(category.name)}`)}>
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">

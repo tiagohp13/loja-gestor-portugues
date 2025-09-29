@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useData } from '../../contexts/DataContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
@@ -16,18 +16,30 @@ import { validatePermission } from '@/utils/permissionUtils';
 const ProductList = () => {
   const navigate = useNavigate();
   const { products, deleteProduct } = useData();
+  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('');
   const { sortField, sortDirection, handleSort, setSortField, setSortDirection } = useProductSort();
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   // Add useScrollToTop hook to ensure page starts at the top
   useScrollToTop();
 
+  // Handle category filter from URL params
+  useEffect(() => {
+    const categoria = searchParams.get('categoria');
+    if (categoria) {
+      setCategoryFilter(categoria);
+    }
+  }, [searchParams]);
+
   const filteredProducts = products
-    .filter(product => 
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      product.code.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    .filter(product => {
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        product.code.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory = !categoryFilter || product.category === categoryFilter;
+      return matchesSearch && matchesCategory;
+    })
     .sort((a, b) => {
       if (sortField === 'name') {
         return sortDirection === 'asc' 

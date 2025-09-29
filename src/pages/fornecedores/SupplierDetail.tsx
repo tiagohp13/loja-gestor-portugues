@@ -44,19 +44,19 @@ const SupplierDetail = () => {
   // Separate effect for combining documents when supplier data is loaded
   useEffect(() => {
     if (!isLoading && supplierEntries && supplierExpenses) {
-      // Combine documents from stock entries and expenses
-      const allDocuments = [
-        ...supplierEntries.map(entry => ({
-          ...entry,
-          type: 'Compra',
-          value: 0 // We'll calculate this if needed
-        })),
-        ...supplierExpenses.map(expense => ({
-          ...expense,
-          type: 'Despesa',
-          value: 0 // We'll calculate this if needed
-        }))
-      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          // Combine documents from stock entries and expenses
+          const allDocuments = [
+            ...supplierEntries.map(entry => ({
+              ...entry,
+              type: 'Compra',
+              value: entry.value || 0
+            })),
+            ...supplierExpenses.map(expense => ({
+              ...expense,
+              type: 'Despesa', 
+              value: expense.value || 0
+            }))
+          ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
       
       setSupplierDocuments(allDocuments);
     }
@@ -228,7 +228,7 @@ const SupplierDetail = () => {
                       </TableCell>
                       <TableCell>{formatDateString(doc.date)}</TableCell>
                       <TableCell>
-                        {isLoadingTotal ? '...' : formatCurrency(doc.value || 0)}
+                        {formatCurrency(doc.value || 0)}
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={doc.status || 'active'} />

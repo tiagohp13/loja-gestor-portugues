@@ -32,9 +32,9 @@ const EntryHistory: React.FC<EntryHistoryProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {entriesForProduct.map((entry, index) => (
-                <tr key={index}>
+                <tr key={index} className="hover:bg-gray-50 cursor-pointer" onClick={() => entry.id && (window.location.href = `/entradas/${entry.id}`)}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(entry.date)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{entry.number}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 hover:underline">{entry.number}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.document}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.supplierName}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.quantity}</td>

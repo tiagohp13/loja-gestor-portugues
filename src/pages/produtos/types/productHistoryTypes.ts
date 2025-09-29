@@ -1,5 +1,7 @@
 
 export interface EntryItem {
+  id?: string;
+  entryId?: string;
   date: string;
   number: string;
   document: string;

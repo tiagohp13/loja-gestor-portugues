@@ -37,7 +37,26 @@ export const useSupplierDetail = () => {
         .order('date', { ascending: false });
       
       if (entriesData) {
-        setSupplierEntries(entriesData);
+        // Calculate total value for each entry
+        const entriesWithValues = await Promise.all(
+          entriesData.map(async (entry) => {
+            const { data: itemsData } = await supabase
+              .from('stock_entry_items')
+              .select('quantity, purchase_price, discount_percent')
+              .eq('entry_id', entry.id);
+            
+            let entryValue = 0;
+            if (itemsData && itemsData.length > 0) {
+              entryValue = itemsData.reduce((sum, item) => {
+                const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+                return sum + (item.quantity * item.purchase_price * discountMultiplier);
+              }, 0);
+            }
+            
+            return { ...entry, value: entryValue };
+          })
+        );
+        setSupplierEntries(entriesWithValues);
       }
 
       // Fetch expenses for this supplier
@@ -49,7 +68,26 @@ export const useSupplierDetail = () => {
         .order('date', { ascending: false });
       
       if (expensesData) {
-        setSupplierExpenses(expensesData);
+        // Calculate total value for each expense
+        const expensesWithValues = await Promise.all(
+          expensesData.map(async (expense) => {
+            const { data: itemsData } = await supabase
+              .from('expense_items')
+              .select('quantity, unit_price, discount_percent')
+              .eq('expense_id', expense.id);
+            
+            let expenseValue = 0;
+            if (itemsData && itemsData.length > 0) {
+              expenseValue = itemsData.reduce((sum, item) => {
+                const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+                return sum + (item.quantity * item.unit_price * discountMultiplier);
+              }, 0);
+            }
+            
+            return { ...expense, value: expenseValue };
+          })
+        );
+        setSupplierExpenses(expensesWithValues);
       }
       
       setIsLoading(false);
