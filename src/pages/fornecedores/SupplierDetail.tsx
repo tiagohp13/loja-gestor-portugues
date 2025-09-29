@@ -5,6 +5,7 @@ import { useSupplierDetail } from './hooks/useSupplierDetail';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, ShoppingCart, Receipt } from 'lucide-react';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
@@ -17,7 +18,8 @@ const SupplierDetail = () => {
   const navigate = useNavigate();
   const { supplier, supplierEntries, supplierExpenses, isLoading } = useSupplierDetail();
   const [totalSpent, setTotalSpent] = useState<number>(0);
-	const [isLoadingTotal, setIsLoadingTotal] = useState(true);
+  const [isLoadingTotal, setIsLoadingTotal] = useState(true);
+  const [supplierDocuments, setSupplierDocuments] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchSupplierData = async () => {
@@ -26,6 +28,22 @@ const SupplierDetail = () => {
         try {
           const spent = await getSupplierTotalSpent(id);
           setTotalSpent(spent);
+          
+          // Combine documents from stock entries and expenses
+          const allDocuments = [
+            ...supplierEntries.map(entry => ({
+              ...entry,
+              type: 'Compra',
+              value: 0 // We'll calculate this if needed
+            })),
+            ...supplierExpenses.map(expense => ({
+              ...expense,
+              type: 'Despesa',
+              value: 0 // We'll calculate this if needed
+            }))
+          ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+          
+          setSupplierDocuments(allDocuments);
         } catch (error) {
           console.error('Error fetching supplier total spent:', error);
         } finally {
@@ -35,7 +53,7 @@ const SupplierDetail = () => {
     };
 
     fetchSupplierData();
-  }, [id]);
+  }, [id, supplierEntries, supplierExpenses]);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -67,8 +85,8 @@ const SupplierDetail = () => {
         }
       />
 
-      <div className="grid md:grid-cols-3 gap-6 mt-6">
-        <Card className="md:col-span-2">
+      <div className="grid md:grid-cols-1 gap-6 mt-6">
+        <Card>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <span>Informações do Fornecedor</span>
@@ -157,69 +175,68 @@ const SupplierDetail = () => {
             </div>
           </CardContent>
         </Card>
+      </div>
 
+      {/* Documents Section */}
+      <div className="mt-6">
         <Card>
           <CardHeader>
-            <CardTitle>Documentos</CardTitle>
+            <CardTitle>Documentos ({supplierDocuments.length})</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Stock Entries */}
-            {supplierEntries.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                  <ShoppingCart className="h-4 w-4 mr-1" />
-                  Compras ({supplierEntries.length})
-                </h4>
-                <div className="space-y-2">
-                  {supplierEntries.map((entry) => (
-                    <div 
-                      key={entry.id} 
-                      className="p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => navigate(`/entradas/${entry.id}`)}
+          <CardContent>
+            {supplierDocuments.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Número</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Valor</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Notas</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {supplierDocuments.map((doc) => (
+                    <TableRow 
+                      key={`${doc.type}-${doc.id}`}
+                      className="cursor-pointer hover:bg-gray-50"
+                      onClick={() => {
+                        if (doc.type === 'Compra') {
+                          navigate(`/entradas/${doc.id}`);
+                        } else {
+                          navigate(`/despesas/${doc.id}`);
+                        }
+                      }}
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-sm">{entry.number}</p>
-                          <p className="text-xs text-gray-500">{formatDateString(entry.date)}</p>
-                        </div>
-                        {entry.invoice_number && (
-                          <p className="text-xs text-gray-400">Fatura: {entry.invoice_number}</p>
-                        )}
-                      </div>
-                    </div>
+                      <TableCell className="font-medium">{doc.number}</TableCell>
+                      <TableCell>
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          doc.type === 'Compra' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-orange-100 text-orange-800'
+                        }`}>
+                          {doc.type}
+                        </span>
+                      </TableCell>
+                      <TableCell>{formatDateString(doc.date)}</TableCell>
+                      <TableCell>
+                        {isLoadingTotal ? '...' : formatCurrency(doc.value || 0)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge status={doc.status || 'active'} />
+                      </TableCell>
+                      <TableCell className="max-w-xs truncate">
+                        {doc.notes || doc.invoice_number || '-'}
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </div>
-              </div>
-            )}
-
-            {/* Expenses */}
-            {supplierExpenses.length > 0 && (
-              <div>
-                <h4 className="text-sm font-medium text-gray-500 mb-2 flex items-center">
-                  <Receipt className="h-4 w-4 mr-1" />
-                  Despesas ({supplierExpenses.length})
-                </h4>
-                <div className="space-y-2">
-                  {supplierExpenses.map((expense) => (
-                    <div 
-                      key={expense.id} 
-                      className="p-2 border rounded cursor-pointer hover:bg-gray-50 transition-colors"
-                      onClick={() => navigate(`/despesas/${expense.id}`)}
-                    >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="font-medium text-sm">{expense.number}</p>
-                          <p className="text-xs text-gray-500">{formatDateString(expense.date)}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {supplierEntries.length === 0 && supplierExpenses.length === 0 && (
-              <p className="text-gray-500 text-sm">Nenhum documento encontrado para este fornecedor.</p>
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-gray-500 text-center py-8">
+                Nenhum documento encontrado para este fornecedor.
+              </p>
             )}
           </CardContent>
         </Card>
