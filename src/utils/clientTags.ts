@@ -1,7 +1,7 @@
 import { Client, StockExit } from '@/types';
 import { differenceInMonths, parseISO } from 'date-fns';
 
-export type ClientTag = 'Novo' | 'Recorrente' | 'Inativo';
+export type ClientTag = 'Novo' | 'Recorrente' | 'Inativo' | 'VIP';
 
 export interface ClientTagConfig {
   inactivityMonths: number;
@@ -47,6 +47,18 @@ export const calculateClientTag = (
     return 'Inativo';
   }
   
+  // Verificar se é VIP (3+ compras nos últimos 3 meses)
+  const threeMonthsAgo = new Date();
+  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+  
+  const recentPurchases = clientExits.filter(exit => 
+    parseISO(exit.date) >= threeMonthsAgo
+  );
+  
+  if (recentPurchases.length >= 3) {
+    return 'VIP';
+  }
+  
   // Classificar baseado no número de compras
   if (clientExits.length === 1) {
     return 'Novo';
@@ -66,6 +78,8 @@ export const getTagColor = (tag: ClientTag): string => {
       return 'bg-green-100 text-green-800 border-green-200';
     case 'Inativo':
       return 'bg-gray-100 text-gray-800 border-gray-200';
+    case 'VIP':
+      return 'bg-amber-100 text-amber-800 border-amber-200';
     default:
       return 'bg-gray-100 text-gray-800 border-gray-200';
   }
@@ -82,6 +96,8 @@ export const getTagDescription = (tag: ClientTag): string => {
       return 'Cliente com múltiplas compras';
     case 'Inativo':
       return 'Cliente sem compras recentes';
+    case 'VIP':
+      return 'Cliente VIP com 3+ compras nos últimos 3 meses';
     default:
       return '';
   }
