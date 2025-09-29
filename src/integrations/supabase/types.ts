@@ -152,13 +152,6 @@ export type Database = {
             referencedRelation: "expenses"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_expense_items_expense_id"
-            columns: ["expense_id"]
-            isOneToOne: false
-            referencedRelation: "expenses"
-            referencedColumns: ["id"]
-          },
         ]
       }
       expenses: {
@@ -276,20 +269,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_order_items_order_id"
-            columns: ["order_id"]
-            isOneToOne: false
-            referencedRelation: "orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_order_items_product_id"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "order_items_order_id_fkey"
             columns: ["order_id"]
@@ -520,20 +499,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_stock_entry_items_entry_id"
-            columns: ["entry_id"]
-            isOneToOne: false
-            referencedRelation: "stock_entries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_stock_entry_items_product_id"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "stock_entry_items_entry_id_fkey"
             columns: ["entry_id"]
             isOneToOne: false
@@ -584,20 +549,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_stock_exit_items_exit_id"
-            columns: ["exit_id"]
-            isOneToOne: false
-            referencedRelation: "stock_exits"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fk_stock_exit_items_product_id"
-            columns: ["product_id"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "stock_exit_items_exit_id_fkey"
             columns: ["exit_id"]
