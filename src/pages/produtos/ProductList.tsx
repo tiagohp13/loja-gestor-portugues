@@ -181,7 +181,7 @@ const ProductList = () => {
                 />
                 <SortableTableHeader
                   column="name"
-                  label="Nome"
+                  label="Produto"
                   sortDirection={getSortIcon('name')}
                   onSort={handleSort}
                 />
@@ -193,19 +193,13 @@ const ProductList = () => {
                 />
                 <SortableTableHeader
                   column="currentStock"
-                  label="Stock Atual"
+                  label="Stock"
                   sortDirection={getSortIcon('currentStock')}
                   onSort={handleSort}
                 />
                 <SortableTableHeader
-                  column="minStock"
-                  label="Stock Mínimo"
-                  sortDirection={getSortIcon('minStock')}
-                  onSort={handleSort}
-                />
-                <SortableTableHeader
                   column="salePrice"
-                  label="Preço de Venda"
+                  label="Preço Sugerido"
                   sortDirection={getSortIcon('salePrice')}
                   onSort={handleSort}
                 />
@@ -222,13 +216,13 @@ const ProductList = () => {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
                     A carregar produtos...
                   </TableCell>
                 </TableRow>
               ) : filteredProducts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-6 text-gestorApp-gray">
+                  <TableCell colSpan={6} className="text-center py-6 text-gestorApp-gray">
                     Nenhum produto encontrado
                   </TableCell>
                 </TableRow>
