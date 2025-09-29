@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ShoppingCart, ArrowUp, ArrowDown } from "lucide-react";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
+import { checkOrderDependencies } from '@/utils/dependencyUtils';
 import StatusBadge from "@/components/common/StatusBadge";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -144,6 +145,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
                             title="Eliminar Encomenda"
                             description="Tem a certeza que deseja eliminar esta encomenda?"
                             onDelete={() => onDelete(order.id)}
+                            checkDependencies={() => checkOrderDependencies(order.id)}
                             trigger={
                               <Button
                                 variant="outline"

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { StockEntry } from '@/types';
 import { formatCurrency } from '@/utils/formatting';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { checkStockEntryDependencies } from '@/utils/dependencyUtils';
 
 interface StockEntryItemProps {
   entry: StockEntry;
@@ -64,6 +65,7 @@ const StockEntryItem: React.FC<StockEntryItemProps> = ({
               title="Eliminar Compra"
               description="Tem a certeza que deseja eliminar esta compra? Esta ação é irreversível e poderá afetar o stock."
               onDelete={() => onDelete(entry.id)}
+              checkDependencies={() => checkStockEntryDependencies(entry.id)}
               trigger={
                 <Button variant="outline" size="sm">
                   <Trash2 className="h-4 w-4" />

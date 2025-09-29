@@ -12,6 +12,7 @@ import SortableTableHeader from '@/components/ui/SortableTableHeader';
 import { useToast } from '@/hooks/use-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
+import { checkClientDependencies } from '@/utils/dependencyUtils';
 import { useSortableClients } from '@/hooks/useSortableClients';
 import {
   Table,
@@ -196,6 +197,7 @@ const ClientList = () => {
                             title="Eliminar Cliente"
                             description={`Tem a certeza que deseja eliminar o cliente "${client.name}"?`}
                             onDelete={() => handleDelete(client.id)}
+                            checkDependencies={() => checkClientDependencies(client.id)}
                             trigger={
                               <Button variant="outline" size="sm" title="Eliminar">
                                 <Trash2 className="w-4 h-4" />

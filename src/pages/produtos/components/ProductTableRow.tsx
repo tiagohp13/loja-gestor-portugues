@@ -6,6 +6,7 @@ import { Edit, Trash2, History } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import { Product } from '@/types';
+import { checkProductDependencies } from '@/utils/dependencyUtils';
 
 interface ProductTableRowProps {
   product: Product;
@@ -79,6 +80,7 @@ const ProductTableRow = ({
               title="Eliminar Produto"
               description={`Tem a certeza que deseja eliminar o produto "${product.name}"?`}
               onDelete={() => onDelete(product.id)}
+              checkDependencies={() => checkProductDependencies(product.id)}
               trigger={
                 <Button variant="outline" size="sm" title="Eliminar">
                   <Trash2 className="w-4 h-4" />

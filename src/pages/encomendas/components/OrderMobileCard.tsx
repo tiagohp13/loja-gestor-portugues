@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash2, ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
+import { checkOrderDependencies } from '@/utils/dependencyUtils';
 import StatusBadge from "@/components/common/StatusBadge";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
@@ -121,6 +122,7 @@ const OrderMobileCard: React.FC<OrderMobileCardProps> = ({
                       title="Eliminar Encomenda"
                       description="Tem a certeza que deseja eliminar esta encomenda?"
                       onDelete={() => onDelete(order.id)}
+                      checkDependencies={() => checkOrderDependencies(order.id)}
                       disabled={order.convertedToStockExitId !== null}
                       trigger={
                         <Button 

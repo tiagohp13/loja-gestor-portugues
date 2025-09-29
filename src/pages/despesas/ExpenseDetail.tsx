@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { checkExpenseDependencies } from '@/utils/dependencyUtils';
 
 const ExpenseDetail = () => {
   const { id } = useParams<{ id: string }>();

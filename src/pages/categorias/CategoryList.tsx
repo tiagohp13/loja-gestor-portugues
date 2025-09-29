@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/tooltip";
 import PageHeader from '@/components/ui/PageHeader';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { checkCategoryDependencies } from '@/utils/dependencyUtils';
 import EmptyState from '@/components/common/EmptyState';
 import RecordCount from '@/components/common/RecordCount';
 
@@ -172,6 +173,7 @@ const CategoryList: React.FC = () => {
                               title="Eliminar Categoria"
                               description="Tem a certeza que deseja eliminar esta categoria?"
                               onDelete={() => handleDeleteCategory(category.id)}
+                              checkDependencies={() => checkCategoryDependencies(category.name)}
                               trigger={
                                 <Tooltip>
                                   <TooltipTrigger asChild>

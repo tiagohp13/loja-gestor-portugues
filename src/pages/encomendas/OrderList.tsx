@@ -14,6 +14,7 @@ import EmptyState from '@/components/common/EmptyState';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
+import { checkOrderDependencies } from '@/utils/dependencyUtils';
 
 const OrderList = () => {
   const navigate = useNavigate();

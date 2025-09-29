@@ -10,6 +10,7 @@ import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import RecordCount from '@/components/common/RecordCount';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
+import { checkSupplierDependencies } from '@/utils/dependencyUtils';
 import {
   Table,
   TableBody,
@@ -138,6 +139,7 @@ const SupplierList = () => {
                             title="Eliminar Fornecedor"
                             description="Tem a certeza que deseja eliminar este fornecedor?"
                             onDelete={() => handleDelete(supplier.id)}
+                            checkDependencies={() => checkSupplierDependencies(supplier.id)}
                             trigger={
                               <Button variant="outline" size="sm" title="Eliminar">
                                 <Trash2 className="w-4 h-4" />

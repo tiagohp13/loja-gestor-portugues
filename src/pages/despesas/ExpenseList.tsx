@@ -11,6 +11,7 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import EmptyState from '@/components/common/EmptyState';
 import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
+import { checkExpenseDependencies } from '@/utils/dependencyUtils';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
 
@@ -263,6 +264,7 @@ const ExpenseList = () => {
             handleDeleteExpense(deleteDialog.expenseId);
           }
         }}
+        checkDependencies={deleteDialog.expenseId ? () => checkExpenseDependencies(deleteDialog.expenseId!) : undefined}
         title="Eliminar Despesa"
         description="Tem a certeza que pretende eliminar esta despesa? Esta ação não pode ser desfeita."
         trigger={<div />}
