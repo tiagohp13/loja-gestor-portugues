@@ -16,6 +16,7 @@ import {
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
+import GlobalSearch from './GlobalSearch';
 
 /**
  * Main navigation sidebar component 
@@ -149,6 +150,13 @@ const AppSidebar: React.FC = () => {
       </SidebarHeader>
       
       <SidebarContent>
+        {/* Global Search */}
+        <SidebarGroup>
+          <SidebarGroupContent className="px-2">
+            <GlobalSearch />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>

@@ -16,6 +16,7 @@ import { useClientTags } from '@/hooks/useClientTags';
 import { ptBR } from 'date-fns/locale';
 import { checkClientDependencies } from '@/utils/dependencyUtils';
 import { useSortableClients } from '@/hooks/useSortableClients';
+import TopClientsSection from '@/components/clients/TopClientsSection';
 import {
   Table,
   TableBody,
@@ -38,6 +39,30 @@ const ClientList = () => {
   
   // Use sortable clients hook
   const { clients, isLoading, handleSort, getSortIcon } = useSortableClients();
+
+  const handleViewAllTopClients = () => {
+    // Ensure we sort by totalSpent in descending order
+    // If already sorted by totalSpent ascending, clicking again will make it descending
+    // If not sorted by totalSpent, first click will be ascending, so we need two clicks
+    const currentSort = getSortIcon('totalSpent');
+    if (currentSort === null) {
+      // Not sorted by totalSpent, need to click twice to get descending
+      handleSort('totalSpent'); // First click: ascending
+      setTimeout(() => handleSort('totalSpent'), 100); // Second click: descending
+    } else if (currentSort === 'asc') {
+      // Already ascending, click once more to get descending
+      handleSort('totalSpent');
+    }
+    // If already descending, no need to do anything
+    
+    // Scroll to the table
+    setTimeout(() => {
+      document.querySelector('.overflow-x-auto')?.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'start' 
+      });
+    }, 200);
+  };
 
   const filteredClients = clients.filter(client => 
     client.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
@@ -88,6 +113,9 @@ const ClientList = () => {
         count={clients.length}
         icon={Users}
       />
+      
+      {/* Top 5 Clientes Section */}
+      <TopClientsSection onViewAllClick={handleViewAllTopClients} />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <div className="relative mb-4">
