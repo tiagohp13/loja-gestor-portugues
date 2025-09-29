@@ -55,10 +55,10 @@ export const useOrderHandlers = (
       return;
     }
 
-    if (currentSalePrice <= 0) {
+    if (currentSalePrice < 0) {
       toast({
         title: "Erro",
-        description: "O produto deve ter um preço de venda válido",
+        description: "O preço de venda não pode ser negativo",
         variant: "destructive"
       });
       return;

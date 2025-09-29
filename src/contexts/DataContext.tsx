@@ -1345,12 +1345,37 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const deleteStockExit = async (id: string) => {
     try {
+      // First, check if this stock exit was converted from an order
+      const stockExit = stockExits.find(e => e.id === id);
+      
       const { data, error } = await supabase.rpc('soft_delete_record', {
         table_name: 'stock_exits',
         record_id: id
       });
       
       if (error) throw error;
+      
+      // If this exit was converted from an order, restore the order to pending state
+      if (stockExit?.fromOrderId) {
+        const { error: updateOrderError } = await supabase
+          .from('orders')
+          .update({
+            converted_to_stock_exit_id: null,
+            converted_to_stock_exit_number: null
+          })
+          .eq('id', stockExit.fromOrderId);
+        
+        if (updateOrderError) {
+          console.error('Error restoring order:', updateOrderError);
+        } else {
+          // Update local state to reflect restored order
+          setOrders(orders.map(o => 
+            o.id === stockExit.fromOrderId 
+              ? { ...o, convertedToStockExitId: null, convertedToStockExitNumber: null }
+              : o
+          ));
+        }
+      }
       
       // Remove from local state
       setStockExits(stockExits.filter(e => e.id !== id));

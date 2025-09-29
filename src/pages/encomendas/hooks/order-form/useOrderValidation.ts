@@ -51,10 +51,10 @@ export const useOrderValidation = () => {
         };
       }
       
-      if (!item.salePrice || item.salePrice <= 0) {
+      if (item.salePrice < 0) {
         return {
           valid: false,
-          message: `Produto "${item.productName}" tem preço inválido`
+          message: `Produto "${item.productName}" tem preço negativo`
         };
       }
     }
