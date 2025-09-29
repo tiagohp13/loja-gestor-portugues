@@ -450,19 +450,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   
   const fetchClients = async () => {
     try {
-      console.log('Fetching clients...');
+      // Fetching clients
       const { data, error } = await supabase
         .from('clients')
         .select('*')
         .neq('status', 'deleted') // Filter out deleted clients
         .order('name');
       
-      console.log('Clients query result:', { data, error });
-      
       if (error) throw error;
       
       if (data) {
-        console.log('Found clients:', data.length);
         const formattedClients = data.map(mapDbClientToClient);
         setClients(formattedClients);
       }
