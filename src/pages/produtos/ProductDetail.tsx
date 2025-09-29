@@ -48,24 +48,30 @@ const ProductDetail: React.FC = () => {
         productId={id}
       />
       
-      <div className="grid md:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
         {/* Product Image Card */}
         {product.image && (
-          <ProductImageCard image={product.image} name={product.name} />
+          <div className="lg:col-span-4">
+            <ProductImageCard image={product.image} name={product.name} />
+          </div>
         )}
         
-        {/* Product Details Card */}
-        <ProductDetailCard 
-          product={product} 
-          totalUnitsSold={totalUnitsSold}
-        />
+        {/* Product Details Card - Takes remaining space */}
+        <div className={product.image ? "lg:col-span-5" : "lg:col-span-8"}>
+          <ProductDetailCard 
+            product={product} 
+            totalUnitsSold={totalUnitsSold}
+          />
+        </div>
         
         {/* Stock Card */}
-        <ProductStockCard 
-          currentStock={product.currentStock} 
-          minStock={product.minStock}
-          hasImage={!!product.image} 
-        />
+        <div className="lg:col-span-3">
+          <ProductStockCard 
+            currentStock={product.currentStock} 
+            minStock={product.minStock}
+            hasImage={!!product.image} 
+          />
+        </div>
       </div>
       
       {/* Price History */}

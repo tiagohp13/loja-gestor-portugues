@@ -42,7 +42,8 @@ export const mapDbClientToClient = (data: any): Client => ({
   notes: data.notes || '',
   createdAt: data.created_at,
   updatedAt: data.updated_at,
-  status: data.status
+  status: data.status,
+  lastPurchaseDate: data.last_purchase_date
 });
 
 export const mapDbSupplierToSupplier = (data: any): Supplier => ({

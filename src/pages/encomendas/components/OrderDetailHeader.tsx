@@ -118,10 +118,11 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
         title={`Encomenda: ${order.number}`}
         description="Detalhes da encomenda"
         actions={
-          <>
+          <div className="flex items-center gap-3">
             <Button 
               variant="outline" 
               onClick={handleExportToPdf}
+              className="flex items-center gap-2"
             >
               <FileText className="h-4 w-4 text-red-500" />
               PDF
@@ -130,7 +131,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             {isPending && (
               <Button
                 onClick={handleConvertDialog}
-                className="text-white bg-blue-500 hover:bg-blue-600"
+                className="text-white bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
               >
                 <ShoppingCart className="h-4 w-4" />
                 Converter
@@ -141,6 +142,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               <Button
                 variant="secondary"
                 onClick={handleEditOrder}
+                className="flex items-center gap-2"
               >
                 <Pencil className="h-4 w-4" />
                 Editar
@@ -153,7 +155,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             >
               Voltar
             </Button>
-          </>
+          </div>
         }
       />
 
