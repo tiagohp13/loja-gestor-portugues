@@ -279,7 +279,7 @@ const OrderList = () => {
                               size="sm"
                               onClick={() => {
                                 if (!validatePermission(canEdit, 'editar encomendas')) return;
-                                navigate(`/encomendas/${order.id}`);
+                                navigate(`/encomendas/editar/${order.id}`);
                               }}
                               disabled={order.convertedToStockExitId !== null}
                               className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}

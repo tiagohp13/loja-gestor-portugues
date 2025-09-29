@@ -7,11 +7,15 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Plus, Trash2, Save, ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { toast } from 'sonner';
-import { Client, OrderItem } from '@/types';
+import { Client, OrderItem, Product } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
+import { cn } from '@/lib/utils';
 
 interface OrderFormData {
   clientId: string;
@@ -26,7 +30,9 @@ const OrderEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const [clients, setClients] = useState<Client[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [productSearchOpen, setProductSearchOpen] = useState<{ [key: number]: boolean }>({});
   const [formData, setFormData] = useState<OrderFormData>({
     clientId: '',
     clientName: '',
@@ -38,6 +44,7 @@ const OrderEdit = () => {
 
   useEffect(() => {
     fetchClients();
+    fetchProducts();
     if (id) {
       fetchOrder(id);
     }
@@ -73,6 +80,39 @@ const OrderEdit = () => {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+
+      if (data) {
+        const formattedProducts: Product[] = data.map(product => ({
+          id: product.id,
+          code: product.code,
+          name: product.name,
+          description: product.description || '',
+          category: product.category || '',
+          purchasePrice: Number(product.purchase_price),
+          salePrice: Number(product.sale_price),
+          currentStock: Number(product.current_stock),
+          minStock: Number(product.min_stock),
+          image: product.image || '',
+          status: product.status || 'active',
+          createdAt: product.created_at,
+          updatedAt: product.updated_at
+        }));
+        setProducts(formattedProducts);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      toast.error('Erro ao carregar produtos');
+    }
+  };
+
   const fetchOrder = async (orderId: string) => {
     try {
       setIsLoading(true);
@@ -93,7 +133,7 @@ const OrderEdit = () => {
         const formattedOrder: OrderFormData = {
           clientId: orderData.client_id || '',
           clientName: orderData.client_name || '',
-          date: orderData.date,
+          date: new Date(orderData.date).toISOString().split('T')[0],
           notes: orderData.notes || '',
           discount: Number(orderData.discount || 0),
           items: (orderData.order_items || []).map((item: any) => ({
@@ -102,7 +142,7 @@ const OrderEdit = () => {
             productName: item.product_name,
             quantity: item.quantity,
             salePrice: Number(item.sale_price),
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined,
+            discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
             createdAt: item.created_at,
             updatedAt: item.updated_at
           }))
@@ -163,15 +203,32 @@ const OrderEdit = () => {
     });
   };
 
+  const handleProductSelect = (index: number, productId: string) => {
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const updatedItems = [...formData.items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        productId: product.id,
+        productName: `${product.code} - ${product.name}`,
+        salePrice: product.salePrice
+      };
+      setFormData({
+        ...formData,
+        items: updatedItems
+      });
+    }
+    setProductSearchOpen({ ...productSearchOpen, [index]: false });
+  };
+
   const calculateTotal = () => {
     const itemsTotal = formData.items.reduce((sum, item) => {
       const itemTotal = item.quantity * item.salePrice;
-      const discountAmount = itemTotal * (item.discountPercent / 100);
+      const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
       return sum + (itemTotal - discountAmount);
     }, 0);
 
-    const generalDiscount = itemsTotal * (formData.discount / 100);
-    return itemsTotal - generalDiscount;
+    return itemsTotal;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -234,7 +291,7 @@ const OrderEdit = () => {
       if (itemsError) throw itemsError;
 
       toast.success('Encomenda atualizada com sucesso');
-      navigate('/encomendas/historico');
+      navigate('/encomendas/consultar');
     } catch (error) {
       console.error('Error creating order:', error);
       toast.error('Erro ao atualizar encomenda');
@@ -276,8 +333,7 @@ const OrderEdit = () => {
                 id="date"
                 type="date"
                 value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                required
+                disabled
               />
             </div>
 
@@ -328,18 +384,50 @@ const OrderEdit = () => {
                 <TableBody>
                   {formData.items.map((item, index) => {
                     const itemTotal = item.quantity * item.salePrice;
-                    const discountAmount = itemTotal * (item.discountPercent / 100);
+                    const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
                     const subtotal = itemTotal - discountAmount;
 
                     return (
                       <TableRow key={index}>
                         <TableCell>
-                          <Input
-                            value={item.productName}
-                            onChange={(e) => updateItem(index, 'productName', e.target.value)}
-                            placeholder="Nome do produto"
-                            required
-                          />
+                          <Popover open={productSearchOpen[index]} onOpenChange={(open) => setProductSearchOpen({ ...productSearchOpen, [index]: open })}>
+                            <PopoverTrigger asChild>
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={productSearchOpen[index]}
+                                className="w-full justify-between"
+                              >
+                                {item.productName || "Selecionar produto..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-full p-0">
+                              <Command>
+                                <CommandInput placeholder="Pesquisar produto..." />
+                                <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
+                                <CommandList>
+                                  <CommandGroup>
+                                    {products.map((product) => (
+                                      <CommandItem
+                                        key={product.id}
+                                        value={`${product.code} ${product.name}`}
+                                        onSelect={() => handleProductSelect(index, product.id)}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            item.productId === product.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
+                                        {product.code} - {product.name}
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         </TableCell>
                         <TableCell>
                           <Input
@@ -366,7 +454,7 @@ const OrderEdit = () => {
                             min="0"
                             max="100"
                             step="0.01"
-                            value={item.discountPercent}
+                            value={item.discountPercent || 0}
                             onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value) || 0)}
                             className="w-20"
                           />
@@ -396,24 +484,9 @@ const OrderEdit = () => {
         {formData.items.length > 0 && (
           <Card>
             <CardContent className="pt-6">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                <div>
-                  <Label htmlFor="discount">Desconto Geral (%)</Label>
-                  <Input
-                    id="discount"
-                    type="number"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={formData.discount}
-                    onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                  />
-                </div>
-                <div></div>
-                <div className="text-right">
-                  <div className="text-2xl font-bold text-gestorApp-blue">
-                    Total: {formatCurrency(calculateTotal())}
-                  </div>
+              <div className="flex justify-end">
+                <div className="text-2xl font-bold text-gestorApp-blue">
+                  Total: {formatCurrency(calculateTotal())}
                 </div>
               </div>
             </CardContent>
@@ -421,7 +494,7 @@ const OrderEdit = () => {
         )}
 
         <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/historico')}>
+          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/consultar')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
