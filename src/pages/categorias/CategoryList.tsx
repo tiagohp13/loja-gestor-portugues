@@ -180,7 +180,7 @@ const CategoryList: React.FC = () => {
                           <Package size={18} className="text-gestorApp-blue" />
                           <span className="text-lg">{category.name}</span>
                         </div>
-                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-1">
                           {canEdit && (
                             <Tooltip>
                               <TooltipTrigger asChild>
@@ -199,26 +199,27 @@ const CategoryList: React.FC = () => {
                             </Tooltip>
                           )}
                           {canDelete && (
-                            <DeleteConfirmDialog
-                              title="Eliminar Categoria"
-                              description="Tem a certeza que deseja eliminar esta categoria?"
-                              onDelete={() => handleDeleteCategory(category.id)}
-                              checkDependencies={() => checkCategoryDependencies(category.name)}
-                              trigger={
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <Trash size={16} />
-                                    </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Eliminar categoria</TooltipContent>
-                                </Tooltip>
-                              }
-                            />
+                            <div onClick={(e) => e.stopPropagation()}>
+                              <DeleteConfirmDialog
+                                title="Eliminar Categoria"
+                                description="Tem a certeza que deseja eliminar esta categoria?"
+                                onDelete={() => handleDeleteCategory(category.id)}
+                                checkDependencies={() => checkCategoryDependencies(category.name)}
+                                trigger={
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm"
+                                      >
+                                        <Trash size={16} />
+                                      </Button>
+                                    </TooltipTrigger>
+                                    <TooltipContent>Eliminar categoria</TooltipContent>
+                                  </Tooltip>
+                                }
+                              />
+                            </div>
                           )}
                         </div>
                       </CardTitle>
