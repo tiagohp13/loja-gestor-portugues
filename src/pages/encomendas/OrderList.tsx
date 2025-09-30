@@ -71,6 +71,10 @@ const OrderList = () => {
           discount: Number(order.discount || 0),
           createdAt: order.created_at,
           updatedAt: order.updated_at,
+          orderType: order.order_type as 'combined' | 'awaiting_stock' || 'combined',
+          expectedDeliveryDate: order.expected_delivery_date,
+          expectedDeliveryTime: order.expected_delivery_time,
+          deliveryLocation: order.delivery_location,
           items: (order.order_items || []).map((item: any) => ({
             id: item.id,
             productId: item.product_id || '',
@@ -280,7 +284,7 @@ const OrderList = () => {
                           </Badge>
                         ) : (
                           <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
-                            Pendente
+                            {order.orderType === 'awaiting_stock' ? 'Pendente – A aguardar stock' : 'Pendente – Combinada'}
                           </Badge>
                         )}
                       </td>

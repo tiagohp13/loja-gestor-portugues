@@ -81,7 +81,7 @@ const OrderMobileCard: React.FC<OrderMobileCardProps> = ({
                 </StatusBadge>
               ) : (
                 <StatusBadge variant="warning" className="inline-flex">
-                  Pendente
+                  {order.orderType === 'awaiting_stock' ? 'Pendente – A aguardar stock' : 'Pendente – Combinada'}
                 </StatusBadge>
               )}
             </div>

@@ -366,20 +366,6 @@ const OrderEdit = () => {
               />
             </div>
 
-            <div>
-              <Label htmlFor="discount">Desconto Global (%)</Label>
-              <Input
-                id="discount"
-                type="number"
-                min="0"
-                max="100"
-                step="0.01"
-                value={formData.discount}
-                onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                placeholder="0"
-              />
-            </div>
-
             <div className="md:col-span-2">
               <Label htmlFor="notes">Notas</Label>
               <Textarea

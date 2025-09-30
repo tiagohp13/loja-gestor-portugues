@@ -64,7 +64,6 @@ export const DeliveryInformation = ({
                 selected={expectedDeliveryDate}
                 onSelect={onDeliveryDateChange}
                 initialFocus
-                className="pointer-events-auto"
                 locale={pt}
               />
             </PopoverContent>

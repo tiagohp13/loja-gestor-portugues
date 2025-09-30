@@ -104,11 +104,11 @@ const OrderTable: React.FC<OrderTableProps> = ({
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                 {order.convertedToStockExitId ? (
                   <StatusBadge variant="success" icon={ShoppingCart}>
-                    Convertida em Venda
+                    Convertida em Saída
                   </StatusBadge>
                 ) : (
                   <StatusBadge variant="warning">
-                    Pendente
+                    {order.orderType === 'awaiting_stock' ? 'Pendente – A aguardar stock' : 'Pendente – Combinada'}
                   </StatusBadge>
                 )}
               </td>

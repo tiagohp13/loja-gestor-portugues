@@ -131,7 +131,7 @@ const OrderNew = () => {
           </div>
 
           {/* Order Type */}
-          <OrderTypeSelector 
+          <OrderTypeSelector
             value={orderType}
             onChange={setOrderType}
           />
