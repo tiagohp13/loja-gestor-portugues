@@ -28,10 +28,10 @@ const ProductDetail: React.FC = () => {
     totalAmountSold
   } = useProductHistory(id);
   
-  // Scroll to top on component mount
+  // Scroll to top when product changes or page loads
   useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [id]);
   
   if (isLoading) return <LoadingSpinner />;
   
