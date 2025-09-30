@@ -9,6 +9,8 @@ import ClientSelector from './components/ClientSelector';
 import OrderDatePicker from './components/OrderDatePicker';
 import ProductSelector from './components/ProductSelector';
 import OrderProductsTable from './components/OrderProductsTable';
+import { OrderTypeSelector } from './components/OrderTypeSelector';
+import { DeliveryInformation } from './components/DeliveryInformation';
 import { useOrderForm } from './hooks/useOrderForm';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -47,6 +49,15 @@ const OrderNew = () => {
     
     notes,
     setNotes,
+    
+    orderType,
+    setOrderType,
+    expectedDeliveryDate,
+    setExpectedDeliveryDate,
+    expectedDeliveryTime,
+    setExpectedDeliveryTime,
+    deliveryLocation,
+    setDeliveryLocation,
     
     handleSaveOrder,
     navigate,
@@ -93,21 +104,47 @@ const OrderNew = () => {
       />
       
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-          <ClientSelector 
-            clientSearchTerm={clientSearchTerm}
-            setClientSearchTerm={setClientSearchTerm}
-            clientSearchOpen={clientSearchOpen}
-            setClientSearchOpen={setClientSearchOpen}
-            filteredClients={filteredClients}
-            handleSelectClient={handleSelectClient}
+        <div className="space-y-6">
+          {/* Client and Date Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label htmlFor="client-search">Cliente *</Label>
+              <ClientSelector 
+                clientSearchTerm={clientSearchTerm}
+                setClientSearchTerm={setClientSearchTerm}
+                clientSearchOpen={clientSearchOpen}
+                setClientSearchOpen={setClientSearchOpen}
+                filteredClients={filteredClients}
+                handleSelectClient={handleSelectClient}
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Data da Encomenda *</Label>
+              <OrderDatePicker 
+                orderDate={orderDate}
+                calendarOpen={calendarOpen}
+                setCalendarOpen={setCalendarOpen}
+                setOrderDate={setOrderDate}
+              />
+            </div>
+          </div>
+
+          {/* Order Type */}
+          <OrderTypeSelector 
+            value={orderType}
+            onChange={setOrderType}
           />
-          
-          <OrderDatePicker 
-            orderDate={orderDate}
-            calendarOpen={calendarOpen}
-            setCalendarOpen={setCalendarOpen}
-            setOrderDate={setOrderDate}
+
+          {/* Delivery Information */}
+          <DeliveryInformation
+            orderType={orderType}
+            expectedDeliveryDate={expectedDeliveryDate}
+            expectedDeliveryTime={expectedDeliveryTime}
+            deliveryLocation={deliveryLocation}
+            onDeliveryDateChange={setExpectedDeliveryDate}
+            onDeliveryTimeChange={setExpectedDeliveryTime}
+            onDeliveryLocationChange={setDeliveryLocation}
           />
         </div>
         

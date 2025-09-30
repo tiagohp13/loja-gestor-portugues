@@ -297,11 +297,15 @@ export type Database = {
           created_at: string
           date: string
           deleted_at: string | null
+          delivery_location: string | null
           discount: number | null
+          expected_delivery_date: string | null
+          expected_delivery_time: string | null
           id: string
           migrated_at: string | null
           notes: string | null
           number: string
+          order_type: string | null
           reference_old: string | null
           status: string | null
           updated_at: string
@@ -315,11 +319,15 @@ export type Database = {
           created_at?: string
           date?: string
           deleted_at?: string | null
+          delivery_location?: string | null
           discount?: number | null
+          expected_delivery_date?: string | null
+          expected_delivery_time?: string | null
           id?: string
           migrated_at?: string | null
           notes?: string | null
           number: string
+          order_type?: string | null
           reference_old?: string | null
           status?: string | null
           updated_at?: string
@@ -333,11 +341,15 @@ export type Database = {
           created_at?: string
           date?: string
           deleted_at?: string | null
+          delivery_location?: string | null
           discount?: number | null
+          expected_delivery_date?: string | null
+          expected_delivery_time?: string | null
           id?: string
           migrated_at?: string | null
           notes?: string | null
           number?: string
+          order_type?: string | null
           reference_old?: string | null
           status?: string | null
           updated_at?: string

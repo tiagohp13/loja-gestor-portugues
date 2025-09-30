@@ -40,6 +40,12 @@ export const useOrderForm = () => {
   const [notes, setNotes] = useState(duplicateData?.notes || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // New fields for order type and delivery information
+  const [orderType, setOrderType] = useState<'combined' | 'awaiting_stock'>('combined');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | undefined>(undefined);
+  const [expectedDeliveryTime, setExpectedDeliveryTime] = useState<string>('');
+  const [deliveryLocation, setDeliveryLocation] = useState<string>('');
+  
   // Effect to set selected client when duplicating
   useEffect(() => {
     if (duplicateData?.clientId && clients.length > 0) {
@@ -96,7 +102,11 @@ export const useOrderForm = () => {
     orderDate,
     orderItems,
     notes,
-    setIsSubmitting
+    setIsSubmitting,
+    orderType,
+    expectedDeliveryDate,
+    expectedDeliveryTime,
+    deliveryLocation
   );
   
   return {
@@ -133,6 +143,15 @@ export const useOrderForm = () => {
     
     notes,
     setNotes,
+    
+    orderType,
+    setOrderType,
+    expectedDeliveryDate,
+    setExpectedDeliveryDate,
+    expectedDeliveryTime,
+    setExpectedDeliveryTime,
+    deliveryLocation,
+    setDeliveryLocation,
     
     handleSaveOrder,
     navigate,

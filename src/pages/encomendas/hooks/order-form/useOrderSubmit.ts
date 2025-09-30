@@ -14,7 +14,11 @@ export const useOrderSubmit = (
   orderDate: Date,
   orderItems: OrderItem[],
   notes: string,
-  setIsSubmitting: (isSubmitting: boolean) => void
+  setIsSubmitting: (isSubmitting: boolean) => void,
+  orderType: 'combined' | 'awaiting_stock',
+  expectedDeliveryDate?: Date,
+  expectedDeliveryTime?: string,
+  deliveryLocation?: string
 ) => {
   const navigate = useNavigate();
   const { validateOrder, displayValidationError } = useOrderValidation();
@@ -47,7 +51,11 @@ export const useOrderSubmit = (
           salePrice: item.salePrice
         })),
         notes,
-        total  // Adding total value to the order
+        total,  // Adding total value to the order
+        orderType,
+        expectedDeliveryDate: expectedDeliveryDate?.toISOString().split('T')[0],
+        expectedDeliveryTime,
+        deliveryLocation
       };
       
       console.log("Order data being submitted:", JSON.stringify(newOrder));

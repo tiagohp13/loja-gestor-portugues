@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatDateString } from '@/utils/formatting';
 import { Order, StockExit } from '@/types';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Calendar, Clock, MapPin } from 'lucide-react';
 import StatusBadge from '@/components/common/StatusBadge';
+import { format, parseISO } from 'date-fns';
+import { pt } from 'date-fns/locale';
 
 interface OrderInformationCardProps {
   order: Order;
@@ -22,6 +24,12 @@ const OrderInformationCard: React.FC<OrderInformationCardProps> = ({ order, rela
     if (relatedStockExit) {
       navigate(`/saidas/${relatedStockExit.id}`);
     }
+  };
+  
+  // Get order type label
+  const getOrderTypeLabel = (type?: string) => {
+    if (!type) return 'Pendente – Combinada';
+    return type === 'combined' ? 'Pendente – Combinada' : 'Pendente – A aguardar stock';
   };
 
   return (
@@ -59,10 +67,50 @@ const OrderInformationCard: React.FC<OrderInformationCardProps> = ({ order, rela
             </StatusBadge>
           ) : (
             <StatusBadge variant="warning">
-              Pendente
+              {getOrderTypeLabel(order.orderType)}
             </StatusBadge>
           )}
         </div>
+        
+        {/* Show delivery information only for combined orders that are not converted */}
+        {!order.convertedToStockExitId && order.orderType === 'combined' && (
+          <div className="col-span-1 md:col-span-2 space-y-3 pt-2 border-t">
+            <p className="text-sm font-semibold">Informações de Entrega</p>
+            
+            {order.expectedDeliveryDate && (
+              <div className="flex items-start gap-2">
+                <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Data Prevista</p>
+                  <p className="text-sm text-muted-foreground">
+                    {format(parseISO(order.expectedDeliveryDate), 'PPP', { locale: pt })}
+                  </p>
+                </div>
+              </div>
+            )}
+            
+            {order.expectedDeliveryTime && (
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Hora Prevista</p>
+                  <p className="text-sm text-muted-foreground">{order.expectedDeliveryTime}</p>
+                </div>
+              </div>
+            )}
+            
+            {order.deliveryLocation && (
+              <div className="flex items-start gap-2">
+                <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                <div>
+                  <p className="text-sm font-medium">Local de Entrega/Levantamento</p>
+                  <p className="text-sm text-muted-foreground">{order.deliveryLocation}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
         {order.notes && (
           <div className="col-span-1 md:col-span-2">
             <p className="text-sm font-medium mb-1">Notas</p>

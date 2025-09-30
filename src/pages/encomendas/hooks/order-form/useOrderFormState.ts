@@ -20,6 +20,11 @@ export const useOrderFormState = (): OrderFormState => {
   
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [orderType, setOrderType] = useState<'combined' | 'awaiting_stock'>('combined');
+  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState<Date | undefined>(undefined);
+  const [expectedDeliveryTime, setExpectedDeliveryTime] = useState<string>('');
+  const [deliveryLocation, setDeliveryLocation] = useState<string>('');
 
   return {
     selectedClientId,
@@ -34,7 +39,11 @@ export const useOrderFormState = (): OrderFormState => {
     currentProduct,
     currentQuantity,
     notes,
-    isSubmitting
+    isSubmitting,
+    orderType,
+    expectedDeliveryDate,
+    expectedDeliveryTime,
+    deliveryLocation
   };
 };
 

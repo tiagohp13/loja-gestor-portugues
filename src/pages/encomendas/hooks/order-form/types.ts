@@ -22,4 +22,8 @@ export interface OrderFormState {
   currentQuantity: number;
   notes: string;
   isSubmitting: boolean;
+  orderType: 'combined' | 'awaiting_stock';
+  expectedDeliveryDate?: Date;
+  expectedDeliveryTime?: string;
+  deliveryLocation?: string;
 }

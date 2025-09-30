@@ -170,6 +170,10 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   status?: string;
+  orderType?: 'combined' | 'awaiting_stock';
+  expectedDeliveryDate?: string;
+  expectedDeliveryTime?: string;
+  deliveryLocation?: string;
 }
 
 export interface OrderItem {

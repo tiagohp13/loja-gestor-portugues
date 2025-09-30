@@ -16,6 +16,8 @@ import { Client, OrderItem, Product } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import { cn } from '@/lib/utils';
+import { OrderTypeSelector } from './components/OrderTypeSelector';
+import { DeliveryInformation } from './components/DeliveryInformation';
 
 interface OrderFormData {
   clientId: string;
@@ -24,6 +26,10 @@ interface OrderFormData {
   notes: string;
   discount: number;
   items: OrderItem[];
+  orderType: 'combined' | 'awaiting_stock';
+  expectedDeliveryDate?: Date;
+  expectedDeliveryTime?: string;
+  deliveryLocation?: string;
 }
 
 const OrderEdit = () => {
@@ -39,7 +45,11 @@ const OrderEdit = () => {
     date: new Date().toISOString().split('T')[0],
     notes: '',
     discount: 0,
-    items: []
+    items: [],
+    orderType: 'combined',
+    expectedDeliveryDate: undefined,
+    expectedDeliveryTime: '',
+    deliveryLocation: ''
   });
 
   useEffect(() => {
@@ -138,6 +148,10 @@ const OrderEdit = () => {
           date: new Date(orderData.date).toISOString().split('T')[0],
           notes: orderData.notes || '',
           discount: Number(orderData.discount || 0),
+          orderType: (orderData.order_type as 'combined' | 'awaiting_stock') || 'combined',
+          expectedDeliveryDate: orderData.expected_delivery_date ? new Date(orderData.expected_delivery_date) : undefined,
+          expectedDeliveryTime: orderData.expected_delivery_time || '',
+          deliveryLocation: orderData.delivery_location || '',
           items: (orderData.order_items || []).map((item: any) => ({
             id: item.id,
             productId: item.product_id || '',
@@ -264,7 +278,11 @@ const OrderEdit = () => {
           client_name: formData.clientName,
           date: formData.date,
           notes: formData.notes,
-          discount: formData.discount
+          discount: formData.discount,
+          order_type: formData.orderType,
+          expected_delivery_date: formData.expectedDeliveryDate?.toISOString().split('T')[0],
+          expected_delivery_time: formData.expectedDeliveryTime,
+          delivery_location: formData.deliveryLocation
         })
         .eq('id', id);
 
@@ -370,6 +388,27 @@ const OrderEdit = () => {
                 onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="Notas adicionais sobre a encomenda..."
                 rows={3}
+              />
+            </div>
+            
+            {/* Order Type */}
+            <div className="md:col-span-2">
+              <OrderTypeSelector 
+                value={formData.orderType}
+                onChange={(value) => setFormData({ ...formData, orderType: value })}
+              />
+            </div>
+            
+            {/* Delivery Information */}
+            <div className="md:col-span-2">
+              <DeliveryInformation
+                orderType={formData.orderType}
+                expectedDeliveryDate={formData.expectedDeliveryDate}
+                expectedDeliveryTime={formData.expectedDeliveryTime}
+                deliveryLocation={formData.deliveryLocation}
+                onDeliveryDateChange={(date) => setFormData({ ...formData, expectedDeliveryDate: date })}
+                onDeliveryTimeChange={(time) => setFormData({ ...formData, expectedDeliveryTime: time })}
+                onDeliveryLocationChange={(location) => setFormData({ ...formData, deliveryLocation: location })}
               />
             </div>
           </CardContent>
