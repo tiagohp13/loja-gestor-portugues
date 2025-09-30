@@ -18,6 +18,7 @@ import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
 import { checkCategoryDependencies } from '@/utils/dependencyUtils';
 import EmptyState from '@/components/common/EmptyState';
 import RecordCount from '@/components/common/RecordCount';
+import CategoryProductsModal from './components/CategoryProductsModal';
 
 type SortField = 'name' | 'productCount';
 type SortDirection = 'asc' | 'desc';
@@ -30,6 +31,7 @@ const CategoryList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
+  const [selectedCategory, setSelectedCategory] = useState<{ id: string; name: string } | null>(null);
   
   const handleCreateCategory = () => {
     if (!validatePermission(canCreate, 'criar categorias')) return;
@@ -76,6 +78,18 @@ const CategoryList: React.FC = () => {
     }
   };
 
+  const handleCategoryClick = (categoryId: string, categoryName: string, e: React.MouseEvent) => {
+    // Prevent navigation if clicking on buttons
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    setSelectedCategory({ id: categoryId, name: categoryName });
+  };
+
+  const handleCloseModal = () => {
+    setSelectedCategory(null);
+  };
+
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-6">
@@ -90,6 +104,15 @@ const CategoryList: React.FC = () => {
             )
           }
         />
+
+        {selectedCategory && (
+          <CategoryProductsModal
+            isOpen={!!selectedCategory}
+            onClose={handleCloseModal}
+            categoryId={selectedCategory.id}
+            categoryName={selectedCategory.name}
+          />
+        )}
 
         <RecordCount title="Total de categorias" count={categories.length} />
 
@@ -146,21 +169,28 @@ const CategoryList: React.FC = () => {
               {sortedCategories.map((category) => {
                 const productCount = getCategoryProductCount(category.name);
                 return (
-                  <Card key={category.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/produtos/consultar?categoria=${encodeURIComponent(category.name)}`)}>
+                  <Card 
+                    key={category.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer" 
+                    onClick={(e) => handleCategoryClick(category.id, category.name, e)}
+                  >
                     <CardHeader className="pb-3">
                       <CardTitle className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Package size={18} className="text-gestorApp-blue" />
                           <span className="text-lg">{category.name}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                           {canEdit && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleEditCategory(category.id)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditCategory(category.id);
+                                  }}
                                 >
                                   <Edit size={16} />
                                 </Button>
@@ -177,7 +207,11 @@ const CategoryList: React.FC = () => {
                               trigger={
                                 <Tooltip>
                                   <TooltipTrigger asChild>
-                                    <Button variant="ghost" size="sm">
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
                                       <Trash size={16} />
                                     </Button>
                                   </TooltipTrigger>
