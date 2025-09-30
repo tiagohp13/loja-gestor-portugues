@@ -34,13 +34,13 @@ const ExitHistory: React.FC<ExitHistoryProps> = ({
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Saída</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantidade</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preço Unit.</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Data</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Nº Saída</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Fatura</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Cliente</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Quantidade</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Preço Unit.</th>
+                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Total</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
