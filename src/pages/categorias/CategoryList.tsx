@@ -199,27 +199,28 @@ const CategoryList: React.FC = () => {
                             </Tooltip>
                           )}
                           {canDelete && (
-                            <div onClick={(e) => e.stopPropagation()}>
-                              <DeleteConfirmDialog
-                                title="Eliminar Categoria"
-                                description="Tem a certeza que deseja eliminar esta categoria?"
-                                onDelete={() => handleDeleteCategory(category.id)}
-                                checkDependencies={() => checkCategoryDependencies(category.name)}
-                                trigger={
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <Button 
-                                        variant="ghost" 
-                                        size="sm"
-                                      >
-                                        <Trash size={16} />
-                                      </Button>
-                                    </TooltipTrigger>
-                                    <TooltipContent>Eliminar categoria</TooltipContent>
-                                  </Tooltip>
-                                }
-                              />
-                            </div>
+                            <DeleteConfirmDialog
+                              title="Eliminar Categoria"
+                              description="Tem a certeza que deseja eliminar esta categoria?"
+                              onDelete={() => handleDeleteCategory(category.id)}
+                              checkDependencies={() => checkCategoryDependencies(category.name)}
+                              trigger={
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                      }}
+                                    >
+                                      <Trash size={16} />
+                                    </Button>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Eliminar categoria</TooltipContent>
+                                </Tooltip>
+                              }
+                            />
                           )}
                         </div>
                       </CardTitle>
