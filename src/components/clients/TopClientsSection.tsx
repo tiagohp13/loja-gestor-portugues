@@ -82,52 +82,48 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="space-y-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {topClients.map((client, index) => {
             const progressValue = maxSpent > 0 ? (client.totalSpent / maxSpent) * 100 : 0;
             
             return (
-              <div
-                key={client.id}
-                className={cn(
-                  "relative py-4 px-4 cursor-pointer transition-colors hover:bg-accent/50 rounded-md",
-                  index < topClients.length - 1 && "border-b border-border"
-                )}
-                onClick={() => navigate(`/clientes/${client.id}`)}
+              <Card 
+                key={client.id} 
+                onClick={() => navigate(`/clientes/${client.id}`)} 
+                className="relative cursor-pointer hover:shadow-lg transition-all border-t-4 border-t-primary"
               >
-                <div className="flex items-center gap-4">
+                <CardContent className="p-4 space-y-3">
                   {/* Rank Badge */}
-                  <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                  <div className="flex items-center justify-center">
                     {getRankBadge(index)}
                   </div>
 
-                  {/* Client Info and Progress */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-base text-foreground truncate pr-4" title={client.name}>
-                        {client.name}
-                      </h3>
-                      <p className="font-semibold text-base text-green-600 dark:text-green-500 whitespace-nowrap">
-                        {formatCurrency(client.totalSpent)}
-                      </p>
-                    </div>
-                    
-                    {/* Progress Bar */}
-                    <div className="relative">
-                      <Progress 
-                        value={progressValue} 
-                        className="h-2 bg-muted"
-                      />
-                    </div>
+                  {/* Client Name */}
+                  <h3 className="font-semibold text-sm text-center line-clamp-2 min-h-[2.5rem] text-foreground" title={client.name}>
+                    {client.name}
+                  </h3>
 
-                    {client.email && (
-                      <p className="text-xs text-muted-foreground mt-2 truncate" title={client.email}>
-                        {client.email}
-                      </p>
-                    )}
+                  {/* Amount */}
+                  <p className="font-bold text-lg text-center text-green-600 dark:text-green-500">
+                    {formatCurrency(client.totalSpent)}
+                  </p>
+
+                  {/* Progress Bar */}
+                  <div className="relative">
+                    <Progress 
+                      value={progressValue} 
+                      className="h-2 bg-muted"
+                    />
                   </div>
-                </div>
-              </div>
+
+                  {/* Email */}
+                  {client.email && (
+                    <p className="text-xs text-muted-foreground text-center truncate" title={client.email}>
+                      {client.email}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
             );
           })}
         </div>
