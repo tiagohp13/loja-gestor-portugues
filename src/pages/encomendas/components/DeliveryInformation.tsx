@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { format } from "date-fns";
+import { format, startOfDay } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { pt } from "date-fns/locale";
@@ -32,6 +32,17 @@ export const DeliveryInformation = ({
     return null;
   }
 
+  // Handle date selection with proper timezone handling
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      // Normalize to start of day to avoid timezone issues
+      const normalizedDate = startOfDay(date);
+      onDeliveryDateChange(normalizedDate);
+    } else {
+      onDeliveryDateChange(undefined);
+    }
+  };
+
   return (
     <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
       <h3 className="font-semibold text-sm">Informações de Entrega (Opcional)</h3>
@@ -52,7 +63,7 @@ export const DeliveryInformation = ({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {expectedDeliveryDate ? (
-                  format(expectedDeliveryDate, "dd/MM/yyyy", { locale: pt })
+                  format(startOfDay(expectedDeliveryDate), "dd/MM/yyyy", { locale: pt })
                 ) : (
                   <span>Selecione uma data</span>
                 )}
@@ -61,8 +72,8 @@ export const DeliveryInformation = ({
             <PopoverContent className="w-auto p-0 bg-background z-50" align="start">
               <Calendar
                 mode="single"
-                selected={expectedDeliveryDate}
-                onSelect={onDeliveryDateChange}
+                selected={expectedDeliveryDate ? startOfDay(expectedDeliveryDate) : undefined}
+                onSelect={handleDateSelect}
                 initialFocus
               />
             </PopoverContent>

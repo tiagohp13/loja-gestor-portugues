@@ -7,6 +7,7 @@ import { useOrderFormState } from './order-form/useOrderFormState';
 import { useOrderFilters } from './order-form/useOrderFilters';
 import { useOrderHandlers } from './order-form/useOrderHandlers';
 import { useOrderSubmit } from './order-form/useOrderSubmit';
+import { startOfDay, parseISO } from 'date-fns';
 
 export type { OrderItem };
 
@@ -24,9 +25,13 @@ export const useOrderForm = () => {
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   
-  const [orderDate, setOrderDate] = useState<Date>(
-    duplicateData?.date ? new Date(duplicateData.date) : new Date()
-  );
+  const [orderDate, setOrderDate] = useState<Date>(() => {
+    if (duplicateData?.date) {
+      // Parse the date string correctly to avoid timezone issues
+      return startOfDay(parseISO(duplicateData.date));
+    }
+    return startOfDay(new Date());
+  });
   const [calendarOpen, setCalendarOpen] = useState(false);
   
   const [orderItems, setOrderItems] = useState<OrderItem[]>(duplicateData?.items || []);

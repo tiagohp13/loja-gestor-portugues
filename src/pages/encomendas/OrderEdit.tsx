@@ -18,6 +18,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { cn } from '@/lib/utils';
 import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { DeliveryInformation } from './components/DeliveryInformation';
+import { format, parseISO, startOfDay } from 'date-fns';
 
 interface OrderFormData {
   clientId: string;
@@ -142,14 +143,20 @@ const OrderEdit = () => {
       }
   
       if (orderData) {
+        // Parse date strings correctly to avoid timezone issues
+        const parsedDate = parseISO(orderData.date);
+        const localDate = startOfDay(parsedDate);
+        
         const formattedOrder: OrderFormData = {
           clientId: orderData.client_id || '',
           clientName: orderData.client_name || '',
-          date: new Date(orderData.date).toISOString().split('T')[0],
+          date: format(localDate, 'yyyy-MM-dd'),
           notes: orderData.notes || '',
           discount: Number(orderData.discount || 0),
           orderType: (orderData.order_type as 'combined' | 'awaiting_stock') || 'combined',
-          expectedDeliveryDate: orderData.expected_delivery_date ? new Date(orderData.expected_delivery_date) : undefined,
+          expectedDeliveryDate: orderData.expected_delivery_date 
+            ? startOfDay(parseISO(orderData.expected_delivery_date))
+            : undefined,
           expectedDeliveryTime: orderData.expected_delivery_time || '',
           deliveryLocation: orderData.delivery_location || '',
           items: (orderData.order_items || []).map((item: any) => ({
@@ -280,9 +287,11 @@ const OrderEdit = () => {
           notes: formData.notes,
           discount: formData.discount,
           order_type: formData.orderType,
-          expected_delivery_date: formData.expectedDeliveryDate?.toISOString().split('T')[0],
-          expected_delivery_time: formData.expectedDeliveryTime,
-          delivery_location: formData.deliveryLocation
+          expected_delivery_date: formData.expectedDeliveryDate 
+            ? format(startOfDay(formData.expectedDeliveryDate), 'yyyy-MM-dd')
+            : null,
+          expected_delivery_time: formData.expectedDeliveryTime || null,
+          delivery_location: formData.deliveryLocation || null
         })
         .eq('id', id);
 

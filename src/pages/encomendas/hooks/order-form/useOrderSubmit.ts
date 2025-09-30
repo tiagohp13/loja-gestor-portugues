@@ -6,6 +6,7 @@ import { OrderItem } from './types';
 import { useOrderValidation } from './useOrderValidation';
 import { Order } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
+import { format, startOfDay } from 'date-fns';
 
 export const useOrderSubmit = (
   addOrder: (order: any) => Promise<Order>,
@@ -43,7 +44,7 @@ export const useOrderSubmit = (
       const newOrder = {
         clientId: selectedClientId,
         clientName: selectedClient?.name,
-        date: orderDate.toISOString(),
+        date: format(startOfDay(orderDate), 'yyyy-MM-dd'),
         items: orderItems.map(item => ({
           productId: item.productId,
           productName: item.productName,
@@ -53,7 +54,9 @@ export const useOrderSubmit = (
         notes,
         total,  // Adding total value to the order
         orderType,
-        expectedDeliveryDate: expectedDeliveryDate?.toISOString().split('T')[0],
+        expectedDeliveryDate: expectedDeliveryDate 
+          ? format(startOfDay(expectedDeliveryDate), 'yyyy-MM-dd')
+          : undefined,
         expectedDeliveryTime,
         deliveryLocation
       };
