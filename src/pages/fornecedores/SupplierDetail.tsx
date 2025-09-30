@@ -216,7 +216,7 @@ const SupplierDetail = () => {
                         }
                       }}
                     >
-                      <TableCell className="font-medium">{doc.number}</TableCell>
+                      <TableCell className="text-primary hover:underline">{doc.number}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs ${
                           doc.type === 'Compra' 
