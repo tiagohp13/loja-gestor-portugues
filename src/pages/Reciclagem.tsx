@@ -341,26 +341,19 @@ const RecordCard: React.FC<RecordCardProps> = ({
       <CardContent className="pt-0 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <span className="text-sm font-medium text-muted-foreground">Apagado Em</span>
-            <p className="text-sm font-medium">{formatDateTime(record.deleted_at)}</p>
+            <span className="text-sm font-semibold text-slate-950">Apagado Em</span>
+            <p className="text-sm font-normal">{formatDateTime(record.deleted_at)}</p>
           </div>
           
           {recordNumber && <div className="space-y-1">
-              <span className="text-sm font-medium text-muted-foreground">Número: </span>
+              <span className="text-sm font-semibold text-slate-950">Número: </span>
               <button onClick={handleNumberClick} className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors">
                 {recordNumber}
               </button>
             </div>}
         </div>
         
-        {record.additional_info && Object.keys(record.additional_info).length > 0 && <div className="space-y-1">
-            <span className="text-sm font-medium text-muted-foreground">Detalhes</span>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {Object.entries(record.additional_info).filter(([key]) => key !== 'number').slice(0, 4).map(([key, value]) => <p key={key} className="text-sm text-muted-foreground">
-                    <span className="capitalize">{key.replace(/_/g, ' ')}</span>: {String(value)}
-                  </p>)}
-            </div>
-          </div>}
+        {record.additional_info && Object.keys(record.additional_info).length > 0}
         
         <div className="pt-2 border-t">
           <p className="text-sm text-[#c41e1e] font-extrabold">
