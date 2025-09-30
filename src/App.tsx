@@ -6,6 +6,7 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { Toaster } from 'sonner';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
+import { ScrollToTop } from './components/common/ScrollToTop';
 
 // Authentication
 import LoginPage from './pages/Login';
@@ -95,6 +96,7 @@ const ProtectedRoute = () => {
 function App() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <ThemeProvider>
         <AuthProvider>
           <DataProvider>
