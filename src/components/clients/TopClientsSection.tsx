@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useTopClients } from '@/hooks/useTopClients';
 import { formatCurrency } from '@/utils/formatting';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 interface TopClientsSectionProps {
   onViewAllClick: () => void;
 }
@@ -49,6 +51,25 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({
         </CardContent>
       </Card>;
   }
+
+  const maxSpent = topClients[0]?.totalSpent || 0;
+
+  const getRankBadge = (index: number) => {
+    switch (index) {
+      case 0:
+        return <span className="text-2xl" title="1º Lugar">🥇</span>;
+      case 1:
+        return <span className="text-2xl" title="2º Lugar">🥈</span>;
+      case 2:
+        return <span className="text-2xl" title="3º Lugar">🥉</span>;
+      default:
+        return (
+          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+            <span className="text-sm font-medium text-muted-foreground">{index + 1}</span>
+          </div>
+        );
+    }
+  };
   return <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
@@ -61,30 +82,55 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({
         </Button>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {topClients.map((client, index) => <Card key={client.id} onClick={() => navigate(`/clientes/${client.id}`)} className="relative cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary bg-white/0">
-              <CardContent className="p-4 bg-white">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-neutral-500">
-                    #{index + 1}
-                  </span>
-                  <TrendingUp className="w-4 h-4 text-primary" />
-                </div>
-                <h3 className="font-semibold text-sm mb-1 line-clamp-2" title={client.name}>
-                  {client.name}
-                </h3>
-                <p className="font-medium text-[008000] text-[#008000]">
-                  {formatCurrency(client.totalSpent)}
-                </p>
-                {client.email && <p className="text-xs text-muted-foreground mt-1 truncate" title={client.email}>
-                    {client.email}
-                  </p>}
-              </CardContent>
-            </Card>)}
-        </div>
+        <div className="space-y-1">
+          {topClients.map((client, index) => {
+            const progressValue = maxSpent > 0 ? (client.totalSpent / maxSpent) * 100 : 0;
+            
+            return (
+              <div
+                key={client.id}
+                className={cn(
+                  "relative py-4 px-4 cursor-pointer transition-colors hover:bg-accent/50 rounded-md",
+                  index < topClients.length - 1 && "border-b border-border"
+                )}
+                onClick={() => navigate(`/clientes/${client.id}`)}
+              >
+                <div className="flex items-center gap-4">
+                  {/* Rank Badge */}
+                  <div className="flex-shrink-0 w-8 flex items-center justify-center">
+                    {getRankBadge(index)}
+                  </div>
 
-        {/* Progress bars showing relative spending */}
-        
+                  {/* Client Info and Progress */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-base text-foreground truncate pr-4" title={client.name}>
+                        {client.name}
+                      </h3>
+                      <p className="font-semibold text-base text-green-600 dark:text-green-500 whitespace-nowrap">
+                        {formatCurrency(client.totalSpent)}
+                      </p>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="relative">
+                      <Progress 
+                        value={progressValue} 
+                        className="h-2 bg-muted"
+                      />
+                    </div>
+
+                    {client.email && (
+                      <p className="text-xs text-muted-foreground mt-2 truncate" title={client.email}>
+                        {client.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </CardContent>
     </Card>;
 };
