@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -18,17 +17,17 @@ import PageHeader from '@/components/ui/PageHeader';
 import { cn } from '@/lib/utils';
 import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { DeliveryInformation } from './components/DeliveryInformation';
-import { format, parseISO, startOfDay } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 
 interface OrderFormData {
   clientId: string;
   clientName: string;
-  date: string;
+  date: string; // yyyy-MM-dd
   notes: string;
   discount: number;
   items: OrderItem[];
   orderType: 'combined' | 'awaiting_stock';
-  expectedDeliveryDate?: Date;
+  expectedDeliveryDate?: string; // yyyy-MM-dd
   expectedDeliveryTime?: string;
   deliveryLocation?: string;
 }
@@ -48,7 +47,7 @@ const OrderEdit = () => {
     discount: 0,
     items: [],
     orderType: 'combined',
-    expectedDeliveryDate: undefined,
+    expectedDeliveryDate: '',
     expectedDeliveryTime: '',
     deliveryLocation: ''
   });
@@ -143,20 +142,18 @@ const OrderEdit = () => {
       }
   
       if (orderData) {
-        // Parse date strings correctly to avoid timezone issues
-        const parsedDate = parseISO(orderData.date);
-        const localDate = startOfDay(parsedDate);
-        
         const formattedOrder: OrderFormData = {
           clientId: orderData.client_id || '',
           clientName: orderData.client_name || '',
-          date: format(localDate, 'yyyy-MM-dd'),
+          date: orderData.date 
+            ? format(parseISO(orderData.date), 'yyyy-MM-dd')
+            : new Date().toISOString().split('T')[0],
           notes: orderData.notes || '',
           discount: Number(orderData.discount || 0),
           orderType: (orderData.order_type as 'combined' | 'awaiting_stock') || 'combined',
-          expectedDeliveryDate: orderData.expected_delivery_date 
-            ? startOfDay(parseISO(orderData.expected_delivery_date))
-            : undefined,
+          expectedDeliveryDate: orderData.expected_delivery_date
+            ? format(parseISO(orderData.expected_delivery_date), 'yyyy-MM-dd')
+            : '',
           expectedDeliveryTime: orderData.expected_delivery_time || '',
           deliveryLocation: orderData.delivery_location || '',
           items: (orderData.order_items || []).map((item: any) => ({
@@ -251,7 +248,6 @@ const OrderEdit = () => {
       return sum + (itemTotal - discountAmount);
     }, 0);
 
-    // Apply global discount
     const globalDiscountAmount = itemsTotal * ((formData.discount || 0) / 100);
     return itemsTotal - globalDiscountAmount;
   };
@@ -277,7 +273,6 @@ const OrderEdit = () => {
     try {
       setIsLoading(true);
 
-      // Update order
       const { error: orderError } = await supabase
         .from('orders')
         .update({
@@ -287,9 +282,7 @@ const OrderEdit = () => {
           notes: formData.notes,
           discount: formData.discount,
           order_type: formData.orderType,
-          expected_delivery_date: formData.expectedDeliveryDate 
-            ? format(startOfDay(formData.expectedDeliveryDate), 'yyyy-MM-dd')
-            : null,
+          expected_delivery_date: formData.expectedDeliveryDate || null,
           expected_delivery_time: formData.expectedDeliveryTime || null,
           delivery_location: formData.deliveryLocation || null
         })
@@ -297,7 +290,6 @@ const OrderEdit = () => {
 
       if (orderError) throw orderError;
 
-      // Delete existing order items
       const { error: deleteItemsError } = await supabase
         .from('order_items')
         .delete()
@@ -305,7 +297,6 @@ const OrderEdit = () => {
 
       if (deleteItemsError) throw deleteItemsError;
 
-      // Create order items
       const itemsToInsert = formData.items.map(item => ({
         order_id: id,
         product_id: item.productId,
@@ -386,7 +377,6 @@ const OrderEdit = () => {
               />
             </div>
             
-            {/* Order Type */}
             <div className="md:col-span-2">
               <OrderTypeSelector 
                 value={formData.orderType}
@@ -394,7 +384,6 @@ const OrderEdit = () => {
               />
             </div>
             
-            {/* Delivery Information */}
             <div className="md:col-span-2">
               <DeliveryInformation
                 orderType={formData.orderType}
@@ -542,24 +531,26 @@ const OrderEdit = () => {
 
         {formData.items.length > 0 && (
           <Card>
-            <CardContent className="pt-6">
-              <div className="flex justify-end">
-                <div className="text-2xl font-bold text-gestorApp-blue">
-                  Total: {formatCurrency(calculateTotal())}
-                </div>
+            <CardHeader>
+              <CardTitle>Resumo</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <div className="flex justify-between">
+                <span>Total:</span>
+                <span className="font-medium">{formatCurrency(calculateTotal())}</span>
               </div>
             </CardContent>
           </Card>
         )}
 
-        <div className="flex gap-4">
+        <div className="flex justify-between">
           <Button type="button" variant="outline" onClick={() => navigate('/encomendas/consultar')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Cancelar
           </Button>
           <Button type="submit" disabled={isLoading}>
             <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'A guardar...' : 'Guardar Encomenda'}
+            {isLoading ? 'A guardar...' : 'Guardar Alterações'}
           </Button>
         </div>
       </form>
