@@ -199,14 +199,14 @@ const CategoryList: React.FC = () => {
                             </Tooltip>
                           )}
                           {canDelete && (
-                            <DeleteConfirmDialog
-                              title="Eliminar Categoria"
-                              description="Tem a certeza que deseja eliminar esta categoria?"
-                              onDelete={() => handleDeleteCategory(category.id)}
-                              checkDependencies={() => checkCategoryDependencies(category.name)}
-                              trigger={
-                                <Tooltip>
-                                  <TooltipTrigger asChild>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <DeleteConfirmDialog
+                                  title="Eliminar Categoria"
+                                  description="Tem a certeza que deseja eliminar esta categoria?"
+                                  onDelete={() => handleDeleteCategory(category.id)}
+                                  checkDependencies={() => checkCategoryDependencies(category.name)}
+                                  trigger={
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
@@ -216,11 +216,11 @@ const CategoryList: React.FC = () => {
                                     >
                                       <Trash size={16} />
                                     </Button>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Eliminar categoria</TooltipContent>
-                                </Tooltip>
-                              }
-                            />
+                                  }
+                                />
+                              </TooltipTrigger>
+                              <TooltipContent>Eliminar categoria</TooltipContent>
+                            </Tooltip>
                           )}
                         </div>
                       </CardTitle>

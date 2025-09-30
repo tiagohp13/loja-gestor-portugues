@@ -12,6 +12,7 @@ import { Package, ChevronUp, ChevronDown } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
 import { Badge } from '@/components/ui/badge';
 import EmptyState from '@/components/common/EmptyState';
+import { naturalSort } from '@/pages/produtos/hooks/useProductSort';
 
 interface CategoryProductsModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
 }) => {
   const { products, getCategory } = useData();
   const [category, setCategory] = useState<any>(null);
-  const [sortField, setSortField] = useState<SortField>('name');
+  const [sortField, setSortField] = useState<SortField>('code');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
   useEffect(() => {
@@ -48,6 +49,11 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
   const sortedProducts = [...categoryProducts].sort((a, b) => {
     const aValue = a[sortField];
     const bValue = b[sortField];
+
+    // Use natural sort for code to handle numeric ordering
+    if (sortField === 'code' && typeof aValue === 'string' && typeof bValue === 'string') {
+      return naturalSort(aValue, bValue, sortDirection);
+    }
 
     if (typeof aValue === 'string' && typeof bValue === 'string') {
       return sortDirection === 'asc'
