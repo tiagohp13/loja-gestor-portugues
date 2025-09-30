@@ -25,14 +25,14 @@ const HistoryTables: React.FC<HistoryTablesProps> = ({
 }) => {
   return (
     <>
+      <PendingOrdersHistory 
+        pendingOrdersForProduct={pendingOrdersForProduct}
+      />
+      
       <EntryHistory 
         entriesForProduct={entriesForProduct}
         totalUnitsPurchased={totalUnitsPurchased}
         totalAmountSpent={totalAmountSpent}
-      />
-      
-      <PendingOrdersHistory 
-        pendingOrdersForProduct={pendingOrdersForProduct}
       />
       
       <ExitHistory 
