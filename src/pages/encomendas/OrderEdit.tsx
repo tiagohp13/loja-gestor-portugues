@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,17 +18,17 @@ import PageHeader from '@/components/ui/PageHeader';
 import { cn } from '@/lib/utils';
 import { OrderTypeSelector } from './components/OrderTypeSelector';
 import { DeliveryInformation } from './components/DeliveryInformation';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, startOfDay } from 'date-fns';
 
 interface OrderFormData {
   clientId: string;
   clientName: string;
-  date: string; // yyyy-MM-dd
+  date: string;
   notes: string;
   discount: number;
   items: OrderItem[];
   orderType: 'combined' | 'awaiting_stock';
-  expectedDeliveryDate?: string; // yyyy-MM-dd
+  expectedDeliveryDate?: Date;
   expectedDeliveryTime?: string;
   deliveryLocation?: string;
 }
@@ -47,7 +48,7 @@ const OrderEdit = () => {
     discount: 0,
     items: [],
     orderType: 'combined',
-    expectedDeliveryDate: '',
+    expectedDeliveryDate: undefined,
     expectedDeliveryTime: '',
     deliveryLocation: ''
   });
@@ -55,15 +56,23 @@ const OrderEdit = () => {
   useEffect(() => {
     fetchClients();
     fetchProducts();
-    if (id) fetchOrder(id);
+    if (id) {
+      fetchOrder(id);
+    }
   }, [id]);
 
   const fetchClients = async () => {
     try {
-      const { data, error } = await supabase.from('clients').select('*').neq('status', 'deleted').order('name');
+      const { data, error } = await supabase
+        .from('clients')
+        .select('*')
+        .neq('status', 'deleted')
+        .order('name');
+
       if (error) throw error;
+
       if (data) {
-        setClients(data.map(client => ({
+        const formattedClients: Client[] = data.map(client => ({
           id: client.id,
           name: client.name,
           email: client.email || '',
@@ -74,7 +83,8 @@ const OrderEdit = () => {
           createdAt: client.created_at,
           updatedAt: client.updated_at,
           status: client.status
-        })));
+        }));
+        setClients(formattedClients);
       }
     } catch (error) {
       console.error('Error fetching clients:', error);
@@ -84,10 +94,16 @@ const OrderEdit = () => {
 
   const fetchProducts = async () => {
     try {
-      const { data, error } = await supabase.from('products').select('*').neq('status', 'deleted').order('name');
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .neq('status', 'deleted')
+        .order('name');
+
       if (error) throw error;
+
       if (data) {
-        setProducts(data.map(product => ({
+        const formattedProducts: Product[] = data.map(product => ({
           id: product.id,
           code: product.code,
           name: product.name,
@@ -101,7 +117,8 @@ const OrderEdit = () => {
           status: product.status || 'active',
           createdAt: product.created_at,
           updatedAt: product.updated_at
-        })));
+        }));
+        setProducts(formattedProducts);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
@@ -112,17 +129,34 @@ const OrderEdit = () => {
   const fetchOrder = async (orderId: string) => {
     try {
       setIsLoading(true);
-      const { data: orderData, error: orderError } = await supabase.from('orders').select('*, order_items(*)').eq('id', orderId).single();
-      if (orderError) throw orderError;
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .select(`
+          *,
+          order_items(*)
+        `)
+        .eq('id', orderId)
+        .single();
+  
+      if (orderError) {
+        throw orderError;
+      }
+  
       if (orderData) {
-        setFormData({
+        // Parse date strings correctly to avoid timezone issues
+        const parsedDate = parseISO(orderData.date);
+        const localDate = startOfDay(parsedDate);
+        
+        const formattedOrder: OrderFormData = {
           clientId: orderData.client_id || '',
           clientName: orderData.client_name || '',
-          date: orderData.date ? format(parseISO(orderData.date), 'yyyy-MM-dd') : new Date().toISOString().split('T')[0],
+          date: format(localDate, 'yyyy-MM-dd'),
           notes: orderData.notes || '',
           discount: Number(orderData.discount || 0),
           orderType: (orderData.order_type as 'combined' | 'awaiting_stock') || 'combined',
-          expectedDeliveryDate: orderData.expected_delivery_date ? format(parseISO(orderData.expected_delivery_date), 'yyyy-MM-dd') : '',
+          expectedDeliveryDate: orderData.expected_delivery_date 
+            ? startOfDay(parseISO(orderData.expected_delivery_date))
+            : undefined,
           expectedDeliveryTime: orderData.expected_delivery_time || '',
           deliveryLocation: orderData.delivery_location || '',
           items: (orderData.order_items || []).map((item: any) => ({
@@ -135,7 +169,8 @@ const OrderEdit = () => {
             createdAt: item.created_at,
             updatedAt: item.updated_at
           }))
-        });
+        };
+        setFormData(formattedOrder);
       }
     } catch (error) {
       console.error('Error fetching order:', error);
@@ -147,7 +182,11 @@ const OrderEdit = () => {
 
   const handleClientChange = (clientId: string) => {
     const client = clients.find(c => c.id === clientId);
-    setFormData({ ...formData, clientId, clientName: client?.name || '' });
+    setFormData({
+      ...formData,
+      clientId,
+      clientName: client?.name || ''
+    });
   };
 
   const addItem = () => {
@@ -161,23 +200,47 @@ const OrderEdit = () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    setFormData({ ...formData, items: [...formData.items, newItem] });
+    
+    setFormData({
+      ...formData,
+      items: [...formData.items, newItem]
+    });
   };
 
-  const removeItem = (index: number) => setFormData({ ...formData, items: formData.items.filter((_, i) => i !== index) });
+  const removeItem = (index: number) => {
+    setFormData({
+      ...formData,
+      items: formData.items.filter((_, i) => i !== index)
+    });
+  };
 
   const updateItem = (index: number, field: keyof Omit<OrderItem, 'id' | 'createdAt' | 'updatedAt'>, value: string | number) => {
     const updatedItems = [...formData.items];
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
-    setFormData({ ...formData, items: updatedItems });
+    updatedItems[index] = {
+      ...updatedItems[index],
+      [field]: value
+    };
+    setFormData({
+      ...formData,
+      items: updatedItems
+    });
   };
 
   const handleProductSelect = (index: number, productId: string) => {
     const product = products.find(p => p.id === productId);
-    if (!product) return;
-    const updatedItems = [...formData.items];
-    updatedItems[index] = { ...updatedItems[index], productId: product.id, productName: `${product.code} - ${product.name}`, salePrice: product.salePrice };
-    setFormData({ ...formData, items: updatedItems });
+    if (product) {
+      const updatedItems = [...formData.items];
+      updatedItems[index] = {
+        ...updatedItems[index],
+        productId: product.id,
+        productName: `${product.code} - ${product.name}`,
+        salePrice: product.salePrice
+      };
+      setFormData({
+        ...formData,
+        items: updatedItems
+      });
+    }
     setProductSearchOpen({ ...productSearchOpen, [index]: false });
   };
 
@@ -187,34 +250,62 @@ const OrderEdit = () => {
       const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
       return sum + (itemTotal - discountAmount);
     }, 0);
-    return itemsTotal - (itemsTotal * ((formData.discount || 0) / 100));
+
+    // Apply global discount
+    const globalDiscountAmount = itemsTotal * ((formData.discount || 0) / 100);
+    return itemsTotal - globalDiscountAmount;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.clientId) return toast.error('Por favor selecione um cliente');
-    if (formData.items.length === 0) return toast.error('Por favor adicione pelo menos um item');
-    if (formData.items.some(item => !item.productName.trim())) return toast.error('Por favor preencha o nome de todos os produtos');
+    
+    if (!formData.clientId) {
+      toast.error('Por favor selecione um cliente');
+      return;
+    }
+
+    if (formData.items.length === 0) {
+      toast.error('Por favor adicione pelo menos um item');
+      return;
+    }
+
+    if (formData.items.some(item => !item.productName.trim())) {
+      toast.error('Por favor preencha o nome de todos os produtos');
+      return;
+    }
 
     try {
       setIsLoading(true);
 
-      const { error: orderError } = await supabase.from('orders').update({
-        client_id: formData.clientId,
-        client_name: formData.clientName,
-        date: formData.date,
-        notes: formData.notes,
-        discount: formData.discount,
-        order_type: formData.orderType,
-        expected_delivery_date: formData.expectedDeliveryDate || null,
-        expected_delivery_time: formData.expectedDeliveryTime || null,
-        delivery_location: formData.deliveryLocation || null
-      }).eq('id', id);
+      // Update order
+      const { error: orderError } = await supabase
+        .from('orders')
+        .update({
+          client_id: formData.clientId,
+          client_name: formData.clientName,
+          date: formData.date,
+          notes: formData.notes,
+          discount: formData.discount,
+          order_type: formData.orderType,
+          expected_delivery_date: formData.expectedDeliveryDate 
+            ? format(startOfDay(formData.expectedDeliveryDate), 'yyyy-MM-dd')
+            : null,
+          expected_delivery_time: formData.expectedDeliveryTime || null,
+          delivery_location: formData.deliveryLocation || null
+        })
+        .eq('id', id);
+
       if (orderError) throw orderError;
 
-      const { error: deleteItemsError } = await supabase.from('order_items').delete().eq('order_id', id);
+      // Delete existing order items
+      const { error: deleteItemsError } = await supabase
+        .from('order_items')
+        .delete()
+        .eq('order_id', id);
+
       if (deleteItemsError) throw deleteItemsError;
 
+      // Create order items
       const itemsToInsert = formData.items.map(item => ({
         order_id: id,
         product_id: item.productId,
@@ -223,7 +314,11 @@ const OrderEdit = () => {
         sale_price: item.salePrice,
         discount_percent: item.discountPercent
       }));
-      const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemsToInsert);
+
       if (itemsError) throw itemsError;
 
       toast.success('Encomenda atualizada com sucesso');
@@ -236,64 +331,102 @@ const OrderEdit = () => {
     }
   };
 
-  const formatCurrency = (value: number) => new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR' }).format(value);
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-PT', {
+      style: 'currency',
+      currency: 'EUR'
+    }).format(value);
+  };
 
   return (
     <div className="p-6 space-y-6">
       <PageHeader title="Editar Encomenda" />
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <Card>
-          <CardHeader><CardTitle>Informações da Encomenda</CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>Informações da Encomenda</CardTitle>
+          </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="client">Cliente *</Label>
               <Select value={formData.clientId} onValueChange={handleClientChange}>
-                <SelectTrigger><SelectValue placeholder="Selecionar cliente" /></SelectTrigger>
-                <SelectContent>{clients.map(client => <SelectItem key={client.id} value={client.id}>{client.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecionar cliente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
 
             <div>
               <Label htmlFor="date">Data da Encomenda *</Label>
-              <Input type="date" id="date" value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} required />
+              <Input
+                id="date"
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                required
+              />
             </div>
 
             <div className="md:col-span-2">
               <Label htmlFor="notes">Notas</Label>
-              <Textarea id="notes" value={formData.notes} onChange={e => setFormData({ ...formData, notes: e.target.value })} rows={3} placeholder="Notas adicionais..." />
+              <Textarea
+                id="notes"
+                value={formData.notes}
+                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                placeholder="Notas adicionais sobre a encomenda..."
+                rows={3}
+              />
             </div>
-
+            
+            {/* Order Type */}
             <div className="md:col-span-2">
-              <OrderTypeSelector value={formData.orderType} onChange={value => setFormData({ ...formData, orderType: value })} />
+              <OrderTypeSelector 
+                value={formData.orderType}
+                onChange={(value) => setFormData({ ...formData, orderType: value })}
+              />
             </div>
-
+            
+            {/* Delivery Information */}
             <div className="md:col-span-2">
               <DeliveryInformation
                 orderType={formData.orderType}
                 expectedDeliveryDate={formData.expectedDeliveryDate}
                 expectedDeliveryTime={formData.expectedDeliveryTime}
                 deliveryLocation={formData.deliveryLocation}
-                onDeliveryDateChange={date => setFormData({ ...formData, expectedDeliveryDate: date })}
-                onDeliveryTimeChange={time => setFormData({ ...formData, expectedDeliveryTime: time })}
-                onDeliveryLocationChange={loc => setFormData({ ...formData, deliveryLocation: loc })}
+                onDeliveryDateChange={(date) => setFormData({ ...formData, expectedDeliveryDate: date })}
+                onDeliveryTimeChange={(time) => setFormData({ ...formData, expectedDeliveryTime: time })}
+                onDeliveryLocationChange={(location) => setFormData({ ...formData, deliveryLocation: location })}
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Items */}
         <Card>
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Itens da Encomenda</CardTitle>
-              <Button type="button" onClick={addItem} variant="outline" size="sm"><Plus className="w-4 h-4 mr-2" />Adicionar Item</Button>
+              <Button type="button" onClick={addItem} variant="outline" size="sm">
+                <Plus className="w-4 h-4 mr-2" />
+                Adicionar Item
+              </Button>
             </div>
           </CardHeader>
           <CardContent>
             {formData.items.length === 0 ? (
               <div className="text-center py-8 text-gestorApp-gray">
                 <p>Nenhum item adicionado ainda.</p>
-                <Button type="button" onClick={addItem} variant="outline" className="mt-4"><Plus className="w-4 h-4 mr-2" />Adicionar Primeiro Item</Button>
+                <Button type="button" onClick={addItem} variant="outline" className="mt-4">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Adicionar Primeiro Item
+                </Button>
               </div>
             ) : (
               <Table>
@@ -309,14 +442,23 @@ const OrderEdit = () => {
                 </TableHeader>
                 <TableBody>
                   {formData.items.map((item, index) => {
-                    const subtotal = item.quantity * item.salePrice * (1 - (item.discountPercent || 0)/100);
+                    const itemTotal = item.quantity * item.salePrice;
+                    const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
+                    const subtotal = itemTotal - discountAmount;
+
                     return (
                       <TableRow key={index}>
                         <TableCell>
-                          <Popover open={productSearchOpen[index]} onOpenChange={open => setProductSearchOpen({ ...productSearchOpen, [index]: open })}>
+                          <Popover open={productSearchOpen[index]} onOpenChange={(open) => setProductSearchOpen({ ...productSearchOpen, [index]: open })}>
                             <PopoverTrigger asChild>
-                              <Button variant="outline" role="combobox" className="w-full justify-between">
-                                {item.productName || 'Selecionar produto...'} <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                              <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={productSearchOpen[index]}
+                                className="w-full justify-between"
+                              >
+                                {item.productName || "Selecionar produto..."}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                               </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-full p-0">
@@ -325,9 +467,18 @@ const OrderEdit = () => {
                                 <CommandEmpty>Nenhum produto encontrado.</CommandEmpty>
                                 <CommandList>
                                   <CommandGroup>
-                                    {products.map(product => (
-                                      <CommandItem key={product.id} value={`${product.code} ${product.name}`} onSelect={() => handleProductSelect(index, product.id)}>
-                                        <Check className={cn("mr-2 h-4 w-4", item.productId === product.id ? "opacity-100" : "opacity-0")} />
+                                    {products.map((product) => (
+                                      <CommandItem
+                                        key={product.id}
+                                        value={`${product.code} ${product.name}`}
+                                        onSelect={() => handleProductSelect(index, product.id)}
+                                      >
+                                        <Check
+                                          className={cn(
+                                            "mr-2 h-4 w-4",
+                                            item.productId === product.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                        />
                                         {product.code} - {product.name}
                                       </CommandItem>
                                     ))}
@@ -337,11 +488,49 @@ const OrderEdit = () => {
                             </PopoverContent>
                           </Popover>
                         </TableCell>
-                        <TableCell><Input type="number" min="1" value={item.quantity} onChange={e => updateItem(index, 'quantity', parseInt(e.target.value)||1)} className="w-20" /></TableCell>
-                        <TableCell><Input type="number" min="0" step="0.01" value={item.salePrice} onChange={e => updateItem(index, 'salePrice', parseFloat(e.target.value)||0)} className="w-24" /></TableCell>
-                        <TableCell><Input type="number" min="0" max="100" step="0.01" value={item.discountPercent||0} onChange={e => updateItem(index, 'discountPercent', parseFloat(e.target.value)||0)} className="w-20" /></TableCell>
-                        <TableCell className="font-medium">{formatCurrency(subtotal)}</TableCell>
-                        <TableCell><Button type="button" variant="ghost" size="sm" onClick={() => removeItem(index)}><Trash2 className="w-4 h-4" /></Button></TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.salePrice}
+                            onChange={(e) => updateItem(index, 'salePrice', parseFloat(e.target.value) || 0)}
+                            className="w-24"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.01"
+                            value={item.discountPercent || 0}
+                            onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value) || 0)}
+                            className="w-20"
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {formatCurrency(subtotal)}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeItem(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -354,16 +543,24 @@ const OrderEdit = () => {
         {formData.items.length > 0 && (
           <Card>
             <CardContent className="pt-6">
-              <div className="flex justify-end text-2xl font-bold text-gestorApp-blue">
-                Total: {formatCurrency(calculateTotal())}
+              <div className="flex justify-end">
+                <div className="text-2xl font-bold text-gestorApp-blue">
+                  Total: {formatCurrency(calculateTotal())}
+                </div>
               </div>
             </CardContent>
           </Card>
         )}
 
         <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/consultar')}><ArrowLeft className="w-4 h-4 mr-2" />Cancelar</Button>
-          <Button type="submit" disabled={isLoading}><Save className="w-4 h-4 mr-2" />{isLoading ? 'A guardar...' : 'Guardar Encomenda'}</Button>
+          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button type="submit" disabled={isLoading}>
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'A guardar...' : 'Guardar Encomenda'}
+          </Button>
         </div>
       </form>
     </div>
