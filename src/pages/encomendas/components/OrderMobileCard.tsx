@@ -87,6 +87,23 @@ const OrderMobileCard: React.FC<OrderMobileCardProps> = ({
             </div>
           </div>
           
+          {order.expectedDeliveryDate && (
+            <div>
+              <p className="text-sm font-medium text-gestorApp-gray mb-1">
+                Entrega Prevista
+              </p>
+              <div className="space-y-1">
+                <p className="text-sm">
+                  {format(new Date(order.expectedDeliveryDate), "dd/MM/yyyy", { locale: pt })}
+                  {order.expectedDeliveryTime && ` às ${order.expectedDeliveryTime}`}
+                </p>
+                {order.deliveryLocation && (
+                  <p className="text-xs text-muted-foreground">{order.deliveryLocation}</p>
+                )}
+              </div>
+            </div>
+          )}
+          
           <div 
             className="flex justify-end space-x-2 mt-4" 
             onClick={(e) => e.stopPropagation()}

@@ -77,6 +77,9 @@ const OrderTable: React.FC<OrderTableProps> = ({
             >
               Estado {getSortIcon('status')}
             </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+              Entrega
+            </th>
             <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
               Ações
             </th>
@@ -110,6 +113,19 @@ const OrderTable: React.FC<OrderTableProps> = ({
                   <StatusBadge variant="warning">
                     {order.orderType === 'awaiting_stock' ? 'Pendente – A aguardar stock' : 'Pendente – Combinada'}
                   </StatusBadge>
+                )}
+              </td>
+              <td className="px-6 py-4 text-sm text-gestorApp-gray-dark">
+                {order.expectedDeliveryDate && (
+                  <div className="space-y-1">
+                    <div>{format(new Date(order.expectedDeliveryDate), "dd/MM/yyyy", { locale: pt })}</div>
+                    {order.expectedDeliveryTime && (
+                      <div className="text-xs">{order.expectedDeliveryTime}</div>
+                    )}
+                    {order.deliveryLocation && (
+                      <div className="text-xs text-muted-foreground">{order.deliveryLocation}</div>
+                    )}
+                  </div>
                 )}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
