@@ -54,8 +54,7 @@ const OrderList = () => {
         .select(`
           *,
           order_items(*)
-        `)
-        .order('created_at', { ascending: false });
+        `);
 
       if (ordersError) throw ordersError;
 
@@ -90,8 +89,21 @@ const OrderList = () => {
           }, 0) * (1 - Number(order.discount || 0) / 100)
         }));
 
-        setOrders(formattedOrders);
-        setFilteredOrders(formattedOrders);
+        // Ordenar: Pendentes primeiro (por data desc), depois Convertidas (por data desc)
+        const sortedOrders = formattedOrders.sort((a, b) => {
+          // Se uma é pendente e outra convertida, pendente vem primeiro
+          const aPending = !a.convertedToStockExitId;
+          const bPending = !b.convertedToStockExitId;
+          
+          if (aPending && !bPending) return -1;
+          if (!aPending && bPending) return 1;
+          
+          // Se ambas têm o mesmo estado, ordenar por data (mais recente primeiro)
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+
+        setOrders(sortedOrders);
+        setFilteredOrders(sortedOrders);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
