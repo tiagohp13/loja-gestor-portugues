@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +10,7 @@ import { RefreshCw, Trash2, Package, Users, ShoppingCart, TrendingUp, TrendingDo
 import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { formatDateTime } from '@/utils/formatting';
 
 interface DeletedRecord {
   id: string;
@@ -124,22 +126,32 @@ const Reciclagem = () => {
     return acc;
   }, {} as GroupedRecords);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-PT', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
   const getDaysInRecycleBin = (deletedAt: string) => {
     const now = new Date();
     const deletedDate = new Date(deletedAt);
     const diffTime = Math.abs(now.getTime() - deletedDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays;
+  };
+
+  const getPermanentDeletionDate = (deletedAt: string) => {
+    const deletedDate = new Date(deletedAt);
+    deletedDate.setDate(deletedDate.getDate() + 30);
+    return formatDateTime(deletedDate);
+  };
+
+  const getRecordLink = (tableType: string, recordId: string) => {
+    const routes: { [key: string]: string } = {
+      products: `/produtos/${recordId}`,
+      categories: `/categorias/${recordId}`,
+      clients: `/clientes/${recordId}`,
+      suppliers: `/fornecedores/${recordId}`,
+      orders: `/encomendas/${recordId}`,
+      stock_entries: `/entradas/${recordId}`,
+      stock_exits: `/saidas/${recordId}`,
+      expenses: `/despesas/${recordId}`
+    };
+    return routes[tableType] || '#';
   };
 
   if (isLoading) {
@@ -219,8 +231,9 @@ const Reciclagem = () => {
                   isRestoring={isRestoring === record.id}
                   isDeleting={isDeleting === record.id}
                   tableTypeLabels={tableTypeLabels}
-                  formatDate={formatDate}
                   getDaysInRecycleBin={getDaysInRecycleBin}
+                  getPermanentDeletionDate={getPermanentDeletionDate}
+                  getRecordLink={getRecordLink}
                 />
               ))}
             </div>
@@ -238,8 +251,9 @@ const Reciclagem = () => {
                     isRestoring={isRestoring === record.id}
                     isDeleting={isDeleting === record.id}
                     tableTypeLabels={tableTypeLabels}
-                    formatDate={formatDate}
                     getDaysInRecycleBin={getDaysInRecycleBin}
+                    getPermanentDeletionDate={getPermanentDeletionDate}
+                    getRecordLink={getRecordLink}
                   />
                 ))}
                 {(!groupedRecords[tableType] || groupedRecords[tableType].length === 0) && (
@@ -269,8 +283,9 @@ interface RecordCardProps {
   isRestoring: boolean;
   isDeleting: boolean;
   tableTypeLabels: { [key: string]: { label: string; icon: React.ComponentType<any> } };
-  formatDate: (date: string) => string;
   getDaysInRecycleBin: (deletedAt: string) => number;
+  getPermanentDeletionDate: (deletedAt: string) => string;
+  getRecordLink: (tableType: string, recordId: string) => string;
 }
 
 const RecordCard: React.FC<RecordCardProps> = ({
@@ -280,15 +295,28 @@ const RecordCard: React.FC<RecordCardProps> = ({
   isRestoring,
   isDeleting,
   tableTypeLabels,
-  formatDate,
-  getDaysInRecycleBin
+  getDaysInRecycleBin,
+  getPermanentDeletionDate,
+  getRecordLink
 }) => {
+  const navigate = useNavigate();
   const IconComponent = tableTypeLabels[record.table_type]?.icon || Package;
   const daysInBin = getDaysInRecycleBin(record.deleted_at);
+  const permanentDeletionDate = getPermanentDeletionDate(record.deleted_at);
+  
+  // Extrair o número do registo do additional_info
+  const recordNumber = record.additional_info?.number || null;
+  
+  const handleNumberClick = () => {
+    if (recordNumber) {
+      const link = getRecordLink(record.table_type, record.id);
+      navigate(link);
+    }
+  };
   
   return (
-    <Card className="relative">
-      <CardHeader className="pb-3">
+    <Card className="relative hover:shadow-md transition-shadow">
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <IconComponent className="w-5 h-5 text-gestorApp-blue" />
@@ -299,7 +327,7 @@ const RecordCard: React.FC<RecordCardProps> = ({
                   {tableTypeLabels[record.table_type]?.label || record.table_type}
                 </Badge>
                 <Badge variant={daysInBin > 25 ? "destructive" : daysInBin > 20 ? "secondary" : "outline"}>
-                  {daysInBin} {daysInBin === 1 ? 'dia' : 'dias'}
+                  {daysInBin} {daysInBin === 1 ? 'dia' : 'dias'} na reciclagem
                 </Badge>
               </div>
             </div>
@@ -357,29 +385,50 @@ const RecordCard: React.FC<RecordCardProps> = ({
         </div>
       </CardHeader>
       
-      <CardContent className="pt-0">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="text-gestorApp-gray">Apagado em:</span>
-            <p className="font-medium">{formatDate(record.deleted_at)}</p>
+      <CardContent className="pt-0 space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1">
+            <span className="text-sm font-medium text-muted-foreground">Apagado Em</span>
+            <p className="text-sm font-medium">{formatDateTime(record.deleted_at)}</p>
           </div>
           
-          {record.additional_info && Object.keys(record.additional_info).length > 0 && (
-            <div>
-              <span className="text-gestorApp-gray">Detalhes:</span>
-              <div className="mt-1">
-                {Object.entries(record.additional_info).slice(0, 2).map(([key, value]) => (
-                  <p key={key} className="text-xs text-gestorApp-gray-dark">
-                    {key}: {String(value)}
-                  </p>
-                ))}
-              </div>
+          {recordNumber && (
+            <div className="space-y-1">
+              <span className="text-sm font-medium text-muted-foreground">Número</span>
+              <button
+                onClick={handleNumberClick}
+                className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+              >
+                {recordNumber}
+              </button>
             </div>
           )}
         </div>
         
+        {record.additional_info && Object.keys(record.additional_info).length > 0 && (
+          <div className="space-y-1">
+            <span className="text-sm font-medium text-muted-foreground">Detalhes</span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {Object.entries(record.additional_info)
+                .filter(([key]) => key !== 'number')
+                .slice(0, 4)
+                .map(([key, value]) => (
+                  <p key={key} className="text-sm text-muted-foreground">
+                    <span className="capitalize">{key.replace(/_/g, ' ')}</span>: {String(value)}
+                  </p>
+                ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="pt-2 border-t">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium">Será eliminado definitivamente em:</span> {permanentDeletionDate}
+          </p>
+        </div>
+        
         {daysInBin > 25 && (
-          <div className="mt-3 p-2 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
+          <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive font-medium">
             ⚠️ Este registo será eliminado automaticamente em {30 - daysInBin} {30 - daysInBin === 1 ? 'dia' : 'dias'}.
           </div>
         )}
