@@ -56,22 +56,22 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({
 
   const getRankBadge = (index: number) => {
     const badges = [
-      { bg: '#C9A227', text: 'white', title: '1º Lugar' }, // Dourado
-      { bg: '#A8A8A8', text: 'white', title: '2º Lugar' }, // Prateado
-      { bg: '#B87333', text: 'white', title: '3º Lugar' }, // Bronze
-      { bg: '#D3D3D3', text: '#666666', title: `${index + 1}º Lugar` }, // Cinza claro
-      { bg: '#D3D3D3', text: '#666666', title: `${index + 1}º Lugar` }, // Cinza claro
+      { border: '#C9A227', title: '1º Lugar' }, // Dourado
+      { border: '#A8A8A8', title: '2º Lugar' }, // Prateado
+      { border: '#B87333', title: '3º Lugar' }, // Bronze
+      { border: '#D3D3D3', title: `${index + 1}º Lugar` }, // Cinza claro
+      { border: '#D3D3D3', title: `${index + 1}º Lugar` }, // Cinza claro
     ];
 
     const badge = badges[index] || badges[3];
 
     return (
       <div 
-        className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
-        style={{ backgroundColor: badge.bg }}
+        className="w-10 h-10 rounded-full flex items-center justify-center bg-background shadow-sm"
+        style={{ border: `3px solid ${badge.border}` }}
         title={badge.title}
       >
-        <span className="text-sm font-bold" style={{ color: badge.text }}>
+        <span className="text-sm font-bold text-foreground">
           {index + 1}
         </span>
       </div>
