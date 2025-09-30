@@ -1,4 +1,6 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
 import { EntryItem } from '../types/productHistoryTypes';
 
@@ -13,56 +15,52 @@ const EntryHistory: React.FC<EntryHistoryProps> = ({
   totalUnitsPurchased,
   totalAmountSpent
 }) => {
+  const navigate = useNavigate();
+  
   return (
     <div className="mt-10">
       <h3 className="text-xl font-semibold mb-4">Histórico de Entradas</h3>
-      {entriesForProduct.length > 0 ? (
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Data</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Nº Entrada</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Fatura</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Fornecedor</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Quantidade</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Preço Unit.</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Total</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {entriesForProduct.map((entry, index) => (
-                <tr key={index} className="hover:bg-gray-50 cursor-pointer" onClick={() => entry.id && (window.location.href = `/entradas/${entry.id}`)}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(entry.date)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 hover:underline">{entry.number}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.document}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.supplierName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{entry.quantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(entry.unitPrice)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(entry.total)}</td>
-                </tr>
-              ))}
-              {entriesForProduct.length > 0 && (
-                <tr className="bg-gray-50">
-                  <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                    Total de Unidades Compradas:
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    {totalUnitsPurchased}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                    Total Gasto:
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    {formatCurrency(totalAmountSpent)}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+      {entriesForProduct.length === 0 ? (
+        <p className="text-muted-foreground">Sem entradas registadas para este produto.</p>
       ) : (
-        <p className="text-gray-500">Sem entradas registadas para este produto.</p>
+        <div className="bg-white rounded-lg shadow overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Nº Entrada</TableHead>
+                <TableHead>Fatura</TableHead>
+                <TableHead>Fornecedor</TableHead>
+                <TableHead className="text-right">Quantidade</TableHead>
+                <TableHead className="text-right">Preço Unit.</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {entriesForProduct.map((entry, index) => (
+                <TableRow 
+                  key={index}
+                  className="cursor-pointer hover:bg-accent"
+                  onClick={() => entry.id && navigate(`/entradas/${entry.id}`)}
+                >
+                  <TableCell>{formatDateString(entry.date)}</TableCell>
+                  <TableCell className="text-primary hover:underline">{entry.number}</TableCell>
+                  <TableCell>{entry.document}</TableCell>
+                  <TableCell>{entry.supplierName}</TableCell>
+                  <TableCell className="text-right">{entry.quantity}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(entry.unitPrice)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(entry.total)}</TableCell>
+                </TableRow>
+              ))}
+              <TableRow className="font-semibold bg-muted/50">
+                <TableCell colSpan={4}>Total de Unidades Compradas:</TableCell>
+                <TableCell className="text-right">{totalUnitsPurchased}</TableCell>
+                <TableCell className="text-right">Total Gasto:</TableCell>
+                <TableCell className="text-right">{formatCurrency(totalAmountSpent)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

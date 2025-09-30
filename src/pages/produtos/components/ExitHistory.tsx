@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
 import { ExitItem } from '../types/productHistoryTypes';
 
@@ -29,71 +30,65 @@ const ExitHistory: React.FC<ExitHistoryProps> = ({
   return (
     <div className="mt-10">
       <h3 className="text-xl font-semibold mb-4">Histórico de Saídas</h3>
-      {exitsForProduct.length > 0 ? (
+      {exitsForProduct.length === 0 ? (
+        <p className="text-muted-foreground">Sem saídas registadas para este produto.</p>
+      ) : (
         <div className="bg-white rounded-lg shadow overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Data</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Nº Saída</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Fatura</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Cliente</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Quantidade</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Preço Unit.</th>
-                <th scope="col" className="px-6 py-3 text-left text-xs text-gray-500 tracking-wider">Total</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Data</TableHead>
+                <TableHead>Nº Saída</TableHead>
+                <TableHead>Fatura</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead className="text-right">Quantidade</TableHead>
+                <TableHead className="text-right">Preço Unit.</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {exitsForProduct.map((exit, index) => (
-                <tr key={index}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(exit.date)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <button 
-                      onClick={(e) => handleNavigateToExit(exit.exitId, e)}
-                      className="text-blue-500 hover:underline cursor-pointer"
-                    >
-                      {exit.number}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.document}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
+                <TableRow key={index}>
+                  <TableCell>{formatDateString(exit.date)}</TableCell>
+                  <TableCell 
+                    className="text-primary hover:underline cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigate(`/saidas/${exit.exitId}`);
+                    }}
+                  >
+                    {exit.number}
+                  </TableCell>
+                  <TableCell>{exit.document}</TableCell>
+                  <TableCell>
                     {exit.clientId ? (
-                      <button 
-                        onClick={(e) => handleNavigateToClient(exit.clientId!, e)}
-                        className="text-blue-500 hover:underline cursor-pointer"
+                      <span 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/clientes/${exit.clientId}`);
+                        }}
+                        className="text-primary hover:underline cursor-pointer"
                       >
                         {exit.clientName}
-                      </button>
+                      </span>
                     ) : (
-                      <span className="text-gray-500">{exit.clientName}</span>
+                      <span>{exit.clientName}</span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.quantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(exit.unitPrice)}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(exit.total)}</td>
-                </tr>
+                  </TableCell>
+                  <TableCell className="text-right">{exit.quantity}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(exit.unitPrice)}</TableCell>
+                  <TableCell className="text-right">{formatCurrency(exit.total)}</TableCell>
+                </TableRow>
               ))}
-              {exitsForProduct.length > 0 && (
-                <tr className="bg-gray-50">
-                  <td colSpan={4} className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                    Total de Unidades Vendidas:
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    {totalUnitsSold}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900 text-right">
-                    Total Vendido:
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-bold text-gray-900">
-                    {formatCurrency(totalAmountSold)}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              <TableRow className="font-semibold bg-muted/50">
+                <TableCell colSpan={4}>Total de Unidades Vendidas:</TableCell>
+                <TableCell className="text-right">{totalUnitsSold}</TableCell>
+                <TableCell className="text-right">Total Vendido:</TableCell>
+                <TableCell className="text-right">{formatCurrency(totalAmountSold)}</TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
         </div>
-      ) : (
-        <p className="text-gray-500">Sem saídas registadas para este produto.</p>
       )}
     </div>
   );
