@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { formatDateTime } from '@/utils/formatting';
+import DeletedRecordModal from './Reciclagem/components/DeletedRecordModal';
+
 interface DeletedRecord {
   id: string;
   name: string;
@@ -26,6 +27,7 @@ const Reciclagem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRestoring, setIsRestoring] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<{ id: string; type: string; number: string } | null>(null);
   useScrollToTop();
   const tableTypeLabels: {
     [key: string]: {
@@ -156,20 +158,12 @@ const Reciclagem = () => {
     deletedDate.setDate(deletedDate.getDate() + 30);
     return formatDateTime(deletedDate);
   };
-  const getRecordLink = (tableType: string, recordId: string) => {
-    const routes: {
-      [key: string]: string;
-    } = {
-      products: `/produtos/${recordId}`,
-      categories: `/categorias/${recordId}`,
-      clients: `/clientes/${recordId}`,
-      suppliers: `/fornecedores/${recordId}`,
-      orders: `/encomendas/${recordId}`,
-      stock_entries: `/entradas/${recordId}`,
-      stock_exits: `/saidas/${recordId}`,
-      expenses: `/despesas/${recordId}`
-    };
-    return routes[tableType] || '#';
+  const handleOpenRecordModal = (recordId: string, tableType: string, recordNumber: string) => {
+    setSelectedRecord({ id: recordId, type: tableType, number: recordNumber });
+  };
+
+  const handleCloseRecordModal = () => {
+    setSelectedRecord(null);
   };
   if (isLoading) {
     return <div className="p-6">
@@ -184,6 +178,16 @@ const Reciclagem = () => {
   }
   return <div className="p-6 space-y-6">
       <PageHeader title="Reciclagem" description="Gerir registos apagados e recuperação de dados" />
+
+      {selectedRecord && (
+        <DeletedRecordModal
+          isOpen={!!selectedRecord}
+          onClose={handleCloseRecordModal}
+          recordId={selectedRecord.id}
+          recordType={selectedRecord.type}
+          recordNumber={selectedRecord.number}
+        />
+      )}
 
       {/* Summary Card */}
       <Card>
@@ -227,13 +231,13 @@ const Reciclagem = () => {
 
           <TabsContent value="all">
             <div className="space-y-4">
-              {deletedRecords.map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={isRestoring === record.id} isDeleting={isDeleting === record.id} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} getRecordLink={getRecordLink} />)}
+              {deletedRecords.map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={isRestoring === record.id} isDeleting={isDeleting === record.id} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} onOpenModal={handleOpenRecordModal} />)}
             </div>
           </TabsContent>
 
           {Object.keys(tableTypeLabels).map(tableType => <TabsContent key={tableType} value={tableType}>
               <div className="space-y-4">
-                {(groupedRecords[tableType] || []).map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={isRestoring === record.id} isDeleting={isDeleting === record.id} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} getRecordLink={getRecordLink} />)}
+                {(groupedRecords[tableType] || []).map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={isRestoring === record.id} isDeleting={isDeleting === record.id} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} onOpenModal={handleOpenRecordModal} />)}
                 {(!groupedRecords[tableType] || groupedRecords[tableType].length === 0) && <Card>
                     <CardContent className="pt-6">
                       <div className="text-center py-4">
@@ -262,7 +266,7 @@ interface RecordCardProps {
   };
   getDaysInRecycleBin: (deletedAt: string) => number;
   getPermanentDeletionDate: (deletedAt: string) => string;
-  getRecordLink: (tableType: string, recordId: string) => string;
+  onOpenModal: (recordId: string, tableType: string, recordNumber: string) => void;
 }
 const RecordCard: React.FC<RecordCardProps> = ({
   record,
@@ -273,9 +277,8 @@ const RecordCard: React.FC<RecordCardProps> = ({
   tableTypeLabels,
   getDaysInRecycleBin,
   getPermanentDeletionDate,
-  getRecordLink
+  onOpenModal
 }) => {
-  const navigate = useNavigate();
   const IconComponent = tableTypeLabels[record.table_type]?.icon || Package;
   const daysInBin = getDaysInRecycleBin(record.deleted_at);
   const permanentDeletionDate = getPermanentDeletionDate(record.deleted_at);
@@ -284,8 +287,7 @@ const RecordCard: React.FC<RecordCardProps> = ({
   const recordNumber = record.additional_info?.number || null;
   const handleNumberClick = () => {
     if (recordNumber) {
-      const link = getRecordLink(record.table_type, record.id);
-      navigate(link);
+      onOpenModal(record.id, record.table_type, recordNumber);
     }
   };
   return <Card className="relative hover:shadow-md transition-shadow">
