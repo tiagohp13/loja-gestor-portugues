@@ -55,20 +55,27 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({
   const maxSpent = topClients[0]?.totalSpent || 0;
 
   const getRankBadge = (index: number) => {
-    switch (index) {
-      case 0:
-        return <span className="text-2xl" title="1º Lugar">🥇</span>;
-      case 1:
-        return <span className="text-2xl" title="2º Lugar">🥈</span>;
-      case 2:
-        return <span className="text-2xl" title="3º Lugar">🥉</span>;
-      default:
-        return (
-          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-sm font-medium text-muted-foreground">{index + 1}</span>
-          </div>
-        );
-    }
+    const badges = [
+      { bg: '#C9A227', text: 'white', title: '1º Lugar' }, // Dourado
+      { bg: '#A8A8A8', text: 'white', title: '2º Lugar' }, // Prateado
+      { bg: '#B87333', text: 'white', title: '3º Lugar' }, // Bronze
+      { bg: '#D3D3D3', text: '#666666', title: `${index + 1}º Lugar` }, // Cinza claro
+      { bg: '#D3D3D3', text: '#666666', title: `${index + 1}º Lugar` }, // Cinza claro
+    ];
+
+    const badge = badges[index] || badges[3];
+
+    return (
+      <div 
+        className="w-10 h-10 rounded-full flex items-center justify-center shadow-sm"
+        style={{ backgroundColor: badge.bg }}
+        title={badge.title}
+      >
+        <span className="text-sm font-bold" style={{ color: badge.text }}>
+          {index + 1}
+        </span>
+      </div>
+    );
   };
   return <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">
