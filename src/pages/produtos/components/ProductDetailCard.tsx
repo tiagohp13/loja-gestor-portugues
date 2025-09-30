@@ -30,7 +30,7 @@ const ProductDetailCard: React.FC<ProductDetailCardProps> = ({ product, totalUni
         <div className="grid md:grid-cols-2 gap-4">
           <div>
             <p className="text-sm font-medium text-gray-500">Descrição</p>
-            <p>{product.description || '-'}</p>
+            <p className="whitespace-pre-wrap">{product.description || '-'}</p>
           </div>
           
           <div>
