@@ -6,18 +6,19 @@ import { Button } from '@/components/ui/button';
 import { useTopClients } from '@/hooks/useTopClients';
 import { formatCurrency } from '@/utils/formatting';
 import { Skeleton } from '@/components/ui/skeleton';
-
 interface TopClientsSectionProps {
   onViewAllClick: () => void;
 }
-
-const TopClientsSection: React.FC<TopClientsSectionProps> = ({ onViewAllClick }) => {
+const TopClientsSection: React.FC<TopClientsSectionProps> = ({
+  onViewAllClick
+}) => {
   const navigate = useNavigate();
-  const { topClients, isLoading } = useTopClients();
-
+  const {
+    topClients,
+    isLoading
+  } = useTopClients();
   if (isLoading) {
-    return (
-      <Card className="mb-6">
+    return <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-primary" />
@@ -26,18 +27,15 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({ onViewAllClick })
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            {Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} className="h-24 w-full" />
-            ))}
+            {Array.from({
+            length: 5
+          }).map((_, index) => <Skeleton key={index} className="h-24 w-full" />)}
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
   if (topClients.length === 0) {
-    return (
-      <Card className="mb-6">
+    return <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-primary" />
@@ -49,35 +47,22 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({ onViewAllClick })
             Ainda não existem vendas registadas
           </div>
         </CardContent>
-      </Card>
-    );
+      </Card>;
   }
-
-  return (
-    <Card className="mb-6">
+  return <Card className="mb-6">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="w-5 h-5 text-primary" />
           Top 5 Clientes por Valor Gasto
         </CardTitle>
-        <Button 
-          variant="outline" 
-          size="sm"
-          onClick={onViewAllClick}
-          className="flex items-center gap-2"
-        >
+        <Button variant="outline" size="sm" onClick={onViewAllClick} className="flex items-center gap-2">
           <Eye className="w-4 h-4" />
           Ver todos
         </Button>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {topClients.map((client, index) => (
-            <Card 
-              key={client.id} 
-              className="relative cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary"
-              onClick={() => navigate(`/clientes/${client.id}`)}
-            >
+          {topClients.map((client, index) => <Card key={client.id} className="relative cursor-pointer hover:shadow-md transition-shadow border-l-4 border-l-primary" onClick={() => navigate(`/clientes/${client.id}`)}>
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-xs font-medium text-muted-foreground">
@@ -88,17 +73,14 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({ onViewAllClick })
                 <h3 className="font-semibold text-sm mb-1 line-clamp-2" title={client.name}>
                   {client.name}
                 </h3>
-                <p className="text-lg font-bold text-primary">
+                <p className="text-lg text-primary font-medium">
                   {formatCurrency(client.totalSpent)}
                 </p>
-                {client.email && (
-                  <p className="text-xs text-muted-foreground mt-1 truncate" title={client.email}>
+                {client.email && <p className="text-xs text-muted-foreground mt-1 truncate" title={client.email}>
                     {client.email}
-                  </p>
-                )}
+                  </p>}
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
 
         {/* Progress bars showing relative spending */}
@@ -107,11 +89,9 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({ onViewAllClick })
             Comparação relativa
           </h4>
           {topClients.map((client, index) => {
-            const maxSpent = topClients[0]?.totalSpent || 1;
-            const percentage = (client.totalSpent / maxSpent) * 100;
-            
-            return (
-              <div key={client.id} className="flex items-center gap-3">
+          const maxSpent = topClients[0]?.totalSpent || 1;
+          const percentage = client.totalSpent / maxSpent * 100;
+          return <div key={client.id} className="flex items-center gap-3">
                 <span className="text-xs font-medium text-muted-foreground w-6">
                   #{index + 1}
                 </span>
@@ -120,24 +100,20 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({ onViewAllClick })
                     <span className="text-sm font-medium truncate" title={client.name}>
                       {client.name}
                     </span>
-                    <span className="text-sm font-bold text-primary">
+                    <span className="text-sm text-primary font-medium">
                       {formatCurrency(client.totalSpent)}
                     </span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
-                    <div 
-                      className="bg-primary h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${Math.max(percentage, 5)}%` }}
-                    />
+                    <div className="bg-primary h-2 rounded-full transition-all duration-300" style={{
+                  width: `${Math.max(percentage, 5)}%`
+                }} />
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              </div>;
+        })}
         </div>
       </CardContent>
-    </Card>
-  );
+    </Card>;
 };
-
 export default TopClientsSection;
