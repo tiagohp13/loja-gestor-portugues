@@ -6,7 +6,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { CalendarIcon, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { pt } from "date-fns/locale";
+import { ptBR } from "date-fns/locale";
 
 interface DeliveryInformationProps {
   orderType: 'combined' | 'awaiting_stock';
@@ -52,7 +52,7 @@ export const DeliveryInformation = ({
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {expectedDeliveryDate ? (
-                  format(expectedDeliveryDate, "PPP", { locale: pt })
+                  format(expectedDeliveryDate, "dd/MM/yyyy", { locale: ptBR })
                 ) : (
                   <span>Selecione uma data</span>
                 )}
@@ -64,7 +64,6 @@ export const DeliveryInformation = ({
                 selected={expectedDeliveryDate}
                 onSelect={onDeliveryDateChange}
                 initialFocus
-                locale={pt}
               />
             </PopoverContent>
           </Popover>
