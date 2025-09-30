@@ -22,3 +22,13 @@ export interface ExitItem {
   total: number;
   exitId: string;
 }
+
+export interface PendingOrderItem {
+  date: string;
+  number: string;
+  clientName: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+  orderId: string;
+}

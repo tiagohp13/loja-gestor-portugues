@@ -1,11 +1,13 @@
 import React from 'react';
 import EntryHistory from './EntryHistory';
 import ExitHistory from './ExitHistory';
-import { EntryItem, ExitItem } from '../types/productHistoryTypes';
+import PendingOrdersHistory from './PendingOrdersHistory';
+import { EntryItem, ExitItem, PendingOrderItem } from '../types/productHistoryTypes';
 
 interface HistoryTablesProps {
   entriesForProduct: EntryItem[];
   exitsForProduct: ExitItem[];
+  pendingOrdersForProduct: PendingOrderItem[];
   totalUnitsPurchased: number;
   totalAmountSpent: number;
   totalUnitsSold: number;
@@ -15,6 +17,7 @@ interface HistoryTablesProps {
 const HistoryTables: React.FC<HistoryTablesProps> = ({
   entriesForProduct,
   exitsForProduct,
+  pendingOrdersForProduct,
   totalUnitsPurchased,
   totalAmountSpent,
   totalUnitsSold,
@@ -26,6 +29,10 @@ const HistoryTables: React.FC<HistoryTablesProps> = ({
         entriesForProduct={entriesForProduct}
         totalUnitsPurchased={totalUnitsPurchased}
         totalAmountSpent={totalAmountSpent}
+      />
+      
+      <PendingOrdersHistory 
+        pendingOrdersForProduct={pendingOrdersForProduct}
       />
       
       <ExitHistory 

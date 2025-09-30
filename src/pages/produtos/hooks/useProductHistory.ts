@@ -1,11 +1,11 @@
 
 import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
-import { StockEntryItem, StockExitItem } from '@/types';
-import { EntryItem, ExitItem } from '../types/productHistoryTypes';
+import { StockEntryItem, StockExitItem, OrderItem } from '@/types';
+import { EntryItem, ExitItem, PendingOrderItem } from '../types/productHistoryTypes';
 
 export const useProductHistory = (productId: string | undefined) => {
-  const { getProductHistory } = useData();
+  const { getProductHistory, orders } = useData();
   
   const productHistory = useMemo(() => {
     if (!productId) return { entries: [], exits: [] };
@@ -47,6 +47,26 @@ export const useProductHistory = (productId: string | undefined) => {
       );
   }, [productHistory.exits, productId]);
   
+  // Get pending orders for this product
+  const pendingOrdersForProduct = useMemo(() => {
+    if (!productId) return [];
+    
+    return orders
+      .filter(order => !order.convertedToStockExitId && order.status !== 'deleted')
+      .flatMap(order => order.items
+        .filter((item: OrderItem) => item.productId === productId)
+        .map((item: OrderItem) => ({
+          date: order.date,
+          number: order.number,
+          clientName: order.clientName || '-',
+          quantity: item.quantity,
+          unitPrice: item.salePrice,
+          total: item.quantity * item.salePrice,
+          orderId: order.id
+        }))
+      );
+  }, [orders, productId]);
+  
   // Calculate totals
   const totals = useMemo(() => {
     const totalUnitsSold = exitsForProduct.reduce((total, exit) => total + exit.quantity, 0);
@@ -65,6 +85,7 @@ export const useProductHistory = (productId: string | undefined) => {
   return {
     entriesForProduct,
     exitsForProduct,
+    pendingOrdersForProduct,
     ...totals
   };
 };

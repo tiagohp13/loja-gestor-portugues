@@ -21,6 +21,7 @@ const ProductDetail: React.FC = () => {
   const {
     entriesForProduct,
     exitsForProduct,
+    pendingOrdersForProduct,
     totalUnitsSold,
     totalUnitsPurchased,
     totalAmountSpent,
@@ -83,6 +84,7 @@ const ProductDetail: React.FC = () => {
       <HistoryTables 
         entriesForProduct={entriesForProduct} 
         exitsForProduct={exitsForProduct}
+        pendingOrdersForProduct={pendingOrdersForProduct}
         totalUnitsPurchased={totalUnitsPurchased}
         totalAmountSpent={totalAmountSpent}
         totalUnitsSold={totalUnitsSold}
