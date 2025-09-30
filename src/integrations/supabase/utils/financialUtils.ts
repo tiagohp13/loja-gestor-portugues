@@ -10,7 +10,8 @@ export const getClientTotalSpent = async (clientId: string): Promise<number> => 
     const { data: exitData, error: exitError } = await supabase
       .from('stock_exits')
       .select('id')
-      .eq('client_id', clientId);
+      .eq('client_id', clientId)
+      .or('status.is.null,status.neq.deleted');
     
     if (exitError) {
       console.error('Error fetching client exits:', exitError);
