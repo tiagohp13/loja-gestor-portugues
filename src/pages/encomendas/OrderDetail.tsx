@@ -9,6 +9,8 @@ import OrderClientCard from './components/OrderClientCard';
 import OrderProductsTableDetail from './components/OrderProductsTableDetail';
 import { DuplicateOrderButton } from './components/DuplicateOrderButton';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 /**
  * Order detail page component
@@ -17,7 +19,7 @@ import { useScrollToTop } from '@/hooks/useScrollToTop';
 const OrderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const contentRef = useRef<HTMLDivElement>(null);
-  const { order, client, totalValue, relatedStockExit } = useOrderDetail(id);
+  const { order, client, totalValue, relatedStockExit, isDeleted } = useOrderDetail(id);
   
   // Scroll to top on component mount
   useScrollToTop();
@@ -32,7 +34,22 @@ const OrderDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <OrderDetailHeader order={order} relatedStockExit={relatedStockExit} orderId={order.id} orderNumber={order.number} />
+      <OrderDetailHeader 
+        order={order} 
+        relatedStockExit={relatedStockExit} 
+        orderId={order.id} 
+        orderNumber={order.number}
+        isDeleted={isDeleted}
+      />
+
+      {isDeleted && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Este registo foi apagado e está em modo de leitura apenas.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="pdf-content" ref={contentRef}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { mapDbOrderToOrder, mapDbOrderItemToOrderItem } from '@/utils/mappers';
 
 /**
  * Hook for fetching and managing order detail data
@@ -16,15 +18,50 @@ export const useOrderDetail = (id: string | undefined) => {
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
   const [relatedStockExit, setRelatedStockExit] = useState<StockExit | null>(null);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
-    // Don't proceed if still loading data
-    if (isLoading) {
-      return;
-    }
-    
-    if (id) {
-      const fetchedOrder = orders.find(o => o.id === id);
+    const fetchOrder = async () => {
+      // Don't proceed if still loading data
+      if (isLoading) {
+        return;
+      }
+      
+      if (!id) return;
+
+      let fetchedOrder = orders.find(o => o.id === id);
+      
+      // If not found, fetch from database (including deleted)
+      if (!fetchedOrder) {
+        try {
+          const { data, error } = await supabase
+            .from('orders')
+            .select(`
+              *,
+              order_items(*)
+            `)
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const items = data.order_items || [];
+            fetchedOrder = mapDbOrderToOrder(data, items);
+            setIsDeleted(data.status === 'deleted');
+          }
+        } catch (error) {
+          console.error('Error fetching deleted order:', error);
+          toast({
+            title: "Erro",
+            description: "Encomenda não encontrada",
+            variant: "destructive",
+          });
+          navigate('/encomendas/consultar');
+          return;
+        }
+      }
+
       if (fetchedOrder) {
         setOrder(fetchedOrder);
         
@@ -58,15 +95,10 @@ export const useOrderDetail = (id: string | undefined) => {
             setClient(clientWithAddress);
           }
         }
-      } else {
-        toast({
-          title: "Erro",
-          description: "Encomenda não encontrada",
-          variant: "destructive",
-        });
-        navigate('/encomendas/consultar');
       }
-    }
+    };
+
+    fetchOrder();
   }, [id, orders, clients, navigate, stockExits, isLoading]);
 
   return {
@@ -74,5 +106,6 @@ export const useOrderDetail = (id: string | undefined) => {
     client,
     totalValue,
     relatedStockExit,
+    isDeleted,
   };
 };

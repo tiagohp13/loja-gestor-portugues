@@ -9,12 +9,14 @@ interface StockEntryDetailHeaderProps {
   entryNumber: string;
   id: string;
   onExportPdf: () => void;
+  isDeleted?: boolean;
 }
 
 const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
   entryNumber,
   id,
-  onExportPdf
+  onExportPdf,
+  isDeleted = false
 }) => {
   const navigate = useNavigate();
 
@@ -46,12 +48,14 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
           <FileText className="h-4 w-4" />
           Exportar para PDF
         </Button>
-        <Button
-          size="sm"
-          onClick={() => navigate(`/entradas/editar/${id}`)}
-        >
-          Editar
-        </Button>
+        {!isDeleted && (
+          <Button
+            size="sm"
+            onClick={() => navigate(`/entradas/editar/${id}`)}
+          >
+            Editar
+          </Button>
+        )}
       </div>
     </div>
   );

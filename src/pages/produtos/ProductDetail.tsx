@@ -11,10 +11,14 @@ import ProductNotFound from './components/ProductNotFound';
 import HistoryTables from './components/HistoryTables';
 import { ProductPriceHistory } from './components/ProductPriceHistory';
 import { useProductHistory } from './hooks/useProductHistory';
+import { useProductDetail } from './hooks/useProductDetail';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getProduct, isLoading } = useData();
+  const { isDeleted } = useProductDetail();
   const navigate = useNavigate();
   
   // Get product history
@@ -50,7 +54,17 @@ const ProductDetail: React.FC = () => {
         productName={product.name} 
         productCode={product.code}
         productId={id}
+        isDeleted={isDeleted}
       />
+
+      {isDeleted && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Este registo foi apagado e está em modo de leitura apenas.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
         {/* Product Image Card */}

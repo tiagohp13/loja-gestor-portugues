@@ -24,9 +24,10 @@ interface OrderDetailHeaderProps {
   relatedStockExit: StockExit | null;
   orderId: string;
   orderNumber: string;
+  isDeleted?: boolean;
 }
 
-const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit, orderId, orderNumber }) => {
+const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit, orderId, orderNumber, isDeleted = false }) => {
   const navigate = useNavigate();
   const { convertOrderToStockExit, products } = useData();
   const isPending = !order.convertedToStockExitId;
@@ -132,7 +133,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               PDF
             </Button>
             
-            {isPending && (
+            {isPending && !isDeleted && (
               <Button
                 onClick={handleConvertDialog}
                 className="text-white bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
@@ -142,7 +143,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               </Button>
             )}
             
-            {isPending && (
+            {isPending && !isDeleted && (
               <Button
                 variant="secondary"
                 onClick={handleEditOrder}

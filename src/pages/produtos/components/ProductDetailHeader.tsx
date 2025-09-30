@@ -9,12 +9,14 @@ interface ProductDetailHeaderProps {
   productName: string;
   productCode: string;
   productId: string;
+  isDeleted?: boolean;
 }
 
 const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({ 
   productName, 
   productCode,
-  productId
+  productId,
+  isDeleted = false
 }) => {
   const navigate = useNavigate();
   
@@ -24,10 +26,12 @@ const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
       description={`Código: ${productCode}`}
       actions={
         <>
-          <Button onClick={() => navigate(`/produtos/editar/${productId}`)}>
-            <Pencil className="h-4 w-4" />
-            Editar Produto
-          </Button>
+          {!isDeleted && (
+            <Button onClick={() => navigate(`/produtos/editar/${productId}`)}>
+              <Pencil className="h-4 w-4" />
+              Editar Produto
+            </Button>
+          )}
           <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
             Voltar ao Catálogo
           </Button>

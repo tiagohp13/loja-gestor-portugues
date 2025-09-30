@@ -12,12 +12,16 @@ import ClientOrdersTable from './components/ClientOrdersTable';
 import ClientExitsTable from './components/ClientExitsTable';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
+import { useClientDetail } from './hooks/useClientDetail';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getClient, getClientHistory, isLoading } = useData();
   const { canEdit } = usePermissions();
+  const { isDeleted } = useClientDetail();
   const [clientHistory, setClientHistory] = useState<{ orders: any[], exits: any[] }>({ orders: [], exits: [] });
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLoadingTotal, setIsLoadingTotal] = useState(false);
@@ -67,7 +71,7 @@ const ClientDetail = () => {
         description="Detalhes do cliente"
         actions={
           <div className="flex space-x-2">
-            {canEdit && (
+            {canEdit && !isDeleted && (
               <Button onClick={() => {
                 if (!validatePermission(canEdit, 'editar clientes')) return;
                 navigate(`/clientes/editar/${id}`);
@@ -81,6 +85,15 @@ const ClientDetail = () => {
           </div>
         }
       />
+
+      {isDeleted && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Este registo foi apagado e está em modo de leitura apenas.
+          </AlertDescription>
+        </Alert>
+      )}
       
       <div className="grid md:grid-cols-3 gap-6 mt-6">
         <ClientInfoCard 

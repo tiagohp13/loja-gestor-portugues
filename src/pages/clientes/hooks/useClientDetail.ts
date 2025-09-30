@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
 import { Client, Order, StockExit } from '@/types';
+import { supabase } from '@/integrations/supabase/client';
+import { mapDbClientToClient } from '@/utils/mappers';
 
 export const useClientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,14 +14,38 @@ export const useClientDetail = () => {
   const [clientOrders, setClientOrders] = useState<Order[]>([]);
   const [clientExits, setClientExits] = useState<StockExit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    const fetchClient = async () => {
+      if (!id) return;
     
-    setIsLoading(true);
-    
-    const fetchData = () => {
-      const foundClient = getClient(id);
+      setIsLoading(true);
+      
+      let foundClient = getClient(id);
+      
+      // If not found in context, try to fetch from database (including deleted)
+      if (!foundClient) {
+        try {
+          const { data, error } = await supabase
+            .from('clients')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            foundClient = mapDbClientToClient(data);
+            setIsDeleted(data.status === 'deleted');
+          }
+        } catch (error) {
+          console.error('Error fetching deleted client:', error);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       if (!foundClient) {
         setIsLoading(false);
         return;
@@ -34,7 +60,7 @@ export const useClientDetail = () => {
       setIsLoading(false);
     };
 
-    fetchData();
+    fetchClient();
   }, [id, getClient, getClientHistory]);
 
   const handleNavigate = (path: string) => {
@@ -47,6 +73,7 @@ export const useClientDetail = () => {
     clientExits,
     isLoading,
     handleNavigate,
+    isDeleted,
   };
 };
 

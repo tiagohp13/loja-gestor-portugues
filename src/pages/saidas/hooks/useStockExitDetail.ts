@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
 import { ClientWithAddress } from '@/types';
 import { toast } from '@/components/ui/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { mapDbStockExitToStockExit, mapDbStockExitItemToStockExitItem } from '@/utils/mappers';
 
 export const useStockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -11,6 +13,7 @@ export const useStockExitDetail = () => {
   const [stockExit, setStockExit] = useState<any | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   // Function to clean notes from any "Converted from order" text (including codes with letters)
   const cleanNotes = (notes: string | undefined): string => {
@@ -20,8 +23,43 @@ export const useStockExitDetail = () => {
   };
 
   useEffect(() => {
-    if (id) {
-      const exit = stockExits.find(exit => exit.id === id);
+    const fetchStockExit = async () => {
+      if (!id) return;
+
+      // Try to find in context first
+      let exit = stockExits.find(exit => exit.id === id);
+      
+      // If not found, fetch from database (including deleted)
+      if (!exit) {
+        try {
+          const { data, error } = await supabase
+            .from('stock_exits')
+            .select(`
+              *,
+              stock_exit_items(*)
+            `)
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const items = data.stock_exit_items || [];
+            exit = mapDbStockExitToStockExit(data, items);
+            setIsDeleted(data.status === 'deleted');
+          }
+        } catch (error) {
+          console.error('Error fetching deleted stock exit:', error);
+          toast({
+            title: 'Erro',
+            description: 'Venda não encontrada',
+            variant: 'destructive',
+          });
+          navigate('/saidas/historico');
+          return;
+        }
+      }
+
       if (exit) {
         // Clean notes immediately to avoid showing English text
         const cleanedExit = { ...exit, notes: cleanNotes(exit.notes) };
@@ -48,15 +86,10 @@ export const useStockExitDetail = () => {
             setClient(clientWithAddress);
           }
         }
-      } else {
-        toast({
-          title: 'Erro',
-          description: 'Venda não encontrada',
-          variant: 'destructive',
-        });
-        navigate('/saidas/historico');
       }
-    }
+    };
+
+    fetchStockExit();
   }, [id, stockExits, navigate, clients]);
 
   const handleViewClient = () => {
@@ -79,6 +112,7 @@ export const useStockExitDetail = () => {
     handleViewClient,
     handleViewOrder,
     navigate,
-    id
+    id,
+    isDeleted
   };
 };

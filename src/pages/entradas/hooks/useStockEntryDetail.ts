@@ -5,6 +5,8 @@ import { useData } from '@/contexts/DataContext';
 import { SupplierWithAddress } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { mapDbStockEntryToStockEntry } from '@/utils/mappers';
 
 export const useStockEntryDetail = (id: string | undefined) => {
   const navigate = useNavigate();
@@ -12,11 +14,42 @@ export const useStockEntryDetail = (id: string | undefined) => {
   const [stockEntry, setStockEntry] = useState<any | null>(null);
   const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
+  const [isDeleted, setIsDeleted] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (id) {
-      const entry = stockEntries.find(entry => entry.id === id);
+    const fetchEntry = async () => {
+      if (!id) return;
+
+      let entry = stockEntries.find(entry => entry.id === id);
+      
+      // If not found, fetch from database (including deleted)
+      if (!entry) {
+        try {
+          const { data, error } = await supabase
+            .from('stock_entries')
+            .select(`
+              *,
+              stock_entry_items(*)
+            `)
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            const items = data.stock_entry_items || [];
+            entry = mapDbStockEntryToStockEntry(data, items);
+            setIsDeleted(data.status === 'deleted');
+          }
+        } catch (error) {
+          console.error('Error fetching deleted stock entry:', error);
+          toast.error('Compra não encontrada');
+          navigate('/entradas/historico');
+          return;
+        }
+      }
+
       if (entry) {
         setStockEntry(entry);
         
@@ -42,11 +75,10 @@ export const useStockEntryDetail = (id: string | undefined) => {
             setSupplier(supplierWithAddress);
           }
         }
-      } else {
-        toast.error('Compra não encontrada');
-        navigate('/entradas/historico');
       }
-    }
+    };
+
+    fetchEntry();
   }, [id, stockEntries, navigate, suppliers]);
 
   const handleExportToPdf = async () => {
@@ -64,6 +96,7 @@ export const useStockEntryDetail = (id: string | undefined) => {
     supplier,
     totalValue,
     contentRef,
-    handleExportToPdf
+    handleExportToPdf,
+    isDeleted
   };
 };

@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Supplier, StockEntry } from '@/types';
+import { mapDbSupplierToSupplier } from '@/utils/mappers';
 
 export const useSupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -13,6 +14,7 @@ export const useSupplierDetail = () => {
   const [supplierEntries, setSupplierEntries] = useState<any[]>([]);
   const [supplierExpenses, setSupplierExpenses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -20,7 +22,30 @@ export const useSupplierDetail = () => {
     setIsLoading(true);
     
     const fetchData = async () => {
-      const foundSupplier = getSupplier(id);
+      let foundSupplier = getSupplier(id);
+      
+      // If not found in context, try to fetch from database (including deleted)
+      if (!foundSupplier) {
+        try {
+          const { data, error } = await supabase
+            .from('suppliers')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            foundSupplier = mapDbSupplierToSupplier(data);
+            setIsDeleted(data.status === 'deleted');
+          }
+        } catch (error) {
+          console.error('Error fetching deleted supplier:', error);
+          setIsLoading(false);
+          return;
+        }
+      }
+
       if (!foundSupplier) {
         setIsLoading(false);
         return;
@@ -106,6 +131,7 @@ export const useSupplierDetail = () => {
     supplierExpenses,
     isLoading,
     handleNavigate,
+    isDeleted,
   };
 };
 

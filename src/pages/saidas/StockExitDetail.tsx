@@ -6,6 +6,8 @@ import ExitInformationCard from './components/ExitInformationCard';
 import ClientInformationCard from './components/ClientInformationCard';
 import ProductsSoldTable from './components/ProductsSoldTable';
 import { exportToPdf } from '@/utils/pdfExport';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
 const StockExitDetail = () => {
   const { 
@@ -16,7 +18,8 @@ const StockExitDetail = () => {
     handleViewClient, 
     handleViewOrder,
     navigate,
-    id
+    id,
+    isDeleted
   } = useStockExitDetail();
   
   const contentRef = useRef<HTMLDivElement>(null);
@@ -48,7 +51,17 @@ const StockExitDetail = () => {
         id={id || ''}
         onNavigateBack={handleNavigate}
         onExportPdf={handleExportToPdf}
+        isDeleted={isDeleted}
       />
+
+      {isDeleted && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Este registo foi apagado e está em modo de leitura apenas.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="pdf-content" ref={contentRef}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">

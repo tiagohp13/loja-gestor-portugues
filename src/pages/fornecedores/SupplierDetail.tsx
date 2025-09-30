@@ -6,17 +6,18 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, ShoppingCart, Receipt } from 'lucide-react';
+import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, ShoppingCart, Receipt, AlertCircle } from 'lucide-react';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
 import StatusBadge from '@/components/common/StatusBadge';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { supplier, supplierEntries, supplierExpenses, isLoading } = useSupplierDetail();
+  const { supplier, supplierEntries, supplierExpenses, isLoading, isDeleted } = useSupplierDetail();
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLoadingTotal, setIsLoadingTotal] = useState(true);
   const [supplierDocuments, setSupplierDocuments] = useState<any[]>([]);
@@ -77,20 +78,31 @@ const SupplierDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader
-        title={supplier.name}
+      <PageHeader 
+        title={supplier.name} 
         description="Detalhes do fornecedor"
         actions={
           <div className="flex space-x-2">
-            <Button onClick={() => navigate(`/fornecedores/editar/${id}`)}>
-              Editar Fornecedor
-            </Button>
+            {!isDeleted && (
+              <Button onClick={() => navigate(`/fornecedores/editar/${id}`)}>
+                Editar Fornecedor
+              </Button>
+            )}
             <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
               Voltar à Lista
             </Button>
           </div>
         }
       />
+
+      {isDeleted && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Este registo foi apagado e está em modo de leitura apenas.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid md:grid-cols-1 gap-6 mt-6">
         <Card>

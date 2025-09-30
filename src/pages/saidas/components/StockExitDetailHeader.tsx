@@ -9,13 +9,15 @@ type StockExitDetailHeaderProps = {
   id: string;
   onNavigateBack: (path: string) => void;
   onExportPdf: () => void;
+  isDeleted?: boolean;
 };
 
 const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({ 
   exitNumber, 
   id, 
   onNavigateBack,
-  onExportPdf
+  onExportPdf,
+  isDeleted = false
 }) => {
   return (
     <PageHeader
@@ -27,13 +29,15 @@ const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({
             <FileText className="h-4 w-4 text-red-500" />
             Exportar para PDF
           </Button>
-          <Button 
-            variant="secondary"
-            onClick={() => onNavigateBack(`/saidas/editar/${id}`)}
-          >
-            <Pencil className="h-4 w-4" />
-            Editar
-          </Button>
+          {!isDeleted && (
+            <Button 
+              variant="secondary"
+              onClick={() => onNavigateBack(`/saidas/editar/${id}`)}
+            >
+              <Pencil className="h-4 w-4" />
+              Editar
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => onNavigateBack('/saidas/historico')}
