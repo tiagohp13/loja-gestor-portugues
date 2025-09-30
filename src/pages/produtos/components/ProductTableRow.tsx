@@ -38,7 +38,12 @@ const ProductTableRow = ({
         <div className="flex items-center space-x-3">
           {product.image ? (
             <div className="w-10 h-10 rounded-md overflow-hidden bg-gestorApp-gray-light flex-shrink-0">
-              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+              <img 
+                src={product.image} 
+                alt={product.name} 
+                className="w-full h-full object-cover" 
+                loading="lazy"
+              />
             </div>
           ) : (
             <div className="w-10 h-10 rounded-md bg-gestorApp-gray-light flex-shrink-0 flex items-center justify-center">

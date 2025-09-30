@@ -26,6 +26,7 @@ const ProductImageCard: React.FC<ProductImageCardProps> = ({ image, name }) => {
                 src={image} 
                 alt={name} 
                 className="max-h-48 object-contain rounded-md transition-transform group-hover:scale-105"
+                loading="lazy"
               />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="bg-black bg-opacity-40 rounded-full p-2">
@@ -40,6 +41,7 @@ const ProductImageCard: React.FC<ProductImageCardProps> = ({ image, name }) => {
                 src={image} 
                 alt={name} 
                 className="object-contain w-full h-full"
+                loading="lazy"
               />
             </AspectRatio>
           </DialogContent>
