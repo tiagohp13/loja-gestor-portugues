@@ -253,14 +253,15 @@ const OrderList = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredOrders.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr 
+                      key={order.id} 
+                      className="hover:bg-gray-50 cursor-pointer"
+                      onClick={() => navigate(`/encomendas/${order.id}`)}
+                    >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                          onClick={() => navigate(`/encomendas/${order.id}`)}
-                          className="text-sm font-medium text-gestorApp-blue hover:text-gestorApp-blue-dark underline"
-                        >
+                        <span className="text-sm font-medium text-gestorApp-blue">
                           {order.number}
-                        </button>
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
                         {formatDate(order.date)}
@@ -283,13 +284,14 @@ const OrderList = () => {
                           </Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
                           {canEdit && (
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 if (!validatePermission(canEdit, 'editar encomendas')) return;
                                 navigate(`/encomendas/editar/${order.id}`);
                               }}
@@ -310,8 +312,8 @@ const OrderList = () => {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => {
-                                    // Delete button clicked for order
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                     setDeleteDialog({ open: true, orderId: order.id });
                                   }}
                                   disabled={order.convertedToStockExitId !== null}
