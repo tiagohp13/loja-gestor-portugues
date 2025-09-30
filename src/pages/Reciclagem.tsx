@@ -11,7 +11,6 @@ import PageHeader from '@/components/ui/PageHeader';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { formatDateTime } from '@/utils/formatting';
 import DeletedRecordModal from './Reciclagem/components/DeletedRecordModal';
-
 interface DeletedRecord {
   id: string;
   name: string;
@@ -27,7 +26,11 @@ const Reciclagem = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isRestoring, setIsRestoring] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
-  const [selectedRecord, setSelectedRecord] = useState<{ id: string; type: string; number: string } | null>(null);
+  const [selectedRecord, setSelectedRecord] = useState<{
+    id: string;
+    type: string;
+    number: string;
+  } | null>(null);
   useScrollToTop();
   const tableTypeLabels: {
     [key: string]: {
@@ -159,9 +162,12 @@ const Reciclagem = () => {
     return formatDateTime(deletedDate);
   };
   const handleOpenRecordModal = (recordId: string, tableType: string, recordNumber: string) => {
-    setSelectedRecord({ id: recordId, type: tableType, number: recordNumber });
+    setSelectedRecord({
+      id: recordId,
+      type: tableType,
+      number: recordNumber
+    });
   };
-
   const handleCloseRecordModal = () => {
     setSelectedRecord(null);
   };
@@ -179,15 +185,7 @@ const Reciclagem = () => {
   return <div className="p-6 space-y-6">
       <PageHeader title="Reciclagem" description="Gerir registos apagados e recuperação de dados" />
 
-      {selectedRecord && (
-        <DeletedRecordModal
-          isOpen={!!selectedRecord}
-          onClose={handleCloseRecordModal}
-          recordId={selectedRecord.id}
-          recordType={selectedRecord.type}
-          recordNumber={selectedRecord.number}
-        />
-      )}
+      {selectedRecord && <DeletedRecordModal isOpen={!!selectedRecord} onClose={handleCloseRecordModal} recordId={selectedRecord.id} recordType={selectedRecord.type} recordNumber={selectedRecord.number} />}
 
       {/* Summary Card */}
       <Card>
@@ -343,7 +341,7 @@ const RecordCard: React.FC<RecordCardProps> = ({
       <CardContent className="pt-0 space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <span className="text-sm font-semibold text-slate-950">Apagado Em</span>
+            <span className="text-sm font-semibold text-slate-950">Apagado em</span>
             <p className="text-sm font-normal">{formatDateTime(record.deleted_at)}</p>
           </div>
           
