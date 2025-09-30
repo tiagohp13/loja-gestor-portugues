@@ -49,11 +49,11 @@ export const useProductHistory = (productId: string | undefined) => {
   
   // Get pending orders for this product
   const pendingOrdersForProduct = useMemo(() => {
-    if (!productId) return [];
+    if (!productId || !orders) return [];
     
     return orders
       .filter(order => !order.convertedToStockExitId && order.status !== 'deleted')
-      .flatMap(order => order.items
+      .flatMap(order => (order.items || [])
         .filter((item: OrderItem) => item.productId === productId)
         .map((item: OrderItem) => ({
           date: order.date,

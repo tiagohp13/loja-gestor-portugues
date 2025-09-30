@@ -10,12 +10,12 @@ interface PendingOrdersHistoryProps {
 }
 
 const PendingOrdersHistory: React.FC<PendingOrdersHistoryProps> = ({ 
-  pendingOrdersForProduct 
+  pendingOrdersForProduct = []
 }) => {
   const navigate = useNavigate();
   
-  const totalQuantityOrdered = pendingOrdersForProduct.reduce((sum, order) => sum + order.quantity, 0);
-  const totalValueOrdered = pendingOrdersForProduct.reduce((sum, order) => sum + order.total, 0);
+  const totalQuantityOrdered = pendingOrdersForProduct?.reduce((sum, order) => sum + order.quantity, 0) || 0;
+  const totalValueOrdered = pendingOrdersForProduct?.reduce((sum, order) => sum + order.total, 0) || 0;
 
   return (
     <Card>
