@@ -83,7 +83,11 @@ export const mapDbOrderToOrder = (data: any, items: any[] = []): Order => ({
   discount: Number(data.discount || 0),
   createdAt: data.created_at,
   updatedAt: data.updated_at,
-  items: items.map(mapDbOrderItemToOrderItem)
+  items: items.map(mapDbOrderItemToOrderItem),
+  orderType: data.order_type || 'combined',
+  expectedDeliveryDate: data.expected_delivery_date,
+  expectedDeliveryTime: data.expected_delivery_time,
+  deliveryLocation: data.delivery_location
 });
 
 export const mapDbStockEntryItemToStockEntryItem = (data: any): StockEntryItem => ({
