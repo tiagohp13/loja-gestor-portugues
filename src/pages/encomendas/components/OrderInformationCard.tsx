@@ -72,8 +72,8 @@ const OrderInformationCard: React.FC<OrderInformationCardProps> = ({ order, rela
           )}
         </div>
         
-        {/* Show delivery information only for combined orders that are not converted */}
-        {!order.convertedToStockExitId && order.orderType === 'combined' && (
+        {/* Show delivery information for combined orders */}
+        {order.orderType === 'combined' && (order.expectedDeliveryDate || order.expectedDeliveryTime || order.deliveryLocation) && (
           <div className="col-span-1 md:col-span-2 space-y-3 pt-2 border-t">
             <p className="text-sm font-semibold">Informações de Entrega</p>
             
