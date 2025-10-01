@@ -1,12 +1,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { format, startOfDay } from "date-fns";
-import { CalendarIcon, Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { pt } from "date-fns/locale";
+import { format } from "date-fns";
+import { Clock } from "lucide-react";
 
 interface DeliveryInformationProps {
   orderType: 'combined' | 'awaiting_stock';
@@ -32,12 +27,10 @@ export const DeliveryInformation = ({
     return null;
   }
 
-  // Handle date selection with proper timezone handling
-  const handleDateSelect = (date: Date | undefined) => {
-    if (date) {
-      // Normalize to start of day to avoid timezone issues
-      const normalizedDate = startOfDay(date);
-      onDeliveryDateChange(normalizedDate);
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value) {
+      const newDate = new Date(e.target.value + 'T00:00:00');
+      onDeliveryDateChange(newDate);
     } else {
       onDeliveryDateChange(undefined);
     }
@@ -51,33 +44,13 @@ export const DeliveryInformation = ({
         {/* Expected Delivery Date */}
         <div className="space-y-2">
           <Label htmlFor="delivery-date">Data Prevista de Entrega</Label>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                id="delivery-date"
-                variant="outline"
-                className={cn(
-                  "w-full justify-start text-left font-normal",
-                  !expectedDeliveryDate && "text-muted-foreground"
-                )}
-              >
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {expectedDeliveryDate ? (
-                  format(startOfDay(expectedDeliveryDate), "dd/MM/yyyy", { locale: pt })
-                ) : (
-                  <span>Selecione uma data</span>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-background z-50" align="start">
-              <Calendar
-                mode="single"
-                selected={expectedDeliveryDate ? startOfDay(expectedDeliveryDate) : undefined}
-                onSelect={handleDateSelect}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Input
+            id="delivery-date"
+            type="date"
+            value={expectedDeliveryDate ? format(expectedDeliveryDate, 'yyyy-MM-dd') : ''}
+            onChange={handleDateChange}
+            className="w-full"
+          />
         </div>
 
         {/* Expected Delivery Time */}
