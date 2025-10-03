@@ -147,6 +147,16 @@ const OrderEdit = () => {
         const parsedDate = parseISO(orderData.date);
         const localDate = startOfDay(parsedDate);
         
+        // Safely parse delivery date only if it exists
+        let deliveryDate: Date | undefined = undefined;
+        if (orderData.expected_delivery_date) {
+          try {
+            deliveryDate = startOfDay(parseISO(orderData.expected_delivery_date));
+          } catch (e) {
+            console.warn('Failed to parse delivery date:', e);
+          }
+        }
+        
         const formattedOrder: OrderFormData = {
           clientId: orderData.client_id || '',
           clientName: orderData.client_name || '',
@@ -154,9 +164,7 @@ const OrderEdit = () => {
           notes: orderData.notes || '',
           discount: Number(orderData.discount || 0),
           orderType: (orderData.order_type as 'combined' | 'awaiting_stock') || 'combined',
-          expectedDeliveryDate: orderData.expected_delivery_date 
-            ? startOfDay(parseISO(orderData.expected_delivery_date))
-            : undefined,
+          expectedDeliveryDate: deliveryDate,
           expectedDeliveryTime: orderData.expected_delivery_time || '',
           deliveryLocation: orderData.delivery_location || '',
           items: (orderData.order_items || []).map((item: any) => ({
@@ -277,7 +285,7 @@ const OrderEdit = () => {
     try {
       setIsLoading(true);
 
-      // Update order
+      // Update order - only save delivery info for 'combined' orders
       const { error: orderError } = await supabase
         .from('orders')
         .update({
@@ -287,11 +295,11 @@ const OrderEdit = () => {
           notes: formData.notes,
           discount: formData.discount,
           order_type: formData.orderType,
-          expected_delivery_date: formData.expectedDeliveryDate 
+          expected_delivery_date: formData.orderType === 'combined' && formData.expectedDeliveryDate 
             ? format(startOfDay(formData.expectedDeliveryDate), 'yyyy-MM-dd')
             : null,
-          expected_delivery_time: formData.expectedDeliveryTime || null,
-          delivery_location: formData.deliveryLocation || null
+          expected_delivery_time: formData.orderType === 'combined' ? formData.expectedDeliveryTime || null : null,
+          delivery_location: formData.orderType === 'combined' ? formData.deliveryLocation || null : null
         })
         .eq('id', id);
 
@@ -340,9 +348,21 @@ const OrderEdit = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <PageHeader title="Editar Encomenda" />
+      <div className="flex justify-between items-center">
+        <PageHeader title="Editar Encomenda" />
+        <div className="flex gap-4">
+          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/consultar')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Cancelar
+          </Button>
+          <Button type="submit" form="order-edit-form" disabled={isLoading}>
+            <Save className="w-4 h-4 mr-2" />
+            {isLoading ? 'A guardar...' : 'Guardar Encomenda'}
+          </Button>
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="order-edit-form" onSubmit={handleSubmit} className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Informações da Encomenda</CardTitle>
@@ -390,7 +410,20 @@ const OrderEdit = () => {
             <div className="md:col-span-2">
               <OrderTypeSelector 
                 value={formData.orderType}
-                onChange={(value) => setFormData({ ...formData, orderType: value })}
+                onChange={(value) => {
+                  // Clear delivery info when changing to 'awaiting_stock'
+                  if (value === 'awaiting_stock') {
+                    setFormData({ 
+                      ...formData, 
+                      orderType: value,
+                      expectedDeliveryDate: undefined,
+                      expectedDeliveryTime: '',
+                      deliveryLocation: ''
+                    });
+                  } else {
+                    setFormData({ ...formData, orderType: value });
+                  }
+                }}
               />
             </div>
             
@@ -552,16 +585,6 @@ const OrderEdit = () => {
           </Card>
         )}
 
-        <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/encomendas/consultar')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'A guardar...' : 'Guardar Encomenda'}
-          </Button>
-        </div>
       </form>
     </div>
   );
