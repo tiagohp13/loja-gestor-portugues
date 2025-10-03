@@ -220,6 +220,16 @@ const OrderList = () => {
         )}
       </div>
 
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, orderId: null })}
+        onDelete={handleDeleteOrder}
+        title="Eliminar Encomenda"
+        description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
+        trigger={<></>}
+      />
+
       {/* Tabela de encomendas */}
       <Card>
         <CardContent className="p-0">
@@ -249,6 +259,9 @@ const OrderList = () => {
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                       ESTADO
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                      ENTREGA
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
                       AÇÕES
@@ -288,6 +301,19 @@ const OrderList = () => {
                           </Badge>
                         )}
                       </td>
+                      <td className="px-6 py-4 text-sm text-gestorApp-gray-dark">
+                        {order.expectedDeliveryDate && (
+                          <div className="space-y-1">
+                            <div>{formatDate(order.expectedDeliveryDate)}</div>
+                            {order.expectedDeliveryTime && (
+                              <div className="text-xs text-muted-foreground">{order.expectedDeliveryTime}</div>
+                            )}
+                            {order.deliveryLocation && (
+                              <div className="text-xs text-muted-foreground">{order.deliveryLocation}</div>
+                            )}
+                          </div>
+                        )}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
                           {canEdit && (
@@ -306,27 +332,29 @@ const OrderList = () => {
                             </Button>
                           )}
                           {canDelete && (
-                            <DeleteConfirmDialog
-                              open={deleteDialog.open && deleteDialog.orderId === order.id}
-                              onClose={() => setDeleteDialog({ open: false, orderId: null })}
-                              onDelete={handleDeleteOrder}
-                              title="Eliminar Encomenda"
-                              description="Tem a certeza que pretende eliminar esta encomenda? Esta ação não pode ser desfeita."
-                              trigger={
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteDialog({ open: true, orderId: order.id });
-                                  }}
-                                  disabled={order.convertedToStockExitId !== null}
-                                  className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              }
-                            />
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (!validatePermission(canDelete, 'eliminar encomendas')) return;
+                                if (order.convertedToStockExitId) {
+                                  toast.error('Não pode eliminar encomendas já convertidas em saída');
+                                  return;
+                                }
+                                // Check dependencies
+                                const deps = await checkOrderDependencies(order.id);
+                                if (!deps.canDelete) {
+                                  toast.error(deps.message || 'Não é possível eliminar esta encomenda');
+                                  return;
+                                }
+                                setDeleteDialog({ open: true, orderId: order.id });
+                              }}
+                              disabled={order.convertedToStockExitId !== null}
+                              className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           )}
                         </div>
                       </td>
