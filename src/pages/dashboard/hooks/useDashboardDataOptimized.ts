@@ -1,5 +1,6 @@
 import { useData } from '@/contexts/DataContext';
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { 
   ensureDate, 
   createMonthlyDataMap, 
@@ -29,6 +30,27 @@ export const useDashboardDataOptimized = () => {
     profitMarginPercentWithExpenses: 0,
     monthlyExpensesData: {} as Record<string, number>
   });
+  
+  // Add state to track when expenses change
+  const [expensesVersion, setExpensesVersion] = useState(0);
+
+  // Subscribe to expenses changes
+  useEffect(() => {
+    const expensesChannel = supabase
+      .channel('dashboard-expenses-updates')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'expenses' }, 
+        () => {
+          console.log('Expenses changed - triggering recalculation');
+          setExpensesVersion(v => v + 1);
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(expensesChannel);
+    };
+  }, []);
 
   // Calculate basic financial metrics (memoized for performance)
   const basicFinancials = useMemo(() => ({
@@ -85,7 +107,7 @@ export const useDashboardDataOptimized = () => {
     } catch (error) {
       console.error('Error calculating financial metrics with expenses:', error);
     }
-  }, [stockEntries, basicFinancials.totalSalesValue]);
+  }, [stockEntries, basicFinancials.totalSalesValue, expensesVersion]);
 
   // Debounce expensive calculations
   useEffect(() => {

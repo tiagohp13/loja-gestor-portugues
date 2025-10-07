@@ -192,9 +192,21 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       )
       .subscribe();
     
+    const expensesChannel = supabase
+      .channel('public:expenses')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'expenses' }, 
+        () => {
+          // Trigger re-calculation of financial metrics when expenses change
+          console.log('Expenses changed, triggering dashboard update');
+        }
+      )
+      .subscribe();
+    
     return () => {
       supabase.removeChannel(stockEntriesChannel);
       supabase.removeChannel(stockExitsChannel);
+      supabase.removeChannel(expensesChannel);
     };
   }, []);
   

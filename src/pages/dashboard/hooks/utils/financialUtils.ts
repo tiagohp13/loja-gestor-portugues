@@ -37,7 +37,8 @@ export const calculateTotalExpensesValue = async (): Promise<number> => {
           unit_price,
           discount_percent
         )
-      `);
+      `)
+      .neq('status', 'deleted');
       
     if (error) {
       console.error('Error fetching expenses:', error);
@@ -176,6 +177,7 @@ export const getMonthlyExpensesData = async () => {
           discount_percent
         )
       `)
+      .neq('status', 'deleted')
       .order('date', { ascending: true });
       
     if (error) {
