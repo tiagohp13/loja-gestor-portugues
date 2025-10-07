@@ -20,9 +20,6 @@ const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete, loading: permissionsLoading, accessLevel } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
-  
-  // Debug: Log permissions state
-  console.log('Permissions State:', { canCreate, canEdit, canDelete, accessLevel, permissionsLoading });
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -246,79 +243,93 @@ const OrderList = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+                <thead className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      Nº ENCOMENDA
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Nº Encomenda
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      DATA
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Data
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      CLIENTE
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Cliente
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      VALOR
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Valor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      ESTADO
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      ENTREGA
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Entrega
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
-                      AÇÕES
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                      Ações
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredOrders.map((order) => (
                     <tr 
                       key={order.id} 
-                      className="hover:bg-gray-50 cursor-pointer"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
                       onClick={() => navigate(`/encomendas/${order.id}`)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gestorApp-blue">
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
                           {order.number}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {formatDate(order.date)}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
+                          {formatDate(order.date)}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                        {order.clientName}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-900 dark:text-gray-100">
+                          {order.clientName}
+                        </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark font-medium">
-                        {formatCurrency(order.total || 0)}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                          {formatCurrency(order.total || 0)}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         {order.convertedToStockExitId ? (
-                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
+                          <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Convertida em Saída
                           </Badge>
                         ) : (
-                          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100">
+                          <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300">
                             {order.orderType === 'awaiting_stock' ? 'Pendente – A aguardar stock' : 'Pendente – Combinada'}
                           </Badge>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gestorApp-gray-dark">
-                        {order.expectedDeliveryDate && (
-                          <div className="space-y-1">
-                            <div>{formatDate(order.expectedDeliveryDate)}</div>
+                      <td className="px-6 py-4">
+                        {order.expectedDeliveryDate ? (
+                          <div className="space-y-0.5">
+                            <div className="text-sm text-gray-900 dark:text-gray-100">
+                              {formatDate(order.expectedDeliveryDate)}
+                            </div>
                             {order.expectedDeliveryTime && (
-                              <div className="text-xs text-muted-foreground">{order.expectedDeliveryTime}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {order.expectedDeliveryTime}
+                              </div>
                             )}
                             {order.deliveryLocation && (
-                              <div className="text-xs text-muted-foreground">{order.deliveryLocation}</div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">
+                                {order.deliveryLocation}
+                              </div>
                             )}
                           </div>
+                        ) : (
+                          <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
@@ -328,9 +339,10 @@ const OrderList = () => {
                               navigate(`/encomendas/editar/${order.id}`);
                             }}
                             disabled={!canEdit || order.convertedToStockExitId !== null}
-                            className={!canEdit || order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                            className="h-8 w-8 p-0"
+                            title={order.convertedToStockExitId ? 'Não é possível editar encomendas convertidas' : 'Editar encomenda'}
                           >
-                            <Edit className="w-4 h-4" />
+                            <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
@@ -350,9 +362,10 @@ const OrderList = () => {
                               setDeleteDialog({ open: true, orderId: order.id });
                             }}
                             disabled={!canDelete || order.convertedToStockExitId !== null}
-                            className={!canDelete || order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                            title={order.convertedToStockExitId ? 'Não é possível eliminar encomendas convertidas' : 'Eliminar encomenda'}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
