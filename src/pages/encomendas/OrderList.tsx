@@ -319,46 +319,41 @@ const OrderList = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
-                          {canEdit && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (!validatePermission(canEdit, 'editar encomendas')) return;
-                                navigate(`/encomendas/editar/${order.id}`);
-                              }}
-                              disabled={order.convertedToStockExitId !== null}
-                              className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                          )}
-                          {canDelete && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (!validatePermission(canDelete, 'eliminar encomendas')) return;
-                                if (order.convertedToStockExitId) {
-                                  toast.error('Não pode eliminar encomendas já convertidas em saída');
-                                  return;
-                                }
-                                // Check dependencies
-                                const deps = await checkOrderDependencies(order.id);
-                                if (!deps.canDelete) {
-                                  toast.error(deps.message || 'Não é possível eliminar esta encomenda');
-                                  return;
-                                }
-                                setDeleteDialog({ open: true, orderId: order.id });
-                              }}
-                              disabled={order.convertedToStockExitId !== null}
-                              className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (!validatePermission(canEdit, 'editar encomendas')) return;
+                              navigate(`/encomendas/editar/${order.id}`);
+                            }}
+                            disabled={!canEdit || order.convertedToStockExitId !== null}
+                            className={!canEdit || order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (!validatePermission(canDelete, 'eliminar encomendas')) return;
+                              if (order.convertedToStockExitId) {
+                                toast.error('Não pode eliminar encomendas já convertidas em saída');
+                                return;
+                              }
+                              const deps = await checkOrderDependencies(order.id);
+                              if (!deps.canDelete) {
+                                toast.error(deps.message || 'Não é possível eliminar esta encomenda');
+                                return;
+                              }
+                              setDeleteDialog({ open: true, orderId: order.id });
+                            }}
+                            disabled={!canDelete || order.convertedToStockExitId !== null}
+                            className={!canDelete || order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </td>
                     </tr>
