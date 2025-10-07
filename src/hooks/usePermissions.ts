@@ -7,6 +7,10 @@ export const usePermissions = () => {
   
   const accessLevel = (profile?.access_level as AccessLevel) || 'viewer';
   
+  // Debug: Log profile and access level
+  console.log('usePermissions - Profile:', profile);
+  console.log('usePermissions - Access Level:', accessLevel);
+  
   const isAdmin  = accessLevel === 'admin';
   const isEditor = accessLevel === 'editor';
   const isViewer = accessLevel === 'viewer';

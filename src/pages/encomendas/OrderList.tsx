@@ -18,8 +18,11 @@ import { checkOrderDependencies } from '@/utils/dependencyUtils';
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, loading: permissionsLoading, accessLevel } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
+  
+  // Debug: Log permissions state
+  console.log('Permissions State:', { canCreate, canEdit, canDelete, accessLevel, permissionsLoading });
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
