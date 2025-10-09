@@ -22,10 +22,10 @@ const OrderList = () => {
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    orderId: string | null;
-  }>({ open: false, orderId: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; orderId: string | null }>({
+    open: false,
+    orderId: null,
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -48,12 +48,7 @@ const OrderList = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-
-      const { data: ordersData, error: ordersError } = await supabase.from("orders").select(`
-          *,
-          order_items(*)
-        `);
-
+      const { data: ordersData, error: ordersError } = await supabase.from("orders").select("*, order_items(*)");
       if (ordersError) throw ordersError;
 
       if (ordersData) {
@@ -96,10 +91,8 @@ const OrderList = () => {
         const sortedOrders = formattedOrders.sort((a, b) => {
           const aPending = !a.convertedToStockExitId;
           const bPending = !b.convertedToStockExitId;
-
           if (aPending && !bPending) return -1;
           if (!aPending && bPending) return 1;
-
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
 
@@ -116,16 +109,11 @@ const OrderList = () => {
 
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
-
     try {
       const { error: itemsError } = await supabase.from("order_items").delete().eq("order_id", deleteDialog.orderId);
-
       if (itemsError) throw itemsError;
-
       const { error: orderError } = await supabase.from("orders").delete().eq("id", deleteDialog.orderId);
-
       if (orderError) throw orderError;
-
       setOrders(orders.filter((o) => o.id !== deleteDialog.orderId));
       toast.success("Encomenda eliminada com sucesso");
     } catch (error) {
@@ -136,18 +124,11 @@ const OrderList = () => {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-PT", {
-      style: "currency",
-      currency: "EUR",
-    }).format(value);
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(value);
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("pt-PT");
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-PT");
-  };
-
-  if (isLoading) {
+  if (isLoading || permissionsLoading) {
     return (
       <div className="p-6">
         <PageHeader title="Consultar Encomendas" description="Consulte e gerencie as suas encomendas" />
@@ -186,8 +167,7 @@ const OrderList = () => {
         </div>
         {canCreate && (
           <Button onClick={() => navigate("/encomendas/nova")}>
-            <Plus className="w-4 h-4 mr-2" />
-            Nova Encomenda
+            <Plus className="w-4 h-4 mr-2" /> Nova Encomenda
           </Button>
         )}
       </div>
@@ -294,9 +274,7 @@ const OrderList = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        {permissionsLoading ? (
-                          <span className="text-gray-400 text-sm">...</span>
-                        ) : accessLevel === "admin" ? (
+                        {accessLevel === "admin" ? (
                           <div className="flex justify-end items-center gap-2">
                             <Button
                               variant="ghost"
