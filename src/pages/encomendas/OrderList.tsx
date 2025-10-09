@@ -33,39 +33,40 @@ const OrderList = () => {
 
   // Reordena automaticamente sempre que 'orders' muda
   useEffect(() => {
-    const sorted = [...orders].sort((a, b) => {
-      const getPriority = (order: Order) => {
-        if (order.convertedToStockExitId) return 3; // convertidas → último
-        if (order.orderType === "awaiting_stock") return 2; // pendente stock → meio
-        return 1; // combinadas → primeiro
-      };
+    const sortOrders = (orders: Order[]) => {
+      return [...orders].sort((a, b) => {
+        const getPriority = (order: Order) => {
+          if (order.convertedToStockExitId) return 3; // convertidas → último
+          if (order.orderType === "awaiting_stock") return 2; // pendente stock → meio
+          return 1; // combinadas → primeiro
+        };
 
-      const priorityA = getPriority(a);
-      const priorityB = getPriority(b);
-      if (priorityA !== priorityB) return priorityA - priorityB;
+        const priorityA = getPriority(a);
+        const priorityB = getPriority(b);
+        if (priorityA !== priorityB) return priorityA - priorityB;
 
-      if (priorityA === 1) {
-        // combinadas → data de entrega (mais recente primeiro)
-        const dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
-        const dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
-        if (dateA !== dateB) return dateB - dateA;
-      } else if (priorityA === 3) {
-        // convertidas → data de criação (mais recente primeiro)
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        if (dateA !== dateB) return dateB - dateA;
-      } else {
-        // pendente stock → data de criação (mais recente primeiro)
-        const dateA = new Date(a.date).getTime();
-        const dateB = new Date(b.date).getTime();
-        if (dateA !== dateB) return dateB - dateA;
-      }
+        // Mesma prioridade → ordenar por datas
+        let dateA = 0;
+        let dateB = 0;
 
-      // desempate → número da encomenda (numérico)
-      return a.number.localeCompare(b.number, undefined, { numeric: true });
-    });
+        if (priorityA === 1) {
+          // combinadas → data de entrega
+          dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
+          dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+        } else {
+          // pendente stock ou convertidas → data da encomenda
+          dateA = new Date(a.date).getTime();
+          dateB = new Date(b.date).getTime();
+        }
 
-    setFilteredOrders(sorted);
+        if (dateA !== dateB) return dateB - dateA; // mais recente primeiro
+
+        // Desempate → número da encomenda
+        return a.number.localeCompare(b.number, undefined, { numeric: true });
+      });
+    };
+
+    setFilteredOrders(sortOrders(orders));
   }, [orders]);
 
   useEffect(() => {
