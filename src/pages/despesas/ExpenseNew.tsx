@@ -30,10 +30,8 @@ const ExpenseNew = () => {
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
-    if (!validatePermission(canCreate, "criar despesas")) {
-      e.preventDefault();
-      return;
-    }
+    e.preventDefault();
+    if (!validatePermission(canCreate, "criar despesas")) return;
     handleSubmit(e);
   };
 
@@ -42,16 +40,13 @@ const ExpenseNew = () => {
       {/* Cabeçalho */}
       <ExpenseFormHeader />
 
-      {/* Botões de ação no topo, alinhados à direita */}
-      <ExpenseFormActions
-        isLoading={isLoading}
-        onCancel={handleCancel}
-        onSubmit={handleFormSubmit}
-        className="flex flex-col sm:flex-row sm:justify-end gap-2 mb-6"
-      />
+      {/* Botões de ação alinhados à direita */}
+      <div className="flex justify-end gap-2 mb-6">
+        <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} onSubmit={handleFormSubmit} />
+      </div>
 
       {/* Formulário */}
-      <form className="space-y-6">
+      <form onSubmit={handleFormSubmit} className="space-y-6">
         <ExpenseBasicInfo
           suppliers={suppliers}
           supplierId={formData.supplierId}
