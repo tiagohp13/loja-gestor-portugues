@@ -1,27 +1,26 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart } from 'lucide-react';
-import { toast } from 'sonner';
-import { Order } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import PageHeader from '@/components/ui/PageHeader';
-import EmptyState from '@/components/common/EmptyState';
-import DeleteConfirmDialog from '@/components/common/DeleteConfirmDialog';
-import { usePermissions } from '@/hooks/usePermissions';
-import { validatePermission } from '@/utils/permissionUtils';
-import { checkOrderDependencies } from '@/utils/dependencyUtils';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart } from "lucide-react";
+import { toast } from "sonner";
+import { Order } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import PageHeader from "@/components/ui/PageHeader";
+import EmptyState from "@/components/common/EmptyState";
+import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
+import { usePermissions } from "@/hooks/usePermissions";
+import { validatePermission } from "@/utils/permissionUtils";
+import { checkOrderDependencies } from "@/utils/dependencyUtils";
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete, loading: permissionsLoading, accessLevel } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState<{
     open: boolean;
@@ -34,10 +33,11 @@ const OrderList = () => {
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = orders.filter(order =>
-        order.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.clientId?.toLowerCase().includes(searchTerm.toLowerCase())
+      const filtered = orders.filter(
+        (order) =>
+          order.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          order.clientId?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
       setFilteredOrders(filtered);
     } else {
@@ -48,10 +48,8 @@ const OrderList = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-      
-      const { data: ordersData, error: ordersError } = await supabase
-        .from('orders')
-        .select(`
+
+      const { data: ordersData, error: ordersError } = await supabase.from("orders").select(`
           *,
           order_items(*)
         `);
@@ -59,38 +57,40 @@ const OrderList = () => {
       if (ordersError) throw ordersError;
 
       if (ordersData) {
-        const formattedOrders: Order[] = ordersData.map(order => ({
+        const formattedOrders: Order[] = ordersData.map((order) => ({
           id: order.id,
           number: order.number,
-          clientId: order.client_id || '',
-          clientName: order.client_name || '',
+          clientId: order.client_id || "",
+          clientName: order.client_name || "",
           date: order.date,
-          notes: order.notes || '',
+          notes: order.notes || "",
           convertedToStockExitId: order.converted_to_stock_exit_id,
           convertedToStockExitNumber: order.converted_to_stock_exit_number,
           discount: Number(order.discount || 0),
           createdAt: order.created_at,
           updatedAt: order.updated_at,
-          orderType: order.order_type as 'combined' | 'awaiting_stock' || 'combined',
+          orderType: (order.order_type as "combined" | "awaiting_stock") || "combined",
           expectedDeliveryDate: order.expected_delivery_date,
           expectedDeliveryTime: order.expected_delivery_time,
           deliveryLocation: order.delivery_location,
           items: (order.order_items || []).map((item: any) => ({
             id: item.id,
-            productId: item.product_id || '',
+            productId: item.product_id || "",
             productName: item.product_name,
             quantity: item.quantity,
             salePrice: Number(item.sale_price),
             discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined,
             createdAt: item.created_at,
-            updatedAt: item.updated_at
+            updatedAt: item.updated_at,
           })),
-          total: (order.order_items || []).reduce((sum: number, item: any) => {
-            const itemTotal = item.quantity * Number(item.sale_price);
-            const itemDiscount = Number(item.discount_percent || 0);
-            const discountAmount = itemTotal * (itemDiscount / 100);
-            return sum + (itemTotal - discountAmount);
-          }, 0) * (1 - Number(order.discount || 0) / 100)
+          total:
+            (order.order_items || []).reduce((sum: number, item: any) => {
+              const itemTotal = item.quantity * Number(item.sale_price);
+              const itemDiscount = Number(item.discount_percent || 0);
+              const discountAmount = itemTotal * (itemDiscount / 100);
+              return sum + (itemTotal - discountAmount);
+            }, 0) *
+            (1 - Number(order.discount || 0) / 100),
         }));
 
         // Ordenar: Pendentes primeiro (por data desc), depois Convertidas (por data desc)
@@ -98,10 +98,10 @@ const OrderList = () => {
           // Se uma é pendente e outra convertida, pendente vem primeiro
           const aPending = !a.convertedToStockExitId;
           const bPending = !b.convertedToStockExitId;
-          
+
           if (aPending && !bPending) return -1;
           if (!aPending && bPending) return 1;
-          
+
           // Se ambas têm o mesmo estado, ordenar por data (mais recente primeiro)
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
@@ -110,8 +110,8 @@ const OrderList = () => {
         setFilteredOrders(sortedOrders);
       }
     } catch (error) {
-      console.error('Error fetching orders:', error);
-      toast.error('Erro ao carregar encomendas');
+      console.error("Error fetching orders:", error);
+      toast.error("Erro ao carregar encomendas");
     } finally {
       setIsLoading(false);
     }
@@ -119,55 +119,49 @@ const OrderList = () => {
 
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
-    if (!validatePermission(canDelete, 'eliminar encomendas')) {
+    if (!validatePermission(canDelete, "eliminar encomendas")) {
       setDeleteDialog({ open: false, orderId: null });
       return;
     }
 
     try {
       // Starting delete process for order
-      
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .delete()
-        .eq('order_id', deleteDialog.orderId);
+
+      const { error: itemsError } = await supabase.from("order_items").delete().eq("order_id", deleteDialog.orderId);
 
       if (itemsError) {
-        console.error('Error deleting order items:', itemsError);
+        console.error("Error deleting order items:", itemsError);
         throw itemsError;
       }
-      console.log('Order items deleted successfully');
+      console.log("Order items deleted successfully");
 
-      const { error: orderError } = await supabase
-        .from('orders')
-        .delete()
-        .eq('id', deleteDialog.orderId);
+      const { error: orderError } = await supabase.from("orders").delete().eq("id", deleteDialog.orderId);
 
       if (orderError) {
-        console.error('Error deleting order:', orderError);
+        console.error("Error deleting order:", orderError);
         throw orderError;
       }
-      console.log('Order deleted successfully');
+      console.log("Order deleted successfully");
 
-      setOrders(orders.filter(o => o.id !== deleteDialog.orderId));
-      toast.success('Encomenda eliminada com sucesso');
+      setOrders(orders.filter((o) => o.id !== deleteDialog.orderId));
+      toast.success("Encomenda eliminada com sucesso");
     } catch (error) {
-      console.error('Error deleting order:', error);
-      toast.error('Erro ao eliminar encomenda');
+      console.error("Error deleting order:", error);
+      toast.error("Erro ao eliminar encomenda");
     } finally {
       setDeleteDialog({ open: false, orderId: null });
     }
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR'
+    return new Intl.NumberFormat("pt-PT", {
+      style: "currency",
+      currency: "EUR",
     }).format(value);
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-PT');
+    return new Date(dateString).toLocaleDateString("pt-PT");
   };
 
   if (isLoading) {
@@ -210,10 +204,12 @@ const OrderList = () => {
           />
         </div>
         {canCreate && (
-          <Button onClick={() => {
-            if (!validatePermission(canCreate, 'criar encomendas')) return;
-            navigate('/encomendas/nova');
-          }}>
+          <Button
+            onClick={() => {
+              if (!validatePermission(canCreate, "criar encomendas")) return;
+              navigate("/encomendas/nova");
+            }}
+          >
             <Plus className="w-4 h-4 mr-2" />
             Nova Encomenda
           </Button>
@@ -235,9 +231,11 @@ const OrderList = () => {
         <CardContent className="p-0">
           {filteredOrders.length === 0 ? (
             <div className="p-6">
-              <EmptyState 
+              <EmptyState
                 title="Nenhuma encomenda encontrada"
-                description={searchTerm ? "Tente ajustar os filtros de pesquisa." : "Comece por adicionar uma nova encomenda."}
+                description={
+                  searchTerm ? "Tente ajustar os filtros de pesquisa." : "Comece por adicionar uma nova encomenda."
+                }
               />
             </div>
           ) : (
@@ -261,7 +259,7 @@ const OrderList = () => {
                       Estado
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
-                      Entrega
+                      Informações de Entrega
                     </th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                       Ações
@@ -270,25 +268,19 @@ const OrderList = () => {
                 </thead>
                 <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
                   {filteredOrders.map((order) => (
-                    <tr 
-                      key={order.id} 
+                    <tr
+                      key={order.id}
                       className="hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors"
                       onClick={() => navigate(`/encomendas/${order.id}`)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                          {order.number}
-                        </span>
+                        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{order.number}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-gray-100">
-                          {formatDate(order.date)}
-                        </span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">{formatDate(order.date)}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-gray-100">
-                          {order.clientName}
-                        </span>
+                        <span className="text-sm text-gray-900 dark:text-gray-100">{order.clientName}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -303,7 +295,9 @@ const OrderList = () => {
                           </Badge>
                         ) : (
                           <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300">
-                            {order.orderType === 'awaiting_stock' ? 'Pendente – A aguardar stock' : 'Pendente – Combinada'}
+                            {order.orderType === "awaiting_stock"
+                              ? "Pendente – A aguardar stock"
+                              : "Pendente – Combinada"}
                           </Badge>
                         )}
                       </td>
@@ -319,9 +313,7 @@ const OrderList = () => {
                               </div>
                             )}
                             {order.deliveryLocation && (
-                              <div className="text-xs text-gray-500 dark:text-gray-400">
-                                {order.deliveryLocation}
-                              </div>
+                              <div className="text-xs text-gray-500 dark:text-gray-400">{order.deliveryLocation}</div>
                             )}
                           </div>
                         ) : (
@@ -335,12 +327,16 @@ const OrderList = () => {
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!validatePermission(canEdit, 'editar encomendas')) return;
+                              if (!validatePermission(canEdit, "editar encomendas")) return;
                               navigate(`/encomendas/editar/${order.id}`);
                             }}
                             disabled={!canEdit || order.convertedToStockExitId !== null}
                             className="h-8 w-8 p-0"
-                            title={order.convertedToStockExitId ? 'Não é possível editar encomendas convertidas' : 'Editar encomenda'}
+                            title={
+                              order.convertedToStockExitId
+                                ? "Não é possível editar encomendas convertidas"
+                                : "Editar encomenda"
+                            }
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -349,21 +345,25 @@ const OrderList = () => {
                             size="sm"
                             onClick={async (e) => {
                               e.stopPropagation();
-                              if (!validatePermission(canDelete, 'eliminar encomendas')) return;
+                              if (!validatePermission(canDelete, "eliminar encomendas")) return;
                               if (order.convertedToStockExitId) {
-                                toast.error('Não pode eliminar encomendas já convertidas em saída');
+                                toast.error("Não pode eliminar encomendas já convertidas em saída");
                                 return;
                               }
                               const deps = await checkOrderDependencies(order.id);
                               if (!deps.canDelete) {
-                                toast.error(deps.message || 'Não é possível eliminar esta encomenda');
+                                toast.error(deps.message || "Não é possível eliminar esta encomenda");
                                 return;
                               }
                               setDeleteDialog({ open: true, orderId: order.id });
                             }}
                             disabled={!canDelete || order.convertedToStockExitId !== null}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
-                            title={order.convertedToStockExitId ? 'Não é possível eliminar encomendas convertidas' : 'Eliminar encomenda'}
+                            title={
+                              order.convertedToStockExitId
+                                ? "Não é possível eliminar encomendas convertidas"
+                                : "Eliminar encomenda"
+                            }
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
