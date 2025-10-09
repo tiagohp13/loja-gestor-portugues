@@ -88,12 +88,35 @@ const OrderList = () => {
             (1 - Number(order.discount || 0) / 100),
         }));
 
+        // Nova lógica de ordenação conforme o pedido
         const sortedOrders = formattedOrders.sort((a, b) => {
-          const aPending = !a.convertedToStockExitId;
-          const bPending = !b.convertedToStockExitId;
-          if (aPending && !bPending) return -1;
-          if (!aPending && bPending) return 1;
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
+          const getPriority = (order: Order) => {
+            if (order.orderType === "combined") return 1; // Combinadas primeiro
+            if (order.orderType === "awaiting_stock" && !order.convertedToStockExitId) return 2; // A aguardar stock
+            if (order.convertedToStockExitId) return 3; // Convertidas por último
+            return 4;
+          };
+
+          const priorityA = getPriority(a);
+          const priorityB = getPriority(b);
+
+          if (priorityA !== priorityB) return priorityA - priorityB;
+
+          // Ordenação dentro do grupo
+          if (priorityA === 1) {
+            // Combinadas → data de entrega mais recente primeiro
+            const dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
+            const dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+            if (dateA !== dateB) return dateB - dateA;
+          } else {
+            // A aguardar stock ou convertidas → data de criação mais recente primeiro
+            const createdA = new Date(a.createdAt).getTime();
+            const createdB = new Date(b.createdAt).getTime();
+            if (createdA !== createdB) return createdB - createdA;
+          }
+
+          // Empate → ordenar pelo número da encomenda
+          return a.number.localeCompare(b.number);
         });
 
         setOrders(sortedOrders);
