@@ -90,13 +90,12 @@ const OrderList = () => {
             (1 - Number(order.discount || 0) / 100),
         }));
 
-        // Função de ordenação personalizada
+        // Ordenação personalizada
         const sortedOrders = formattedOrders.sort((a, b) => {
-          // Prioridade de estado
           const getPriority = (order: Order) => {
-            if (order.convertedToStockExitId) return 3; // convertidas → último
-            if (order.orderType === "awaiting_stock") return 2; // pendente stock → meio
-            return 1; // combinadas → primeiro
+            if (order.convertedToStockExitId) return 3; // Convertidas → último
+            if (order.orderType === "awaiting_stock") return 2; // Pendente stock → meio
+            return 1; // Combinadas → primeiro
           };
 
           const priorityA = getPriority(a);
@@ -105,19 +104,21 @@ const OrderList = () => {
 
           // Ordenação dentro da mesma prioridade
           if (priorityA === 1) {
-            // combinadas → data de entrega (mais recente primeiro)
+            // Combinadas → data de entrega (mais recente primeiro)
             const dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
             const dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
             if (dateA !== dateB) return dateB - dateA;
           } else {
-            // restantes → data de criação (mais recente primeiro)
+            // Convertidas e pendentes stock → data da encomenda (mais recente primeiro)
             const dateA = new Date(a.date).getTime();
             const dateB = new Date(b.date).getTime();
             if (dateA !== dateB) return dateB - dateA;
           }
 
-          // desempate → número da encomenda
-          return a.number.localeCompare(b.number, undefined, { numeric: true });
+          // Desempate → número da encomenda numericamente
+          const numA = parseInt(a.number.replace(/\D/g, ""), 10);
+          const numB = parseInt(b.number.replace(/\D/g, ""), 10);
+          return numA - numB;
         });
 
         setOrders(sortedOrders);
