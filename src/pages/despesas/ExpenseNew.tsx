@@ -39,14 +39,21 @@ const ExpenseNew = () => {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Cabeçalho da página */}
+      {/* Cabeçalho */}
       <ExpenseFormHeader />
 
-      {/* Botões de ação no topo, alinhados à direita */}
-      <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} />
+      {/* Botões de ação no topo, à direita */}
+      <div className="flex flex-col sm:flex-row sm:justify-end gap-2 mb-6">
+        <button type="button" className="btn btn-outline" onClick={handleCancel} disabled={isLoading}>
+          Cancelar
+        </button>
+        <button type="submit" className="btn btn-primary" onClick={handleFormSubmit} disabled={isLoading}>
+          Guardar Despesa
+        </button>
+      </div>
 
       {/* Formulário */}
-      <form onSubmit={handleFormSubmit} className="space-y-6">
+      <form className="space-y-6">
         <ExpenseBasicInfo
           suppliers={suppliers}
           supplierId={formData.supplierId}
