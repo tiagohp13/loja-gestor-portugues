@@ -52,6 +52,7 @@ const OrderList = () => {
       if (ordersError) throw ordersError;
 
       if (ordersData) {
+        console.log("🧾 Primeira encomenda (ordersData[0]):", ordersData[0]);
         const formattedOrders: Order[] = ordersData.map((order) => ({
           id: order.id,
           number: order.number,
