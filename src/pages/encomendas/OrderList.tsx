@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
@@ -17,15 +17,15 @@ import { checkOrderDependencies } from "@/utils/dependencyUtils";
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const { canCreate, canEdit, canDelete, loading: permissionsLoading, accessLevel } = usePermissions();
+  const { canCreate, canEdit, canDelete } = usePermissions();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  const [deleteDialog, setDeleteDialog] = useState<{
-    open: boolean;
-    orderId: string | null;
-  }>({ open: false, orderId: null });
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; orderId: string | null }>({
+    open: false,
+    orderId: null,
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -48,12 +48,7 @@ const OrderList = () => {
   const fetchOrders = async () => {
     try {
       setIsLoading(true);
-
-      const { data: ordersData, error: ordersError } = await supabase.from("orders").select(`
-          *,
-          order_items(*)
-        `);
-
+      const { data: ordersData, error: ordersError } = await supabase.from("orders").select(`*, order_items(*)`);
       if (ordersError) throw ordersError;
 
       if (ordersData) {
@@ -93,16 +88,11 @@ const OrderList = () => {
             (1 - Number(order.discount || 0) / 100),
         }));
 
-        // Ordenar: Pendentes primeiro (por data desc), depois Convertidas (por data desc)
         const sortedOrders = formattedOrders.sort((a, b) => {
-          // Se uma é pendente e outra convertida, pendente vem primeiro
           const aPending = !a.convertedToStockExitId;
           const bPending = !b.convertedToStockExitId;
-
           if (aPending && !bPending) return -1;
           if (!aPending && bPending) return 1;
-
-          // Se ambas têm o mesmo estado, ordenar por data (mais recente primeiro)
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
 
@@ -125,23 +115,11 @@ const OrderList = () => {
     }
 
     try {
-      // Starting delete process for order
-
       const { error: itemsError } = await supabase.from("order_items").delete().eq("order_id", deleteDialog.orderId);
-
-      if (itemsError) {
-        console.error("Error deleting order items:", itemsError);
-        throw itemsError;
-      }
-      console.log("Order items deleted successfully");
+      if (itemsError) throw itemsError;
 
       const { error: orderError } = await supabase.from("orders").delete().eq("id", deleteDialog.orderId);
-
-      if (orderError) {
-        console.error("Error deleting order:", orderError);
-        throw orderError;
-      }
-      console.log("Order deleted successfully");
+      if (orderError) throw orderError;
 
       setOrders(orders.filter((o) => o.id !== deleteDialog.orderId));
       toast.success("Encomenda eliminada com sucesso");
@@ -153,16 +131,10 @@ const OrderList = () => {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-PT", {
-      style: "currency",
-      currency: "EUR",
-    }).format(value);
-  };
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(value);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-PT");
-  };
+  const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("pt-PT");
 
   if (isLoading) {
     return (
@@ -182,7 +154,6 @@ const OrderList = () => {
     <div className="p-6 space-y-6">
       <PageHeader title="Consultar Encomendas" description="Consulte e gerencie as suas encomendas" />
 
-      {/* Card com total de encomendas */}
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 text-gestorApp-blue">
@@ -192,7 +163,6 @@ const OrderList = () => {
         </CardContent>
       </Card>
 
-      {/* Campo de pesquisa e botão Nova Encomenda */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray w-4 h-4" />
@@ -216,7 +186,6 @@ const OrderList = () => {
         )}
       </div>
 
-      {/* Delete Confirmation Dialog */}
       <DeleteConfirmDialog
         open={deleteDialog.open}
         onClose={() => setDeleteDialog({ open: false, orderId: null })}
@@ -226,7 +195,6 @@ const OrderList = () => {
         trigger={<></>}
       />
 
-      {/* Tabela de encomendas */}
       <Card>
         <CardContent className="p-0">
           {filteredOrders.length === 0 ? (
@@ -320,8 +288,8 @@ const OrderList = () => {
                           <span className="text-sm text-gray-400 dark:text-gray-500">—</span>
                         )}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex justify-end items-center gap-2">
+                      <td className="px-6 py-4 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-start items-center gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
