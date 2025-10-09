@@ -30,12 +30,12 @@ export const useGlobalSearch = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const searchClients = async (searchTerm: string): Promise<SearchResult[]> => {
-    const { data, error } = await supabase
-      .from('clients')
-      .select('id, name, email, phone')
-      .neq('status', 'deleted')
-      .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
-      .limit(5);
+      const { data, error } = await supabase
+        .from('clients')
+        .select('id, name, email, phone')
+        .is('deleted_at', null)
+        .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
+        .limit(5);
 
     if (error) {
       console.error('Error searching clients:', error);
@@ -55,7 +55,7 @@ export const useGlobalSearch = () => {
     const { data, error } = await supabase
       .from('products')
       .select('id, name, code, category')
-      .neq('status', 'deleted')
+      .is('deleted_at', null)
       .or(`name.ilike.%${searchTerm}%,code.ilike.%${searchTerm}%,category.ilike.%${searchTerm}%`)
       .limit(5);
 
@@ -77,7 +77,7 @@ export const useGlobalSearch = () => {
     const { data, error } = await supabase
       .from('orders')
       .select('id, number, client_name, date')
-      .neq('status', 'deleted')
+      .is('deleted_at', null)
       .or(`number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`)
       .limit(5);
 
@@ -99,7 +99,7 @@ export const useGlobalSearch = () => {
     const { data, error } = await supabase
       .from('stock_exits')
       .select('id, number, client_name, date')
-      .neq('status', 'deleted')
+      .is('deleted_at', null)
       .or(`number.ilike.%${searchTerm}%,client_name.ilike.%${searchTerm}%`)
       .limit(5);
 
@@ -121,7 +121,7 @@ export const useGlobalSearch = () => {
     const { data, error } = await supabase
       .from('suppliers')
       .select('id, name, email, phone')
-      .neq('status', 'deleted')
+      .is('deleted_at', null)
       .or(`name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%`)
       .limit(5);
 

@@ -10,7 +10,8 @@ export const countPendingOrders = async (): Promise<number> => {
     const { data, error, count } = await supabase
       .from('orders')
       .select('*', { count: 'exact', head: true })
-      .is('converted_to_stock_exit_id', null);
+      .is('converted_to_stock_exit_id', null)
+      .is('deleted_at', null);
     
     if (error) {
       console.error('Error counting pending orders:', error);
@@ -32,7 +33,8 @@ export const getLowStockProducts = async (): Promise<any[]> => {
     // Query for all products first
     const { data, error } = await supabase
       .from('products')
-      .select('id, name, code, current_stock, min_stock');
+      .select('id, name, code, current_stock, min_stock')
+      .is('deleted_at', null);
     
     if (error) {
       console.error('Error fetching low stock products:', error);

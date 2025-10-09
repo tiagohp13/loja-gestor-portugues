@@ -15,11 +15,10 @@ export const useTopClients = () => {
   const fetchTopClients = async () => {
     setIsLoading(true);
     try {
-      // Fetch all clients first
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('*')
-        .neq('status', 'deleted')
+        .is('deleted_at', null)
         .order('name', { ascending: true });
 
       if (clientsError) {

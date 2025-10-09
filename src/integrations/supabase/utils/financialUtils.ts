@@ -11,7 +11,7 @@ export const getClientTotalSpent = async (clientId: string): Promise<number> => 
       .from('stock_exits')
       .select('id')
       .eq('client_id', clientId)
-      .or('status.is.null,status.neq.deleted');
+      .is('deleted_at', null);
     
     if (exitError) {
       console.error('Error fetching client exits:', exitError);
@@ -64,7 +64,7 @@ export const getSupplierTotalSpent = async (supplierId: string): Promise<number>
       .from('stock_entries')
       .select('id')
       .eq('supplier_id', supplierId)
-      .or('status.is.null,status.neq.deleted'); // Include non-deleted entries
+      .is('deleted_at', null);
     
     if (entryError) {
       console.error('Error fetching supplier entries:', entryError);
@@ -93,7 +93,7 @@ export const getSupplierTotalSpent = async (supplierId: string): Promise<number>
       .from('expenses')
       .select('id')
       .eq('supplier_id', supplierId)
-      .or('status.is.null,status.neq.deleted'); // Include non-deleted expenses
+      .is('deleted_at', null);
     
     if (expenseError) {
       console.error('Error fetching supplier expenses:', expenseError);
@@ -134,7 +134,7 @@ export const getClientLastPurchaseDate = async (clientId: string): Promise<strin
       .from('stock_exits')
       .select('date')
       .eq('client_id', clientId)
-      .neq('status', 'deleted')
+      .is('deleted_at', null)
       .order('date', { ascending: false })
       .limit(1);
     

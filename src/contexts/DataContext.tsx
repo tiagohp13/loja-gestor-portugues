@@ -427,7 +427,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or('status.is.null,status.neq.deleted') // Show products with null status or not deleted
+        .is('deleted_at', null)
         .order('name');
       
       if (error) throw error;
@@ -447,7 +447,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .neq('status', 'deleted') // Filter out deleted categories
+        .is('deleted_at', null)
         .order('name');
       
       if (error) throw error;
@@ -468,7 +468,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .neq('status', 'deleted') // Filter out deleted clients
+        .is('deleted_at', null)
         .order('name');
       
       if (error) throw error;
@@ -489,7 +489,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { data, error } = await supabase
         .from('suppliers')
         .select('*')
-        .neq('status', 'deleted') // Filter out deleted suppliers
+        .is('deleted_at', null)
         .order('name');
       
       if (error) throw error;
@@ -512,7 +512,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           *,
           order_items(*)
         `)
-        .neq('status', 'deleted') // Filter out deleted orders
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
@@ -540,7 +540,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           *,
           stock_entry_items(*)
         `)
-        .neq('status', 'deleted') // Filter out deleted stock entries
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
       
       if (error) {
@@ -571,7 +571,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           *,
           stock_exit_items(*)
         `)
-        .neq('status', 'deleted') // Filter out deleted stock exits
+        .is('deleted_at', null)
         .order('created_at', { ascending: false });
       
       if (error) throw error;
