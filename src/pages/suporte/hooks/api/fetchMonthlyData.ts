@@ -10,15 +10,16 @@ export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
     sixMonthsAgo.setMonth(now.getMonth() - 5);
     sixMonthsAgo.setDate(1);
     
-    // Fetch sales data
+    // Fetch sales data - apenas de vendas ativas
     const { data: salesData, error: salesError } = await supabase
       .from('stock_exit_items')
       .select(`
         quantity,
         sale_price,
         discount_percent,
-        stock_exits!inner(date)
+        stock_exits!inner(date, deleted_at)
       `)
+      .is('stock_exits.deleted_at', null)
       .gte('stock_exits.date', sixMonthsAgo.toISOString())
       .lte('stock_exits.date', now.toISOString());
 
@@ -26,15 +27,16 @@ export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
       console.error('Error fetching sales data:', salesError);
     }
 
-    // Fetch purchases data
+    // Fetch purchases data - apenas de compras ativas
     const { data: purchasesData, error: purchasesError } = await supabase
       .from('stock_entry_items')
       .select(`
         quantity,
         purchase_price,
         discount_percent,
-        stock_entries!inner(date)
+        stock_entries!inner(date, deleted_at)
       `)
+      .is('stock_entries.deleted_at', null)
       .gte('stock_entries.date', sixMonthsAgo.toISOString())
       .lte('stock_entries.date', now.toISOString());
 
@@ -42,15 +44,16 @@ export const fetchMonthlyData = async (): Promise<MonthlyDataItem[]> => {
       console.error('Error fetching purchases data:', purchasesError);
     }
 
-    // Fetch expenses data
+    // Fetch expenses data - apenas despesas ativas
     const { data: expensesData, error: expensesError } = await supabase
       .from('expense_items')
       .select(`
         quantity,
         unit_price,
         discount_percent,
-        expenses!inner(date, discount)
+        expenses!inner(date, discount, deleted_at)
       `)
+      .is('expenses.deleted_at', null)
       .gte('expenses.date', sixMonthsAgo.toISOString())
       .lte('expenses.date', now.toISOString());
 
@@ -145,7 +148,7 @@ export const fetchMonthlyOrders = async (): Promise<MonthlyOrderItem[]> => {
     sixMonthsAgo.setMonth(now.getMonth() - 5);
     sixMonthsAgo.setDate(1);
 
-    // Fetch orders data
+    // Fetch orders data - apenas encomendas ativas
     const { data: ordersData, error: ordersError } = await supabase
       .from('orders')
       .select(`
@@ -153,6 +156,7 @@ export const fetchMonthlyOrders = async (): Promise<MonthlyOrderItem[]> => {
         date,
         converted_to_stock_exit_id
       `)
+      .is('deleted_at', null)
       .gte('date', sixMonthsAgo.toISOString())
       .lte('date', now.toISOString());
 

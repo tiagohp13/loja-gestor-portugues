@@ -22,47 +22,73 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
   }
 
   try {
-    // Consulta otimizada para itens de saída de estoque
-    const { data: exitItems, error: exitError } = await supabase
-      .from('stock_exit_items')
-      .select('quantity, sale_price, discount_percent');
-      
+    // Primeiro buscar IDs de saídas ativas (não apagadas)
+    const { data: activeExits, error: exitsError } = await supabase
+      .from('stock_exits')
+      .select('id')
+      .is('deleted_at', null);
+    
     let totalSales = 0;
-    if (exitItems && !exitError) {
-      totalSales = exitItems.reduce((sum, item) => {
-        const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-        return sum + (item.quantity * item.sale_price * discountMultiplier);
-      }, 0);
-    } else if (exitError) {
-      console.error('Error fetching exit items:', exitError);
-      toast({
-        title: "Erro ao carregar dados de vendas",
-        description: exitError.message,
-        variant: "destructive"
-      });
-    }
-    
-    // Consulta otimizada para itens de entrada de estoque
-    const { data: entryItems, error: entryError } = await supabase
-      .from('stock_entry_items')
-      .select('quantity, purchase_price, discount_percent');
+    if (activeExits && activeExits.length > 0 && !exitsError) {
+      const activeExitIds = activeExits.map(e => e.id);
       
-    let totalPurchases = 0;
-    if (entryItems && !entryError) {
-      totalPurchases = entryItems.reduce((sum, item) => {
-        const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
-        return sum + (item.quantity * item.purchase_price * discountMultiplier);
-      }, 0);
-    } else if (entryError) {
-      console.error('Error fetching entry items:', entryError);
-      toast({
-        title: "Erro ao carregar dados de compras",
-        description: entryError.message,
-        variant: "destructive"
-      });
+      // Consulta otimizada para itens de saída de estoque ATIVAS
+      const { data: exitItems, error: exitError } = await supabase
+        .from('stock_exit_items')
+        .select('quantity, sale_price, discount_percent')
+        .in('exit_id', activeExitIds);
+      
+      if (exitItems && !exitError) {
+        totalSales = exitItems.reduce((sum, item) => {
+          const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+          return sum + (item.quantity * item.sale_price * discountMultiplier);
+        }, 0);
+      } else if (exitError) {
+        console.error('Error fetching exit items:', exitError);
+        toast({
+          title: "Erro ao carregar dados de vendas",
+          description: exitError.message,
+          variant: "destructive"
+        });
+      }
+    } else if (exitsError) {
+      console.error('Error fetching active exits:', exitsError);
     }
     
-    // Consulta para despesas (incluindo desconto a nível de despesa)
+    // Primeiro buscar IDs de entradas ativas (não apagadas)
+    const { data: activeEntries, error: entriesError } = await supabase
+      .from('stock_entries')
+      .select('id')
+      .is('deleted_at', null);
+    
+    let totalPurchases = 0;
+    if (activeEntries && activeEntries.length > 0 && !entriesError) {
+      const activeEntryIds = activeEntries.map(e => e.id);
+      
+      // Consulta otimizada para itens de entrada de estoque ATIVAS
+      const { data: entryItems, error: entryError } = await supabase
+        .from('stock_entry_items')
+        .select('quantity, purchase_price, discount_percent')
+        .in('entry_id', activeEntryIds);
+      
+      if (entryItems && !entryError) {
+        totalPurchases = entryItems.reduce((sum, item) => {
+          const discountMultiplier = item.discount_percent ? 1 - (item.discount_percent / 100) : 1;
+          return sum + (item.quantity * item.purchase_price * discountMultiplier);
+        }, 0);
+      } else if (entryError) {
+        console.error('Error fetching entry items:', entryError);
+        toast({
+          title: "Erro ao carregar dados de compras",
+          description: entryError.message,
+          variant: "destructive"
+        });
+      }
+    } else if (entriesError) {
+      console.error('Error fetching active entries:', entriesError);
+    }
+    
+    // Consulta para despesas ativas (incluindo desconto a nível de despesa)
     const { data: expenses, error: expenseError } = await supabase
       .from('expenses')
       .select(`
@@ -72,7 +98,8 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
           unit_price,
           discount_percent
         )
-      `);
+      `)
+      .is('deleted_at', null);
       
     let totalExpenses = 0;
     let numberOfExpenses = 0;
@@ -193,10 +220,11 @@ const fetchTopProducts = async () => {
 // Modificando a função para não usar RPC e retornar o formato correto
 const fetchTopClients = async () => {
   try {
-    // Usar abordagem direta ao invés de RPC
+    // Usar abordagem direta ao invés de RPC - apenas saídas ativas
     const { data: clientExits, error: exitError } = await supabase
       .from('stock_exits')
       .select('client_name, client_id')
+      .is('deleted_at', null)
       .limit(100);
     
     if (exitError) {
@@ -235,6 +263,7 @@ const fetchTopSuppliers = async () => {
     const { data: suppliers, error: suppliersError } = await supabase
       .from('stock_entries')
       .select('supplier_name')
+      .is('deleted_at', null)
       .order('supplier_name');
     
     if (suppliersError || !suppliers) {
@@ -264,6 +293,7 @@ const fetchLowStockProducts = async (): Promise<LowStockProduct[]> => {
     const { data: products, error } = await supabase
       .from('products')
       .select('id, name, current_stock, min_stock')
+      .is('deleted_at', null)
       .lte('current_stock', 10);
     
     if (error) {
@@ -306,7 +336,8 @@ const fetchClientsCount = async () => {
   try {
     const { count, error } = await supabase
       .from('clients')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null);
     
     if (error) {
       console.error('Error fetching clients count:', error);
@@ -360,7 +391,8 @@ const fetchProductsCount = async () => {
   try {
     const { count, error } = await supabase
       .from('products')
-      .select('*', { count: 'exact', head: true });
+      .select('*', { count: 'exact', head: true })
+      .is('deleted_at', null);
     
     if (error) {
       console.error('Error fetching products count:', error);
