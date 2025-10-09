@@ -49,16 +49,16 @@ const OrderList = () => {
       let dateB = 0;
 
       if (priorityA === 1) {
-        // Combinadas → expectedDeliveryDate
+        // Combinadas → expectedDeliveryDate → mais cedo primeiro
         dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
         dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+        if (dateA !== dateB) return dateA - dateB;
       } else {
-        // Pendente stock ou convertidas → date
+        // Pendente stock ou convertidas → date → mais recente primeiro
         dateA = new Date(a.date).getTime();
         dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) return dateB - dateA;
       }
-
-      if (dateA !== dateB) return dateB - dateA; // mais recente primeiro
 
       // Desempate → número da encomenda numérico
       return a.number.localeCompare(b.number, undefined, { numeric: true });
