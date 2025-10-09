@@ -39,35 +39,36 @@ const ExpenseNew = () => {
   };
 
   return (
-  <div className="p-6 space-y-6">
-  <ExpenseFormHeader />
+    <div className="p-6 space-y-6">
+      <ExpenseFormHeader />
 
-  <ExpenseFormActions
-    isLoading={isLoading}
-    onCancel={handleCancel}
-  />
+      <form onSubmit={handleFormSubmit} className="space-y-6">
+        <ExpenseBasicInfo
+          suppliers={suppliers}
+          supplierId={formData.supplierId}
+          date={formData.date}
+          notes={formData.notes}
+          onSupplierChange={handleSupplierChange}
+          onDateChange={(date) => updateFormData({ date })}
+          onNotesChange={(notes) => updateFormData({ notes })}
+        />
 
-  <form onSubmit={handleFormSubmit} className="space-y-6">
-    <ExpenseBasicInfo
-      suppliers={suppliers}
-      supplierId={formData.supplierId}
-      date={formData.date}
-      notes={formData.notes}
-      onSupplierChange={handleSupplierChange}
-      onDateChange={(date) => updateFormData({ date })}
-      onNotesChange={(notes) => updateFormData({ notes })}
-    />
+        <ExpenseItemsTable
+          items={formData.items}
+          onAddItem={addItem}
+          onRemoveItem={removeItem}
+          onUpdateItem={updateItem}
+        />
 
-    <ExpenseItemsTable
-      items={formData.items}
-      onAddItem={addItem}
-      onRemoveItem={removeItem}
-      onUpdateItem={updateItem}
-    />
+        <ExpenseTotalCard total={calculateTotal()} />
 
-    <ExpenseTotalCard total={calculateTotal()} />
-  </form>
-</div>
-
+        <ExpenseFormActions
+          isLoading={isLoading}
+          onCancel={handleCancel}
+        />
+      </form>
+    </div>
+  );
+};
 
 export default ExpenseNew;
