@@ -12,7 +12,6 @@ import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/common/EmptyState";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 import { usePermissions } from "@/hooks/usePermissions";
-import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
 
 const OrderList = () => {
@@ -244,7 +243,8 @@ const OrderList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {order.convertedToStockExitId ? (
                           <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
-                            <CheckCircle className="w-3 h-3 mr-1" /> Convertida em Saída
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Convertida em Saída
                           </Badge>
                         ) : (
                           <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300">
@@ -274,50 +274,38 @@ const OrderList = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        {accessLevel === "admin" ? (
-                          <div className="flex justify-end items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/encomendas/editar/${order.id}`);
-                              }}
-                              disabled={order.convertedToStockExitId !== null}
-                              className="h-8 w-8 p-0"
-                              title={
-                                order.convertedToStockExitId
-                                  ? "Não é possível editar encomendas convertidas"
-                                  : "Editar encomenda"
-                              }
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (order.convertedToStockExitId) {
-                                  toast.error("Não pode eliminar encomendas já convertidas em saída");
-                                  return;
-                                }
-                                setDeleteDialog({ open: true, orderId: order.id });
-                              }}
-                              disabled={order.convertedToStockExitId !== null}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
-                              title={
-                                order.convertedToStockExitId
-                                  ? "Não é possível eliminar encomendas convertidas"
-                                  : "Eliminar encomenda"
-                              }
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">—</span>
-                        )}
+                        <div className="flex justify-end items-center gap-2">
+                          {accessLevel === "admin" ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/encomendas/editar/${order.id}`);
+                                }}
+                                disabled={order.convertedToStockExitId !== null}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteDialog({ open: true, orderId: order.id });
+                                }}
+                                disabled={order.convertedToStockExitId !== null}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <span className="text-gray-400 text-sm">—</span>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}
