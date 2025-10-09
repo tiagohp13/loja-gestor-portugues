@@ -264,8 +264,7 @@ const OrderList = () => {
                       <td className="px-6 py-4 whitespace-nowrap">
                         {order.convertedToStockExitId ? (
                           <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
-                            <CheckCircle className="w-3 h-3 mr-1" />
-                            Convertida em Saída
+                            <CheckCircle className="w-3 h-3 mr-1" /> Convertida em Saída
                           </Badge>
                         ) : (
                           <Badge className="bg-yellow-100 text-yellow-700 hover:bg-yellow-100 dark:bg-yellow-900 dark:text-yellow-300">
@@ -295,7 +294,9 @@ const OrderList = () => {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right" onClick={(e) => e.stopPropagation()}>
-                        {accessLevel === "admin" && (
+                        {permissionsLoading ? (
+                          <span className="text-gray-400 text-sm">...</span>
+                        ) : accessLevel === "admin" ? (
                           <div className="flex justify-end items-center gap-2">
                             <Button
                               variant="ghost"
@@ -336,6 +337,8 @@ const OrderList = () => {
                               <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm">—</span>
                         )}
                       </td>
                     </tr>
