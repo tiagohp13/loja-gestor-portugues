@@ -31,41 +31,41 @@ const OrderList = () => {
     fetchOrders();
   }, []);
 
-  // Reordena automaticamente sempre que 'orders' muda
+  // Função de ordenação centralizada
+  const sortOrders = (ordersToSort: Order[]) => {
+    return [...ordersToSort].sort((a, b) => {
+      const getPriority = (order: Order) => {
+        if (order.orderType === "combined" && !order.convertedToStockExitId) return 1; // Combinadas → primeiro
+        if (order.orderType === "awaiting_stock") return 2; // A aguardar stock → depois
+        return 3; // Convertidas → último
+      };
+
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+      if (priorityA !== priorityB) return priorityA - priorityB;
+
+      // Mesma prioridade → ordenar por datas
+      let dateA = 0;
+      let dateB = 0;
+
+      if (priorityA === 1) {
+        // Combinadas → expectedDeliveryDate
+        dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
+        dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+      } else {
+        // Pendente stock ou convertidas → date
+        dateA = new Date(a.date).getTime();
+        dateB = new Date(b.date).getTime();
+      }
+
+      if (dateA !== dateB) return dateB - dateA; // mais recente primeiro
+
+      // Desempate → número da encomenda numérico
+      return a.number.localeCompare(b.number, undefined, { numeric: true });
+    });
+  };
+
   useEffect(() => {
-    const sortOrders = (orders: Order[]) => {
-      return [...orders].sort((a, b) => {
-        const getPriority = (order: Order) => {
-          if (order.convertedToStockExitId) return 3; // convertidas → último
-          if (order.orderType === "awaiting_stock") return 2; // pendente stock → meio
-          return 1; // combinadas → primeiro
-        };
-
-        const priorityA = getPriority(a);
-        const priorityB = getPriority(b);
-        if (priorityA !== priorityB) return priorityA - priorityB;
-
-        // Mesma prioridade → ordenar por datas
-        let dateA = 0;
-        let dateB = 0;
-
-        if (priorityA === 1) {
-          // combinadas → data de entrega
-          dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
-          dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
-        } else {
-          // pendente stock ou convertidas → data da encomenda
-          dateA = new Date(a.date).getTime();
-          dateB = new Date(b.date).getTime();
-        }
-
-        if (dateA !== dateB) return dateB - dateA; // mais recente primeiro
-
-        // Desempate → número da encomenda
-        return a.number.localeCompare(b.number, undefined, { numeric: true });
-      });
-    };
-
     setFilteredOrders(sortOrders(orders));
   }, [orders]);
 
@@ -77,9 +77,9 @@ const OrderList = () => {
           order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.clientId?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
-      setFilteredOrders(filtered);
+      setFilteredOrders(sortOrders(filtered));
     } else {
-      setFilteredOrders(orders);
+      setFilteredOrders(sortOrders(orders));
     }
   }, [searchTerm, orders]);
 
