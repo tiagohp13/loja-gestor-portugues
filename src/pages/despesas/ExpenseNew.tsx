@@ -1,13 +1,12 @@
-
-import React from 'react';
-import { useExpenseForm } from './hooks/useExpenseForm';
-import ExpenseFormHeader from './components/ExpenseFormHeader';
-import ExpenseBasicInfo from './components/ExpenseBasicInfo';
-import ExpenseItemsTable from './components/ExpenseItemsTable';
-import ExpenseTotalCard from './components/ExpenseTotalCard';
-import ExpenseFormActions from './components/ExpenseFormActions';
-import { usePermissions } from '@/hooks/usePermissions';
-import { validatePermission } from '@/utils/permissionUtils';
+import React from "react";
+import { useExpenseForm } from "./hooks/useExpenseForm";
+import ExpenseFormHeader from "./components/ExpenseFormHeader";
+import ExpenseBasicInfo from "./components/ExpenseBasicInfo";
+import ExpenseItemsTable from "./components/ExpenseItemsTable";
+import ExpenseTotalCard from "./components/ExpenseTotalCard";
+import ExpenseFormActions from "./components/ExpenseFormActions";
+import { usePermissions } from "@/hooks/usePermissions";
+import { validatePermission } from "@/utils/permissionUtils";
 
 const ExpenseNew = () => {
   const {
@@ -21,17 +20,17 @@ const ExpenseNew = () => {
     calculateTotal,
     handleSubmit,
     updateFormData,
-    navigate
+    navigate,
   } = useExpenseForm();
-  
+
   const { canCreate } = usePermissions();
 
   const handleCancel = () => {
-    navigate('/despesas/historico');
+    navigate("/despesas/historico");
   };
 
   const handleFormSubmit = (e: React.FormEvent) => {
-    if (!validatePermission(canCreate, 'criar despesas')) {
+    if (!validatePermission(canCreate, "criar despesas")) {
       e.preventDefault();
       return;
     }
@@ -40,8 +39,13 @@ const ExpenseNew = () => {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Cabeçalho da página */}
       <ExpenseFormHeader />
 
+      {/* Botões de ação no topo, alinhados à direita */}
+      <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} />
+
+      {/* Formulário */}
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <ExpenseBasicInfo
           suppliers={suppliers}
@@ -61,11 +65,6 @@ const ExpenseNew = () => {
         />
 
         <ExpenseTotalCard total={calculateTotal()} />
-
-        <ExpenseFormActions
-          isLoading={isLoading}
-          onCancel={handleCancel}
-        />
       </form>
     </div>
   );
