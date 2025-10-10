@@ -1,4 +1,3 @@
-
 export interface MonthlyVariation {
   currentValue: number;
   previousValue: number;
@@ -14,5 +13,10 @@ export interface DashboardCardData {
   navigateTo: string;
   iconColor: string;
   iconBackground: string;
-  variation?: MonthlyVariation; // Keeping this for backward compatibility but won't use it
+
+  // Percentuais para os dois períodos
+  percentageChange?: {
+    last30Days?: number;
+    previousMonth?: number;
+  };
 }
