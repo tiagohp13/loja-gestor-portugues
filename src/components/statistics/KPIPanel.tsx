@@ -1,153 +1,141 @@
-import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogClose,
-} from "@/components/ui/dialog";
-import { KPI } from "./KPIPanel";
-import { X, Pencil } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 import KPIEditModal from "./KPIEditModal";
+import KPIGrid from "./KPIGrid";
+import KPIPanelSkeleton from "./KPIPanelSkeleton";
+import { loadKpiTargets } from "@/services/kpiService";
+import { toast } from "@/components/ui/use-toast";
 import { usePermissions } from "@/hooks/usePermissions";
 
-interface KPIGridProps {
-  kpis: KPI[];
+export interface KPI {
+  name: string;
+  value: number;
+  target: number;
+  unit: string;
+  description: string;
+  formula: string;
+  isPercentage?: boolean;
+  previousValue?: number;
+  tooltip?: string;
+  belowTarget?: boolean;
+  isInverseKPI?: boolean;
 }
 
-const KPIGrid: React.FC<KPIGridProps> = ({ kpis }) => {
-  const [selectedKpi, setSelectedKpi] = useState<KPI | null>(null);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const { isAdmin } = usePermissions();
+interface KPIPanelProps {
+  kpis: KPI[];
+  title?: string;
+  description?: string;
+}
 
-  const handleSaveKpi = (updatedKpi: KPI) => {
-    if (selectedKpi) {
-      selectedKpi.name = updatedKpi.name;
-      selectedKpi.value = updatedKpi.value;
-      selectedKpi.target = updatedKpi.target;
-      selectedKpi.previousValue = updatedKpi.previousValue;
-      selectedKpi.tooltip = updatedKpi.tooltip;
-      selectedKpi.belowTarget = updatedKpi.belowTarget;
-      setSelectedKpi({ ...selectedKpi });
-    }
-    setIsEditOpen(false);
+const KPIPanel = ({
+  kpis: initialKpis,
+  title = "KPIs",
+  description = "Indicadores-chave de desempenho",
+}: KPIPanelProps) => {
+  const { isAdmin } = usePermissions();
+  const [kpisState, setKpisState] = useState<KPI[]>(initialKpis);
+  const [editKpi, setEditKpi] = useState<KPI | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Atualiza o estado dos KPIs quando props mudam
+  useEffect(() => {
+    setKpisState(initialKpis);
+    setIsLoading(false);
+  }, [initialKpis]);
+
+  // Carregar metas salvas da base de dados
+  useEffect(() => {
+    const fetchTargets = async () => {
+      try {
+        setIsLoading(true);
+        const savedTargets = await loadKpiTargets();
+        if (Object.keys(savedTargets).length > 0) {
+          setKpisState((prev) =>
+            prev.map((kpi) => ({
+              ...kpi,
+              target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
+              belowTarget: kpi.isInverseKPI
+                ? kpi.value > (savedTargets[kpi.name] ?? kpi.target)
+                : kpi.value < (savedTargets[kpi.name] ?? kpi.target),
+            })),
+          );
+        } else {
+          setKpisState(initialKpis);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar metas dos KPIs:", error);
+        toast({
+          title: "Erro ao carregar metas",
+          description: "Não foi possível carregar as metas personalizadas dos KPIs.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (initialKpis.length > 0) fetchTargets();
+  }, [initialKpis.length]);
+
+  // Atualiza um KPI individual
+  const handleSaveTarget = (updatedKpi: KPI) => {
+    setKpisState((prev) => prev.map((kpi) => (kpi.name === updatedKpi.name ? updatedKpi : kpi)));
+    setEditKpi(null);
   };
 
+  if (isLoading) {
+    return <KPIPanelSkeleton title={title} description={description} />;
+  }
+
   return (
-    <>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {kpis.map((kpi) => (
-          <Card
-            key={kpi.name}
-            className={`cursor-pointer hover:shadow-lg transition-shadow border ${
-              kpi.belowTarget ? "border-red-400" : "border-green-400"
-            }`}
-            onClick={() => setSelectedKpi(kpi)}
-          >
-            <CardHeader>
-              <CardTitle className="text-sm">{kpi.name}</CardTitle>
-              <CardDescription className="text-xs text-gray-500">{kpi.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold">
-                {kpi.isPercentage
-                  ? `${kpi.value.toFixed(2)}%`
-                  : kpi.unit === "€"
-                    ? `€ ${kpi.value.toFixed(2)}`
-                    : kpi.value}
-              </div>
-              <div className="text-xs text-gray-400 mt-1">
-                Meta:{" "}
-                {kpi.isPercentage
-                  ? `${kpi.target.toFixed(2)}%`
-                  : kpi.unit === "€"
-                    ? `€ ${kpi.target.toFixed(2)}`
-                    : kpi.target}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {kpisState.map((kpi) => (
+            <Card key={kpi.name} className="relative">
+              <CardHeader className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-sm">{kpi.name}</CardTitle>
+                  <CardDescription className="text-xs text-gray-500">{kpi.description}</CardDescription>
+                </div>
+                {isAdmin && (
+                  <Button variant="outline" size="icon" className="h-6 w-6 p-0" onClick={() => setEditKpi(kpi)}>
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                )}
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col gap-1">
+                  <span className="text-lg font-semibold">
+                    {kpi.isPercentage ? `${kpi.value.toFixed(2)}%` : `${kpi.value.toFixed(2)} ${kpi.unit}`}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Meta: {kpi.isPercentage ? `${kpi.target.toFixed(2)}%` : `${kpi.target.toFixed(2)} ${kpi.unit}`}
+                  </span>
+                  {kpi.belowTarget && <span className="text-xs text-red-600 font-medium">Abaixo da meta</span>}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </CardContent>
 
-      {/* Modal para detalhes do KPI */}
-      <Dialog open={!!selectedKpi} onOpenChange={() => setSelectedKpi(null)}>
-        <DialogContent className="max-w-md relative">
-          <DialogHeader>
-            <DialogTitle>{selectedKpi?.name}</DialogTitle>
-            <DialogDescription>{selectedKpi?.description}</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2 mt-4">
-            <div>
-              <strong>Valor Atual:</strong>{" "}
-              {selectedKpi?.isPercentage
-                ? `${selectedKpi.value.toFixed(2)}%`
-                : selectedKpi?.unit === "€"
-                  ? `€ ${selectedKpi.value.toFixed(2)}`
-                  : selectedKpi?.value}
-            </div>
-            <div>
-              <strong>Meta:</strong>{" "}
-              {selectedKpi?.isPercentage
-                ? `${selectedKpi.target.toFixed(2)}%`
-                : selectedKpi?.unit === "€"
-                  ? `€ ${selectedKpi.target.toFixed(2)}`
-                  : selectedKpi?.target}
-            </div>
-            {selectedKpi?.previousValue !== undefined && (
-              <div>
-                <strong>Valor Anterior:</strong>{" "}
-                {selectedKpi.isPercentage
-                  ? `${selectedKpi.previousValue.toFixed(2)}%`
-                  : selectedKpi.unit === "€"
-                    ? `€ ${selectedKpi.previousValue.toFixed(2)}`
-                    : selectedKpi.previousValue}
-              </div>
-            )}
-            {selectedKpi?.formula && (
-              <div>
-                <strong>Fórmula:</strong> {selectedKpi.formula}
-              </div>
-            )}
-            {selectedKpi?.tooltip && (
-              <div className="text-gray-500 text-sm">
-                <strong>Observações:</strong> {selectedKpi.tooltip}
-              </div>
-            )}
-            {selectedKpi?.belowTarget !== undefined && (
-              <div className={`font-medium ${selectedKpi.belowTarget ? "text-red-600" : "text-green-600"}`}>
-                {selectedKpi.belowTarget ? "Abaixo da meta" : "Acima da meta"}
-              </div>
-            )}
-          </div>
-
-          {isAdmin && (
-            <Button variant="outline" size="sm" className="mt-4" onClick={() => setIsEditOpen(true)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />
-              Editar KPI
-            </Button>
-          )}
-
-          <DialogClose asChild>
-            <button className="absolute top-3 right-3 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
-              <X className="w-4 h-4" />
-            </button>
-          </DialogClose>
-        </DialogContent>
-      </Dialog>
-
-      {/* Modal de edição do KPI */}
-      {selectedKpi && isEditOpen && (
+      {editKpi && (
         <KPIEditModal
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          kpis={[selectedKpi]}
-          onSave={(updatedKpis) => handleSaveKpi(updatedKpis[0])}
+          isOpen={!!editKpi}
+          onClose={() => setEditKpi(null)}
+          kpis={[editKpi]}
+          onSave={(updatedKpis) => handleSaveTarget(updatedKpis[0])}
         />
       )}
-    </>
+    </Card>
   );
 };
 
-export default KPIGrid;
+export default KPIPanel;
