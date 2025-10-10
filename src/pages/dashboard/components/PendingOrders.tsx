@@ -1,9 +1,16 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Edit, Trash2, CheckCircle } from "lucide-react";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { format } from "date-fns";
+import { usePermissions } from "@/hooks/usePermissions";
+import { validatePermission } from "@/utils/permissionUtils";
+import { checkOrderDependencies } from "@/utils/dependencyUtils";
+import { toast } from "sonner";
 
 interface PendingOrdersProps {
   pendingOrders: Order[];
@@ -11,91 +18,159 @@ interface PendingOrdersProps {
   navigateToClientDetail?: (id: string) => void;
 }
 
-const PendingOrders: React.FC<PendingOrdersProps> = ({
-  pendingOrders,
-  navigateToOrderDetail,
-  navigateToClientDetail,
-}) => {
-  // Limit to a maximum of 5 orders for display
-  const displayOrders = pendingOrders.slice(0, 5);
+const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateToOrderDetail }) => {
+  const { canEdit, canDelete } = usePermissions();
 
-  // Calculate total value for each order
-  const calculateTotal = (order: Order) => {
-    let total = 0;
-    if (order.items && order.items.length > 0) {
-      total = order.items.reduce((sum, item) => {
-        const itemPrice = item.salePrice * item.quantity;
-        const discount = item.discountPercent ? itemPrice * (item.discountPercent / 100) : 0;
-        return sum + (itemPrice - discount);
-      }, 0);
+  // Ordenação fiel ao OrderList
+  const sortedOrders = useMemo(() => {
+    const getPriority = (order: Order) => {
+      if (order.orderType === "combined" && !order.convertedToStockExitId) return 1;
+      if (order.orderType === "awaiting_stock") return 2;
+      return 3; // convertidas
+    };
+
+    return [...pendingOrders]
+      .sort((a, b) => {
+        const priorityA = getPriority(a);
+        const priorityB = getPriority(b);
+        if (priorityA !== priorityB) return priorityA - priorityB;
+
+        let dateA = 0;
+        let dateB = 0;
+
+        if (priorityA === 1) {
+          dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
+          dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+          if (dateA !== dateB) return dateA - dateB;
+        } else {
+          dateA = new Date(a.date).getTime();
+          dateB = new Date(b.date).getTime();
+          if (dateA !== dateB) return dateB - dateA;
+        }
+
+        return a.number.localeCompare(b.number, undefined, { numeric: true });
+      })
+      .slice(0, 5); // limitar a 5 encomendas
+  }, [pendingOrders]);
+
+  const formatDate = (dateStr: string) => (dateStr ? format(new Date(dateStr), "dd/MM/yyyy") : "—");
+
+  const handleDelete = async (order: Order) => {
+    if (!validatePermission(canDelete, "eliminar encomendas")) return;
+
+    if (order.convertedToStockExitId) {
+      toast.error("Não pode eliminar encomendas já convertidas em saída");
+      return;
     }
 
-    // Apply order-level discount if applicable
-    if (order.discount && total > 0) {
-      total = total * (1 - order.discount / 100);
+    const deps = await checkOrderDependencies(order.id);
+    if (!deps.canDelete) {
+      toast.error(deps.message || "Não é possível eliminar esta encomenda");
+      return;
     }
 
-    return total;
+    // Trigger de delete externo via DashboardPage
+    toast.info("A função de eliminar deve ser implementada no contexto do Dashboard");
   };
-
-  // Calculate total value of all displayed pending orders
-  const totalPendingValue = displayOrders.reduce((sum, order) => {
-    return sum + (order.total || calculateTotal(order));
-  }, 0);
 
   return (
     <Card className="h-full">
-      <CardHeader className="pb-3">
+      <CardHeader>
         <CardTitle>Encomendas Pendentes</CardTitle>
       </CardHeader>
-      <CardContent className="pt-0 p-0">
-        {displayOrders.length > 0 ? (
-          <>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nº da Encomenda</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead className="text-right">Valor Total</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Informações de Entrega</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayOrders.map((order) => (
-                    <TableRow key={order.id} className="cursor-pointer hover:bg-gray-50">
-                      <TableCell onClick={() => navigateToOrderDetail(order.id)}>
-                        <span className="text-blue-600 hover:underline font-medium">{order.number}</span>
-                      </TableCell>
-                      <TableCell>{format(new Date(order.date), "dd/MM/yyyy")}</TableCell>
-                      <TableCell className="text-gray-900">{order.clientName || "Cliente desconhecido"}</TableCell>
-                      <TableCell className="text-right font-medium">
-                        {formatCurrency(order.total || calculateTotal(order))}
-                      </TableCell>
-                      <TableCell>{order.status || "Pendente"}</TableCell>
-                      <TableCell>{order.deliveryInfo || "-"}</TableCell>
-                      <TableCell>
-                        <button
-                          className="text-blue-600 hover:underline font-medium"
-                          onClick={() => navigateToOrderDetail(order.id)}
-                        >
-                          Ver
-                        </button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            <div className="flex justify-end mt-2 px-4 pb-4 text-sm text-gray-700 font-medium">
-              Total: <span className="ml-1 text-gray-900">{formatCurrency(totalPendingValue)}</span>
-            </div>
-          </>
+      <CardContent className="p-0">
+        {sortedOrders.length === 0 ? (
+          <div className="text-center p-6 text-gray-500">Não existem encomendas pendentes.</div>
         ) : (
-          <div className="text-center py-8 text-gray-500">Não existem encomendas pendentes.</div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nº Encomenda</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Valor</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead>Informações de Entrega</TableHead>
+                  <TableHead>Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sortedOrders.map((order) => (
+                  <TableRow
+                    key={order.id}
+                    className="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                    onClick={() => navigateToOrderDetail(order.id)}
+                  >
+                    <TableCell>
+                      <span className="text-blue-600 hover:underline font-medium">{order.number}</span>
+                    </TableCell>
+                    <TableCell>{formatDate(order.date)}</TableCell>
+                    <TableCell>{order.clientName || "—"}</TableCell>
+                    <TableCell>{formatCurrency(order.total || 0)}</TableCell>
+                    <TableCell>
+                      {order.convertedToStockExitId ? (
+                        <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Convertida em Saída
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300">
+                          {order.orderType === "awaiting_stock"
+                            ? "Pendente – A aguardar stock"
+                            : "Pendente – Combinada"}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {order.expectedDeliveryDate ? (
+                        <div className="space-y-0.5 text-sm">
+                          <div>{formatDate(order.expectedDeliveryDate)}</div>
+                          {order.expectedDeliveryTime && (
+                            <div className="text-xs text-gray-500">{order.expectedDeliveryTime}</div>
+                          )}
+                          {order.deliveryLocation && (
+                            <div className="text-xs text-gray-500">{order.deliveryLocation}</div>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-sm text-gray-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (!validatePermission(canEdit, "editar encomendas")) return;
+                            toast.info("Editar deve ser implementado no contexto do Dashboard");
+                          }}
+                          disabled={!canEdit || !!order.convertedToStockExitId}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(order);
+                          }}
+                          disabled={!canDelete || !!order.convertedToStockExitId}
+                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
     </Card>
