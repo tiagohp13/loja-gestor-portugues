@@ -1,32 +1,22 @@
-import React from "react";
-import { Package, Users, Truck, TrendingUp } from "lucide-react";
+import React, { useMemo } from "react";
+import { Package, Users, Truck, TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { formatCurrency } from "@/utils/formatting";
 import { Product, Client, Supplier } from "@/types/";
 import DashboardSummaryCard from "./DashboardSummaryCard";
 import { DashboardCardData } from "@/types/dashboard";
+import { subDays, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
 
 interface DashboardSummaryCardsProps {
   products: Product[];
   clients: Client[];
   suppliers: Supplier[];
   totalStockValue: number;
-
-  // Novos props para variação
-  totalSales: number;
-  totalSalesLast30Days: number;
-  totalSalesPreviousMonth: number;
-
-  totalSpent: number;
-  totalSpentLast30Days: number;
-  totalSpentPreviousMonth: number;
-
-  profit: number;
-  profitLast30Days: number;
-  profitPreviousMonth: number;
-
-  profitMargin: number;
-  profitMarginLast30Days: number;
-  profitMarginPreviousMonth: number;
+  totalSalesValue: number;
+  totalPurchaseValue: number;
+  totalProfit: number;
+  // Arrays de vendas e compras com datas
+  stockExits: { date: string; value: number }[];
+  stockEntries: { date: string; value: number }[];
 }
 
 const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
@@ -34,76 +24,102 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
   clients,
   suppliers,
   totalStockValue,
-
-  totalSales,
-  totalSalesLast30Days,
-  totalSalesPreviousMonth,
-
-  totalSpent,
-  totalSpentLast30Days,
-  totalSpentPreviousMonth,
-
-  profit,
-  profitLast30Days,
-  profitPreviousMonth,
-
-  profitMargin,
-  profitMarginLast30Days,
-  profitMarginPreviousMonth,
+  totalSalesValue,
+  totalPurchaseValue,
+  totalProfit,
+  stockExits,
+  stockEntries,
 }) => {
-  // Função para calcular a variação percentual
-  const calcPercentageChange = (current: number, previous: number) => {
-    if (previous === 0) return 0;
-    return ((current - previous) / Math.abs(previous)) * 100;
+  const calculatePercentageChange = (currentPeriod: number, previousPeriod: number) => {
+    if (previousPeriod === 0) return undefined;
+    return ((currentPeriod - previousPeriod) / previousPeriod) * 100;
   };
+
+  const now = new Date();
+  const last30DaysInterval = { start: subDays(now, 30), end: now };
+  const previous30DaysInterval = { start: subDays(now, 60), end: subDays(now, 31) };
+
+  const currentMonthInterval = { start: startOfMonth(now), end: endOfMonth(now) };
+  const previousMonthInterval = {
+    start: startOfMonth(subDays(startOfMonth(now), 1)),
+    end: endOfMonth(subDays(startOfMonth(now), 1)),
+  };
+
+  const sumInInterval = (items: { date: string; value: number }[], interval: { start: Date; end: Date }) =>
+    items.filter((i) => isWithinInterval(new Date(i.date), interval)).reduce((sum, i) => sum + i.value, 0);
+
+  const salesLast30 = sumInInterval(stockExits, last30DaysInterval);
+  const salesPrev30 = sumInInterval(stockExits, previous30DaysInterval);
+  const salesPrevMonth = sumInInterval(stockExits, previousMonthInterval);
+  const salesCurrMonth = sumInInterval(stockExits, currentMonthInterval);
+
+  const purchasesLast30 = sumInInterval(stockEntries, last30DaysInterval);
+  const purchasesPrev30 = sumInInterval(stockEntries, previous30DaysInterval);
+  const purchasesPrevMonth = sumInInterval(stockEntries, previousMonthInterval);
+  const purchasesCurrMonth = sumInInterval(stockEntries, currentMonthInterval);
 
   const cards: DashboardCardData[] = [
     {
+      title: "Total Produtos",
+      value: products.length,
+      icon: <Package className="h-6 w-6" />,
+      navigateTo: "/produtos/consultar",
+      iconColor: "text-blue-500",
+      iconBackground: "bg-blue-100",
+    },
+    {
+      title: "Total Clientes",
+      value: clients.length,
+      icon: <Users className="h-6 w-6" />,
+      navigateTo: "/clientes/consultar",
+      iconColor: "text-green-500",
+      iconBackground: "bg-green-100",
+    },
+    {
+      title: "Total Fornecedores",
+      value: suppliers.length,
+      icon: <Truck className="h-6 w-6" />,
+      navigateTo: "/fornecedores/consultar",
+      iconColor: "text-orange-500",
+      iconBackground: "bg-orange-100",
+    },
+    {
       title: "Total Vendas",
-      value: formatCurrency(totalSales),
+      value: formatCurrency(totalSalesValue),
       icon: <TrendingUp className="h-6 w-6" />,
       navigateTo: "/vendas",
       iconColor: "text-purple-500",
       iconBackground: "bg-purple-100",
       percentageChange: {
-        last30Days: calcPercentageChange(totalSales, totalSalesLast30Days),
-        previousMonth: calcPercentageChange(totalSales, totalSalesPreviousMonth),
+        last30Days: calculatePercentageChange(salesLast30, salesPrev30),
+        previousMonth: calculatePercentageChange(salesCurrMonth, salesPrevMonth),
       },
     },
     {
-      title: "Total Gasto",
-      value: formatCurrency(totalSpent),
-      icon: <Package className="h-6 w-6" />,
-      navigateTo: "/despesas",
-      iconColor: "text-blue-500",
-      iconBackground: "bg-blue-100",
+      title: "Total Compras",
+      value: formatCurrency(totalPurchaseValue),
+      icon: <TrendingUp className="h-6 w-6" />,
+      navigateTo: "/compras",
+      iconColor: "text-red-500",
+      iconBackground: "bg-red-100",
       percentageChange: {
-        last30Days: calcPercentageChange(totalSpent, totalSpentLast30Days),
-        previousMonth: calcPercentageChange(totalSpent, totalSpentPreviousMonth),
+        last30Days: calculatePercentageChange(purchasesLast30, purchasesPrev30),
+        previousMonth: calculatePercentageChange(purchasesCurrMonth, purchasesPrevMonth),
       },
     },
     {
       title: "Lucro",
-      value: formatCurrency(profit),
+      value: formatCurrency(totalProfit),
       icon: <TrendingUp className="h-6 w-6" />,
-      navigateTo: "/vendas",
-      iconColor: "text-green-500",
+      navigateTo: "/dashboard",
+      iconColor: "text-green-700",
       iconBackground: "bg-green-100",
       percentageChange: {
-        last30Days: calcPercentageChange(profit, profitLast30Days),
-        previousMonth: calcPercentageChange(profit, profitPreviousMonth),
-      },
-    },
-    {
-      title: "Margem de Lucro",
-      value: `${profitMargin.toFixed(2)}%`,
-      icon: <TrendingUp className="h-6 w-6" />,
-      navigateTo: "/vendas",
-      iconColor: "text-orange-500",
-      iconBackground: "bg-orange-100",
-      percentageChange: {
-        last30Days: calcPercentageChange(profitMargin, profitMarginLast30Days),
-        previousMonth: calcPercentageChange(profitMargin, profitMarginPreviousMonth),
+        last30Days: calculatePercentageChange(salesLast30 - purchasesLast30, salesPrev30 - purchasesPrev30),
+        previousMonth: calculatePercentageChange(
+          salesCurrMonth - purchasesCurrMonth,
+          salesPrevMonth - purchasesPrevMonth,
+        ),
       },
     },
   ];
