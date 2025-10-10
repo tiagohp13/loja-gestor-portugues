@@ -82,11 +82,30 @@ export const useStockEntries = () => {
   };
 
   const calculateEntryTotal = (entry: StockEntry) => {
-    return entry.items.reduce((total, item) => {
+    if (!entry.items || entry.items.length === 0) {
+      console.warn('⚠️ Stock entry has no items:', entry);
+      return 0;
+    }
+    
+    const total = entry.items.reduce((total, item) => {
+      console.log('📦 Item:', {
+        productName: item.productName,
+        quantity: item.quantity,
+        purchasePrice: item.purchasePrice,
+        discountPercent: item.discountPercent
+      });
+      
       const itemTotal = item.quantity * item.purchasePrice;
       const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
-      return total + (itemTotal - discountAmount);
+      const itemFinal = itemTotal - discountAmount;
+      
+      console.log(`💰 Item total: ${itemTotal}, discount: ${discountAmount}, final: ${itemFinal}`);
+      
+      return total + itemFinal;
     }, 0);
+    
+    console.log(`✅ Entry ${entry.number} total: ${total}`);
+    return total;
   };
 
   return {

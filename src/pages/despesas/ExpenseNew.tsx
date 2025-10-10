@@ -42,7 +42,7 @@ const ExpenseNew = () => {
 
       {/* Botões de ação alinhados à direita */}
       <div className="flex justify-end gap-2 mb-6">
-        <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} onSubmit={handleFormSubmit} />
+        <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} />
       </div>
 
       {/* Formulário */}
