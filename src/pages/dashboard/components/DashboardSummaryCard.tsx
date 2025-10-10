@@ -46,8 +46,9 @@ const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData })
         <div className="space-y-1">
           <p className="text-sm font-medium text-gestorApp-gray">{title}</p>
           <p className="text-2xl font-bold text-gestorApp-gray-dark">{value}</p>
+
           {percentageChange && (
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 mt-1">
               <div>Últimos 30 dias: {renderPercentage(percentageChange.last30Days)}</div>
               <div>Mês anterior: {renderPercentage(percentageChange.previousMonth)}</div>
             </div>

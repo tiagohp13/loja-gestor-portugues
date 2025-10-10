@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Package, Users, Truck, TrendingUp, ArrowUp, ArrowDown } from "lucide-react";
 import { formatCurrency } from "@/utils/formatting";
 import { Product, Client, Supplier } from "@/types/";
@@ -14,7 +14,6 @@ interface DashboardSummaryCardsProps {
   totalSalesValue: number;
   totalPurchaseValue: number;
   totalProfit: number;
-  // Arrays de vendas e compras com datas
   stockExits: { date: string; value: number }[];
   stockEntries: { date: string; value: number }[];
 }
