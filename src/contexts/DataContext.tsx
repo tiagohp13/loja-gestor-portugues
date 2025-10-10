@@ -1045,8 +1045,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       const entryNumber = entryNumberData || `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
       
-      const tempId = crypto.randomUUID();
-      
       const itemsWithIds = entry.items.map(item => {
         if (!item.id) {
           return { 
@@ -1058,22 +1056,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
         return item;
       });
-      
-      const optimisticEntry: StockEntry = {
-        id: tempId,
-        number: entryNumber,
-        supplierId: entry.supplierId,
-        supplierName: entry.supplierName,
-        date: entry.date,
-        invoiceNumber: entry.invoiceNumber || '',
-        notes: entry.notes || '',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        items: itemsWithIds,
-        total: entry.total
-      };
-      
-      setStockEntries(prev => [optimisticEntry, ...prev]);
       
       const { data, error } = await supabase
         .from('stock_entries')
@@ -1130,36 +1112,28 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
       }
       
-      const newEntry: StockEntry = {
+      await fetchProducts();
+      
+      toast.success('Entrada registada com sucesso');
+      
+      // A subscrição em tempo real irá atualizar a lista automaticamente
+      // Retornar dados básicos para navegação
+      return {
         id: data.id,
         number: data.number,
         supplierId: data.supplier_id || '',
         supplierName: data.supplier_name,
         date: data.date,
         invoiceNumber: data.invoice_number || '',
-        notes: data.notes,
+        notes: data.notes || '',
         createdAt: data.created_at,
         updatedAt: data.updated_at,
-        items: itemsWithIds.map(item => ({
-          ...item,
-          id: item.id || crypto.randomUUID()
-        })),
+        items: itemsWithIds,
         total: entry.total
       };
-      
-      setStockEntries(prev => [
-        ...prev.filter(e => e.id !== tempId),
-        newEntry
-      ]);
-      
-      await fetchProducts();
-      
-      toast.success('Entrada registada com sucesso');
-      return newEntry;
     } catch (error) {
       console.error('Error adding stock entry:', error);
       toast.error('Erro ao adicionar entrada de stock');
-      setStockEntries(prev => prev.filter(e => e.id !== crypto.randomUUID()));
       throw error;
     }
   };
