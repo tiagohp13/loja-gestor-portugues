@@ -1,154 +1,126 @@
-import { useData } from "@/contexts/DataContext";
-import { useMemo, useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import {
-  ensureDate,
-  createMonthlyDataMap,
+import { useData } from '@/contexts/DataContext';
+import { useMemo, useState, useEffect, useCallback } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { 
+  ensureDate, 
+  createMonthlyDataMap, 
   processExitsForMonthlyData,
-  processEntriesForMonthlyData,
-} from "./utils/dateUtils";
-import { identifyLowStockProducts, calculateTotalStockValue } from "./utils/productUtils";
-import {
+  processEntriesForMonthlyData 
+} from './utils/dateUtils';
+import { 
+  identifyLowStockProducts,
+  calculateTotalStockValue
+} from './utils/productUtils';
+import { 
   calculateTotalSalesValue,
   calculateTotalPurchaseValue,
   calculateTotalSpent,
   calculateTotalProfitWithExpenses,
   calculateProfitMarginPercentWithExpenses,
-  getMonthlyExpensesData,
-} from "./utils/financialUtils";
+  getMonthlyExpensesData
+} from './utils/financialUtils';
 
-export const useDashboardDataRealtime = () => {
+export const useDashboardDataOptimized = () => {
   const { products, stockEntries, stockExits, orders } = useData();
-
+  
+  // State for values that include expenses
   const [financialMetrics, setFinancialMetrics] = useState({
     totalSpentWithExpenses: 0,
     totalProfitWithExpenses: 0,
     profitMarginPercentWithExpenses: 0,
-    monthlyExpensesData: {} as Record<string, number>,
-    last30Days: {
-      totalSales: 0,
-      totalPurchases: 0,
-      profit: 0,
-      profitMargin: 0,
-    },
-    monthComparison: {
-      currentMonth: 0,
-      previousMonth: 0,
-      variationPercent: 0,
-    },
+    monthlyExpensesData: {} as Record<string, number>
   });
+  
+  // Add state to track when expenses change
+  const [expensesVersion, setExpensesVersion] = useState(0);
 
-  const [version, setVersion] = useState(0);
-
-  // Supabase realtime updates
+  // Subscribe to expenses changes
   useEffect(() => {
-    const tables = ["stock_entries", "stock_exits", "expenses"];
-    const channels = tables.map((table) =>
-      supabase
-        .channel(`realtime-${table}`)
-        .on("postgres_changes", { event: "*", schema: "public", table }, () => {
-          setVersion((v) => v + 1);
-        })
-        .subscribe(),
-    );
-    return () => channels.forEach((c) => supabase.removeChannel(c));
+    const expensesChannel = supabase
+      .channel('dashboard-expenses-updates')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'expenses' }, 
+        () => {
+          console.log('Expenses changed - triggering recalculation');
+          setExpensesVersion(v => v + 1);
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(expensesChannel);
+    };
   }, []);
 
-  // Memoized basic financials
-  const basicFinancials = useMemo(
-    () => ({
-      totalSalesValue: calculateTotalSalesValue(stockExits),
-      totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
-      totalStockValue: calculateTotalStockValue(products),
-    }),
-    [stockExits, stockEntries, products],
-  );
+  // Calculate basic financial metrics (memoized for performance)
+  const basicFinancials = useMemo(() => ({
+    totalSalesValue: calculateTotalSalesValue(stockExits),
+    totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
+    totalStockValue: calculateTotalStockValue(products)
+  }), [stockExits, stockEntries, products]);
 
-  // Low stock products
-  const lowStockProducts = useMemo(() => identifyLowStockProducts(products), [products]);
-
-  // Recalculate metrics whenever stock/entries/expenses change
-  const calculateMetrics = useCallback(async () => {
-    const now = new Date();
-    const start30Days = new Date();
-    start30Days.setDate(now.getDate() - 30);
-
-    // Filter entries and exits para últimos 30 dias
-    const recentEntries = stockEntries.filter((e) => new Date(e.date) >= start30Days);
-    const recentExits = stockExits.filter((e) => new Date(e.date) >= start30Days);
-
-    // Total últimos 30 dias
-    const totalSales30 = calculateTotalSalesValue(recentExits);
-    const totalPurchases30 = calculateTotalPurchaseValue(recentEntries);
-    const profit30 = totalSales30 - totalPurchases30; // incluir despesas se quiser
-    const margin30 = totalSales30 ? (profit30 / totalSales30) * 100 : 0;
-
-    // Mês atual e mês anterior
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    const previousMonthDate = new Date(currentYear, currentMonth - 1);
-    const prevMonth = previousMonthDate.getMonth();
-    const prevYear = previousMonthDate.getFullYear();
-
-    const totalSalesCurrentMonth = calculateTotalSalesValue(
-      stockExits.filter((e) => {
-        const d = new Date(e.date);
-        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      }),
-    );
-
-    const totalSalesPrevMonth = calculateTotalSalesValue(
-      stockExits.filter((e) => {
-        const d = new Date(e.date);
-        return d.getMonth() === prevMonth && d.getFullYear() === prevYear;
-      }),
-    );
-
-    const variationPercent = totalSalesPrevMonth
-      ? ((totalSalesCurrentMonth - totalSalesPrevMonth) / totalSalesPrevMonth) * 100
-      : 100;
-
-    // Expenses
-    const expensesData = await getMonthlyExpensesData();
-    const totalSpentWithExpenses = await calculateTotalSpent(stockEntries);
-    const totalProfitWithExpenses = await calculateTotalProfitWithExpenses(
-      basicFinancials.totalSalesValue,
-      stockEntries,
-    );
-    const profitMarginPercentWithExpenses = await calculateProfitMarginPercentWithExpenses(
-      basicFinancials.totalSalesValue,
-      stockEntries,
-    );
-
-    setFinancialMetrics({
-      totalSpentWithExpenses,
-      totalProfitWithExpenses,
-      profitMarginPercentWithExpenses,
-      monthlyExpensesData: expensesData,
-      last30Days: {
-        totalSales: totalSales30,
-        totalPurchases: totalPurchases30,
-        profit: profit30,
-        profitMargin: margin30,
-      },
-      monthComparison: {
-        currentMonth: totalSalesCurrentMonth,
-        previousMonth: totalSalesPrevMonth,
-        variationPercent,
-      },
+  // Prepare monthly data for charts (optimized)
+  const monthlyData = useMemo(() => {
+    const dataMap = createMonthlyDataMap();
+    processExitsForMonthlyData(stockExits, dataMap);
+    processEntriesForMonthlyData(stockEntries, dataMap);
+    
+    // Add expenses data to monthly chart
+    Object.entries(financialMetrics.monthlyExpensesData).forEach(([monthKey, expenseValue]) => {
+      const [year, month] = monthKey.split('-');
+      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+      const monthName = monthDate.toLocaleDateString('pt-PT', { 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      
+      if (dataMap.has(monthName)) {
+        const existing = dataMap.get(monthName)!;
+        existing.compras += expenseValue;
+      }
     });
-  }, [stockEntries, stockExits, basicFinancials]);
+    
+    return Array.from(dataMap.values());
+  }, [stockExits, stockEntries, financialMetrics.monthlyExpensesData]);
+  
+  // Calculate low stock products (memoized)
+  const lowStockProducts = useMemo(() => {
+    return identifyLowStockProducts(products);
+  }, [products]);
 
+  // Calculate financial metrics including expenses (debounced)
+  const calculateExpensiveMetrics = useCallback(async () => {
+    try {
+      const [totalSpent, totalProfitWithExp, profitMarginWithExp, expensesData] = await Promise.all([
+        calculateTotalSpent(stockEntries),
+        calculateTotalProfitWithExpenses(basicFinancials.totalSalesValue, stockEntries),
+        calculateProfitMarginPercentWithExpenses(basicFinancials.totalSalesValue, stockEntries),
+        getMonthlyExpensesData()
+      ]);
+      
+      setFinancialMetrics({
+        totalSpentWithExpenses: totalSpent,
+        totalProfitWithExpenses: totalProfitWithExp,
+        profitMarginPercentWithExpenses: profitMarginWithExp,
+        monthlyExpensesData: expensesData
+      });
+    } catch (error) {
+      console.error('Error calculating financial metrics with expenses:', error);
+    }
+  }, [stockEntries, basicFinancials.totalSalesValue, expensesVersion]);
+
+  // Debounce expensive calculations
   useEffect(() => {
-    const timer = setTimeout(calculateMetrics, 0); // run immediately
+    const timer = setTimeout(calculateExpensiveMetrics, 300);
     return () => clearTimeout(timer);
-  }, [calculateMetrics, version]);
+  }, [calculateExpensiveMetrics]);
 
   return {
     products,
     orders,
+    monthlyData,
     lowStockProducts,
     ...basicFinancials,
-    ...financialMetrics,
+    ...financialMetrics
   };
 };
