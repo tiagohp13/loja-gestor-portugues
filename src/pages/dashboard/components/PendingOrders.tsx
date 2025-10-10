@@ -21,6 +21,24 @@ interface PendingOrdersProps {
 const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateToOrderDetail }) => {
   const { canEdit, canDelete } = usePermissions();
 
+  // Função para calcular o total corretamente
+  const calculateTotal = (order: Order) => {
+    if (!order.items || order.items.length === 0) return 0;
+
+    let total = order.items.reduce((sum, item) => {
+      const itemPrice = item.salePrice * item.quantity;
+      const discount = item.discountPercent ? itemPrice * (item.discountPercent / 100) : 0;
+      return sum + (itemPrice - discount);
+    }, 0);
+
+    // aplica desconto da encomenda, se houver
+    if (order.discount) {
+      total = total * (1 - order.discount / 100);
+    }
+
+    return total;
+  };
+
   // Ordenação fiel ao OrderList
   const sortedOrders = useMemo(() => {
     const getPriority = (order: Order) => {
@@ -107,7 +125,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                     </TableCell>
                     <TableCell>{formatDate(order.date)}</TableCell>
                     <TableCell>{order.clientName || "—"}</TableCell>
-                    <TableCell>{formatCurrency(order.total || 0)}</TableCell>
+                    <TableCell>{formatCurrency(calculateTotal(order))}</TableCell>
                     <TableCell>
                       {order.convertedToStockExitId ? (
                         <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex items-center gap-1">
