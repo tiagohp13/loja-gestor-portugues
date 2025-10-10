@@ -9,8 +9,9 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 import { KPI } from "./KPIPanel";
-import { format } from "date-fns";
-import { X } from "lucide-react";
+import { X, Pencil } from "lucide-react";
+import KPIEditModal from "./KPIEditModal";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface KPIGridProps {
   kpis: KPI[];
@@ -18,6 +19,21 @@ interface KPIGridProps {
 
 const KPIGrid: React.FC<KPIGridProps> = ({ kpis }) => {
   const [selectedKpi, setSelectedKpi] = useState<KPI | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const { isAdmin } = usePermissions();
+
+  const handleSaveKpi = (updatedKpi: KPI) => {
+    if (selectedKpi) {
+      selectedKpi.name = updatedKpi.name;
+      selectedKpi.value = updatedKpi.value;
+      selectedKpi.target = updatedKpi.target;
+      selectedKpi.previousValue = updatedKpi.previousValue;
+      selectedKpi.tooltip = updatedKpi.tooltip;
+      selectedKpi.belowTarget = updatedKpi.belowTarget;
+      setSelectedKpi({ ...selectedKpi });
+    }
+    setIsEditOpen(false);
+  };
 
   return (
     <>
@@ -57,7 +73,7 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis }) => {
 
       {/* Modal para detalhes do KPI */}
       <Dialog open={!!selectedKpi} onOpenChange={() => setSelectedKpi(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md relative">
           <DialogHeader>
             <DialogTitle>{selectedKpi?.name}</DialogTitle>
             <DialogDescription>{selectedKpi?.description}</DialogDescription>
@@ -105,6 +121,14 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis }) => {
               </div>
             )}
           </div>
+
+          {isAdmin && (
+            <Button variant="outline" size="sm" className="mt-4" onClick={() => setIsEditOpen(true)}>
+              <Pencil className="h-3.5 w-3.5 mr-1" />
+              Editar KPI
+            </Button>
+          )}
+
           <DialogClose asChild>
             <button className="absolute top-3 right-3 p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700">
               <X className="w-4 h-4" />
@@ -112,6 +136,16 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis }) => {
           </DialogClose>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de edição do KPI */}
+      {selectedKpi && isEditOpen && (
+        <KPIEditModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          kpis={[selectedKpi]}
+          onSave={(updatedKpis) => handleSaveKpi(updatedKpis[0])}
+        />
+      )}
     </>
   );
 };
