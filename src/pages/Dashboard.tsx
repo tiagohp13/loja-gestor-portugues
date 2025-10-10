@@ -12,7 +12,7 @@ import { WidgetConfig } from "@/components/ui/DashboardCustomization/types";
 const SalesAndPurchasesChart = lazy(() => import("./dashboard/components/SalesAndPurchasesChart"));
 const LowStockProducts = lazy(() => import("./dashboard/components/LowStockProducts"));
 const InsufficientStockOrders = lazy(() => import("./dashboard/components/InsufficientStockOrders"));
-const PendingOrders = lazy(() => import("./dashboard/components/PendingOrders"));
+const PendingOrders = lazy(() => import("./dashboard/components/PendingOrders")); // já com as colunas completas
 const SummaryCards = lazy(() => import("./suporte/components/SummaryCards"));
 const KPIPanel = lazy(() => import("@/components/statistics/KPIPanel"));
 
@@ -53,7 +53,7 @@ const DashboardPage: React.FC = () => {
     return defaultDashboardConfig;
   });
 
-  const { insufficientStockItems, pendingOrders } = useMemo(() => {
+  const { insufficientStockItems, pendingOrders: filteredPendingOrders } = useMemo(() => {
     const findInsufficientStockOrders = (orders: any[], products: any[]) => {
       return orders.reduce((acc: any[], order) => {
         if (order.convertedToStockExitId || order.status === "deleted") return acc;
@@ -102,9 +102,9 @@ const DashboardPage: React.FC = () => {
         </Suspense>
       ),
       "pending-orders": (
-        <Suspense fallback={<TableSkeleton title="Encomendas Pendentes" rows={4} columns={4} />}>
+        <Suspense fallback={<TableSkeleton title="Encomendas Pendentes" rows={4} columns={7} />}>
           <PendingOrders
-            pendingOrders={pendingOrders}
+            pendingOrders={filteredPendingOrders}
             navigateToOrderDetail={navigateToOrderDetail}
             navigateToClientDetail={navigateToClientDetail}
           />
@@ -136,7 +136,7 @@ const DashboardPage: React.FC = () => {
       isLoading,
       monthlyData,
       lowStockProducts,
-      pendingOrders,
+      filteredPendingOrders,
       insufficientStockItems,
       kpis,
       navigateToProductDetail,
