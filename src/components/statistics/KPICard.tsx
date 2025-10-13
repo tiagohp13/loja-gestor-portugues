@@ -113,18 +113,18 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
   const belowTarget = checkIfBelowTarget();
   const progress = calculateProgress();
   
- return (
+return (
   <TooltipProvider>
     <Card
       className={`shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-gray-300 ${
-        belowTarget ? "border-orange-300" : "border-emerald-300"
+        belowTarget ? "border-rose-300" : "border-emerald-300"
       }`}
       onClick={onClick}
     >
-      <CardContent className="p-4 flex flex-col justify-between h-full">
-        {/* Header (título + ícone + tooltip) */}
-        <div>
-          <div className="text-sm font-medium flex items-center gap-2 mb-2">
+      <CardContent className="p-4 h-full flex flex-col">
+        {/* Parte superior (título + descrição + tooltip) */}
+        <div className="flex-grow">
+          <div className="text-sm font-medium flex items-center gap-2 mb-1">
             {getKPIIcon()}
             {kpi.name}
             <Tooltip>
@@ -142,51 +142,31 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
               </TooltipContent>
             </Tooltip>
           </div>
-
-          {/* Valor principal — fixado visualmente */}
-          <div className="flex items-end justify-between min-h-[60px]">
-            <div className="text-2xl font-bold leading-none">
-              {kpi.unit === "€" && !kpi.isPercentage && "€ "}
-              {formatValue(kpi.value)}
-              {kpi.unit !== "€" && !kpi.isPercentage && ` ${kpi.unit}`}
-              {kpi.isPercentage && "%"}
-            </div>
-            {getTrendIcon()}
-          </div>
+          <p className="text-sm text-gray-500 leading-snug mb-4">
+            {kpi.description}
+          </p>
         </div>
 
-        {/* Secção inferior — meta e barra */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-gray-600">
-              Meta:{" "}
-              <span className="font-medium text-gray-700">
-                {formatValue(kpi.target)}
-              </span>
+        {/* Parte inferior (valor + meta) */}
+        <div className="mt-auto">
+          <div className="text-2xl font-bold text-gray-900 leading-none mb-1">
+            {kpi.unit === "€" && !kpi.isPercentage && "€ "}
+            {formatValue(kpi.value)}
+            {kpi.unit !== "€" && !kpi.isPercentage && ` ${kpi.unit}`}
+            {kpi.isPercentage && "%"}
+          </div>
+          <p className="text-sm text-gray-500">
+            Meta:{" "}
+            <span className="font-medium text-gray-700">
+              {formatValue(kpi.target)}
             </span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <Progress
-            value={progress}
-            className={`h-2 ${
-              belowTarget ? "bg-orange-100" : "bg-gray-100"
-            }`}
-          />
+          </p>
         </div>
-
-        {/* Alerta quando abaixo da meta */}
-        {belowTarget && (
-          <Alert className="mt-3 py-2 bg-orange-50 border-orange-200">
-            <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
-            <AlertDescription className="text-xs text-orange-700">
-              {getAlertMessage()}
-            </AlertDescription>
-          </Alert>
-        )}
       </CardContent>
     </Card>
   </TooltipProvider>
 );
+
 
 
 export default KPICard;
