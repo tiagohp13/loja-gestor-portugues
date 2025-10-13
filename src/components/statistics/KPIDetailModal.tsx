@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Pencil, X, Info, Sigma } from "lucide-react";
 import { KPI } from "./KPIPanel";
 import { formatCurrency } from "@/utils/formatting";
-import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
+import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface KPIDetailModalProps {
   kpi: KPI | null;
@@ -31,14 +31,24 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
     return value.toFixed(2);
   };
 
-  // 👇 Cria dados do gráfico com fallback suave entre previousValue e value
-  const chartData =
-    Array.isArray((kpi as any).history) && (kpi as any).history.length > 0
-      ? (kpi as any).history
-      : [
-          { name: "Mês Anterior", value: kpi.previousValue ?? kpi.value * 0.9 },
-          { name: "Atual", value: kpi.value },
-        ];
+  // 🔹 Gera sempre 3 pontos de dados: há 2 meses, mês anterior e atual
+  const buildChartData = (kpi: KPI) => {
+    if (Array.isArray((kpi as any).history) && (kpi as any).history.length >= 3) {
+      return (kpi as any).history.slice(-3);
+    }
+
+    const valAtual = kpi.value ?? 0;
+    const valAnterior = kpi.previousValue && kpi.previousValue > 0 ? kpi.previousValue : valAtual * 0.9;
+    const valDoisMeses = valAnterior * 0.9;
+
+    return [
+      { name: "Há 2 meses", value: valDoisMeses },
+      { name: "Mês anterior", value: valAnterior },
+      { name: "Atual", value: valAtual },
+    ];
+  };
+
+  const chartData = buildChartData(kpi);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -68,7 +78,6 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <DialogDescription className="text-sm text-gray-500 mt-1">{kpi.description}</DialogDescription>
           )}
 
-          {/* Fórmula pura */}
           {kpi.formula && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
               <Sigma className="h-4 w-4 text-gray-500" />
@@ -77,10 +86,12 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           )}
         </DialogHeader>
 
-        {/* 👇 Mini gráfico de tendência - aparece sempre */}
-        <div className="h-20 mb-4">
+        {/* 🔹 Mini gráfico de tendência (3 meses, suave, sempre visível) */}
+        <div className="h-28 mb-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData}>
+              <XAxis dataKey="name" hide />
+              <YAxis hide domain={["auto", "auto"]} />
               <Tooltip
                 formatter={(value: number) => renderValue(value)}
                 contentStyle={{
@@ -113,7 +124,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <span className="font-semibold text-gray-900">{renderValue(kpi.target)}</span>
           </div>
 
-          {kpi.previousValue !== undefined && (
+          {kpi.previousValue !== undefined && kpi.previousValue > 0 && (
             <div className="flex justify-between">
               <span className="text-sm text-gray-600">Mês Anterior</span>
               <span className="font-semibold text-gray-900">{renderValue(kpi.previousValue)}</span>
