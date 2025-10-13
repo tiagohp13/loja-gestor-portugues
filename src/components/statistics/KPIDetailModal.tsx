@@ -37,7 +37,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
               <Info className="h-5 w-5 text-gray-500" />
-              <DialogTitle className="text-lg font-bold text-gray-900">{kpi.name}</DialogTitle>
+              <DialogTitle className="text-lg font-semibold">{kpi.name}</DialogTitle>
             </div>
 
             <div className="flex gap-1">
@@ -55,7 +55,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           </div>
 
           {kpi.description && (
-            <DialogDescription className="text-sm text-gray-500 mt-1">{kpi.description}</DialogDescription>
+            <DialogDescription className="text-sm text-gray-500 mt-1 mb-2">{kpi.description}</DialogDescription>
           )}
 
           {/* Fórmula (sem rótulo “Como é calculado”) */}
