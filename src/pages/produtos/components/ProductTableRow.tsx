@@ -29,6 +29,7 @@ const ProductTableRow = ({
   return (
     <TableRow key={product.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onViewProduct(product.id)}>
       <TableCell className="font-medium">{product.code}</TableCell>
+
       <TableCell>
         <div className="flex items-center space-x-3">
           {product.image ? (
@@ -56,12 +57,12 @@ const ProductTableRow = ({
 
       {/* Coluna de ações alinhada */}
       <TableCell className="text-right w-[210px] pr-6" onClick={(e) => e.stopPropagation()}>
-        <div className="inline-flex items-center justify-end gap-2 w-full">
+        <div className="flex justify-end items-center gap-1.5">
           {/* Botão Histórico */}
           <Button
-            variant="outline"
+            variant="ghost"
             size="icon"
-            className="h-9 w-9 p-0"
+            className="h-8 w-8 p-0 hover:bg-gray-100"
             title="Histórico"
             onClick={(e) => onViewHistory(product.id, e)}
           >
@@ -71,9 +72,9 @@ const ProductTableRow = ({
           {/* Botão Editar */}
           {canEdit && (
             <Button
-              variant="outline"
+              variant="ghost"
               size="icon"
-              className="h-9 w-9 p-0"
+              className="h-8 w-8 p-0 hover:bg-gray-100"
               title="Editar"
               onClick={(e) => onEdit(product.id, e)}
             >
@@ -89,7 +90,7 @@ const ProductTableRow = ({
               onDelete={() => onDelete(product.id)}
               checkDependencies={() => checkProductDependencies(product.id)}
               trigger={
-                <Button variant="outline" size="icon" className="h-9 w-9 p-0" title="Eliminar">
+                <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-gray-100" title="Eliminar">
                   <Trash2 className="w-4 h-4" />
                 </Button>
               }
