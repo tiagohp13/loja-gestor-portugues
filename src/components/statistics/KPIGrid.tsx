@@ -28,9 +28,17 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis, onSaveKpis }) => {
     setIsEditModalOpen(true);
   };
 
-  // Guardar metas atualizadas
   const handleSaveTargets = (updatedKpis: KPI[]) => {
-    if (onSaveKpis) onSaveKpis(updatedKpis);
+    if (!updatedKpis || updatedKpis.length === 0) return;
+
+    // Atualiza apenas o KPI editado, mantendo os outros
+    const updatedKpi = updatedKpis[0];
+    const mergedKpis = kpis.map((kpi) => (kpi.name === updatedKpi.name ? updatedKpi : kpi));
+
+    if (onSaveKpis) {
+      onSaveKpis(mergedKpis);
+    }
+
     setIsEditModalOpen(false);
     setIsDetailModalOpen(false);
   };
