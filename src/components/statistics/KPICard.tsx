@@ -113,80 +113,64 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
   const belowTarget = checkIfBelowTarget();
   const progress = calculateProgress();
   
- return (
-  <TooltipProvider>
-    <Card
-      className={`shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-gray-300 ${
-        belowTarget ? "border-orange-300" : "border-emerald-300"
-      }`}
-      onClick={onClick}
-    >
-      <CardContent className="p-4 flex flex-col justify-between h-full">
-        {/* Header (título + ícone + tooltip) */}
-        <div>
-          <div className="text-sm font-medium flex items-center gap-2 mb-2">
-            {getKPIIcon()}
-            {kpi.name}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 text-gray-400 cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>
-                  <strong>Descrição:</strong> {kpi.description}
-                </p>
-                <p className="mt-1">
-                  <strong>Fórmula:</strong> {kpi.formula}
-                </p>
-                {kpi.tooltip && <p className="mt-1">{kpi.tooltip}</p>}
-              </TooltipContent>
-            </Tooltip>
+  return (
+    <TooltipProvider>
+      <Card 
+        className={`shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-gray-300 ${
+          belowTarget ? 'border-orange-300' : ''
+        }`}
+        onClick={onClick}
+      >
+        <CardContent className="p-4">
+          <div className="pb-2">
+            <div className="text-sm font-medium flex items-center gap-2">
+              {getKPIIcon()}
+              {kpi.name}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Info className="h-3.5 w-3.5 text-gray-400 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p><strong>Descrição:</strong> {kpi.description}</p>
+                  <p className="mt-1"><strong>Fórmula:</strong> {kpi.formula}</p>
+                  {kpi.tooltip && <p className="mt-1">{kpi.tooltip}</p>}
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </div>
-
-          {/* Valor principal — fixado visualmente */}
-          <div className="flex items-end justify-between min-h-[60px]">
-            <div className="text-2xl font-bold leading-none">
-              {kpi.unit === "€" && !kpi.isPercentage && "€ "}
+          
+          <div className="flex items-center justify-between">
+            <div className="text-2xl font-bold">
+              {kpi.unit === '€' && !kpi.isPercentage && '€ '}
               {formatValue(kpi.value)}
-              {kpi.unit !== "€" && !kpi.isPercentage && ` ${kpi.unit}`}
-              {kpi.isPercentage && "%"}
+              {kpi.unit !== '€' && !kpi.isPercentage && ` ${kpi.unit}`}
             </div>
             {getTrendIcon()}
           </div>
-        </div>
-
-        {/* Secção inferior — meta e barra */}
-        <div className="mt-4">
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="text-gray-600">
-              Meta:{" "}
-              <span className="font-medium text-gray-700">
-                {formatValue(kpi.target)}
-              </span>
-            </span>
-            <span>{Math.round(progress)}%</span>
+          
+          <div className="mt-4">
+            <div className="flex items-center justify-between text-xs mb-1">
+              <span>Meta: {formatValue(kpi.target)}</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <Progress 
+              value={progress} 
+              className={`h-2 ${belowTarget ? 'bg-orange-100' : 'bg-gray-100'}`}
+            />
           </div>
-          <Progress
-            value={progress}
-            className={`h-2 ${
-              belowTarget ? "bg-orange-100" : "bg-gray-100"
-            }`}
-          />
-        </div>
-
-        {/* Alerta quando abaixo da meta */}
-        {belowTarget && (
-          <Alert className="mt-3 py-2 bg-orange-50 border-orange-200">
-            <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
-            <AlertDescription className="text-xs text-orange-700">
-              {getAlertMessage()}
-            </AlertDescription>
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
-  </TooltipProvider>
-);
-
+          
+          {belowTarget && (
+            <Alert className="mt-2 py-2 bg-orange-50 border-orange-200">
+              <AlertTriangle className="h-3.5 w-3.5 text-orange-500" />
+              <AlertDescription className="text-xs text-orange-700">
+                {getAlertMessage()}
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+    </TooltipProvider>
+  );
+};
 
 export default KPICard;
