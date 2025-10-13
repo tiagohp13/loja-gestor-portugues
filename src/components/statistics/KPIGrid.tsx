@@ -46,20 +46,23 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis, onSaveKpis }) => {
   return (
     <>
       {/* Grelha de KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch content-start">
         {kpis.map((kpi, index) => (
           <Card
             key={index}
-            className={`cursor-pointer hover:shadow-lg transition-shadow border ${
+            className={`flex flex-col justify-between h-full cursor-pointer hover:shadow-lg transition-shadow border ${
               kpi.belowTarget ? "border-red-400" : "border-green-400"
             }`}
             onClick={() => handleCardClick(kpi)}
           >
-            <CardHeader>
+            {/* Cabeçalho */}
+            <CardHeader className="flex-grow">
               <CardTitle className="text-sm">{kpi.name}</CardTitle>
-              <CardDescription className="text-xs text-gray-500">{kpi.description}</CardDescription>
+              <CardDescription className="text-xs text-gray-500 line-clamp-2">{kpi.description}</CardDescription>
             </CardHeader>
-            <CardContent>
+
+            {/* Conteúdo inferior (valor e meta) */}
+            <CardContent className="mt-auto">
               <div className="text-xl font-bold">
                 {kpi.isPercentage
                   ? `${kpi.value.toFixed(2)}%`
