@@ -185,7 +185,7 @@ const ProductList = () => {
                   sortDirection={getSortIcon("actions")}
                   onSort={handleSort}
                   sortable={false}
-                  className="text-right pr-6 w-[240px]"
+                  className="text-right pr-6 w-[210px]" // largura e padding fixos
                 />
               </TableRow>
             </TableHeader>
