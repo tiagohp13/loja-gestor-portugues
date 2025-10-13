@@ -37,12 +37,18 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
               <Info className="h-5 w-5 text-gray-500" />
-              <DialogTitle className="text-lg font-semibold">{kpi.name}</DialogTitle>
+              <DialogTitle className="text-xl font-semibold text-gray-900 tracking-tight">{kpi.name}</DialogTitle>
             </div>
 
             <div className="flex gap-1">
               {canEdit && (
-                <Button variant="ghost" size="icon" onClick={onEdit} title="Editar meta" className="hover:bg-gray-100">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onEdit}
+                  title="Editar meta"
+                  className="hover:bg-gray-100 hover:text-sky-600 transition-colors"
+                >
                   <Pencil className="h-4 w-4 text-gray-500" />
                 </Button>
               )}
@@ -60,25 +66,22 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
 
           {/* Fórmula (sem rótulo “Como é calculado”) */}
           {kpi.formula && (
-            <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
+            <div className="mt-2 flex items-center gap-2 text-sm font-mono text-gray-700">
               <Sigma className="h-4 w-4 text-gray-500" />
               <span>{kpi.formula}</span>
             </div>
           )}
         </DialogHeader>
 
-        {/* Removido: mini gráfico */}
-        {/* Removido: campo "Mês Anterior" */}
-
         <div className="space-y-3">
           <div className="flex justify-between">
             <span className="text-sm text-gray-600">Valor Atual</span>
-            <span className="font-semibold text-gray-900">{renderValue(kpi.value)}</span>
+            <span className="font-semibold text-gray-900 text-base sm:text-lg">{renderValue(kpi.value)}</span>
           </div>
 
           <div className="flex justify-between">
             <span className="text-sm text-gray-600">Meta</span>
-            <span className="font-semibold text-gray-900">{renderValue(kpi.target)}</span>
+            <span className="font-semibold text-gray-900 text-base">{renderValue(kpi.target)}</span>
           </div>
 
           <Separator className="my-2" />
@@ -90,7 +93,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           )}
 
           {typeof kpi.belowTarget === "boolean" && (
-            <div className={`text-sm font-medium ${kpi.belowTarget ? "text-rose-600" : "text-emerald-600"}`}>
+            <div className={`mt-2 text-sm font-medium ${kpi.belowTarget ? "text-rose-600" : "text-emerald-600"}`}>
               {kpi.belowTarget ? "Abaixo da meta" : "Acima da meta"}
             </div>
           )}
