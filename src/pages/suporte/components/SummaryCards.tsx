@@ -5,12 +5,25 @@ import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { SupportStats } from '../types/supportTypes';
 import SummaryCardSkeleton from '@/components/ui/SummaryCardSkeleton';
 
+interface KpiDelta {
+  pct30d: number;
+  pctMoM: number;
+}
+
+interface KpiDeltas {
+  sales: KpiDelta;
+  spent: KpiDelta;
+  profit: KpiDelta;
+  margin: KpiDelta;
+}
+
 interface SummaryCardsProps {
   stats: SupportStats;
   isLoading?: boolean;
+  deltas?: KpiDeltas;
 }
 
-const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false }) => {
+const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false, deltas }) => {
   // Default card configuration
   const defaultCardConfig = [
     { id: 'totalSales', title: 'Total de Vendas', enabled: true, order: 0 },
@@ -97,12 +110,24 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false })
                     {formatCurrency(stats.totalSales)}
                   </div>
                 </div>
-                {stats.monthlySales && stats.monthlySales.length >= 6 && 
-                  renderVariation(
-                    stats.monthlySales[stats.monthlySales.length - 1] || 0,
-                    stats.monthlySales[stats.monthlySales.length - 2] || 0
-                  )
-                }
+                {deltas?.sales && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.sales.pct30d >= 0 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      30d: {deltas.sales.pct30d >= 0 ? '+' : ''}{deltas.sales.pct30d.toFixed(1)}%
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.sales.pctMoM >= 0 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      M/M: {deltas.sales.pctMoM >= 0 ? '+' : ''}{deltas.sales.pctMoM.toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -122,12 +147,24 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false })
                     {formatCurrency(stats.totalSpent)}
                   </div>
                 </div>
-                {stats.monthlyData && stats.monthlyData.length >= 6 && 
-                  renderVariation(
-                    stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0,
-                    stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0
-                  )
-                }
+                {deltas?.spent && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.spent.pct30d >= 0 
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' 
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    }`}>
+                      30d: {deltas.spent.pct30d >= 0 ? '+' : ''}{deltas.spent.pct30d.toFixed(1)}%
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.spent.pctMoM >= 0 
+                        ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' 
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                    }`}>
+                      M/M: {deltas.spent.pctMoM >= 0 ? '+' : ''}{deltas.spent.pctMoM.toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -151,12 +188,24 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false })
                     {formatCurrency(stats.profit)}
                   </div>
                 </div>
-                {stats.monthlyData && stats.monthlyData.length >= 6 && 
-                  renderVariation(
-                    (stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0),
-                    (stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0) - (stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0)
-                  )
-                }
+                {deltas?.profit && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.profit.pct30d >= 0 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      30d: {deltas.profit.pct30d >= 0 ? '+' : ''}{deltas.profit.pct30d.toFixed(1)}%
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.profit.pctMoM >= 0 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      M/M: {deltas.profit.pctMoM >= 0 ? '+' : ''}{deltas.profit.pctMoM.toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -176,17 +225,24 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false })
                     {formatPercentage(stats.profitMargin)}
                   </div>
                 </div>
-                {stats.monthlyData && stats.monthlyData.length >= 6 && (() => {
-                  const currentSales = stats.monthlyData[stats.monthlyData.length - 1]?.vendas || 0;
-                  const currentSpent = stats.monthlyData[stats.monthlyData.length - 1]?.compras || 0;
-                  const previousSales = stats.monthlyData[stats.monthlyData.length - 2]?.vendas || 0;
-                  const previousSpent = stats.monthlyData[stats.monthlyData.length - 2]?.compras || 0;
-                  
-                  const currentMargin = currentSales > 0 ? ((currentSales - currentSpent) / currentSales) * 100 : 0;
-                  const previousMargin = previousSales > 0 ? ((previousSales - previousSpent) / previousSales) * 100 : 0;
-                  
-                  return renderVariation(currentMargin, previousMargin);
-                })()}
+                {deltas?.margin && (
+                  <div className="flex items-center gap-2 mt-2 flex-wrap">
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.margin.pct30d >= 0 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      30d: {deltas.margin.pct30d >= 0 ? '+' : ''}{deltas.margin.pct30d.toFixed(1)}%
+                    </span>
+                    <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                      deltas.margin.pctMoM >= 0 
+                        ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                        : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
+                    }`}>
+                      M/M: {deltas.margin.pctMoM >= 0 ? '+' : ''}{deltas.margin.pctMoM.toFixed(1)}%
+                    </span>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

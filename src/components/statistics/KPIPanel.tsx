@@ -22,6 +22,8 @@ export interface KPI {
   tooltip?: string;
   belowTarget?: boolean;
   isInverseKPI?: boolean;
+  delta30dPct?: number;
+  deltaMoMPct?: number;
 }
 
 interface KPIPanelProps {

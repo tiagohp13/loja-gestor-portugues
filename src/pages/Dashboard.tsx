@@ -1,7 +1,9 @@
 import React, { useState, useMemo, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDashboardData } from "./dashboard/hooks/useDashboardData";
+import { useKpiDeltas } from "./dashboard/hooks/useKpiDeltas";
 import { useSupportData } from "./suporte/hooks/useSupportData";
+import { useData } from "@/contexts/DataContext";
 import PageHeader from "../components/ui/PageHeader";
 import QuickActions from "@/components/ui/QuickActions";
 import TableSkeleton from "@/components/ui/TableSkeleton";
@@ -29,6 +31,7 @@ const defaultDashboardConfig: WidgetConfig[] = [
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { isLoading: isLoadingSupportData, stats: supportStats, kpis } = useSupportData();
+  const { stockExits, stockEntries } = useData();
 
   const {
     products,
@@ -39,6 +42,9 @@ const DashboardPage: React.FC = () => {
     totalProfitWithExpenses,
     profitMarginPercentWithExpenses,
   } = useDashboardData();
+
+  // Calculate KPI deltas (30 days and Month over Month variations)
+  const kpiDeltas = useKpiDeltas(stockExits, stockEntries);
 
   const [dashboardConfig] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem("dashboard-layout-config");
@@ -93,7 +99,7 @@ const DashboardPage: React.FC = () => {
       "quick-actions": <QuickActions />,
       "summary-cards": (
         <Suspense fallback={<TableSkeleton title="Cartões de Resumo" rows={2} columns={2} />}>
-          <SummaryCards stats={updatedStats} isLoading={isLoading} />
+          <SummaryCards stats={updatedStats} isLoading={isLoading} deltas={kpiDeltas} />
         </Suspense>
       ),
       "sales-purchases-chart": (
@@ -139,6 +145,7 @@ const DashboardPage: React.FC = () => {
       filteredPendingOrders,
       insufficientStockItems,
       kpis,
+      kpiDeltas,
       navigateToProductDetail,
       navigateToOrderDetail,
       navigateToClientDetail,

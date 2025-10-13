@@ -142,6 +142,30 @@ const KPICard = ({ kpi }: KPICardProps) => {
             {getTrendIcon()}
           </div>
           
+          {/* Delta badges */}
+          {(kpi.delta30dPct !== undefined || kpi.deltaMoMPct !== undefined) && (
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {kpi.delta30dPct !== undefined && (
+                <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                  kpi.delta30dPct >= 0 
+                    ? 'bg-emerald-100 text-emerald-700' 
+                    : 'bg-rose-100 text-rose-700'
+                }`}>
+                  30d: {kpi.delta30dPct >= 0 ? '+' : ''}{kpi.delta30dPct.toFixed(1)}%
+                </span>
+              )}
+              {kpi.deltaMoMPct !== undefined && (
+                <span className={`text-xs px-2 py-1 rounded-md font-medium ${
+                  kpi.deltaMoMPct >= 0 
+                    ? 'bg-emerald-100 text-emerald-700' 
+                    : 'bg-rose-100 text-rose-700'
+                }`}>
+                  M/M: {kpi.deltaMoMPct >= 0 ? '+' : ''}{kpi.deltaMoMPct.toFixed(1)}%
+                </span>
+              )}
+            </div>
+          )}
+          
           <div className="mt-2">
             <div className="flex items-center justify-between text-xs mb-1">
               <span>Meta: {formatValue(kpi.target)}</span>
