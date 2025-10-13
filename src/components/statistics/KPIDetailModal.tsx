@@ -12,7 +12,6 @@ import { Separator } from "@/components/ui/separator";
 import { Pencil, X, Info, Sigma } from "lucide-react";
 import { KPI } from "./KPIPanel";
 import { formatCurrency } from "@/utils/formatting";
-import { LineChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 interface KPIDetailModalProps {
   kpi: KPI | null;
@@ -30,25 +29,6 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
     if (kpi.unit === "€") return formatCurrency(value);
     return value.toFixed(2);
   };
-
-  // 🔹 Gera sempre 3 pontos de dados: há 2 meses, mês anterior e atual
-  const buildChartData = (kpi: KPI) => {
-    if (Array.isArray((kpi as any).history) && (kpi as any).history.length >= 3) {
-      return (kpi as any).history.slice(-3);
-    }
-
-    const valAtual = kpi.value ?? 0;
-    const valAnterior = kpi.previousValue && kpi.previousValue > 0 ? kpi.previousValue : valAtual * 0.9;
-    const valDoisMeses = valAnterior * 0.9;
-
-    return [
-      { name: "Há 2 meses", value: valDoisMeses },
-      { name: "Mês anterior", value: valAnterior },
-      { name: "Atual", value: valAtual },
-    ];
-  };
-
-  const chartData = buildChartData(kpi);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -78,6 +58,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <DialogDescription className="text-sm text-gray-500 mt-1">{kpi.description}</DialogDescription>
           )}
 
+          {/* Fórmula (sem rótulo “Como é calculado”) */}
           {kpi.formula && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
               <Sigma className="h-4 w-4 text-gray-500" />
@@ -86,32 +67,8 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           )}
         </DialogHeader>
 
-        {/* 🔹 Mini gráfico de tendência (3 meses, suave, sempre visível) */}
-        <div className="h-28 mb-4">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <XAxis dataKey="name" hide />
-              <YAxis hide domain={["auto", "auto"]} />
-              <Tooltip
-                formatter={(value: number) => renderValue(value)}
-                contentStyle={{
-                  backgroundColor: "white",
-                  border: "1px solid #ddd",
-                  borderRadius: "6px",
-                  fontSize: "0.75rem",
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="value"
-                stroke="#0ea5e9"
-                strokeWidth={2}
-                dot={false}
-                isAnimationActive={true}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        {/* Removido: mini gráfico */}
+        {/* Removido: campo "Mês Anterior" */}
 
         <div className="space-y-3">
           <div className="flex justify-between">
@@ -124,13 +81,6 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <span className="font-semibold text-gray-900">{renderValue(kpi.target)}</span>
           </div>
 
-          {kpi.previousValue !== undefined && kpi.previousValue > 0 && (
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Mês Anterior</span>
-              <span className="font-semibold text-gray-900">{renderValue(kpi.previousValue)}</span>
-            </div>
-          )}
-
           <Separator className="my-2" />
 
           {kpi.tooltip && (
@@ -139,7 +89,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             </div>
           )}
 
-          {kpi.belowTarget !== undefined && (
+          {typeof kpi.belowTarget === "boolean" && (
             <div className={`text-sm font-medium ${kpi.belowTarget ? "text-rose-600" : "text-emerald-600"}`}>
               {kpi.belowTarget ? "Abaixo da meta" : "Acima da meta"}
             </div>
