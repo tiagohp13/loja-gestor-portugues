@@ -9,9 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, X, TrendingUp, TrendingDown, Info } from "lucide-react";
-import { formatCurrency } from "@/utils/formatting";
+import { Pencil, X, Info, TrendingUp, TrendingDown, Sigma } from "lucide-react";
 import { KPI } from "./KPIPanel";
+import { formatCurrency } from "@/utils/formatting";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts"; // <- opcional, se quiseres o mini gráfico
 
 interface KPIDetailModalProps {
   kpi: KPI | null;
@@ -24,7 +25,6 @@ interface KPIDetailModalProps {
 const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, onEdit, canEdit = false }) => {
   if (!kpi) return null;
 
-  // Define ícone conforme o KPI
   const getIcon = () => {
     if (kpi.name.toLowerCase().includes("lucro")) return <TrendingUp className="h-5 w-5 text-emerald-600" />;
     if (kpi.name.toLowerCase().includes("gasto")) return <TrendingDown className="h-5 w-5 text-rose-600" />;
@@ -41,7 +41,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md rounded-xl shadow-lg border border-gray-100">
-        <DialogHeader className="relative pb-4">
+        <DialogHeader className="relative pb-3">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
               {getIcon()}
@@ -63,9 +63,31 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           </div>
 
           {kpi.description && (
-            <DialogDescription className="text-sm text-gray-500">{kpi.description}</DialogDescription>
+            <DialogDescription className="text-sm text-gray-500 mt-1">{kpi.description}</DialogDescription>
+          )}
+
+          {/* 👇 Nova secção: fórmula logo abaixo da descrição */}
+          {kpi.formula && (
+            <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+              <Sigma className="h-4 w-4 text-gray-500" />
+              <span>
+                <strong>Como é calculado:</strong> {kpi.formula}
+              </span>
+            </div>
           )}
         </DialogHeader>
+
+        {/* Mini gráfico de tendência (opcional) */}
+        {Array.isArray((kpi as any).history) && (kpi as any).history.length > 0 && (
+          <div className="h-24 mb-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={(kpi as any).history}>
+                <Tooltip formatter={(value: number) => renderValue(value)} />
+                <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
 
         <div className="space-y-3">
           <div className="flex justify-between">
@@ -77,13 +99,6 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <span className="text-sm text-gray-600">Meta</span>
             <span className="font-semibold text-gray-900">{renderValue(kpi.target)}</span>
           </div>
-
-          {kpi.previousValue !== undefined && (
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Valor Anterior</span>
-              <span className="font-semibold text-gray-900">{renderValue(kpi.previousValue)}</span>
-            </div>
-          )}
 
           <Separator className="my-2" />
 
@@ -106,12 +121,6 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           )}
 
           <Separator className="my-2" />
-
-          {kpi.formula && (
-            <div className="text-sm text-gray-600">
-              <strong>Fórmula:</strong> {kpi.formula}
-            </div>
-          )}
 
           {kpi.tooltip && (
             <div className="text-sm text-gray-600">
