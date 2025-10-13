@@ -43,16 +43,21 @@ const ProductTableRow = ({
           <span className="font-medium">{product.name}</span>
         </div>
       </TableCell>
+
       <TableCell>{product.category || "-"}</TableCell>
+
       <TableCell>
         <span className={`${product.currentStock <= (product.minStock || 0) ? "text-red-500" : ""}`}>
           {product.currentStock} unidades
         </span>
       </TableCell>
+
       <TableCell className="font-medium">{formatCurrency(product.salePrice)}</TableCell>
-      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-        {/* Ações alinhadas e com espaçamento consistente */}
-        <div className="inline-flex items-center justify-end gap-2 pr-4 w-full">
+
+      {/* Coluna de ações alinhada */}
+      <TableCell className="text-right w-[210px] pr-6" onClick={(e) => e.stopPropagation()}>
+        <div className="inline-flex items-center justify-end gap-2 w-full">
+          {/* Botão Histórico */}
           <Button
             variant="outline"
             size="icon"
@@ -63,6 +68,7 @@ const ProductTableRow = ({
             <History className="w-4 h-4" />
           </Button>
 
+          {/* Botão Editar */}
           {canEdit && (
             <Button
               variant="outline"
@@ -75,6 +81,7 @@ const ProductTableRow = ({
             </Button>
           )}
 
+          {/* Botão Eliminar */}
           {canDelete && (
             <DeleteConfirmDialog
               title="Eliminar Produto"
