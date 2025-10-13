@@ -10,9 +10,10 @@ import { KPI } from '@/components/statistics/KPIPanel';
 
 interface KPICardProps {
   kpi: KPI;
+  onClick?: () => void;
 }
 
-const KPICard = ({ kpi }: KPICardProps) => {
+const KPICard = ({ kpi, onClick }: KPICardProps) => {
   // Helper function to get trend icon based on comparison with target
   const getTrendIcon = () => {
     // Inversa a lógica para KPIs inversos (onde menor é melhor)
@@ -114,7 +115,12 @@ const KPICard = ({ kpi }: KPICardProps) => {
   
   return (
     <TooltipProvider>
-      <Card className={`shadow-sm ${belowTarget ? 'border-orange-300' : ''}`}>
+      <Card 
+        className={`shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-gray-300 ${
+          belowTarget ? 'border-orange-300' : ''
+        }`}
+        onClick={onClick}
+      >
         <CardContent className="p-4">
           <div className="pb-2">
             <div className="text-sm font-medium flex items-center gap-2">
@@ -142,31 +148,7 @@ const KPICard = ({ kpi }: KPICardProps) => {
             {getTrendIcon()}
           </div>
           
-          {/* Delta badges */}
-          {(kpi.delta30dPct !== undefined || kpi.deltaMoMPct !== undefined) && (
-            <div className="flex items-center gap-2 mt-2 flex-wrap">
-              {kpi.delta30dPct !== undefined && (
-                <span className={`text-xs px-2 py-1 rounded-md font-medium ${
-                  kpi.delta30dPct >= 0 
-                    ? 'bg-emerald-100 text-emerald-700' 
-                    : 'bg-rose-100 text-rose-700'
-                }`}>
-                  30d: {kpi.delta30dPct >= 0 ? '+' : ''}{kpi.delta30dPct.toFixed(1)}%
-                </span>
-              )}
-              {kpi.deltaMoMPct !== undefined && (
-                <span className={`text-xs px-2 py-1 rounded-md font-medium ${
-                  kpi.deltaMoMPct >= 0 
-                    ? 'bg-emerald-100 text-emerald-700' 
-                    : 'bg-rose-100 text-rose-700'
-                }`}>
-                  M/M: {kpi.deltaMoMPct >= 0 ? '+' : ''}{kpi.deltaMoMPct.toFixed(1)}%
-                </span>
-              )}
-            </div>
-          )}
-          
-          <div className="mt-2">
+          <div className="mt-4">
             <div className="flex items-center justify-between text-xs mb-1">
               <span>Meta: {formatValue(kpi.target)}</span>
               <span>{Math.round(progress)}%</span>

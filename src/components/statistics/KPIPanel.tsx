@@ -114,7 +114,7 @@ const KPIPanel = ({ kpis: initialKpis, title = "KPIs", description = "Indicadore
         )}
       </CardHeader>
       <CardContent>
-        <KPIGrid kpis={kpisState} />
+        <KPIGrid kpis={kpisState} onSaveKpis={handleSaveTargets} />
       </CardContent>
       
       <KPIEditModal 
