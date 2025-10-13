@@ -1,73 +1,45 @@
+// ============================================
+// 📅 dateUtils.ts
+// ============================================
+// Funções auxiliares de datas para intervalos de 30 dias e meses
+// Usadas nos cálculos de KPIs e dashboards
+// ============================================
 
-import { StockEntry, StockExit } from '@/types';
+export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+export const endOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
 
-/**
- * Ensures a value is converted to a proper Date object
- */
-export const ensureDate = (dateInput: string | Date): Date => {
-  return dateInput instanceof Date ? dateInput : new Date(dateInput);
+export const daysAgo = (n: number) => {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  d.setDate(d.getDate() - n);
+  return d;
 };
 
-/**
- * Creates a mapping of monthly data entries for the last 6 months
- */
-export const createMonthlyDataMap = (): Map<string, { name: string, vendas: number, compras: number }> => {
-  const dataMap = new Map();
-  
-  const today = new Date();
-  for (let i = 5; i >= 0; i--) {
-    const month = new Date(today.getFullYear(), today.getMonth() - i, 1);
-    const monthName = month.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
-    
-    // Use monthName as key to avoid duplicates
-    if (!dataMap.has(monthName)) {
-      dataMap.set(monthName, {
-        name: monthName,
-        vendas: 0,
-        compras: 0
-      });
-    }
-  }
-  
-  return dataMap;
+// Últimos N dias consecutivos
+export const rangeLastNDays = (n: number) => {
+  const end = endOfDay(new Date());
+  const start = startOfDay(daysAgo(n - 1));
+  return { start, end };
 };
 
-/**
- * Processes stock exits to populate monthly sales data
- */
-export const processExitsForMonthlyData = (
-  stockExits: StockExit[], 
-  dataMap: Map<string, { name: string, vendas: number, compras: number }>
-): void => {
-  stockExits.forEach(exit => {
-    const date = ensureDate(exit.date);
-    const monthName = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
-    
-    if (dataMap.has(monthName)) {
-      const current = dataMap.get(monthName)!;
-      const exitTotal = exit.items.reduce((sum, item) => sum + (item.quantity * item.salePrice), 0);
-      
-      current.vendas += exitTotal;
-    }
-  });
+// Intervalo anterior com a mesma duração (para comparar)
+export const previousRangeSameLength = (start: Date, end: Date) => {
+  const ms = end.getTime() - start.getTime() + 1;
+  const prevEnd = new Date(start.getTime() - 1);
+  const prevStart = new Date(prevEnd.getTime() - (ms - 1));
+  return { start: prevStart, end: prevEnd };
 };
 
-/**
- * Processes stock entries to populate monthly purchase data
- */
-export const processEntriesForMonthlyData = (
-  stockEntries: StockEntry[],
-  dataMap: Map<string, { name: string, vendas: number, compras: number }>
-): void => {
-  stockEntries.forEach(entry => {
-    const date = ensureDate(entry.date);
-    const monthName = date.toLocaleDateString('pt-PT', { month: 'short', year: 'numeric' });
-    
-    if (dataMap.has(monthName)) {
-      const current = dataMap.get(monthName)!;
-      const entryTotal = entry.items.reduce((sum, item) => sum + (item.quantity * item.purchasePrice), 0);
-      
-      current.compras += entryTotal;
-    }
-  });
+// Intervalo do mês atual
+export const monthRange = (ref: Date) => {
+  const start = new Date(ref.getFullYear(), ref.getMonth(), 1, 0, 0, 0, 0);
+  const end = new Date(ref.getFullYear(), ref.getMonth() + 1, 0, 23, 59, 59, 999);
+  return { start, end };
+};
+
+// Intervalo do mês anterior
+export const previousMonthRange = (ref: Date) => {
+  const start = new Date(ref.getFullYear(), ref.getMonth() - 1, 1, 0, 0, 0, 0);
+  const end = new Date(ref.getFullYear(), ref.getMonth(), 0, 23, 59, 59, 999);
+  return { start, end };
 };
