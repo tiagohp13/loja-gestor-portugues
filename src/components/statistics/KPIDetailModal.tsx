@@ -12,7 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Pencil, X, Info, Sigma } from "lucide-react";
 import { KPI } from "./KPIPanel";
 import { formatCurrency } from "@/utils/formatting";
-import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts"; // 👈 mini gráfico de tendência
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 
 interface KPIDetailModalProps {
   kpi: KPI | null;
@@ -30,6 +30,15 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
     if (kpi.unit === "€") return formatCurrency(value);
     return value.toFixed(2);
   };
+
+  // 👇 Cria dados do gráfico com fallback suave entre previousValue e value
+  const chartData =
+    Array.isArray((kpi as any).history) && (kpi as any).history.length > 0
+      ? (kpi as any).history
+      : [
+          { name: "Mês Anterior", value: kpi.previousValue ?? kpi.value * 0.9 },
+          { name: "Atual", value: kpi.value },
+        ];
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -59,7 +68,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <DialogDescription className="text-sm text-gray-500 mt-1">{kpi.description}</DialogDescription>
           )}
 
-          {/* 👇 Fórmula apenas, sem o texto “Como é calculado” */}
+          {/* Fórmula pura */}
           {kpi.formula && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
               <Sigma className="h-4 w-4 text-gray-500" />
@@ -68,25 +77,30 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           )}
         </DialogHeader>
 
-        {/* 👇 Mini gráfico de tendência (opcional) */}
-        {Array.isArray((kpi as any).history) && (kpi as any).history.length > 0 && (
-          <div className="h-20 mb-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={(kpi as any).history}>
-                <Tooltip
-                  formatter={(value: number) => renderValue(value)}
-                  contentStyle={{
-                    backgroundColor: "white",
-                    border: "1px solid #ddd",
-                    borderRadius: "6px",
-                    fontSize: "0.75rem",
-                  }}
-                />
-                <Line type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={2} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
+        {/* 👇 Mini gráfico de tendência - aparece sempre */}
+        <div className="h-20 mb-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <Tooltip
+                formatter={(value: number) => renderValue(value)}
+                contentStyle={{
+                  backgroundColor: "white",
+                  border: "1px solid #ddd",
+                  borderRadius: "6px",
+                  fontSize: "0.75rem",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="#0ea5e9"
+                strokeWidth={2}
+                dot={false}
+                isAnimationActive={true}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
 
         <div className="space-y-3">
           <div className="flex justify-between">
