@@ -9,10 +9,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Pencil, X, Info, TrendingUp, TrendingDown, Sigma } from "lucide-react";
+import { Pencil, X, Info, Sigma } from "lucide-react";
 import { KPI } from "./KPIPanel";
 import { formatCurrency } from "@/utils/formatting";
-import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts"; // <- opcional, se quiseres o mini gráfico
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts"; // 👈 mini gráfico de tendência
 
 interface KPIDetailModalProps {
   kpi: KPI | null;
@@ -24,13 +24,6 @@ interface KPIDetailModalProps {
 
 const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, onEdit, canEdit = false }) => {
   if (!kpi) return null;
-
-  const getIcon = () => {
-    if (kpi.name.toLowerCase().includes("lucro")) return <TrendingUp className="h-5 w-5 text-emerald-600" />;
-    if (kpi.name.toLowerCase().includes("gasto")) return <TrendingDown className="h-5 w-5 text-rose-600" />;
-    if (kpi.name.toLowerCase().includes("venda")) return <TrendingUp className="h-5 w-5 text-blue-500" />;
-    return <Info className="h-5 w-5 text-gray-500" />;
-  };
 
   const renderValue = (value: number) => {
     if (kpi.isPercentage) return `${value.toFixed(2)}%`;
@@ -44,7 +37,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
         <DialogHeader className="relative pb-3">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
-              {getIcon()}
+              <Info className="h-5 w-5 text-gray-500" />
               <DialogTitle className="text-lg font-semibold">{kpi.name}</DialogTitle>
             </div>
 
@@ -66,24 +59,30 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <DialogDescription className="text-sm text-gray-500 mt-1">{kpi.description}</DialogDescription>
           )}
 
-          {/* 👇 Nova secção: fórmula logo abaixo da descrição */}
+          {/* 👇 Fórmula apenas, sem o texto “Como é calculado” */}
           {kpi.formula && (
-            <div className="mt-3 flex items-center gap-2 text-sm text-gray-600">
+            <div className="mt-2 flex items-center gap-2 text-sm text-gray-700">
               <Sigma className="h-4 w-4 text-gray-500" />
-              <span>
-                <strong>Como é calculado:</strong> {kpi.formula}
-              </span>
+              <span>{kpi.formula}</span>
             </div>
           )}
         </DialogHeader>
 
-        {/* Mini gráfico de tendência (opcional) */}
+        {/* 👇 Mini gráfico de tendência (opcional) */}
         {Array.isArray((kpi as any).history) && (kpi as any).history.length > 0 && (
-          <div className="h-24 mb-4">
+          <div className="h-20 mb-4">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={(kpi as any).history}>
-                <Tooltip formatter={(value: number) => renderValue(value)} />
-                <Line type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} dot={false} />
+                <Tooltip
+                  formatter={(value: number) => renderValue(value)}
+                  contentStyle={{
+                    backgroundColor: "white",
+                    border: "1px solid #ddd",
+                    borderRadius: "6px",
+                    fontSize: "0.75rem",
+                  }}
+                />
+                <Line type="monotone" dataKey="value" stroke="#0ea5e9" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -100,23 +99,10 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
             <span className="font-semibold text-gray-900">{renderValue(kpi.target)}</span>
           </div>
 
-          <Separator className="my-2" />
-
-          {kpi.delta30dPct !== undefined && (
+          {kpi.previousValue !== undefined && (
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">📅 Últimos 30 dias</span>
-              <span className={`font-semibold ${kpi.delta30dPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                {kpi.delta30dPct >= 0 ? "▲" : "▼"} {Math.abs(kpi.delta30dPct).toFixed(2)}%
-              </span>
-            </div>
-          )}
-
-          {kpi.deltaMoMPct !== undefined && (
-            <div className="flex justify-between">
-              <span className="text-sm text-gray-600">📆 Mês vs Mês</span>
-              <span className={`font-semibold ${kpi.deltaMoMPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                {kpi.deltaMoMPct >= 0 ? "▲" : "▼"} {Math.abs(kpi.deltaMoMPct).toFixed(2)}%
-              </span>
+              <span className="text-sm text-gray-600">Mês Anterior</span>
+              <span className="font-semibold text-gray-900">{renderValue(kpi.previousValue)}</span>
             </div>
           )}
 
