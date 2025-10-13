@@ -85,10 +85,9 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
         }`}
         onClick={onClick}
       >
-        {/* 🔹 estrutura interna com layout consistente */}
         <CardContent className="p-4 h-full flex flex-col justify-between">
-          {/* Cabeçalho (título + tooltip) */}
-          <div>
+          {/* Cabeçalho com altura fixa */}
+          <div className="min-h-[72px]">
             <div className="text-sm font-medium flex items-center gap-2 mb-1">
               {getKPIIcon()}
               {kpi.name}
@@ -107,12 +106,11 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
                 </TooltipContent>
               </Tooltip>
             </div>
-
-            <p className="text-sm text-gray-500 leading-snug mb-3">{kpi.description}</p>
+            <p className="text-sm text-gray-500 leading-snug">{kpi.description}</p>
           </div>
 
-          {/* Valor principal (sempre alinhado pela base) */}
-          <div className="flex flex-col justify-end mt-auto">
+          {/* Valor + meta com altura controlada */}
+          <div className="flex flex-col justify-end min-h-[80px] mt-2">
             <div className="flex items-center justify-between">
               <div className="text-2xl font-semibold text-gray-900 leading-none">
                 {kpi.unit === "€" && !kpi.isPercentage && "€ "}
@@ -121,22 +119,16 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
               </div>
               {getTrendIcon()}
             </div>
-
             <p className="text-sm text-gray-500 mt-1">
               Meta: <span className="font-medium text-gray-700">{formatValue(kpi.target)}</span>
             </p>
+          </div>
 
-            {/* Barra de progresso */}
-            <div className="mt-2">
-              <div className="flex items-center justify-between text-xs mb-1">
-                <span>{Math.round(progress)}%</span>
-              </div>
-              <Progress value={progress} className={`h-2 ${belowTarget ? "bg-rose-100" : "bg-gray-100"}`} />
-            </div>
-
-            {/* Alerta */}
+          {/* Progress bar e alerta */}
+          <div className="mt-3">
+            <Progress value={progress} className="h-2 bg-gray-100" />
             {belowTarget && (
-              <Alert className="mt-3 py-2 bg-rose-50 border-rose-200">
+              <Alert className="mt-2 py-2 bg-rose-50 border-rose-200">
                 <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />
                 <AlertDescription className="text-xs text-rose-700">{getAlertMessage()}</AlertDescription>
               </Alert>
