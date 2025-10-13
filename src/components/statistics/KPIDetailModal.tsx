@@ -1,149 +1,127 @@
-import React from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Pencil, TrendingUp, TrendingDown, X } from 'lucide-react';
-import { KPI } from '@/components/statistics/KPIPanel';
-import { formatCurrency, formatPercentage } from '@/utils/formatting';
+import React from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Pencil, X, TrendingUp, TrendingDown, Info } from "lucide-react";
+import { formatCurrency } from "@/utils/formatting";
+import { KPI } from "./KPIPanel";
 
 interface KPIDetailModalProps {
   kpi: KPI | null;
   isOpen: boolean;
   onClose: () => void;
-  onEdit: () => void;
-  canEdit: boolean;
+  onEdit?: () => void;
+  canEdit?: boolean;
 }
 
-const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ 
-  kpi, 
-  isOpen, 
-  onClose, 
-  onEdit,
-  canEdit 
-}) => {
+const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, onEdit, canEdit = false }) => {
   if (!kpi) return null;
 
-  const formatValue = (value: number) => {
-    if (isNaN(value) || value === undefined || value === null) {
-      return kpi.isPercentage ? "0,00%" : "0";
-    }
-    if (kpi.isPercentage) return formatPercentage(value);
-    if (kpi.unit === '€') return formatCurrency(value);
-    return value.toLocaleString();
+  // Define ícone conforme o KPI
+  const getIcon = () => {
+    if (kpi.name.toLowerCase().includes("lucro")) return <TrendingUp className="h-5 w-5 text-emerald-600" />;
+    if (kpi.name.toLowerCase().includes("gasto")) return <TrendingDown className="h-5 w-5 text-rose-600" />;
+    if (kpi.name.toLowerCase().includes("venda")) return <TrendingUp className="h-5 w-5 text-blue-500" />;
+    return <Info className="h-5 w-5 text-gray-500" />;
   };
 
-  const isAboveTarget = kpi.isInverseKPI 
-    ? kpi.value <= kpi.target 
-    : kpi.value >= kpi.target;
-
-  const getDeltaDisplay = (delta: number | undefined) => {
-    if (delta === undefined || isNaN(delta)) return null;
-    
-    const isPositive = delta >= 0;
-    const Icon = isPositive ? TrendingUp : TrendingDown;
-    const colorClass = isPositive ? 'text-emerald-600' : 'text-rose-600';
-    
-    return (
-      <div className={`flex items-center gap-1 ${colorClass}`}>
-        <Icon className="h-4 w-4" />
-        <span className="font-semibold">{isPositive ? '+' : ''}{delta.toFixed(1)}%</span>
-      </div>
-    );
+  const renderValue = (value: number) => {
+    if (kpi.isPercentage) return `${value.toFixed(2)}%`;
+    if (kpi.unit === "€") return formatCurrency(value);
+    return value.toFixed(2);
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-start justify-between space-y-0 pb-4">
-          <div className="flex-1">
-            <DialogTitle className="text-2xl font-bold">{kpi.name}</DialogTitle>
-            <p className="text-sm text-muted-foreground mt-1">{kpi.description}</p>
+      <DialogContent className="max-w-md rounded-xl shadow-lg border border-gray-100">
+        <DialogHeader className="relative pb-4">
+          <div className="flex justify-between items-start">
+            <div className="flex items-center gap-2">
+              {getIcon()}
+              <DialogTitle className="text-lg font-semibold">{kpi.name}</DialogTitle>
+            </div>
+
+            <div className="flex gap-1">
+              {canEdit && (
+                <Button variant="ghost" size="icon" onClick={onEdit} title="Editar meta" className="hover:bg-gray-100">
+                  <Pencil className="h-4 w-4 text-gray-500" />
+                </Button>
+              )}
+              <DialogClose asChild>
+                <Button variant="ghost" size="icon" title="Fechar" className="hover:bg-gray-100">
+                  <X className="h-4 w-4 text-gray-500" />
+                </Button>
+              </DialogClose>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            {canEdit && (
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={onEdit}
-                className="h-8 w-8"
-              >
-                <Pencil className="h-4 w-4" />
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+
+          {kpi.description && (
+            <DialogDescription className="text-sm text-gray-500">{kpi.description}</DialogDescription>
+          )}
         </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Valor Atual */}
-          <div className="bg-muted/30 rounded-lg p-4">
-            <p className="text-sm text-muted-foreground mb-1">Valor Atual</p>
-            <p className="text-3xl font-bold">{formatValue(kpi.value)}</p>
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-sm text-gray-600">Valor Atual</span>
+            <span className="font-semibold text-gray-900">{renderValue(kpi.value)}</span>
           </div>
 
-          {/* Meta e Estado */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Meta</p>
-              <p className="text-xl font-semibold">{formatValue(kpi.target)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Estado</p>
-              <p className={`text-sm font-medium ${
-                isAboveTarget ? 'text-emerald-600' : 'text-rose-600'
-              }`}>
-                {isAboveTarget ? '✓ Acima da meta' : '⚠ Abaixo da meta'}
-              </p>
-            </div>
+          <div className="flex justify-between">
+            <span className="text-sm text-gray-600">Meta</span>
+            <span className="font-semibold text-gray-900">{renderValue(kpi.target)}</span>
           </div>
 
-          {/* Variações Percentuais */}
-          {(kpi.delta30dPct !== undefined || kpi.deltaMoMPct !== undefined) && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-sm">Variações</h3>
-              
-              {kpi.delta30dPct !== undefined && (
-                <div className="bg-muted/20 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">📅 Últimos 30 dias</span>
-                    {getDeltaDisplay(kpi.delta30dPct)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Nos últimos 30 dias: <strong>{kpi.delta30dPct >= 0 ? '+' : ''}{kpi.delta30dPct.toFixed(1)}%</strong> comparado com os 30 dias anteriores.
-                  </p>
-                </div>
-              )}
-
-              {kpi.deltaMoMPct !== undefined && (
-                <div className="bg-muted/20 rounded-lg p-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">📆 Mês vs Mês</span>
-                    {getDeltaDisplay(kpi.deltaMoMPct)}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Variação Mês a Mês: <strong>{kpi.deltaMoMPct >= 0 ? '+' : ''}{kpi.deltaMoMPct.toFixed(1)}%</strong> em relação ao mês anterior.
-                  </p>
-                </div>
-              )}
+          {kpi.previousValue !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Valor Anterior</span>
+              <span className="font-semibold text-gray-900">{renderValue(kpi.previousValue)}</span>
             </div>
           )}
 
-          {/* Fórmula */}
-          <div>
-            <p className="text-sm font-medium text-muted-foreground mb-1">Fórmula de Cálculo</p>
-            <p className="text-sm bg-muted/20 rounded p-2 font-mono">{kpi.formula}</p>
-          </div>
+          <Separator className="my-2" />
 
-          {/* Tooltip adicional */}
+          {kpi.delta30dPct !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">📅 Últimos 30 dias</span>
+              <span className={`font-semibold ${kpi.delta30dPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                {kpi.delta30dPct >= 0 ? "▲" : "▼"} {Math.abs(kpi.delta30dPct).toFixed(2)}%
+              </span>
+            </div>
+          )}
+
+          {kpi.deltaMoMPct !== undefined && (
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">📆 Mês vs Mês</span>
+              <span className={`font-semibold ${kpi.deltaMoMPct >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                {kpi.deltaMoMPct >= 0 ? "▲" : "▼"} {Math.abs(kpi.deltaMoMPct).toFixed(2)}%
+              </span>
+            </div>
+          )}
+
+          <Separator className="my-2" />
+
+          {kpi.formula && (
+            <div className="text-sm text-gray-600">
+              <strong>Fórmula:</strong> {kpi.formula}
+            </div>
+          )}
+
           {kpi.tooltip && (
-            <div className="border-l-4 border-primary pl-4">
-              <p className="text-sm text-muted-foreground">{kpi.tooltip}</p>
+            <div className="text-sm text-gray-600">
+              <strong>Observações:</strong> {kpi.tooltip}
+            </div>
+          )}
+
+          {kpi.belowTarget !== undefined && (
+            <div className={`text-sm font-medium ${kpi.belowTarget ? "text-rose-600" : "text-emerald-600"}`}>
+              {kpi.belowTarget ? "Abaixo da meta" : "Acima da meta"}
             </div>
           )}
         </div>
