@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Expense, Supplier, ExpenseItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,21 +218,33 @@ const ExpenseEdit = () => {
     return (
       <div className="p-6">
         <PageHeader title="Despesa não encontrada" description="A despesa solicitada não foi encontrada" />
+        <div className="flex justify-center mt-8">
+          <Button onClick={() => navigate("/despesas/historico")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar ao Histórico
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="p-6 space-y-6">
-      {/* Cabeçalho sem botão “Voltar” */}
-      <div>
-        <h1 className="text-2xl font-bold">Editar Despesa {expense.number}</h1>
-        <p className="text-muted-foreground">Atualize os dados da despesa</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate(`/despesas/${id}`)}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Voltar
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Editar Despesa {expense.number}</h1>
+            <p className="text-muted-foreground">Atualize os dados da despesa</p>
+          </div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Coluna principal */}
           <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
@@ -278,7 +290,6 @@ const ExpenseEdit = () => {
               </CardContent>
             </Card>
 
-            {/* Itens */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -316,7 +327,7 @@ const ExpenseEdit = () => {
                         <Label>Preço Unit.</Label>
                         <Input
                           type="number"
-                          step="0.01"
+                          step="1"
                           value={item.unitPrice}
                           onChange={(e) => updateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
                           min="0"
@@ -351,7 +362,6 @@ const ExpenseEdit = () => {
             </Card>
           </div>
 
-          {/* Coluna lateral direita */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -362,24 +372,12 @@ const ExpenseEdit = () => {
               </CardContent>
             </Card>
 
-            {/* Ações: Guardar e Cancelar */}
             <Card>
               <CardContent className="pt-6">
-                <div className="space-y-4">
-                  <Button type="submit" className="w-full" disabled={isSaving}>
-                    <Save className="w-4 h-4 mr-2" />
-                    {isSaving ? "A guardar..." : "Guardar Despesa"}
-                  </Button>
-
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => navigate(`/despesas/${id}`)}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
+                <Button type="submit" className="w-full" disabled={isSaving}>
+                  <Save className="w-4 h-4 mr-2" />
+                  {isSaving ? "A guardar..." : "Guardar Alterações"}
+                </Button>
               </CardContent>
             </Card>
           </div>
