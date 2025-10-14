@@ -56,8 +56,8 @@ const ProductTableRow = ({
       <TableCell className="font-medium">{formatCurrency(product.salePrice)}</TableCell>
 
       {/* Coluna de ações alinhada */}
-      <TableCell className="text-right w-[210px] pr-6" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-end items-center gap-1.5">
+      <TableCell className="text-right w-[210px] pr-6 align-middle" onClick={(e) => e.stopPropagation()}>
+        <div className="flex justify-end items-center space-x-1.5 h-full">
           {/* Botão Histórico */}
           <Button
             variant="ghost"
