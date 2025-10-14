@@ -27,7 +27,7 @@ interface StockExitFormData {
 const StockExitEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { products } = useData(); // ✅ Lista de produtos
+  const { products } = useData();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StockExitFormData>({
     clientId: "",
@@ -160,14 +160,16 @@ const StockExitEdit = () => {
 
       if (exitError) throw exitError;
 
+      // Apagar os itens antigos antes de inserir os novos
       await supabase.from("stock_exit_items").delete().eq("exit_id", id);
 
+      // Inserir os novos itens com o nome correto da coluna sale_price
       const itemsToInsert = formData.items.map((item) => ({
         exit_id: id,
         product_id: item.productId,
         product_name: item.productName,
         quantity: item.quantity,
-        salePrice: item.salePrice, // ✅ camelCase
+        sale_price: item.salePrice, // ✅ nome correto no Supabase
         discount_percent: item.discountPercent,
       }));
 
