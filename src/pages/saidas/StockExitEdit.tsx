@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { StockExitItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/ui/PageHeader";
+import { useData } from "@/contexts/DataContext";
 
 interface StockExitFormData {
   clientId: string;
@@ -26,6 +27,7 @@ interface StockExitFormData {
 const StockExitEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { products } = useData(); // ✅ Lista de produtos disponível
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StockExitFormData>({
     clientId: "",
@@ -301,13 +303,28 @@ const StockExitEdit = () => {
                     return (
                       <TableRow key={index}>
                         <TableCell>
-                          <Input
-                            value={item.productName}
-                            onChange={(e) => updateItem(index, "productName", e.target.value)}
-                            placeholder="Nome do produto"
+                          <select
+                            value={item.productId}
+                            onChange={(e) => {
+                              const selectedProduct = products.find((p) => p.id === e.target.value);
+                              if (selectedProduct) {
+                                updateItem(index, "productId", selectedProduct.id);
+                                updateItem(index, "productName", selectedProduct.name);
+                                updateItem(index, "salePrice", selectedProduct.sale_price || 0);
+                              }
+                            }}
+                            className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
                             required
-                          />
+                          >
+                            <option value="">Selecione um produto...</option>
+                            {products.map((product) => (
+                              <option key={product.id} value={product.id}>
+                                {product.name}
+                              </option>
+                            ))}
+                          </select>
                         </TableCell>
+
                         <TableCell>
                           <Input
                             type="number"
