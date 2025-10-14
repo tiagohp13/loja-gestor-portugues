@@ -167,7 +167,7 @@ const StockExitEdit = () => {
         product_id: item.productId,
         product_name: item.productName,
         quantity: item.quantity,
-        sale_price: item.salePrice,
+        salePrice: item.salePrice,
         discount_percent: item.discountPercent,
       }));
 
@@ -312,7 +312,7 @@ const StockExitEdit = () => {
                               if (selectedProduct) {
                                 updateItem(index, "productId", String(selectedProduct.id));
                                 updateItem(index, "productName", selectedProduct.name);
-                                updateItem(index, "salePrice", selectedProduct.sale_price || 0);
+                                updateItem(index, "salePrice", selectedProduct.salePrice || 0);
                               } else {
                                 updateItem(index, "productId", "");
                                 updateItem(index, "productName", "");
