@@ -51,7 +51,7 @@ const StockEntryNew = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <div className="flex flex-col space-y-1">
-          <h1 className="text-2xl font-bold">Nova Entrada</h1>
+          <h1 className="text-2xl font-bold">Nova Compra</h1>
           <p className="text-gray-500">Registar uma nova entrada no inventário</p>
         </div>
       </div>
@@ -74,7 +74,7 @@ const StockEntryNew = () => {
           ) : (
             <>
               <Save className="h-4 w-4" />
-              Guardar Entrada
+              Guardar Compra
             </>
           )}
         </Button>
