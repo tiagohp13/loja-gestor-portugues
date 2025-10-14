@@ -1,6 +1,7 @@
-import React, { memo, useMemo } from 'react';
+import React, { memo, useMemo, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/utils/formatting';
+import KpiDetailModal from './KpiDetailModal';
 
 interface KpiDelta {
   pct30d?: number;
@@ -26,72 +27,89 @@ const DashboardMetrics = memo(({
     margin?: KpiDelta;
   };
 }) => {
+  const [selectedKpi, setSelectedKpi] = useState<{
+    title: string;
+    value: string;
+    delta30d?: number;
+    deltaMoM?: number;
+    description?: string;
+  } | null>(null);
+
   const metricsData = useMemo(() => [
     {
       title: 'Total de Vendas',
       value: formatCurrency(totalSales),
       color: 'text-green-600',
-      delta: deltas?.sales
+      delta: deltas?.sales,
+      description: 'Soma total de todas as vendas registadas no sistema'
     },
     {
       title: 'Total Gasto',
       value: formatCurrency(totalSpent),
       color: 'text-red-600',
-      delta: deltas?.spent
+      delta: deltas?.spent,
+      description: 'Soma total de compras e despesas registadas'
     },
     {
       title: 'Lucro',
       value: formatCurrency(profit),
       color: profit >= 0 ? 'text-green-600' : 'text-red-600',
-      delta: deltas?.profit
+      delta: deltas?.profit,
+      description: 'Diferença entre o total de vendas e o total gasto'
     },
     {
       title: 'Margem de Lucro',
       value: `${profitMargin.toFixed(1)}%`,
       color: profitMargin >= 0 ? 'text-green-600' : 'text-red-600',
-      delta: deltas?.margin
+      delta: deltas?.margin,
+      description: 'Percentagem de lucro em relação às vendas totais'
     }
   ], [totalSales, totalSpent, profit, profitMargin, deltas]);
 
+  const handleCardClick = (metric: typeof metricsData[0]) => {
+    setSelectedKpi({
+      title: metric.title,
+      value: metric.value,
+      delta30d: metric.delta?.pct30d,
+      deltaMoM: metric.delta?.pctMoM,
+      description: metric.description
+    });
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {metricsData.map((metric, index) => (
-        <Card key={index} className="animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              {metric.title}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className={`text-2xl font-bold ${metric.color}`}>
-              {metric.value}
-            </div>
-            {metric.delta && (metric.delta.pct30d !== undefined || metric.delta.pctMoM !== undefined) && (
-              <div className="flex items-center gap-2 mt-2 flex-wrap">
-                {metric.delta.pct30d !== undefined && (
-                  <span className={`text-xs px-2 py-1 rounded-md font-medium ${
-                    metric.delta.pct30d >= 0 
-                      ? 'bg-emerald-100 text-emerald-700' 
-                      : 'bg-rose-100 text-rose-700'
-                  }`}>
-                    30d: {metric.delta.pct30d >= 0 ? '+' : ''}{metric.delta.pct30d.toFixed(1)}%
-                  </span>
-                )}
-                {metric.delta.pctMoM !== undefined && (
-                  <span className={`text-xs px-2 py-1 rounded-md font-medium ${
-                    metric.delta.pctMoM >= 0 
-                      ? 'bg-emerald-100 text-emerald-700' 
-                      : 'bg-rose-100 text-rose-700'
-                  }`}>
-                    M/M: {metric.delta.pctMoM >= 0 ? '+' : ''}{metric.delta.pctMoM.toFixed(1)}%
-                  </span>
-                )}
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {metricsData.map((metric, index) => (
+          <Card 
+            key={index} 
+            className="animate-fade-in cursor-pointer hover:shadow-lg hover:border-gray-300 transition-all" 
+            style={{ animationDelay: `${index * 0.1}s` }}
+            onClick={() => handleCardClick(metric)}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                {metric.title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className={`text-2xl font-bold ${metric.color}`}>
+                {metric.value}
               </div>
-            )}
-          </CardContent>
-        </Card>
-      ))}
-    </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <KpiDetailModal
+        isOpen={!!selectedKpi}
+        onClose={() => setSelectedKpi(null)}
+        title={selectedKpi?.title || ''}
+        value={selectedKpi?.value || ''}
+        delta30d={selectedKpi?.delta30d}
+        deltaMoM={selectedKpi?.deltaMoM}
+        description={selectedKpi?.description}
+      />
+    </>
   );
 });
 
