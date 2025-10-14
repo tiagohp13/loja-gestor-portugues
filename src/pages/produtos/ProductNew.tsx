@@ -175,7 +175,7 @@ const ProductNew = () => {
                 id="purchasePrice"
                 type="number"
                 min="0"
-                step="0.01"
+                step="1"
                 value={purchasePrice}
                 onChange={(e) => setPurchasePrice(Number(e.target.value))}
                 placeholder="0.00"
@@ -191,7 +191,7 @@ const ProductNew = () => {
                 id="salePrice"
                 type="number"
                 min="0"
-                step="0.01"
+                step="1"
                 value={salePrice}
                 onChange={(e) => setSalePrice(Number(e.target.value))}
                 placeholder="0.00"
