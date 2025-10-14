@@ -72,7 +72,7 @@ const StockExitEdit = () => {
             productId: String(item.product_id || ""),
             productName: item.product_name,
             quantity: Number(item.quantity) || 0,
-            salePrice: Number(item.sale_price) || 0,
+            salePrice: Number(item.salePrice) || 0,
             discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
             createdAt: item.created_at,
             updatedAt: item.updated_at,
