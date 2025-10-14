@@ -72,7 +72,7 @@ const StockExitEdit = () => {
             productId: String(item.product_id || ""),
             productName: item.product_name,
             quantity: Number(item.quantity) || 0,
-            salePrice: Number(item.salePrice) || 0,
+            salePrice: Number(item.salePrice || item.sale_price || 0), // ✅ mantém camelCase no state
             discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
             createdAt: item.created_at,
             updatedAt: item.updated_at,
@@ -167,7 +167,7 @@ const StockExitEdit = () => {
         product_id: item.productId,
         product_name: item.productName,
         quantity: item.quantity,
-        salePrice: item.salePrice,
+        salePrice: item.salePrice, // ✅ camelCase
         discount_percent: item.discountPercent,
       }));
 
@@ -304,19 +304,29 @@ const StockExitEdit = () => {
                       <TableRow key={index}>
                         <TableCell>
                           <select
-                            value={String(item.productId || "")}
+                            value={item.productId || ""}
                             onChange={(e) => {
                               const selectedId = e.target.value;
                               const selectedProduct = products.find((p) => String(p.id) === selectedId);
 
-                              if (selectedProduct) {
-                                updateItem(index, "productId", String(selectedProduct.id));
-                                updateItem(index, "productName", selectedProduct.name);
-                                updateItem(index, "salePrice", selectedProduct.salePrice || 0);
-                              } else {
-                                updateItem(index, "productId", "");
-                                updateItem(index, "productName", "");
-                              }
+                              setFormData((prev) => {
+                                const updatedItems = [...prev.items];
+                                if (selectedProduct) {
+                                  updatedItems[index] = {
+                                    ...updatedItems[index],
+                                    productId: String(selectedProduct.id),
+                                    productName: selectedProduct.name,
+                                    salePrice: selectedProduct.salePrice || 0,
+                                  };
+                                } else {
+                                  updatedItems[index] = {
+                                    ...updatedItems[index],
+                                    productId: "",
+                                    productName: "",
+                                  };
+                                }
+                                return { ...prev, items: updatedItems };
+                              });
                             }}
                             className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
                             required
