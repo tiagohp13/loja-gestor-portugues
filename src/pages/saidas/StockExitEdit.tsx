@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2, Save, ArrowLeft } from 'lucide-react';
-import { toast } from 'sonner';
-import { StockExitItem } from '@/types';
-import { supabase } from '@/integrations/supabase/client';
-import PageHeader from '@/components/ui/PageHeader';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Trash2, Save, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { StockExitItem } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface StockExitFormData {
   clientId: string;
@@ -28,67 +28,58 @@ const StockExitEdit = () => {
   const { id } = useParams<{ id: string }>();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StockExitFormData>({
-    clientId: '',
-    clientName: '',
-    date: new Date().toISOString().split('T')[0],
-    invoiceNumber: '',
-    notes: '',
+    clientId: "",
+    clientName: "",
+    date: new Date().toISOString().split("T")[0],
+    invoiceNumber: "",
+    notes: "",
     fromOrderId: undefined,
     fromOrderNumber: undefined,
-    items: []
+    items: [],
   });
 
   useEffect(() => {
-    if (id) {
-      fetchStockExit(id);
-    }
+    if (id) fetchStockExit(id);
   }, [id]);
 
   const fetchStockExit = async (exitId: string) => {
     try {
       setIsLoading(true);
-      const { data: exitData, error: exitError } = await supabase
-        .from('stock_exits')
-        .select(`
-          *,
-          stock_exit_items(*)
-        `)
-        .eq('id', exitId)
+      const { data: exitData, error } = await supabase
+        .from("stock_exits")
+        .select(`*, stock_exit_items(*)`)
+        .eq("id", exitId)
         .single();
-  
-      if (exitError) {
-        throw exitError;
-      }
-  
+
+      if (error) throw error;
+
       if (exitData) {
-        // Converter data para formato YYYY-MM-DD para o input type="date"
         const dateObj = new Date(exitData.date);
-        const formattedDate = dateObj.toISOString().split('T')[0];
-        
-        const formattedExit: StockExitFormData = {
-          clientId: exitData.client_id || '',
-          clientName: exitData.client_name || '',
+        const formattedDate = dateObj.toISOString().split("T")[0];
+
+        setFormData({
+          clientId: exitData.client_id || "",
+          clientName: exitData.client_name || "",
           date: formattedDate,
-          invoiceNumber: exitData.invoice_number || '',
-          notes: exitData.notes || '',
+          invoiceNumber: exitData.invoice_number || "",
+          notes: exitData.notes || "",
           fromOrderId: exitData.from_order_id,
           fromOrderNumber: exitData.from_order_number,
           items: (exitData.stock_exit_items || []).map((item: any) => ({
             id: item.id,
-            productId: item.product_id || '',
+            productId: item.product_id || "",
             productName: item.product_name,
             quantity: Number(item.quantity) || 0,
             salePrice: Number(item.sale_price) || 0,
             discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
             createdAt: item.created_at,
-            updatedAt: item.updated_at
-          }))
-        };
-        setFormData(formattedExit);
+            updatedAt: item.updated_at,
+          })),
+        });
       }
     } catch (error) {
-      console.error('Error fetching stock exit:', error);
-      toast.error('Erro ao carregar saída de stock');
+      console.error("Error fetching stock exit:", error);
+      toast.error("Erro ao carregar saída de stock");
     } finally {
       setIsLoading(false);
     }
@@ -97,72 +88,63 @@ const StockExitEdit = () => {
   const addItem = () => {
     const newItem: StockExitItem = {
       id: crypto.randomUUID(),
-      productId: '',
-      productName: '',
+      productId: "",
+      productName: "",
       quantity: 1,
       salePrice: 0,
       discountPercent: 0,
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
-    setFormData(prev => ({
-      ...prev,
-      items: [...prev.items, newItem]
-    }));
+    setFormData((prev) => ({ ...prev, items: [...prev.items, newItem] }));
   };
 
   const removeItem = (index: number) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      items: prev.items.filter((_, i) => i !== index)
+      items: prev.items.filter((_, i) => i !== index),
     }));
   };
 
-  const updateItem = (index: number, field: keyof Omit<StockExitItem, 'id' | 'createdAt' | 'updatedAt'>, value: string | number) => {
+  const updateItem = (
+    index: number,
+    field: keyof Omit<StockExitItem, "id" | "createdAt" | "updatedAt">,
+    value: string | number,
+  ) => {
     const updatedItems = [...formData.items];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: value
-    };
-    setFormData({
-      ...formData,
-      items: updatedItems
-    });
+    updatedItems[index] = { ...updatedItems[index], [field]: value };
+    setFormData({ ...formData, items: updatedItems });
   };
 
   const calculateTotal = () => {
     return formData.items.reduce((sum, item) => {
       const itemTotal = item.quantity * item.salePrice;
-      const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
-      return sum + (itemTotal - discountAmount);
+      const discount = itemTotal * ((item.discountPercent || 0) / 100);
+      return sum + (itemTotal - discount);
     }, 0);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.clientId) {
-      toast.error('Por favor selecione um cliente');
+      toast.error("Por favor selecione um cliente");
       return;
     }
-
     if (formData.items.length === 0) {
-      toast.error('Por favor adicione pelo menos um item');
+      toast.error("Por favor adicione pelo menos um item");
       return;
     }
-
-    if (formData.items.some(item => !item.productName.trim())) {
-      toast.error('Por favor preencha o nome de todos os produtos');
+    if (formData.items.some((item) => !item.productName.trim())) {
+      toast.error("Por favor preencha o nome de todos os produtos");
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // Update stock exit
       const { error: exitError } = await supabase
-        .from('stock_exits')
+        .from("stock_exits")
         .update({
           client_id: formData.clientId,
           client_name: formData.clientName,
@@ -170,58 +152,66 @@ const StockExitEdit = () => {
           invoice_number: formData.invoiceNumber,
           notes: formData.notes,
           from_order_id: formData.fromOrderId,
-          from_order_number: formData.fromOrderNumber
+          from_order_number: formData.fromOrderNumber,
         })
-        .eq('id', id);
+        .eq("id", id);
 
       if (exitError) throw exitError;
 
-      // Delete existing stock exit items
-      const { error: deleteItemsError } = await supabase
-        .from('stock_exit_items')
-        .delete()
-        .eq('exit_id', id);
+      await supabase.from("stock_exit_items").delete().eq("exit_id", id);
 
-      if (deleteItemsError) throw deleteItemsError;
-
-      // Create stock exit items
-      const itemsToInsert = formData.items.map(item => ({
+      const itemsToInsert = formData.items.map((item) => ({
         exit_id: id,
         product_id: item.productId,
         product_name: item.productName,
         quantity: item.quantity,
         sale_price: item.salePrice,
-        discount_percent: item.discountPercent
+        discount_percent: item.discountPercent,
       }));
 
-      const { error: itemsError } = await supabase
-        .from('stock_exit_items')
-        .insert(itemsToInsert);
+      const { error: itemsError } = await supabase.from("stock_exit_items").insert(itemsToInsert);
 
       if (itemsError) throw itemsError;
 
-      toast.success('Saída de stock atualizada com sucesso');
-      navigate('/saidas/historico');
+      toast.success("Saída de stock atualizada com sucesso");
+      navigate("/saidas/historico");
     } catch (error) {
-      console.error('Error updating stock exit:', error);
-      toast.error('Erro ao atualizar saída de stock');
+      console.error("Error updating stock exit:", error);
+      toast.error("Erro ao atualizar saída de stock");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(value);
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(value);
+
+  const handleCancel = () => navigate("/saidas/historico");
+  const handleSave = () => {
+    const form = document.querySelector("form");
+    if (form) form.requestSubmit();
   };
 
   return (
-    <div className="p-6 space-y-6">
-      <PageHeader title="Editar Saída de Stock" />
+    <div className="container mx-auto px-4 py-6">
+      <PageHeader
+        title="Editar Saída de Stock"
+        description="Atualize as informações da saída de stock"
+        actions={
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={handleCancel}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button onClick={handleSave} disabled={isLoading}>
+              <Save className="w-4 h-4 mr-2" />
+              {isLoading ? "A guardar..." : "Guardar Saída"}
+            </Button>
+          </div>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6 mt-6">
         <Card>
           <CardHeader>
             <CardTitle>Informações da Saída</CardTitle>
@@ -229,12 +219,7 @@ const StockExitEdit = () => {
           <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="client">Cliente *</Label>
-              <Input
-                id="client"
-                type="text"
-                value={formData.clientName}
-                disabled
-              />
+              <Input id="client" type="text" value={formData.clientName} disabled />
             </div>
 
             <div>
@@ -262,12 +247,7 @@ const StockExitEdit = () => {
             {formData.fromOrderNumber && (
               <div>
                 <Label htmlFor="fromOrder">Encomenda de Origem</Label>
-                <Input
-                  id="fromOrder"
-                  type="text"
-                  value={formData.fromOrderNumber}
-                  disabled
-                />
+                <Input id="fromOrder" type="text" value={formData.fromOrderNumber} disabled />
               </div>
             )}
 
@@ -317,16 +297,13 @@ const StockExitEdit = () => {
                 </TableHeader>
                 <TableBody>
                   {formData.items.map((item, index) => {
-                    const itemTotal = item.quantity * item.salePrice;
-                    const discountAmount = itemTotal * ((item.discountPercent || 0) / 100);
-                    const subtotal = itemTotal - discountAmount;
-
+                    const subtotal = item.quantity * item.salePrice * (1 - (item.discountPercent || 0) / 100);
                     return (
                       <TableRow key={index}>
                         <TableCell>
                           <Input
                             value={item.productName}
-                            onChange={(e) => updateItem(index, 'productName', e.target.value)}
+                            onChange={(e) => updateItem(index, "productName", e.target.value)}
                             placeholder="Nome do produto"
                             required
                           />
@@ -335,8 +312,9 @@ const StockExitEdit = () => {
                           <Input
                             type="number"
                             min="1"
+                            step="1"
                             value={item.quantity}
-                            onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                            onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 1)}
                             className="w-20"
                           />
                         </TableCell>
@@ -346,7 +324,7 @@ const StockExitEdit = () => {
                             min="0"
                             step="0.01"
                             value={item.salePrice}
-                            onChange={(e) => updateItem(index, 'salePrice', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => updateItem(index, "salePrice", parseFloat(e.target.value) || 0)}
                             className="w-24"
                           />
                         </TableCell>
@@ -357,20 +335,13 @@ const StockExitEdit = () => {
                             max="100"
                             step="0.01"
                             value={item.discountPercent || 0}
-                            onChange={(e) => updateItem(index, 'discountPercent', parseFloat(e.target.value) || 0)}
+                            onChange={(e) => updateItem(index, "discountPercent", parseFloat(e.target.value) || 0)}
                             className="w-20"
                           />
                         </TableCell>
-                        <TableCell className="font-medium">
-                          {formatCurrency(subtotal)}
-                        </TableCell>
+                        <TableCell className="font-medium">{formatCurrency(subtotal)}</TableCell>
                         <TableCell>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeItem(index)}
-                          >
+                          <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(index)}>
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </TableCell>
@@ -398,17 +369,6 @@ const StockExitEdit = () => {
             </CardContent>
           </Card>
         )}
-
-        <div className="flex gap-4">
-          <Button type="button" variant="outline" onClick={() => navigate('/saidas/historico')}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Cancelar
-          </Button>
-          <Button type="submit" disabled={isLoading}>
-            <Save className="w-4 h-4 mr-2" />
-            {isLoading ? 'A guardar...' : 'Guardar Saída'}
-          </Button>
-        </div>
       </form>
     </div>
   );
