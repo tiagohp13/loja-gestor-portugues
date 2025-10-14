@@ -179,8 +179,8 @@ const ProductList = () => {
                   onSort={handleSort}
                 />
 
-                {/* ✅ Cabeçalho “Ações” alinhado mais à direita */}
-                <TableCell className="text-left pr-4 w-[220px]">Ações</TableCell>
+                {/* ✅ Cabeçalho “Ações” alinhado mais ao centro */}
+                <TableCell className="text-center pr-10 w-[220px]">Ações</TableCell>
               </TableRow>
             </TableHeader>
 
