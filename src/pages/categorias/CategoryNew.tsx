@@ -62,7 +62,7 @@ const CategoryNew = () => {
           <div className="flex space-x-3">
             <Button variant="outline" onClick={() => navigate("/categorias/consultar")}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Cancelar Categoria
+              Cancelar
             </Button>
             <Button onClick={handleSubmit}>
               <Save className="w-4 h-4 mr-2" />
