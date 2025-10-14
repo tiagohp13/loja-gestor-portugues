@@ -212,7 +212,7 @@ const CategoryList: React.FC = () => {
                       </div>
                     </CardHeader>
 
-                    {/* Linha mais abaixo: mt-8 controla a posição da border-t */}
+                    {/* Ajuste de espaçamento inferior */}
                     <CardContent className="pt-8 pb-3 mt-8 border-t border-gray-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Produtos</span>
