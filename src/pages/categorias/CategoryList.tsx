@@ -154,12 +154,12 @@ const CategoryList: React.FC = () => {
                 return (
                   <Card
                     key={category.id}
-                    className="group transition-all border border-gray-200 hover:border-gray-300 hover:shadow-md rounded-xl cursor-pointer bg-white dark:bg-card"
+                    className="transition-all border border-gray-200 hover:border-gray-300 hover:shadow-md rounded-xl cursor-pointer bg-white dark:bg-card"
                     onClick={(e) => handleCategoryClick(category.id, category.name, e)}
                   >
                     <CardHeader className="pb-2 flex items-start justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="p-2 rounded-lg bg-blue-50 group-hover:bg-blue-100 transition-colors">
+                        <div className="p-2 rounded-lg bg-blue-50 transition-colors">
                           <Package className="h-5 w-5 text-gestorApp-blue" />
                         </div>
                         <div>
@@ -170,7 +170,8 @@ const CategoryList: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      {/* Botões sempre visíveis */}
+                      <div className="flex items-center gap-1">
                         {canEdit && (
                           <Tooltip>
                             <TooltipTrigger asChild>
