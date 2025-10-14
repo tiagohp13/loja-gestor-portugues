@@ -59,6 +59,7 @@ const DashboardPage: React.FC = () => {
     return defaultDashboardConfig;
   });
 
+  // 🔹 Filtra encomendas pendentes e com stock insuficiente
   const { insufficientStockItems, pendingOrders: filteredPendingOrders } = useMemo(() => {
     const findInsufficientStockOrders = (orders: any[], products: any[]) => {
       return orders.reduce((acc: any[], order) => {
@@ -72,18 +73,29 @@ const DashboardPage: React.FC = () => {
         return acc;
       }, []);
     };
+
     return {
       insufficientStockItems: findInsufficientStockOrders(orders, products),
-      pendingOrders: orders.filter((order) => !order.convertedToStockExitId && order.status !== "deleted"),
+      pendingOrders: orders.filter(
+        (order) =>
+          !order.convertedToStockExitId &&
+          order.status !== "deleted" &&
+          order.status !== "Deleted" &&
+          !order.inRecycleBin && // 🔹 evita encomendas na reciclagem
+          !order.isDeleted && // 🔹 evita soft deletes
+          !order.archived, // 🔹 evita arquivos se existirem
+      ),
     };
   }, [orders, products]);
 
+  // Navegação
   const navigateToProductDetail = (id: string) => navigate(`/produtos/${id}`);
   const navigateToClientDetail = (id: string) => navigate(`/clientes/detalhe/${id}`);
   const navigateToOrderDetail = (id: string) => navigate(`/encomendas/${id}`);
 
   const isLoading = isLoadingSupportData;
 
+  // Atualiza estatísticas com valores financeiros
   const updatedStats = useMemo(
     () => ({
       ...supportStats,
@@ -94,6 +106,7 @@ const DashboardPage: React.FC = () => {
     [supportStats, totalSpentWithExpenses, totalProfitWithExpenses, profitMarginPercentWithExpenses],
   );
 
+  // Map de componentes (widgets)
   const componentMap: { [key: string]: React.ReactNode } = useMemo(
     () => ({
       "quick-actions": <QuickActions />,
