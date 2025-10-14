@@ -157,58 +157,56 @@ const CategoryList: React.FC = () => {
                     className="transition-all border border-gray-200 hover:border-gray-300 hover:shadow-md rounded-xl cursor-pointer bg-white dark:bg-card"
                     onClick={(e) => handleCategoryClick(category.id, category.name, e)}
                   >
-                    <CardHeader className="pb-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start gap-3">
-                          <div className="p-2 rounded-lg bg-blue-50 transition-colors">
-                            <Package className="h-5 w-5 text-gestorApp-blue" />
-                          </div>
-                          <div>
-                            <CardTitle className="text-lg font-semibold text-foreground">{category.name}</CardTitle>
-                            {category.description && (
-                              <p className="text-sm text-muted-foreground">{category.description}</p>
-                            )}
-                          </div>
+                    <CardHeader className="pb-2 flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-blue-50 transition-colors">
+                          <Package className="h-5 w-5 text-gestorApp-blue" />
                         </div>
+                        <div>
+                          <CardTitle className="text-lg font-semibold text-foreground">{category.name}</CardTitle>
+                          {category.description && (
+                            <p className="text-sm text-muted-foreground">{category.description}</p>
+                          )}
+                        </div>
+                      </div>
 
-                        {/* Botões no topo direito */}
-                        <div className="flex items-center gap-1 ml-2">
-                          {canEdit && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditCategory(category.id);
-                                  }}
-                                >
-                                  <Edit size={16} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Editar</TooltipContent>
-                            </Tooltip>
-                          )}
-                          {canDelete && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <DeleteConfirmDialog
-                                  title="Eliminar Categoria"
-                                  description="Tem a certeza que deseja eliminar esta categoria?"
-                                  onDelete={() => handleDeleteCategory(category.id)}
-                                  checkDependencies={() => checkCategoryDependencies(category.name)}
-                                  trigger={
-                                    <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                      <Trash size={16} />
-                                    </Button>
-                                  }
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>Eliminar</TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
+                      {/* Botões sempre visíveis */}
+                      <div className="flex items-center gap-1">
+                        {canEdit && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCategory(category.id);
+                                }}
+                              >
+                                <Edit size={16} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Editar</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {canDelete && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DeleteConfirmDialog
+                                title="Eliminar Categoria"
+                                description="Tem a certeza que deseja eliminar esta categoria?"
+                                onDelete={() => handleDeleteCategory(category.id)}
+                                checkDependencies={() => checkCategoryDependencies(category.name)}
+                                trigger={
+                                  <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                                    <Trash size={16} />
+                                  </Button>
+                                }
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>Eliminar</TooltipContent>
+                          </Tooltip>
+                        )}
                       </div>
                     </CardHeader>
 
