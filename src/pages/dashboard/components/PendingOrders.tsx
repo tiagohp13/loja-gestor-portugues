@@ -2,15 +2,10 @@ import React, { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Edit, Trash2, CheckCircle } from "lucide-react";
+import { CheckCircle } from "lucide-react";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
 import { format } from "date-fns";
-import { usePermissions } from "@/hooks/usePermissions";
-import { validatePermission } from "@/utils/permissionUtils";
-import { checkOrderDependencies } from "@/utils/dependencyUtils";
-import { toast } from "sonner";
 
 interface PendingOrdersProps {
   pendingOrders: Order[];
@@ -19,8 +14,6 @@ interface PendingOrdersProps {
 }
 
 const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateToOrderDetail }) => {
-  const { canEdit, canDelete } = usePermissions();
-
   // Função para calcular o total corretamente
   const calculateTotal = (order: Order) => {
     if (!order.items || order.items.length === 0) return 0;
@@ -70,23 +63,6 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
 
   const formatDate = (dateStr: string) => (dateStr ? format(new Date(dateStr), "dd/MM/yyyy") : "—");
 
-  const handleDelete = async (order: Order) => {
-    if (!validatePermission(canDelete, "eliminar encomendas")) return;
-
-    if (order.convertedToStockExitId) {
-      toast.error("Não pode eliminar encomendas já convertidas em saída");
-      return;
-    }
-
-    const deps = await checkOrderDependencies(order.id);
-    if (!deps.canDelete) {
-      toast.error(deps.message || "Não é possível eliminar esta encomenda");
-      return;
-    }
-
-    toast.info("A função de eliminar deve ser implementada no contexto do Dashboard");
-  };
-
   return (
     <Card className="h-full">
       <CardHeader>
@@ -106,7 +82,6 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                   <TableHead>Valor</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Informações de Entrega</TableHead>
-                  <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -152,41 +127,12 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                         <span className="text-sm text-gray-400">—</span>
                       )}
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (!validatePermission(canEdit, "editar encomendas")) return;
-                            toast.info("Editar deve ser implementado no contexto do Dashboard");
-                          }}
-                          disabled={!canEdit || !!order.convertedToStockExitId}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(order);
-                          }}
-                          disabled={!canDelete || !!order.convertedToStockExitId}
-                          className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
                   </TableRow>
                 ))}
 
                 {/* 🔹 Linha de Total Geral */}
                 <TableRow className="bg-muted">
-                  <TableCell colSpan={7} className="text-right font-semibold text-blue-600 pr-6">
+                  <TableCell colSpan={6} className="text-right font-semibold text-blue-600 pr-6">
                     Total: {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
                   </TableCell>
                 </TableRow>
