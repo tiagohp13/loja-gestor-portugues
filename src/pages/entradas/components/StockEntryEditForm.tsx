@@ -1,14 +1,11 @@
-
-import React from 'react';
-import StockEntryEditSupplier from './StockEntryEditSupplier';
-import StockEntryEditDetails from './StockEntryEditDetails';
-import StockEntryEditProductTable from './StockEntryEditProductTable';
-import StockEntryEditActions from './StockEntryEditActions';
-import { useStockEntryEdit } from '../hooks/useStockEntryEdit';
-import { useData } from '@/contexts/DataContext';
-import { StockEntryItem } from '@/types';
-import { usePermissions } from '@/hooks/usePermissions';
-import { validatePermission } from '@/utils/permissionUtils';
+import React from "react";
+import StockEntryEditSupplier from "./StockEntryEditSupplier";
+import StockEntryEditDetails from "./StockEntryEditDetails";
+import StockEntryEditProductTable from "./StockEntryEditProductTable";
+import { useStockEntryEdit } from "../hooks/useStockEntryEdit";
+import { useData } from "@/contexts/DataContext";
+import { usePermissions } from "@/hooks/usePermissions";
+import { validatePermission } from "@/utils/permissionUtils";
 
 interface StockEntryEditFormProps {
   id?: string;
@@ -28,13 +25,13 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
     removeItem,
     handleSubmit,
     calculateItemTotal,
-    calculateTotal
+    calculateTotal,
   } = useStockEntryEdit(id);
 
   const handleFormSubmit = (e: React.FormEvent) => {
     const requiredPermission = isNewEntry ? canCreate : canEdit;
-    const action = isNewEntry ? 'criar entradas de stock' : 'editar entradas de stock';
-    
+    const action = isNewEntry ? "criar entradas de stock" : "editar entradas de stock";
+
     if (!validatePermission(requiredPermission, action)) {
       e.preventDefault();
       return;
@@ -50,7 +47,7 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
           suppliers={suppliers}
           onSupplierChange={handleSupplierChange}
         />
-        
+
         <StockEntryEditDetails
           date={entry.date}
           invoiceNumber={entry.invoiceNumber}
@@ -58,7 +55,7 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
           onDetailsChange={handleChange}
         />
       </div>
-      
+
       <StockEntryEditProductTable
         items={entry.items}
         products={products}
@@ -68,8 +65,6 @@ const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
         calculateItemTotal={calculateItemTotal}
         calculateTotal={calculateTotal}
       />
-      
-      <StockEntryEditActions isSubmitting={isSubmitting} />
     </form>
   );
 };
