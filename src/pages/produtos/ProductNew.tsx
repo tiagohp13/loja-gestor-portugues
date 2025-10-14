@@ -1,42 +1,42 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import PageHeader from '@/components/ui/PageHeader';
-import { toast } from 'sonner';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useData } from "@/contexts/DataContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import PageHeader from "@/components/ui/PageHeader";
+import { toast } from "sonner";
+import { Save, ArrowLeft } from "lucide-react";
 
 const ProductNew = () => {
   const navigate = useNavigate();
   const { addProduct, categories } = useData();
-  const [name, setName] = useState('');
-  const [code, setCode] = useState('');
-  const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('');
+  const [name, setName] = useState("");
+  const [code, setCode] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("");
   const [purchasePrice, setPurchasePrice] = useState(0);
   const [salePrice, setSalePrice] = useState(0);
   const [currentStock, setCurrentStock] = useState(0);
   const [minStock, setMinStock] = useState(0);
-  const [image, setImage] = useState('');
+  const [image, setImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (purchasePrice < 0 || salePrice < 0 || currentStock < 0 || minStock < 0) {
       toast.error("Valores não podem ser negativos");
       return;
     }
-    
+
     if (purchasePrice > salePrice) {
       toast.warning("O preço de compra é maior que o preço de venda.");
     }
-    
+
     setIsSubmitting(true);
-    
+
     try {
       await addProduct({
         name,
@@ -48,11 +48,11 @@ const ProductNew = () => {
         currentStock,
         minStock,
         image,
-        status: 'active'
+        status: "active",
       });
-      
+
       toast.success("Produto adicionado com sucesso!");
-      navigate('/produtos/consultar');
+      navigate("/produtos/consultar");
     } catch (error) {
       console.error("Error adding product:", error);
       toast.error("Erro ao adicionar produto");
@@ -63,18 +63,36 @@ const ProductNew = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Novo Produto" 
-        description="Adicione um novo produto ao seu inventário" 
+      <PageHeader
+        title="Novo Produto"
+        description="Adicione um novo produto ao seu inventário"
         actions={
-          <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
-            Voltar à Lista
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-center">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/produtos/consultar")}
+              disabled={isSubmitting}
+              className="sm:h-10 sm:px-5"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Cancelar
+            </Button>
+
+            <Button
+              type="submit"
+              form="product-form"
+              disabled={isSubmitting}
+              className="bg-primary text-white sm:h-10 sm:px-6"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              {isSubmitting ? "A guardar..." : "Guardar Produto"}
+            </Button>
+          </div>
         }
       />
-      
+
       <div className="bg-white rounded-lg shadow p-6 mt-6">
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form id="product-form" onSubmit={handleSubmit} className="space-y-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="code" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -88,7 +106,7 @@ const ProductNew = () => {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium text-gestorApp-gray-dark">
                 Nome
@@ -102,7 +120,7 @@ const ProductNew = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="category" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -121,7 +139,7 @@ const ProductNew = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="image" className="text-sm font-medium text-gestorApp-gray-dark">
                 URL da Imagem
@@ -134,7 +152,7 @@ const ProductNew = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <label htmlFor="description" className="text-sm font-medium text-gestorApp-gray-dark">
               Descrição
@@ -147,7 +165,7 @@ const ProductNew = () => {
               rows={3}
             />
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -164,7 +182,7 @@ const ProductNew = () => {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
                 Preço de Venda (€)
@@ -181,7 +199,7 @@ const ProductNew = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -198,7 +216,7 @@ const ProductNew = () => {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
                 Stock Mínimo
@@ -214,15 +232,6 @@ const ProductNew = () => {
                 required
               />
             </div>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate('/produtos/consultar')}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Guardando..." : "Guardar Produto"}
-            </Button>
           </div>
         </form>
       </div>
