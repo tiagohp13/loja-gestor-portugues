@@ -1,25 +1,25 @@
-
-import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import PageHeader from '@/components/ui/PageHeader';
-import { toast } from 'sonner';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useData } from "../../contexts/DataContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import PageHeader from "@/components/ui/PageHeader";
+import { toast } from "sonner";
+import { ArrowLeft, Save } from "lucide-react";
 
 const SupplierEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getSupplier, updateSupplier } = useData();
-  
+
   const [supplier, setSupplier] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    address: '',
-    taxId: '',
-    notes: ''
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+    taxId: "",
+    notes: "",
   });
 
   useEffect(() => {
@@ -27,49 +27,56 @@ const SupplierEdit = () => {
       const foundSupplier = getSupplier(id);
       if (foundSupplier) {
         setSupplier({
-          name: foundSupplier.name || '',
-          email: foundSupplier.email || '',
-          phone: foundSupplier.phone || '',
-          address: foundSupplier.address || '',
-          taxId: foundSupplier.taxId || '',
-          notes: foundSupplier.notes || ''
+          name: foundSupplier.name || "",
+          email: foundSupplier.email || "",
+          phone: foundSupplier.phone || "",
+          address: foundSupplier.address || "",
+          taxId: foundSupplier.taxId || "",
+          notes: foundSupplier.notes || "",
         });
       } else {
-        toast.error('Fornecedor não encontrado');
-        navigate('/fornecedores/consultar');
+        toast.error("Fornecedor não encontrado");
+        navigate("/fornecedores/consultar");
       }
     }
   }, [id, getSupplier, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setSupplier(prev => ({
+    setSupplier((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (id) {
       updateSupplier(id, supplier);
-      toast.success('Fornecedor atualizado com sucesso');
+      toast.success("Fornecedor atualizado com sucesso");
       navigate(`/fornecedores/${id}`);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Editar Fornecedor" 
-        description="Atualize os detalhes do fornecedor" 
+      <PageHeader
+        title="Editar Fornecedor"
+        description="Atualize os detalhes do fornecedor"
         actions={
-          <Button variant="outline" onClick={() => navigate(`/fornecedores/${id}`)}>
-            Voltar aos Detalhes
-          </Button>
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={() => navigate(`/fornecedores/${id}`)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Alterações
+            </Button>
+          </div>
         }
       />
-      
+
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid md:grid-cols-2 gap-4">
@@ -86,7 +93,7 @@ const SupplierEdit = () => {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium text-gestorApp-gray-dark">
                 Email
@@ -101,7 +108,7 @@ const SupplierEdit = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="phone" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -115,7 +122,7 @@ const SupplierEdit = () => {
                 placeholder="Número de telefone"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="taxId" className="text-sm font-medium text-gestorApp-gray-dark">
                 NIF
@@ -129,7 +136,7 @@ const SupplierEdit = () => {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <label htmlFor="address" className="text-sm font-medium text-gestorApp-gray-dark">
               Morada
@@ -142,7 +149,7 @@ const SupplierEdit = () => {
               placeholder="Endereço completo"
             />
           </div>
-          
+
           <div className="space-y-2">
             <label htmlFor="notes" className="text-sm font-medium text-gestorApp-gray-dark">
               Observações
@@ -155,13 +162,6 @@ const SupplierEdit = () => {
               placeholder="Notas ou observações sobre o fornecedor"
               rows={4}
             />
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate(`/fornecedores/${id}`)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Guardar Alterações</Button>
           </div>
         </form>
       </div>
