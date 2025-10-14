@@ -94,7 +94,7 @@ const ProductTable = ({
                 {getSortIcon('salePrice')}
               </div>
             </TableHead>
-            <TableHead className="text-right">Ações</TableHead>
+            <TableHead className="text-right pr-6">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
