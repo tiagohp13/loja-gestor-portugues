@@ -180,7 +180,7 @@ const ProductList = () => {
                 />
 
                 {/* ✅ Cabeçalho “Ações” alinhado mais à direita */}
-                <TableCell className="text-right pr-12 w-[220px]">Ações</TableCell>
+                <TableCell className="text-left pr-10 w-[220px]">Ações</TableCell>
               </TableRow>
             </TableHeader>
 
