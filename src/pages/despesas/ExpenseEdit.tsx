@@ -362,6 +362,7 @@ const ExpenseEdit = () => {
             </Card>
           </div>
 
+          {/* Painel lateral direito */}
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -372,12 +373,24 @@ const ExpenseEdit = () => {
               </CardContent>
             </Card>
 
+            {/* Botões empilhados */}
             <Card>
               <CardContent className="pt-6">
-                <Button type="submit" className="w-full" disabled={isSaving}>
-                  <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? "A guardar..." : "Guardar Alterações"}
-                </Button>
+                <div className="space-y-4">
+                  <Button type="submit" className="w-full" disabled={isSaving}>
+                    <Save className="w-4 h-4 mr-2" />
+                    {isSaving ? "A guardar..." : "Guardar Despesa"}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => navigate(`/despesas/${id}`)}
+                  >
+                    Cancelar
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
