@@ -153,7 +153,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           discount: order.discount,
           converted_to_stock_exit_id: order.convertedToStockExitId,
           converted_to_stock_exit_number: order.convertedToStockExitNumber,
-          // ✅ Campos novos
+          // ✅ novos campos de entrega
           expected_delivery_date: order.expectedDeliveryDate || null,
           expected_delivery_time: order.expectedDeliveryTime || null,
           delivery_location: order.deliveryLocation || null,
