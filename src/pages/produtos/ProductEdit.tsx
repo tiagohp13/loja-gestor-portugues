@@ -1,13 +1,12 @@
-
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import PageHeader from '@/components/ui/PageHeader';
-import { Upload, X, Link as LinkIcon } from 'lucide-react';
-import { toast } from 'sonner';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useData } from "../../contexts/DataContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import PageHeader from "@/components/ui/PageHeader";
+import { Upload, X, Link as LinkIcon, ArrowLeft, Save } from "lucide-react";
+import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const ProductEdit = () => {
@@ -15,80 +14,73 @@ const ProductEdit = () => {
   const navigate = useNavigate();
   const { getProduct, updateProduct, categories } = useData();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const [product, setProduct] = useState({
-    name: '',
-    code: '',
+    name: "",
+    code: "",
     purchasePrice: 0,
     salePrice: 0,
     currentStock: 0,
     minStock: 0,
-    category: '',
-    description: '',
-    image: ''
+    category: "",
+    description: "",
+    image: "",
   });
-  
+
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const [imageUrl, setImageUrl] = useState('');
-  const [activeTab, setActiveTab] = useState('upload');
+  const [imageUrl, setImageUrl] = useState("");
+  const [activeTab, setActiveTab] = useState("upload");
 
   useEffect(() => {
     if (id) {
       const foundProduct = getProduct(id);
       if (foundProduct) {
         setProduct({
-          name: foundProduct.name || '',
-          code: foundProduct.code || '',
+          name: foundProduct.name || "",
+          code: foundProduct.code || "",
           purchasePrice: foundProduct.purchasePrice || 0,
           salePrice: foundProduct.salePrice || 0,
           currentStock: foundProduct.currentStock || 0,
           minStock: foundProduct.minStock || 0,
-          category: foundProduct.category || '',
-          description: foundProduct.description || '',
-          image: foundProduct.image || ''
+          category: foundProduct.category || "",
+          description: foundProduct.description || "",
+          image: foundProduct.image || "",
         });
-        
+
         if (foundProduct.image) {
           setPreviewImage(foundProduct.image);
         }
       } else {
-        toast.error('Produto não encontrado');
-        navigate('/produtos/consultar');
+        toast.error("Produto não encontrado");
+        navigate("/produtos/consultar");
       }
     }
   }, [id, getProduct, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setProduct(prev => ({
+    setProduct((prev) => ({
       ...prev,
-      [name]: name === 'purchasePrice' || name === 'salePrice' || name === 'currentStock' || name === 'minStock'
-              ? parseFloat(value) || 0 
-              : value
+      [name]:
+        name === "purchasePrice" || name === "salePrice" || name === "currentStock" || name === "minStock"
+          ? parseFloat(value) || 0
+          : value,
     }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
-    // Check file type
-    if (!file.type.includes('image/jpeg') && !file.type.includes('image/png')) {
-      toast.error('Apenas imagens JPG ou PNG são permitidas');
+
+    if (!file.type.includes("image/jpeg") && !file.type.includes("image/png")) {
+      toast.error("Apenas imagens JPG ou PNG são permitidas");
       return;
     }
-    
-    // Create object URL for preview
+
     const objectUrl = URL.createObjectURL(file);
     setPreviewImage(objectUrl);
-    setImageUrl('');
-    
-    // In a real app, you would upload the file to a server
-    // For now, we'll just use the object URL
-    setProduct(prev => ({
-      ...prev,
-      image: objectUrl
-    }));
+    setImageUrl("");
+    setProduct((prev) => ({ ...prev, image: objectUrl }));
   };
 
   const handleImageUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -97,53 +89,53 @@ const ProductEdit = () => {
 
   const handleImageUrlSubmit = () => {
     if (!imageUrl) {
-      toast.error('Por favor, insira um URL de imagem válido');
+      toast.error("Por favor, insira um URL de imagem válido");
       return;
     }
 
-    // Set the preview and the product image to the URL
     setPreviewImage(imageUrl);
-    setProduct(prev => ({
-      ...prev,
-      image: imageUrl
-    }));
-    toast.success('Imagem adicionada com sucesso');
+    setProduct((prev) => ({ ...prev, image: imageUrl }));
+    toast.success("Imagem adicionada com sucesso");
   };
 
   const handleRemoveImage = () => {
     setPreviewImage(null);
-    setImageUrl('');
-    setProduct(prev => ({
-      ...prev,
-      image: ''
-    }));
-    
-    // Reset file input
+    setImageUrl("");
+    setProduct((prev) => ({ ...prev, image: "" }));
+
     if (fileInputRef.current) {
-      fileInputRef.current.value = '';
+      fileInputRef.current.value = "";
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (id) {
       updateProduct(id, product);
+      toast.success("Produto atualizado com sucesso!");
       navigate(`/produtos/${id}`);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title="Editar Produto" 
-        description="Atualize os detalhes do produto" 
+      <PageHeader
+        title="Editar Produto"
+        description="Atualize os detalhes do produto"
         actions={
-          <Button variant="outline" onClick={() => navigate(`/produtos/${id}`)}>
-            Voltar aos Detalhes
-          </Button>
+          <div className="flex space-x-3">
+            <Button variant="outline" onClick={() => navigate(`/produtos/${id}`)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Alterações
+            </Button>
+          </div>
         }
       />
-      
+
       <div className="bg-white rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid md:grid-cols-2 gap-4">
@@ -160,7 +152,7 @@ const ProductEdit = () => {
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="name" className="text-sm font-medium text-gestorApp-gray-dark">
                 Nome do Produto
@@ -175,7 +167,7 @@ const ProductEdit = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label htmlFor="category" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -196,7 +188,7 @@ const ProductEdit = () => {
                 ))}
               </select>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="purchasePrice" className="text-sm font-medium text-gestorApp-gray-dark">
                 Preço de Compra (€)
@@ -205,14 +197,14 @@ const ProductEdit = () => {
                 id="purchasePrice"
                 name="purchasePrice"
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
                 value={product.purchasePrice}
                 onChange={handleChange}
                 placeholder="0.00"
               />
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="salePrice" className="text-sm font-medium text-gestorApp-gray-dark">
                 Preço de Venda (€)
@@ -221,7 +213,7 @@ const ProductEdit = () => {
                 id="salePrice"
                 name="salePrice"
                 type="number"
-                step="0.01"
+                step="1"
                 min="0"
                 value={product.salePrice}
                 onChange={handleChange}
@@ -229,7 +221,7 @@ const ProductEdit = () => {
               />
             </div>
           </div>
-          
+
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
@@ -245,9 +237,11 @@ const ProductEdit = () => {
                 placeholder="0"
                 disabled
               />
-              <p className="text-xs text-gestorApp-gray">O stock é atualizado automaticamente através de entradas e saídas</p>
+              <p className="text-xs text-gestorApp-gray">
+                O stock é atualizado automaticamente através de entradas e saídas
+              </p>
             </div>
-            
+
             <div className="space-y-2">
               <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
                 Stock Mínimo
@@ -264,7 +258,7 @@ const ProductEdit = () => {
               <p className="text-xs text-gestorApp-gray">Definir para alertas de stock baixo</p>
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <label htmlFor="description" className="text-sm font-medium text-gestorApp-gray-dark">
               Descrição
@@ -278,26 +272,20 @@ const ProductEdit = () => {
               rows={4}
             />
           </div>
-          
+
+          {/* Secção de imagem (mantida igual) */}
           <div className="space-y-4">
-            <label className="text-sm font-medium text-gestorApp-gray-dark">
-              Imagem do Produto
-            </label>
-            
+            <label className="text-sm font-medium text-gestorApp-gray-dark">Imagem do Produto</label>
             <Tabs defaultValue="upload" value={activeTab} onValueChange={setActiveTab}>
               <TabsList>
                 <TabsTrigger value="upload">Carregar ficheiro</TabsTrigger>
                 <TabsTrigger value="url">URL da imagem</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="upload">
-                {previewImage && activeTab === 'upload' ? (
+                {previewImage && activeTab === "upload" ? (
                   <div className="relative w-48 h-48 border rounded-md overflow-hidden">
-                    <img 
-                      src={previewImage} 
-                      alt="Preview" 
-                      className="w-full h-full object-cover"
-                    />
+                    <img src={previewImage} alt="Preview" className="w-full h-full object-cover" />
                     <Button
                       type="button"
                       variant="destructive"
@@ -309,13 +297,15 @@ const ProductEdit = () => {
                     </Button>
                   </div>
                 ) : (
-                  <div 
+                  <div
                     className="border-2 border-dashed border-gestorApp-gray-light rounded-md p-6 flex flex-col items-center justify-center h-48 w-48 cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="h-12 w-12 text-gestorApp-gray" />
                     <p className="mt-2 text-sm text-gestorApp-gray text-center">
-                      Clique para carregar uma imagem<br />(JPG ou PNG)
+                      Clique para carregar uma imagem
+                      <br />
+                      (JPG ou PNG)
                     </p>
                     <input
                       ref={fileInputRef}
@@ -327,7 +317,7 @@ const ProductEdit = () => {
                   </div>
                 )}
               </TabsContent>
-              
+
               <TabsContent value="url">
                 <div className="space-y-4">
                   <div className="flex items-end gap-2">
@@ -338,24 +328,20 @@ const ProductEdit = () => {
                         placeholder="https://exemplo.com/imagem.jpg"
                       />
                     </div>
-                    <Button 
-                      type="button" 
-                      onClick={handleImageUrlSubmit}
-                      className="flex items-center gap-2"
-                    >
+                    <Button type="button" onClick={handleImageUrlSubmit} className="flex items-center gap-2">
                       <LinkIcon className="h-4 w-4" />
                       <span>Adicionar</span>
                     </Button>
                   </div>
-                  
-                  {previewImage && activeTab === 'url' && (
+
+                  {previewImage && activeTab === "url" && (
                     <div className="relative w-48 h-48 border rounded-md overflow-hidden">
-                      <img 
-                        src={previewImage} 
-                        alt="Preview" 
+                      <img
+                        src={previewImage}
+                        alt="Preview"
                         className="w-full h-full object-cover"
                         onError={() => {
-                          toast.error('Erro ao carregar a imagem. Verifique o URL.');
+                          toast.error("Erro ao carregar a imagem. Verifique o URL.");
                           setPreviewImage(null);
                         }}
                       />
@@ -373,13 +359,6 @@ const ProductEdit = () => {
                 </div>
               </TabsContent>
             </Tabs>
-          </div>
-          
-          <div className="flex justify-end space-x-4">
-            <Button variant="outline" type="button" onClick={() => navigate(`/produtos/${id}`)}>
-              Cancelar
-            </Button>
-            <Button type="submit">Guardar Alterações</Button>
           </div>
         </form>
       </div>
