@@ -1,29 +1,27 @@
-
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Plus, Trash2 } from 'lucide-react';
-import { ExpenseItem } from '@/types';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Plus, Trash2 } from "lucide-react";
+import { ExpenseItem } from "@/types";
 
 interface ExpenseItemsTableProps {
-  items: Omit<ExpenseItem, 'id' | 'createdAt' | 'updatedAt'>[];
+  items: Omit<ExpenseItem, "id" | "createdAt" | "updatedAt">[];
   onAddItem: () => void;
   onRemoveItem: (index: number) => void;
-  onUpdateItem: (index: number, field: keyof Omit<ExpenseItem, 'id' | 'createdAt' | 'updatedAt'>, value: string | number) => void;
+  onUpdateItem: (
+    index: number,
+    field: keyof Omit<ExpenseItem, "id" | "createdAt" | "updatedAt">,
+    value: string | number,
+  ) => void;
 }
 
-const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({
-  items,
-  onAddItem,
-  onRemoveItem,
-  onUpdateItem
-}) => {
+const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({ items, onAddItem, onRemoveItem, onUpdateItem }) => {
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-PT', {
-      style: 'currency',
-      currency: 'EUR'
+    return new Intl.NumberFormat("pt-PT", {
+      style: "currency",
+      currency: "EUR",
     }).format(value);
   };
 
@@ -70,7 +68,7 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({
                     <TableCell>
                       <Input
                         value={item.productName}
-                        onChange={(e) => onUpdateItem(index, 'productName', e.target.value)}
+                        onChange={(e) => onUpdateItem(index, "productName", e.target.value)}
                         placeholder="Nome do produto"
                         required
                       />
@@ -80,7 +78,7 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({
                         type="number"
                         min="1"
                         value={item.quantity}
-                        onChange={(e) => onUpdateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                        onChange={(e) => onUpdateItem(index, "quantity", parseInt(e.target.value) || 1)}
                         className="w-20"
                       />
                     </TableCell>
@@ -88,9 +86,9 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({
                       <Input
                         type="number"
                         min="0"
-                        step="0.01"
+                        step="1"
                         value={item.unitPrice}
-                        onChange={(e) => onUpdateItem(index, 'unitPrice', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => onUpdateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
                         className="w-24"
                       />
                     </TableCell>
@@ -99,22 +97,15 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({
                         type="number"
                         min="0"
                         max="100"
-                        step="0.01"
+                        step="1"
                         value={item.discountPercent}
-                        onChange={(e) => onUpdateItem(index, 'discountPercent', parseFloat(e.target.value) || 0)}
+                        onChange={(e) => onUpdateItem(index, "discountPercent", parseFloat(e.target.value) || 0)}
                         className="w-20"
                       />
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {formatCurrency(subtotal)}
-                    </TableCell>
+                    <TableCell className="font-medium">{formatCurrency(subtotal)}</TableCell>
                     <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onRemoveItem(index)}
-                      >
+                      <Button type="button" variant="ghost" size="sm" onClick={() => onRemoveItem(index)}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </TableCell>
