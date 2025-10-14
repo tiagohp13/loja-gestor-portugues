@@ -114,8 +114,18 @@ export const useSupportData = (): SupportDataReturn => {
     loadData();
   }, []);
 
-  // Set up realtime subscriptions for automatic updates
+  // Set up realtime subscriptions APENAS para tabelas críticas com debouncing
   useEffect(() => {
+    let reloadTimeout: NodeJS.Timeout;
+    
+    const debouncedReload = () => {
+      clearTimeout(reloadTimeout);
+      reloadTimeout = setTimeout(() => {
+        console.log('Data changed, reloading KPI data...');
+        loadData();
+      }, 1000); // Debounce de 1 segundo
+    };
+
     const channels = [
       // Listen for changes in stock entries (purchases)
       supabase
@@ -127,27 +137,7 @@ export const useSupportData = (): SupportDataReturn => {
             schema: 'public',
             table: 'stock_entries'
           },
-          () => {
-            console.log('Stock entries changed, reloading KPI data...');
-            loadData();
-          }
-        )
-        .subscribe(),
-
-      // Listen for changes in stock entry items
-      supabase
-        .channel('stock-entry-items-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'stock_entry_items'
-          },
-          () => {
-            console.log('Stock entry items changed, reloading KPI data...');
-            loadData();
-          }
+          debouncedReload
         )
         .subscribe(),
 
@@ -161,118 +151,27 @@ export const useSupportData = (): SupportDataReturn => {
             schema: 'public',
             table: 'stock_exits'
           },
-          () => {
-            console.log('Stock exits changed, reloading KPI data...');
-            loadData();
-          }
+          debouncedReload
         )
         .subscribe(),
 
-      // Listen for changes in stock exit items
+      // Listen for changes in expenses
       supabase
-        .channel('stock-exit-items-changes')
+        .channel('expenses-changes')
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: 'stock_exit_items'
+            table: 'expenses'
           },
-          () => {
-            console.log('Stock exit items changed, reloading KPI data...');
-            loadData();
-          }
-        )
-        .subscribe(),
-
-      // Listen for changes in orders
-      supabase
-        .channel('orders-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'orders'
-          },
-          () => {
-            console.log('Orders changed, reloading KPI data...');
-            loadData();
-          }
-        )
-        .subscribe(),
-
-      // Listen for changes in order items
-      supabase
-        .channel('order-items-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'order_items'
-          },
-          () => {
-            console.log('Order items changed, reloading KPI data...');
-            loadData();
-          }
-        )
-        .subscribe(),
-
-      // Listen for changes in clients
-      supabase
-        .channel('clients-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'clients'
-          },
-          () => {
-            console.log('Clients changed, reloading KPI data...');
-            loadData();
-          }
-        )
-        .subscribe(),
-
-      // Listen for changes in suppliers
-      supabase
-        .channel('suppliers-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'suppliers'
-          },
-          () => {
-            console.log('Suppliers changed, reloading KPI data...');
-            loadData();
-          }
-        )
-        .subscribe(),
-
-      // Listen for changes in products
-      supabase
-        .channel('products-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'products'
-          },
-          () => {
-            console.log('Products changed, reloading KPI data...');
-            loadData();
-          }
+          debouncedReload
         )
         .subscribe()
     ];
 
     return () => {
-      // Cleanup subscriptions
+      clearTimeout(reloadTimeout);
       channels.forEach(channel => {
         supabase.removeChannel(channel);
       });

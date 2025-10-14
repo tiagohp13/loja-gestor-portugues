@@ -10,8 +10,8 @@ const cache = {
   lastFetch: 0
 };
 
-// Tempo de cache reduzido para 2 minutos para dados mais atualizados
-const CACHE_DURATION = 2 * 60 * 1000;
+// Cache de 5 minutos para melhor performance
+const CACHE_DURATION = 5 * 60 * 1000;
 
 export const fetchSupportStats = async (): Promise<SupportStats> => {
   // Verificar se temos dados em cache válidos
@@ -22,7 +22,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
   }
 
   try {
-    // Primeiro buscar IDs de saídas ativas (não apagadas)
+    // Query otimizada: buscar apenas IDs de exits ativas primeiro
     const { data: activeExits, error: exitsError } = await supabase
       .from('stock_exits')
       .select('id')
@@ -30,13 +30,12 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     
     let totalSales = 0;
     if (activeExits && activeExits.length > 0 && !exitsError) {
-      const activeExitIds = activeExits.map(e => e.id);
-      
-      // Consulta otimizada para itens de saída de estoque ATIVAS
+      // Depois buscar todos os items de uma vez
+      const exitIds = activeExits.map(e => e.id);
       const { data: exitItems, error: exitError } = await supabase
         .from('stock_exit_items')
         .select('quantity, sale_price, discount_percent')
-        .in('exit_id', activeExitIds);
+        .in('exit_id', exitIds);
       
       if (exitItems && !exitError) {
         totalSales = exitItems.reduce((sum, item) => {
@@ -55,7 +54,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       console.error('Error fetching active exits:', exitsError);
     }
     
-    // Primeiro buscar IDs de entradas ativas (não apagadas)
+    // Query otimizada: buscar apenas IDs de entries ativas primeiro
     const { data: activeEntries, error: entriesError } = await supabase
       .from('stock_entries')
       .select('id')
@@ -63,13 +62,12 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
     
     let totalPurchases = 0;
     if (activeEntries && activeEntries.length > 0 && !entriesError) {
-      const activeEntryIds = activeEntries.map(e => e.id);
-      
-      // Consulta otimizada para itens de entrada de estoque ATIVAS
+      // Depois buscar todos os items de uma vez
+      const entryIds = activeEntries.map(e => e.id);
       const { data: entryItems, error: entryError } = await supabase
         .from('stock_entry_items')
         .select('quantity, purchase_price, discount_percent')
-        .in('entry_id', activeEntryIds);
+        .in('entry_id', entryIds);
       
       if (entryItems && !entryError) {
         totalPurchases = entryItems.reduce((sum, item) => {
