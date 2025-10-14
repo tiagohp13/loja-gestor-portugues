@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
 import { Category } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ArrowLeft, Save } from "lucide-react";
 
 const CategoryNew = () => {
   const navigate = useNavigate();
@@ -60,9 +61,13 @@ const CategoryNew = () => {
         actions={
           <div className="flex space-x-3">
             <Button variant="outline" onClick={() => navigate("/categorias/consultar")}>
-              Cancelar
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Cancelar Categoria
             </Button>
-            <Button onClick={handleSubmit}>Guardar</Button>
+            <Button onClick={handleSubmit}>
+              <Save className="w-4 h-4 mr-2" />
+              Guardar Categoria
+            </Button>
           </div>
         }
       />
