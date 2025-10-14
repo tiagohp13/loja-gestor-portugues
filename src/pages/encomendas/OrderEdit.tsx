@@ -530,7 +530,7 @@ const OrderEdit = () => {
                           <Input
                             type="number"
                             min="0"
-                            step="1"
+                            step="any"
                             value={item.salePrice}
                             onChange={(e) => updateItem(index, "salePrice", parseFloat(e.target.value) || 0)}
                             className="w-24"
@@ -541,7 +541,7 @@ const OrderEdit = () => {
                             type="number"
                             min="0"
                             max="100"
-                            step="1"
+                            step="any"
                             value={item.discountPercent || 0}
                             onChange={(e) => updateItem(index, "discountPercent", parseFloat(e.target.value) || 0)}
                             className="w-20"
