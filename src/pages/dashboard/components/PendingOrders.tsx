@@ -39,7 +39,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
     return total;
   };
 
-  // Ordenação fiel ao OrderList
+  // Ordenação fiel ao OrderList — sem limite de 5
   const sortedOrders = useMemo(() => {
     const getPriority = (order: Order) => {
       if (order.orderType === "combined" && !order.convertedToStockExitId) return 1;
@@ -47,28 +47,26 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
       return 3; // convertidas
     };
 
-    return [...pendingOrders]
-      .sort((a, b) => {
-        const priorityA = getPriority(a);
-        const priorityB = getPriority(b);
-        if (priorityA !== priorityB) return priorityA - priorityB;
+    return [...pendingOrders].sort((a, b) => {
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+      if (priorityA !== priorityB) return priorityA - priorityB;
 
-        let dateA = 0;
-        let dateB = 0;
+      let dateA = 0;
+      let dateB = 0;
 
-        if (priorityA === 1) {
-          dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
-          dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
-          if (dateA !== dateB) return dateA - dateB;
-        } else {
-          dateA = new Date(a.date).getTime();
-          dateB = new Date(b.date).getTime();
-          if (dateA !== dateB) return dateB - dateA;
-        }
+      if (priorityA === 1) {
+        dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
+        dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+        if (dateA !== dateB) return dateA - dateB;
+      } else {
+        dateA = new Date(a.date).getTime();
+        dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) return dateB - dateA;
+      }
 
-        return a.number.localeCompare(b.number, undefined, { numeric: true });
-      })
-      .slice(0, 5); // limitar a 5 encomendas
+      return a.number.localeCompare(b.number, undefined, { numeric: true });
+    });
   }, [pendingOrders]);
 
   const formatDate = (dateStr: string) => (dateStr ? format(new Date(dateStr), "dd/MM/yyyy") : "—");
@@ -87,7 +85,6 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
       return;
     }
 
-    // Trigger de delete externo via DashboardPage
     toast.info("A função de eliminar deve ser implementada no contexto do Dashboard");
   };
 
