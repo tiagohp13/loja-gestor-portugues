@@ -212,8 +212,8 @@ const CategoryList: React.FC = () => {
                       </div>
                     </CardHeader>
 
-                    {/* Ajuste de espaçamento inferior */}
-                    <CardContent className="pt-8 pb-3 border-t border-gray-100">
+                    {/* Linha e texto de produtos ajustados */}
+                    <CardContent className="pt-8 pb-3 mt-8 border-t border-gray-100">
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-muted-foreground">Produtos</span>
                         <span className="text-sm font-semibold text-gestorApp-blue">{productCount}</span>
