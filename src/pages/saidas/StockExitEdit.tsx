@@ -322,7 +322,7 @@ const StockExitEdit = () => {
                           <Input
                             type="number"
                             min="0"
-                            step="0.01"
+                            step="1"
                             value={item.salePrice}
                             onChange={(e) => updateItem(index, "salePrice", parseFloat(e.target.value) || 0)}
                             className="w-24"
@@ -333,7 +333,7 @@ const StockExitEdit = () => {
                             type="number"
                             min="0"
                             max="100"
-                            step="0.01"
+                            step="1"
                             value={item.discountPercent || 0}
                             onChange={(e) => updateItem(index, "discountPercent", parseFloat(e.target.value) || 0)}
                             className="w-20"
