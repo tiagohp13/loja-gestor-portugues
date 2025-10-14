@@ -31,7 +31,6 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
       return sum + (itemPrice - discount);
     }, 0);
 
-    // aplica desconto da encomenda, se houver
     if (order.discount) {
       total = total * (1 - order.discount / 100);
     }
@@ -110,6 +109,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                   <TableHead>Ações</TableHead>
                 </TableRow>
               </TableHeader>
+
               <TableBody>
                 {sortedOrders.map((order) => (
                   <TableRow
@@ -183,6 +183,15 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                     </TableCell>
                   </TableRow>
                 ))}
+
+                {/* 🔹 Linha de Total Geral */}
+                <TableRow className="bg-muted font-semibold">
+                  <TableCell colSpan={3}></TableCell>
+                  <TableCell>
+                    {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
+                  </TableCell>
+                  <TableCell colSpan={3}>Total de Encomendas Pendentes</TableCell>
+                </TableRow>
               </TableBody>
             </Table>
           </div>
