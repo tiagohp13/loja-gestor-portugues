@@ -178,17 +178,12 @@ const ProductList = () => {
                   sortDirection={getSortIcon("salePrice")}
                   onSort={handleSort}
                 />
-                {/* Atualizado: coluna Ações alinhada e com largura fixa */}
-                <SortableTableHeader
-                  column="actions"
-                  label="Ações"
-                  sortDirection={getSortIcon("actions")}
-                  onSort={handleSort}
-                  sortable={false}
-                  className="text-right pr-6 w-[210px]" // largura e padding fixos
-                />
+
+                {/* ✅ Cabeçalho “Ações” alinhado mais à direita */}
+                <TableCell className="text-right pr-10 w-[220px]">Ações</TableCell>
               </TableRow>
             </TableHeader>
+
             <TableBody>
               {isLoading ? (
                 <TableRow>
