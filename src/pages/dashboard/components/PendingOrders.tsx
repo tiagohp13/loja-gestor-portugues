@@ -185,12 +185,10 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                 ))}
 
                 {/* 🔹 Linha de Total Geral */}
-                <TableRow className="bg-muted font-semibold">
-                  <TableCell colSpan={3}></TableCell>
-                  <TableCell>
-                    {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
+                <TableRow className="bg-muted">
+                  <TableCell colSpan={7} className="text-right font-semibold text-blue-600 pr-6">
+                    Total: {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
                   </TableCell>
-                  <TableCell colSpan={3}>Total de Encomendas Pendentes</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
