@@ -27,7 +27,7 @@ interface StockExitFormData {
 const StockExitEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { products } = useData(); // ✅ Lista de produtos disponível
+  const { products } = useData(); // ✅ Lista de produtos
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StockExitFormData>({
     clientId: "",
@@ -69,7 +69,7 @@ const StockExitEdit = () => {
           fromOrderNumber: exitData.from_order_number,
           items: (exitData.stock_exit_items || []).map((item: any) => ({
             id: item.id,
-            productId: item.product_id || "",
+            productId: String(item.product_id || ""),
             productName: item.product_name,
             quantity: Number(item.quantity) || 0,
             salePrice: Number(item.sale_price) || 0,
@@ -138,7 +138,7 @@ const StockExitEdit = () => {
       return;
     }
     if (formData.items.some((item) => !item.productName.trim())) {
-      toast.error("Por favor preencha o nome de todos os produtos");
+      toast.error("Por favor selecione todos os produtos");
       return;
     }
 
@@ -304,13 +304,18 @@ const StockExitEdit = () => {
                       <TableRow key={index}>
                         <TableCell>
                           <select
-                            value={item.productId}
+                            value={String(item.productId || "")}
                             onChange={(e) => {
-                              const selectedProduct = products.find((p) => p.id === e.target.value);
+                              const selectedId = e.target.value;
+                              const selectedProduct = products.find((p) => String(p.id) === selectedId);
+
                               if (selectedProduct) {
-                                updateItem(index, "productId", selectedProduct.id);
+                                updateItem(index, "productId", String(selectedProduct.id));
                                 updateItem(index, "productName", selectedProduct.name);
                                 updateItem(index, "salePrice", selectedProduct.sale_price || 0);
+                              } else {
+                                updateItem(index, "productId", "");
+                                updateItem(index, "productName", "");
                               }
                             }}
                             className="w-full border border-gray-300 rounded-md px-2 py-1 text-sm"
@@ -318,7 +323,7 @@ const StockExitEdit = () => {
                           >
                             <option value="">Selecione um produto...</option>
                             {products.map((product) => (
-                              <option key={product.id} value={product.id}>
+                              <option key={product.id} value={String(product.id)}>
                                 {product.name}
                               </option>
                             ))}
