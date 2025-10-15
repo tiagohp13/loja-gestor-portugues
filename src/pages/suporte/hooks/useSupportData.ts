@@ -1,129 +1,186 @@
-import { useEffect, useState } from "react";
-import { useData } from "@/contexts/DataContext";
-import { SupportStats } from "../../types/supportTypes";
 
-export const useSupportData = () => {
-  const { products, categories, clients, suppliers, orders, purchases, stockEntries, stockExits, expenses } = useData();
+import { useState, useEffect } from 'react';
+import { KPI } from '@/components/statistics/KPIPanel';
+import { fetchSupportStats } from './api/fetchSupportStats';
+import { generateKPIs } from './utils/kpiUtils';
+import { SupportStats } from '../types/supportTypes';
+import { loadKpiTargets } from '@/services/kpiService';
+import { supabase } from '@/integrations/supabase/client';
 
+export type { SupportStats } from '../types/supportTypes';
+
+export interface SupportDataReturn {
+  isLoading: boolean;
+  stats: SupportStats;
+  kpis: KPI[];
+}
+
+export const useSupportData = (): SupportDataReturn => {
+  const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<SupportStats>({
-    totals: {
-      clients: 0,
-      suppliers: 0,
-      categories: 0,
-      products: 0,
-    },
+    totalSales: 0,
+    totalSpent: 0,
+    profit: 0,
+    profitMargin: 0,
     topProducts: [],
     topClients: [],
     topSuppliers: [],
-    monthlyData: [],
     lowStockProducts: [],
+    pendingOrders: 0,
+    completedOrders: 0,
+    clientsCount: 0,
+    suppliersCount: 0,
+    categoriesCount: 0,
+    productsCount: 0,
+    monthlySales: [],
+    monthlyData: [],
     monthlyOrders: [],
+    numberOfExpenses: 0
   });
-
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (!products.length && !categories.length && !clients.length && !suppliers.length) {
-      return;
-    }
-
+  
+  const [kpis, setKpis] = useState<KPI[]>([]);
+  
+  const loadData = async () => {
     setIsLoading(true);
-
-    // Totais simples e diretos (correto e rápido)
-    const totals = {
-      clients: clients.length,
-      suppliers: suppliers.length,
-      categories: categories.length,
-      products: products.length,
-    };
-
-    // Produtos com baixo stock
-    const lowStockProducts = products.filter((p) => p.stock_quantity <= (p.low_stock_threshold || 0)).slice(0, 5);
-
-    // Top produtos mais vendidos
-    const productSales: Record<string, number> = {};
-    stockExits.forEach((exit) => {
-      exit.items.forEach((item) => {
-        productSales[item.productId] = (productSales[item.productId] || 0) + item.quantity;
-      });
-    });
-    const topProducts = [...products]
-      .map((p) => ({
-        ...p,
-        sold: productSales[p.id] || 0,
-      }))
-      .sort((a, b) => b.sold - a.sold)
-      .slice(0, 5);
-
-    // Clientes mais frequentes
-    const clientSales: Record<string, number> = {};
-    stockExits.forEach((exit) => {
-      clientSales[exit.clientId] = (clientSales[exit.clientId] || 0) + 1;
-    });
-    const topClients = [...clients]
-      .map((c) => ({
-        ...c,
-        orders: clientSales[c.id] || 0,
-      }))
-      .sort((a, b) => b.orders - a.orders)
-      .slice(0, 5);
-
-    // Fornecedores mais usados
-    const supplierPurchases: Record<string, number> = {};
-    stockEntries.forEach((entry) => {
-      supplierPurchases[entry.supplierId] = (supplierPurchases[entry.supplierId] || 0) + 1;
-    });
-    const topSuppliers = [...suppliers]
-      .map((s) => ({
-        ...s,
-        supplies: supplierPurchases[s.id] || 0,
-      }))
-      .sort((a, b) => b.supplies - a.supplies)
-      .slice(0, 5);
-
-    // Dados mensais de vendas e compras
-    const monthlyDataMap: Record<string, { month: string; sales: number; purchases: number; profit: number }> = {};
-
-    const processTransaction = (date: string | Date, amount: number, type: "sale" | "purchase") => {
-      const d = new Date(date);
-      const key = `${d.getFullYear()}-${d.getMonth() + 1}`;
-      if (!monthlyDataMap[key]) {
-        monthlyDataMap[key] = {
-          month: key,
-          sales: 0,
-          purchases: 0,
-          profit: 0,
-        };
+    try {
+      // Primeiro carregamos as estatísticas gerais
+      const supportStats = await fetchSupportStats();
+      
+      // Ensure we have the necessary monthly data for comparisons
+      if (!supportStats.monthlyData || supportStats.monthlyData.length < 2) {
+        // Add dummy data for comparison if we don't have enough real data
+        // This is just for demonstration purposes
+        if (!supportStats.monthlyData) supportStats.monthlyData = [];
+        if (supportStats.monthlyData.length === 0) {
+          // Add a previous month with slightly lower values
+          const previousMonth = {
+            name: 'Previous',
+            vendas: supportStats.totalSales * 0.9,
+            compras: supportStats.totalSpent * 0.9
+          };
+          supportStats.monthlyData.push(previousMonth);
+        }
+        if (supportStats.monthlyData.length === 1) {
+          // Add current month
+          const currentMonth = {
+            name: 'Current',
+            vendas: supportStats.totalSales,
+            compras: supportStats.totalSpent
+          };
+          supportStats.monthlyData.push(currentMonth);
+        }
       }
-      if (type === "sale") monthlyDataMap[key].sales += amount;
-      if (type === "purchase") monthlyDataMap[key].purchases += amount;
-      monthlyDataMap[key].profit = monthlyDataMap[key].sales - monthlyDataMap[key].purchases;
+      
+      // Similarly ensure we have monthlySales data
+      if (!supportStats.monthlySales || supportStats.monthlySales.length < 2) {
+        if (!supportStats.monthlySales) supportStats.monthlySales = [];
+        if (supportStats.monthlySales.length === 0) {
+          supportStats.monthlySales.push(supportStats.totalSales * 0.9);
+        }
+        if (supportStats.monthlySales.length === 1) {
+          supportStats.monthlySales.push(supportStats.totalSales);
+        }
+      }
+      
+      setStats(supportStats);
+      
+      // Depois geramos os KPIs base
+      const calculatedKpis = generateKPIs(supportStats);
+      
+      // Em seguida carregamos as metas personalizadas da base de dados
+      const savedTargets = await loadKpiTargets();
+      
+      // Atualizamos os KPIs com as metas personalizadas da DB
+      if (Object.keys(savedTargets).length > 0) {
+        const updatedKpis = calculatedKpis.map(kpi => ({
+          ...kpi,
+          target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
+          belowTarget: kpi.isInverseKPI 
+            ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) 
+            : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
+        }));
+        setKpis(updatedKpis);
+      } else {
+        setKpis(calculatedKpis);
+      }
+    } catch (error) {
+      console.error('Error fetching statistics:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  // Set up realtime subscriptions APENAS para tabelas críticas com debouncing
+  useEffect(() => {
+    let reloadTimeout: NodeJS.Timeout;
+    
+    const debouncedReload = () => {
+      clearTimeout(reloadTimeout);
+      reloadTimeout = setTimeout(() => {
+        console.log('Data changed, reloading KPI data...');
+        loadData();
+      }, 1000); // Debounce de 1 segundo
     };
 
-    stockExits.forEach((exit) =>
-      exit.items.forEach((item) => processTransaction(exit.date, item.salePrice * item.quantity, "sale")),
-    );
-    stockEntries.forEach((entry) =>
-      entry.items.forEach((item) => processTransaction(entry.date, item.purchasePrice * item.quantity, "purchase")),
-    );
+    const channels = [
+      // Listen for changes in stock entries (purchases)
+      supabase
+        .channel('stock-entries-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'stock_entries'
+          },
+          debouncedReload
+        )
+        .subscribe(),
 
-    const monthlyData = Object.values(monthlyDataMap).sort(
-      (a, b) => new Date(a.month).getTime() - new Date(b.month).getTime(),
-    );
+      // Listen for changes in stock exits (sales)
+      supabase
+        .channel('stock-exits-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'stock_exits'
+          },
+          debouncedReload
+        )
+        .subscribe(),
 
-    // Atualiza stats
-    setStats({
-      totals,
-      topProducts,
-      topClients,
-      topSuppliers,
-      monthlyData,
-      lowStockProducts,
-      monthlyOrders: orders.slice(-6),
-    });
+      // Listen for changes in expenses
+      supabase
+        .channel('expenses-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'expenses'
+          },
+          debouncedReload
+        )
+        .subscribe()
+    ];
 
-    setIsLoading(false);
-  }, [products, categories, clients, suppliers, orders, purchases, stockEntries, stockExits, expenses]);
+    return () => {
+      clearTimeout(reloadTimeout);
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, []);
 
-  return { stats, isLoading };
+  return {
+    isLoading,
+    stats,
+    kpis
+  };
 };
