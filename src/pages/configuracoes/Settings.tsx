@@ -81,8 +81,10 @@ const Settings = () => {
             orders: "Encomendas",
             stockEntries: "Entradas de Stock",
             stockExits: "Saídas de Stock",
+            expenses: "Despesas", // ✅ adicionado
             all: "Todos os Dados",
           };
+
           summary =
             `Ficheiro detetado: ${labelMap[type]}.\n` +
             `Registos identificados: ${total}\n\n` +
