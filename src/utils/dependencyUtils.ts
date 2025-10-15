@@ -77,11 +77,23 @@ export const checkOrderDependencies = async (orderId: string): Promise<Dependenc
       .single();
 
     if (order && order.converted_to_stock_exit_id) {
-      return {
-        canDelete: false,
-        message: 'Esta encomenda não pode ser eliminada porque já foi convertida numa venda.',
-        dependencies: ['venda']
-      };
+      // Verificar se a venda associada ainda existe (não foi eliminada)
+      const { data: stockExit } = await supabase
+        .from('stock_exits')
+        .select('id, status')
+        .eq('id', order.converted_to_stock_exit_id)
+        .single();
+
+      // Se a venda existe e não está eliminada, bloquear
+      if (stockExit && stockExit.status !== 'deleted') {
+        return {
+          canDelete: false,
+          message: 'Esta encomenda não pode ser eliminada porque já foi convertida numa venda existente.',
+          dependencies: ['venda']
+        };
+      }
+      
+      // Se a venda foi eliminada ou não existe, permitir eliminação
     }
 
     return { canDelete: true };

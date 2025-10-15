@@ -14,56 +14,18 @@ import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
+import { useData } from "@/contexts/DataContext";
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const { orders, deleteOrder } = useData();
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; orderId: string | null }>({
     open: false,
     orderId: null,
   });
-
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
-  // Função de ordenação centralizada
-  const sortOrders = (ordersToSort: Order[]) => {
-    return [...ordersToSort].sort((a, b) => {
-      const getPriority = (order: Order) => {
-        if (order.orderType === "combined" && !order.convertedToStockExitId) return 1; // Combinadas → primeiro
-        if (order.orderType === "awaiting_stock") return 2; // A aguardar stock → depois
-        return 3; // Convertidas → último
-      };
-
-      const priorityA = getPriority(a);
-      const priorityB = getPriority(b);
-      if (priorityA !== priorityB) return priorityA - priorityB;
-
-      // Mesma prioridade → ordenar por datas
-      let dateA = 0;
-      let dateB = 0;
-
-      if (priorityA === 1) {
-        // Combinadas → expectedDeliveryDate → mais cedo primeiro
-        dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
-        dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
-        if (dateA !== dateB) return dateA - dateB;
-      } else {
-        // Pendente stock ou convertidas → date → mais recente primeiro
-        dateA = new Date(a.date).getTime();
-        dateB = new Date(b.date).getTime();
-        if (dateA !== dateB) return dateB - dateA;
-      }
-
-      // Desempate → número da encomenda numérico
-      return a.number.localeCompare(b.number, undefined, { numeric: true });
-    });
-  };
 
   useEffect(() => {
     setFilteredOrders(sortOrders(orders));
@@ -83,61 +45,6 @@ const OrderList = () => {
     }
   }, [searchTerm, orders]);
 
-  const fetchOrders = async () => {
-    try {
-      setIsLoading(true);
-      const { data: ordersData, error: ordersError } = await supabase.from("orders").select(`*, order_items(*)`);
-      if (ordersError) throw ordersError;
-
-      if (ordersData) {
-        console.log("🧾 Primeira encomenda (ordersData[0]):", ordersData[0]);
-
-        const formattedOrders: Order[] = ordersData.map((order) => ({
-          id: order.id,
-          number: order.number,
-          clientId: order.client_id || "",
-          clientName: order.client_name || "",
-          date: order.date,
-          notes: order.notes || "",
-          convertedToStockExitId: order.converted_to_stock_exit_id,
-          convertedToStockExitNumber: order.converted_to_stock_exit_number,
-          discount: Number(order.discount || 0),
-          createdAt: order.created_at,
-          updatedAt: order.updated_at,
-          orderType: (order.order_type as "combined" | "awaiting_stock") || "combined",
-          expectedDeliveryDate: order.expected_delivery_date,
-          expectedDeliveryTime: order.expected_delivery_time,
-          deliveryLocation: order.delivery_location,
-          items: (order.order_items || []).map((item: any) => ({
-            id: item.id,
-            productId: item.product_id || "",
-            productName: item.product_name,
-            quantity: item.quantity,
-            salePrice: Number(item.sale_price),
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : undefined,
-            createdAt: item.created_at,
-            updatedAt: item.updated_at,
-          })),
-          total:
-            (order.order_items || []).reduce((sum: number, item: any) => {
-              const itemTotal = item.quantity * Number(item.sale_price);
-              const itemDiscount = Number(item.discount_percent || 0);
-              const discountAmount = itemTotal * (itemDiscount / 100);
-              return sum + (itemTotal - discountAmount);
-            }, 0) *
-            (1 - Number(order.discount || 0) / 100),
-        }));
-
-        setOrders(formattedOrders);
-      }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      toast.error("Erro ao carregar encomendas");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
     if (!validatePermission(canDelete, "eliminar encomendas")) {
@@ -146,14 +53,16 @@ const OrderList = () => {
     }
 
     try {
-      const { error: itemsError } = await supabase.from("order_items").delete().eq("order_id", deleteDialog.orderId);
-      if (itemsError) throw itemsError;
+      // Verificar dependências antes de eliminar
+      const deps = await checkOrderDependencies(deleteDialog.orderId);
+      if (!deps.canDelete) {
+        toast.error(deps.message || "Não é possível eliminar esta encomenda");
+        setDeleteDialog({ open: false, orderId: null });
+        return;
+      }
 
-      const { error: orderError } = await supabase.from("orders").delete().eq("id", deleteDialog.orderId);
-      if (orderError) throw orderError;
-
-      setOrders(orders.filter((o) => o.id !== deleteDialog.orderId));
-      toast.success("Encomenda eliminada com sucesso");
+      await deleteOrder(deleteDialog.orderId);
+      // Dados atualizarão automaticamente via realtime
     } catch (error) {
       console.error("Error deleting order:", error);
       toast.error("Erro ao eliminar encomenda");
@@ -167,19 +76,35 @@ const OrderList = () => {
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("pt-PT");
 
-  if (isLoading) {
-    return (
-      <div className="p-6">
-        <PageHeader title="Consultar Encomendas" description="Consulte e gerencie as suas encomendas" />
-        <div className="flex justify-center items-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gestorApp-blue mx-auto"></div>
-            <p className="mt-2 text-gestorApp-gray">A carregar encomendas...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Função de ordenação centralizada
+  const sortOrders = (ordersToSort: Order[]) => {
+    return [...ordersToSort].sort((a, b) => {
+      const getPriority = (order: Order) => {
+        if (order.orderType === "combined" && !order.convertedToStockExitId) return 1;
+        if (order.orderType === "awaiting_stock") return 2;
+        return 3;
+      };
+
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+      if (priorityA !== priorityB) return priorityA - priorityB;
+
+      let dateA = 0;
+      let dateB = 0;
+
+      if (priorityA === 1) {
+        dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
+        dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
+        if (dateA !== dateB) return dateA - dateB;
+      } else {
+        dateA = new Date(a.date).getTime();
+        dateB = new Date(b.date).getTime();
+        if (dateA !== dateB) return dateB - dateA;
+      }
+
+      return a.number.localeCompare(b.number, undefined, { numeric: true });
+    });
+  };
 
   return (
     <div className="p-6 space-y-6">

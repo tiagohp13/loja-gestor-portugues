@@ -186,6 +186,42 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, []);
 
   useEffect(() => {
+    // Realtime subscriptions para atualização automática
+    const productsChannel = supabase
+      .channel("public:products")
+      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
+        fetchProducts();
+      })
+      .subscribe();
+
+    const categoriesChannel = supabase
+      .channel("public:categories")
+      .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, () => {
+        fetchCategories();
+      })
+      .subscribe();
+
+    const clientsChannel = supabase
+      .channel("public:clients")
+      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => {
+        fetchClients();
+      })
+      .subscribe();
+
+    const suppliersChannel = supabase
+      .channel("public:suppliers")
+      .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, () => {
+        fetchSuppliers();
+      })
+      .subscribe();
+
+    const ordersChannel = supabase
+      .channel("public:orders")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        fetchOrders();
+      })
+      .subscribe();
+
     const stockEntriesChannel = supabase
       .channel("public:stock_entries")
       .on("postgres_changes", { event: "*", schema: "public", table: "stock_entries" }, () => {
@@ -203,12 +239,16 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const expensesChannel = supabase
       .channel("public:expenses")
       .on("postgres_changes", { event: "*", schema: "public", table: "expenses" }, () => {
-        // Trigger re-calculation of financial metrics when expenses change
         console.log("Expenses changed, triggering dashboard update");
       })
       .subscribe();
 
     return () => {
+      supabase.removeChannel(productsChannel);
+      supabase.removeChannel(categoriesChannel);
+      supabase.removeChannel(clientsChannel);
+      supabase.removeChannel(suppliersChannel);
+      supabase.removeChannel(ordersChannel);
       supabase.removeChannel(stockEntriesChannel);
       supabase.removeChannel(stockExitsChannel);
       supabase.removeChannel(expensesChannel);
