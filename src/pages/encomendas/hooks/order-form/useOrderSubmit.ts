@@ -53,8 +53,8 @@ export const useOrderSubmit = (
         total,
         orderType,
 
-        // ✅ Corrigido — enviar Date e strings diretamente (sem format)
-        expectedDeliveryDate: expectedDeliveryDate || null,
+        // ✅ Enviar datas formatadas corretamente como strings
+        expectedDeliveryDate: expectedDeliveryDate ? format(startOfDay(expectedDeliveryDate), "yyyy-MM-dd") : null,
         expectedDeliveryTime: expectedDeliveryTime || null,
         deliveryLocation: deliveryLocation || null,
       };

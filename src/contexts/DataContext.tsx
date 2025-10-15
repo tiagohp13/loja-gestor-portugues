@@ -919,7 +919,8 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           discount: order.discount,
           converted_to_stock_exit_id: order.convertedToStockExitId,
           converted_to_stock_exit_number: order.convertedToStockExitNumber,
-          // 🟩 novos campos
+          order_type: order.orderType || 'combined',
+          // 🟩 campos de entrega
           expected_delivery_date: order.expectedDeliveryDate || null,
           expected_delivery_time: order.expectedDeliveryTime || null,
           delivery_location: order.deliveryLocation || null,
@@ -977,6 +978,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           discount: order.discount,
           converted_to_stock_exit_id: order.convertedToStockExitId,
           converted_to_stock_exit_number: order.convertedToStockExitNumber,
+          order_type: order.orderType,
+          expected_delivery_date: order.expectedDeliveryDate || null,
+          expected_delivery_time: order.expectedDeliveryTime || null,
+          delivery_location: order.deliveryLocation || null,
         })
         .eq("id", id);
 

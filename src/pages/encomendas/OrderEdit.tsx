@@ -282,6 +282,13 @@ const OrderEdit = () => {
     try {
       setIsLoading(true);
 
+      // Validar campos obrigatórios
+      if (formData.items.length === 0) {
+        toast.error("Por favor adicione pelo menos um item");
+        setIsLoading(false);
+        return;
+      }
+
       // Update order - only save delivery info for 'combined' orders
       const { error: orderError } = await supabase
         .from("orders")
