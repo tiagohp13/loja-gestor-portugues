@@ -959,7 +959,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           discount: order.discount,
           converted_to_stock_exit_id: order.convertedToStockExitId,
           converted_to_stock_exit_number: order.convertedToStockExitNumber,
-          order_type: order.orderType || 'combined',
+          order_type: order.orderType || "combined",
           // 🟩 campos de entrega
           expected_delivery_date: order.expectedDeliveryDate || null,
           expected_delivery_time: order.expectedDeliveryTime || null,
@@ -1444,7 +1444,67 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const exportData = (type: ExportDataType) => {
-    // Implementation remains the same
+    try {
+      let dataToExport: any = {};
+
+      switch (type) {
+        case "products":
+          dataToExport = products;
+          break;
+        case "categories":
+          dataToExport = categories;
+          break;
+        case "clients":
+          dataToExport = clients;
+          break;
+        case "suppliers":
+          dataToExport = suppliers;
+          break;
+        case "orders":
+          dataToExport = orders;
+          break;
+        case "stockEntries":
+          dataToExport = stockEntries;
+          break;
+        case "stockExits":
+          dataToExport = stockExits;
+          break;
+        case "expenses":
+          dataToExport = []; // se ainda não tiveres implementado despesas
+          break;
+        case "all":
+          dataToExport = {
+            products,
+            categories,
+            clients,
+            suppliers,
+            orders,
+            stockEntries,
+            stockExits,
+          };
+          break;
+        default:
+          toast.error("Tipo de exportação inválido");
+          return;
+      }
+
+      // Converte em JSON formatado
+      const json = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+
+      // Cria link de download
+      const link = document.createElement("a");
+      link.href = url;
+      const timestamp = new Date().toISOString().split("T")[0];
+      link.download = `crm-${type}-backup-${timestamp}.json`;
+      link.click();
+
+      toast.success(`Exportação de ${type} concluída com sucesso!`);
+    } catch (error) {
+      console.error("Erro ao exportar dados:", error);
+      toast.error("Erro ao exportar dados");
+    }
   };
 
   const importData = async (type: ExportDataType, data: string) => {
