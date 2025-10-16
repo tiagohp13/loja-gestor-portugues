@@ -40,11 +40,6 @@ const ExpenseNew = () => {
       {/* Cabeçalho */}
       <ExpenseFormHeader />
 
-      {/* Botões de ação alinhados à direita */}
-      <div className="flex justify-end gap-2 mb-6">
-        <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} />
-      </div>
-
       {/* Formulário */}
       <form onSubmit={handleFormSubmit} className="space-y-6">
         <ExpenseBasicInfo
@@ -65,6 +60,11 @@ const ExpenseNew = () => {
         />
 
         <ExpenseTotalCard total={calculateTotal()} />
+
+        {/* Botões de ação (agora dentro do form, no final) */}
+        <div className="flex justify-end gap-2 pt-4">
+          <ExpenseFormActions isLoading={isLoading} onCancel={handleCancel} />
+        </div>
       </form>
     </div>
   );
