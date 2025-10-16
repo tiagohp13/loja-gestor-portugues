@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Trash2 } from "lucide-react";
 import { StockEntryItem, Product } from "@/types";
-import ProductSelector from "./ProductSelector";
+import ProductSelector from "./StockEntryProductSelector";
 
 interface StockEntryEditProductTableProps {
   items: StockEntryItem[];
