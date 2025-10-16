@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -15,16 +14,19 @@ export interface Product {
   id: string;
   code: string;
   name: string;
-  description: string;
   category: string;
+  description?: string;
+  status?: string;
+  image?: string;
   purchasePrice: number;
   salePrice: number;
   currentStock: number;
   minStock: number;
   createdAt: string;
   updatedAt: string;
-  image?: string;
-  status?: string;
+
+  // Campo opcional usado apenas em cálculos internos
+  averageCost?: number;
 }
 
 export interface Category {
@@ -170,7 +172,7 @@ export interface Order {
   createdAt: string;
   updatedAt: string;
   status?: string;
-  orderType?: 'combined' | 'awaiting_stock';
+  orderType?: "combined" | "awaiting_stock";
   expectedDeliveryDate?: string;
   expectedDeliveryTime?: string;
   deliveryLocation?: string;
@@ -212,7 +214,16 @@ export interface ExpenseItem {
   updatedAt: string;
 }
 
-export type ExportDataType = 'products' | 'categories' | 'clients' | 'suppliers' | 'orders' | 'stockEntries' | 'stockExits' | 'expenses' | 'all';
+export type ExportDataType =
+  | "products"
+  | "categories"
+  | "clients"
+  | "suppliers"
+  | "orders"
+  | "stockEntries"
+  | "stockExits"
+  | "expenses"
+  | "all";
 
 export interface LegacyStockEntry {
   id: string;
