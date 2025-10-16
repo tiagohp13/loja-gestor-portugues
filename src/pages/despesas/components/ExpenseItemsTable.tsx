@@ -86,7 +86,7 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({ items, onAddItem,
                       <Input
                         type="number"
                         min="0"
-                        step="1"
+                        step="0.01"
                         value={item.unitPrice}
                         onChange={(e) => onUpdateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
                         className="w-24"
@@ -97,7 +97,7 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({ items, onAddItem,
                         type="number"
                         min="0"
                         max="100"
-                        step="1"
+                        step="0.01"
                         value={item.discountPercent}
                         onChange={(e) => onUpdateItem(index, "discountPercent", parseFloat(e.target.value) || 0)}
                         className="w-20"
