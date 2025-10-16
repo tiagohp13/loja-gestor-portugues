@@ -79,9 +79,9 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                   <TableHead>Nº Encomenda</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Valor</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Informações de Entrega</TableHead>
+                  <TableHead>Valor</TableHead>
                 </TableRow>
               </TableHeader>
 
