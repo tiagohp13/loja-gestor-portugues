@@ -14,7 +14,6 @@ interface PendingOrdersProps {
 }
 
 const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateToOrderDetail }) => {
-  // Função para calcular o total corretamente
   const calculateTotal = (order: Order) => {
     if (!order.items || order.items.length === 0) return 0;
 
@@ -31,12 +30,11 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
     return total;
   };
 
-  // Ordenação fiel ao OrderList — sem limite de 5
   const sortedOrders = useMemo(() => {
     const getPriority = (order: Order) => {
       if (order.orderType === "combined" && !order.convertedToStockExitId) return 1;
       if (order.orderType === "awaiting_stock") return 2;
-      return 3; // convertidas
+      return 3;
     };
 
     return [...pendingOrders].sort((a, b) => {
@@ -79,9 +77,9 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                   <TableHead>Nº Encomenda</TableHead>
                   <TableHead>Data</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Valor</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead>Informações de Entrega</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
 
@@ -97,7 +95,6 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                     </TableCell>
                     <TableCell>{formatDate(order.date)}</TableCell>
                     <TableCell>{order.clientName || "—"}</TableCell>
-                    <TableCell>{formatCurrency(calculateTotal(order))}</TableCell>
                     <TableCell>
                       {order.convertedToStockExitId ? (
                         <Badge className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300 flex items-center gap-1">
@@ -127,13 +124,17 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                         <span className="text-sm text-gray-400">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right">{formatCurrency(calculateTotal(order))}</TableCell>
                   </TableRow>
                 ))}
 
                 {/* 🔹 Linha de Total Geral */}
                 <TableRow className="bg-muted">
-                  <TableCell colSpan={6} className="text-right font-semibold text-blue-600 pr-6">
-                    Total: {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
+                  <TableCell colSpan={5} className="text-right font-semibold text-blue-600 pr-2">
+                    Total:
+                  </TableCell>
+                  <TableCell className="text-right font-semibold text-blue-600 pr-6">
+                    {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
                   </TableCell>
                 </TableRow>
               </TableBody>
