@@ -556,6 +556,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return mapDbOrderToOrder(order, items);
         });
 
+        // 🧮 Cálculo do total (somando os produtos e descontos)
+        formattedOrders.forEach((order) => {
+          if (order.items && order.items.length > 0) {
+            const total = order.items.reduce((sum, item) => {
+              const subtotal = item.quantity * item.salePrice;
+              const discount = subtotal * ((item.discountPercent || 0) / 100);
+              return sum + (subtotal - discount);
+            }, 0);
+            order.total = total;
+          } else {
+            order.total = 0;
+          }
+        });
+
         setOrders(formattedOrders);
       }
     } catch (error) {
