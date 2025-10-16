@@ -6,6 +6,7 @@ import { generateKPIs } from './utils/kpiUtils';
 import { SupportStats } from '../types/supportTypes';
 import { loadKpiTargets } from '@/services/kpiService';
 import { supabase } from '@/integrations/supabase/client';
+import { useData } from '@/contexts/DataContext';
 
 export type { SupportStats } from '../types/supportTypes';
 
@@ -16,6 +17,7 @@ export interface SupportDataReturn {
 }
 
 export const useSupportData = (): SupportDataReturn => {
+  const { clients, suppliers, categories, products } = useData();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<SupportStats>({
     totalSales: 0,
@@ -45,6 +47,12 @@ export const useSupportData = (): SupportDataReturn => {
     try {
       // Primeiro carregamos as estatísticas gerais
       const supportStats = await fetchSupportStats();
+      
+      // Atualizar os totais com dados do contexto
+      supportStats.clientsCount = clients.length;
+      supportStats.suppliersCount = suppliers.length;
+      supportStats.categoriesCount = categories.length;
+      supportStats.productsCount = products.length;
       
       // Ensure we have the necessary monthly data for comparisons
       if (!supportStats.monthlyData || supportStats.monthlyData.length < 2) {
@@ -112,7 +120,7 @@ export const useSupportData = (): SupportDataReturn => {
   
   useEffect(() => {
     loadData();
-  }, []);
+  }, [clients.length, suppliers.length, categories.length, products.length]);
 
   // Set up realtime subscriptions APENAS para tabelas críticas com debouncing
   useEffect(() => {
