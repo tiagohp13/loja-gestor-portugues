@@ -133,7 +133,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
                   <TableCell colSpan={5} className="text-right font-semibold text-blue-600 pr-0">
                     Total:
                   </TableCell>
-                  <TableCell className="text-right font-semibold text-blue-600 pr-8">
+                  <TableCell className="text-right font-semibold text-blue-600 pr-6">
                     {formatCurrency(sortedOrders.reduce((acc, order) => acc + calculateTotal(order), 0))}
                   </TableCell>
                 </TableRow>
