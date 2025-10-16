@@ -9,8 +9,8 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   
   // Valores para cálculos
   const clientsCount = stats.clientsCount;
-  // Correção: usar o valor correto para o número de vendas (19, não 6)
-  const salesCount = 19; // stats.completedOrders estava retornando 6, mas sabemos que são 19
+  // Usar o número real de vendas (saídas de stock ativas)
+  const salesCount = stats.completedOrders; // Número dinâmico de vendas
   
   // Debug para verificar os valores usados no cálculo
   console.log('Debug KPI values:', { 
@@ -54,11 +54,11 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Array de KPIs
   const kpis: KPI[] = [];
   
-  // Adicionamos os KPIs ao array
+  // Adicionamos os KPIs ao array com valores arredondados a 2 casas decimais
   kpis.push(
     {
       name: "ROI",
-      value: roi,
+      value: Number(roi.toFixed(2)),
       target: 40,
       unit: '%',
       isPercentage: true,
@@ -69,7 +69,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     },
     {
       name: "Margem de Lucro",
-      value: stats.profitMargin,
+      value: Number(stats.profitMargin.toFixed(2)),
       target: 25,
       unit: '%',
       isPercentage: true,
@@ -83,7 +83,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Criamos a Taxa de Conversão como um objeto separado para garantir que está correto
   const taxaConversao: KPI = {
     name: "Taxa de Conversão",
-    value: salesConversionRate,
+    value: Number(salesConversionRate.toFixed(2)),
     target: 20,
     unit: '%',
     isPercentage: true,
@@ -99,7 +99,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Valor Médio de Compra CORRIGIDO - agora inclui despesas no denominador
   const valorMedioCompra: KPI = {
     name: "Valor Médio de Compra",
-    value: averagePurchaseValue,
+    value: Number(averagePurchaseValue.toFixed(2)),
     target: 500,
     unit: '€',
     isPercentage: false,
@@ -113,11 +113,11 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Adicionamos o Valor Médio de Compra corrigido ao array de KPIs
   kpis.push(valorMedioCompra);
   
-  // Adicionamos os KPIs restantes ao array
+  // Adicionamos os KPIs restantes ao array com valores arredondados
   kpis.push(
     {
       name: "Valor Médio de Venda",
-      value: averageSaleValue,
+      value: Number(averageSaleValue.toFixed(2)),
       target: 600,
       unit: '€',
       isPercentage: false,
@@ -128,7 +128,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     },
     {
       name: "Lucro Médio por Venda",
-      value: averageProfitPerSale,
+      value: Number(averageProfitPerSale.toFixed(2)),
       target: 200,
       unit: '€',
       isPercentage: false,
@@ -139,18 +139,18 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     },
     {
       name: "Lucro Total",
-      value: stats.profit,
+      value: Number(stats.profit.toFixed(2)),
       target: 10000,
       unit: '€',
       isPercentage: false,
       previousValue: 9500,
       description: "Lucro total gerado no período.",
-      formula: "Valor de Vendas - Valor de Compras",
+      formula: "Valor de Vendas - (Valor de Compras + Despesas)",
       belowTarget: stats.profit < 10000
     },
     {
       name: "Lucro por Cliente",
-      value: profitPerClient,
+      value: Number(profitPerClient.toFixed(2)),
       target: 800,
       unit: '€',
       isPercentage: false,

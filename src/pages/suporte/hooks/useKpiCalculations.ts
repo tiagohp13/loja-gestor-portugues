@@ -8,33 +8,33 @@ import { SupportStats } from '../types/supportTypes';
 export const useKpiCalculations = (stats: SupportStats) => {
   return useMemo(() => {
     // Calculate basic metrics that will be used in multiple KPI calculations
-    const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
     const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
+    const salesCount = stats.completedOrders; // Número real de vendas (saídas ativas)
     
     // ROI (Retorno sobre o Investimento) = (Lucro / Total Gasto incluindo despesas) × 100
-    const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
+    const roi = stats.totalSpent > 0 ? Number(((stats.profit / stats.totalSpent) * 100).toFixed(2)) : 0;
     
     // Margem de Lucro = (Lucro / Valor de Vendas) × 100 (já inclui despesas no cálculo do lucro)
-    const profitMargin = stats.profitMargin;
+    const profitMargin = Number(stats.profitMargin.toFixed(2));
     
     // Taxa de Conversão de Vendas = (Número de Vendas / Número de Clientes) × 100
-    const salesCount = 19; // Valor fixo correto
-    const salesConversionRate = stats.clientsCount > 0 ? (salesCount / stats.clientsCount) * 100 : 0;
+    const salesConversionRate = stats.clientsCount > 0 ? Number(((salesCount / stats.clientsCount) * 100).toFixed(2)) : 0;
     
-    // Valor Médio de Compra = Valor de Compras / Número de Compras (sem incluir despesas)
-    const averagePurchaseValue = totalEntries > 0 ? (stats.totalSpent - stats.profit + stats.totalSales - stats.totalSales) / totalEntries : 0;
+    // Valor Médio de Compra = (Total Gasto) / (Número de Compras + Número de Despesas)
+    const totalTransactions = totalEntries + (stats.numberOfExpenses || 0);
+    const averagePurchaseValue = totalTransactions > 0 ? Number((stats.totalSpent / totalTransactions).toFixed(2)) : 0;
     
     // Valor Médio de Venda = Valor de Vendas / Número de Vendas
-    const averageSaleValue = salesCount > 0 ? stats.totalSales / salesCount : 0;
+    const averageSaleValue = salesCount > 0 ? Number((stats.totalSales / salesCount).toFixed(2)) : 0;
     
     // Lucro Total = Valor de Vendas - (Compras + Despesas)
-    const totalProfit = stats.profit;
+    const totalProfit = Number(stats.profit.toFixed(2));
     
     // Lucro Médio por Venda = Lucro / Número de Vendas
-    const averageProfitPerSale = salesCount > 0 ? stats.profit / salesCount : 0;
+    const averageProfitPerSale = salesCount > 0 ? Number((stats.profit / salesCount).toFixed(2)) : 0;
     
     // Lucro por Cliente = Lucro / Número de Clientes
-    const profitPerClient = stats.clientsCount > 0 ? stats.profit / stats.clientsCount : 0;
+    const profitPerClient = stats.clientsCount > 0 ? Number((stats.profit / stats.clientsCount).toFixed(2)) : 0;
 
     return {
       // Return all calculated KPIs
@@ -47,8 +47,9 @@ export const useKpiCalculations = (stats: SupportStats) => {
       averageProfitPerSale,
       profitPerClient,
       // Additional metrics that might be useful
-      completedExitsCount,
-      totalEntries
+      salesCount,
+      totalEntries,
+      totalTransactions
     };
   }, [stats]);
 };

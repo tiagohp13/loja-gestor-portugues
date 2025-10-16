@@ -29,7 +29,9 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       .is('deleted_at', null);
     
     let totalSales = 0;
+    let completedExitsCount = 0; // Número de vendas (saídas concluídas)
     if (activeExits && activeExits.length > 0 && !exitsError) {
+      completedExitsCount = activeExits.length; // Contar vendas ativas
       // Depois buscar todos os items de uma vez
       const exitIds = activeExits.map(e => e.id);
       const { data: exitItems, error: exitError } = await supabase
@@ -168,7 +170,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       topSuppliers,
       lowStockProducts: lowStockProductsData,
       pendingOrders,
-      completedOrders: completedCount,
+      completedOrders: completedExitsCount, // Usar o número real de vendas
       clientsCount,
       suppliersCount,
       categoriesCount,
