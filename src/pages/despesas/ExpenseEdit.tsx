@@ -327,7 +327,7 @@ const ExpenseEdit = () => {
                         <Label>Preço Unit.</Label>
                         <Input
                           type="number"
-                          step="1"
+                          step="0.01"
                           value={item.unitPrice}
                           onChange={(e) => updateItem(index, "unitPrice", parseFloat(e.target.value) || 0)}
                           min="0"
