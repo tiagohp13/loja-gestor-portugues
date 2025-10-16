@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from "react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { StockEntryItem, Product } from "@/types";
-import ProductSelector from "./StockEntryProductSelector";
+
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { StockEntryItem } from '@/types';
+import { Product } from '@/types';
+import StockEntryEditProductRow from './StockEntryEditProductRow';
 
 interface StockEntryEditProductTableProps {
   items: StockEntryItem[];
   products: Product[];
   onItemChange: (index: number, field: keyof StockEntryItem, value: any) => void;
-  addNewItem: (newItem: StockEntryItem) => void;
+  addNewItem: () => void;
   removeItem: (index: number) => void;
   calculateItemTotal: (item: StockEntryItem) => number;
   calculateTotal: () => number;
@@ -22,137 +23,72 @@ const StockEntryEditProductTable: React.FC<StockEntryEditProductTableProps> = ({
   addNewItem,
   removeItem,
   calculateItemTotal,
-  calculateTotal,
+  calculateTotal
 }) => {
-  const [productSearchTerm, setProductSearchTerm] = useState("");
-  const [productSearchOpen, setProductSearchOpen] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
-  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
-  const [currentQuantity, setCurrentQuantity] = useState(1);
-  const [currentPurchasePrice, setCurrentPurchasePrice] = useState(0);
-
-  useEffect(() => {
-    if (!productSearchTerm.trim()) {
-      setFilteredProducts(products);
-    } else {
-      const term = productSearchTerm.toLowerCase();
-      setFilteredProducts(
-        products.filter((p) => p.name.toLowerCase().includes(term) || p.code.toLowerCase().includes(term)),
-      );
-    }
-  }, [productSearchTerm, products]);
-
-  const handleSelectProduct = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      setCurrentProduct(product);
-      setCurrentPurchasePrice(product.purchasePrice);
-      setProductSearchTerm(`${product.code} - ${product.name}`);
-      setProductSearchOpen(false);
-    }
-  };
-
-  const handleAddProduct = () => {
-    if (!currentProduct) return;
-
-    const newItem: StockEntryItem = {
-      id: crypto.randomUUID(),
-      productId: currentProduct.id,
-      productName: `${currentProduct.code} - ${currentProduct.name}`,
-      quantity: currentQuantity,
-      purchasePrice: currentPurchasePrice,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    addNewItem(newItem);
-    setCurrentProduct(null);
-    setProductSearchTerm("");
-    setCurrentQuantity(1);
-    setCurrentPurchasePrice(0);
-  };
-
-  const formatCurrency = (v: number) =>
-    new Intl.NumberFormat("pt-PT", { style: "currency", currency: "EUR" }).format(v);
-
   return (
-    <div className="space-y-4">
-      {/* NOVO ProductSelector */}
-      <ProductSelector
-        productSearchTerm={productSearchTerm}
-        setProductSearchTerm={setProductSearchTerm}
-        productSearchOpen={productSearchOpen}
-        setProductSearchOpen={setProductSearchOpen}
-        filteredProducts={filteredProducts}
-        handleSelectProduct={handleSelectProduct}
-        currentProduct={currentProduct}
-        currentQuantity={currentQuantity}
-        currentSalePrice={currentPurchasePrice}
-        setCurrentQuantity={setCurrentQuantity}
-        setCurrentSalePrice={setCurrentPurchasePrice}
-        handleAddProduct={handleAddProduct}
-      />
-
-      {/* Tabela de produtos adicionados */}
-      {items.length === 0 ? (
-        <p className="text-center py-6 text-gray-500">Nenhum produto adicionado.</p>
-      ) : (
-        <div className="border rounded-md overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Produto</TableHead>
-                <TableHead>Qtd.</TableHead>
-                <TableHead>Preço Compra (€)</TableHead>
-                <TableHead>Subtotal</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item, idx) => {
-                const subtotal = item.quantity * item.purchasePrice;
-                return (
-                  <TableRow key={idx}>
-                    <TableCell>{item.productName}</TableCell>
-                    <TableCell>
-                      <input
-                        type="number"
-                        min="1"
-                        value={item.quantity}
-                        onChange={(e) => onItemChange(idx, "quantity", parseInt(e.target.value) || 1)}
-                        className="w-20 border rounded-md px-2 py-1"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={item.purchasePrice}
-                        onChange={(e) => onItemChange(idx, "purchasePrice", parseFloat(e.target.value) || 0)}
-                        className="w-24 border rounded-md px-2 py-1"
-                      />
-                    </TableCell>
-                    <TableCell className="font-medium">{formatCurrency(subtotal)}</TableCell>
-                    <TableCell>
-                      <Button type="button" variant="ghost" size="sm" onClick={() => removeItem(idx)}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              <TableRow className="bg-gray-50 font-medium">
-                <TableCell colSpan={3} className="text-right pr-4">
-                  Total:
-                </TableCell>
-                <TableCell>{formatCurrency(calculateTotal())}</TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
-      )}
+    <div className="space-y-2">
+      <div className="flex justify-between items-center mb-2">
+        <label className="text-sm font-medium text-gestorApp-gray-dark">
+          Produtos
+        </label>
+        <Button 
+          type="button" 
+          variant="outline" 
+          size="sm"
+          onClick={addNewItem}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Adicionar Produto
+        </Button>
+      </div>
+      
+      <div className="border rounded-md overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                Produto
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                Quantidade
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                Preço Unitário
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                Subtotal
+              </th>
+              <th className="px-3 py-3 text-left text-xs font-medium text-gestorApp-gray-dark uppercase tracking-wider">
+                Ações
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {items.map((item, index) => (
+              <StockEntryEditProductRow
+                key={index}
+                item={item}
+                index={index}
+                products={products}
+                onItemChange={onItemChange}
+                removeItem={removeItem}
+                calculateItemTotal={calculateItemTotal}
+              />
+            ))}
+          </tbody>
+          <tfoot className="bg-gray-50">
+            <tr>
+              <td colSpan={3} className="px-3 py-2 text-right font-medium">
+                Total:
+              </td>
+              <td className="px-3 py-2 font-medium">
+                {calculateTotal().toFixed(2)} €
+              </td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 };
