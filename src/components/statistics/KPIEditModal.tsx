@@ -30,17 +30,10 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
 
   const handleInputChange = (kpiName: string, value: string) => {
     const numValue = parseFloat(value);
-    if (!isNaN(numValue)) {
-      setTargets((prev) => ({
-        ...prev,
-        [kpiName]: numValue,
-      }));
-    } else if (value === "") {
-      setTargets((prev) => ({
-        ...prev,
-        [kpiName]: 0,
-      }));
-    }
+    setTargets((prev) => ({
+      ...prev,
+      [kpiName]: !isNaN(numValue) ? numValue : 0,
+    }));
   };
 
   const handleSave = async () => {
@@ -73,10 +66,10 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
   };
 
   const formatDisplayValue = (kpi: KPI) => {
-    const target = targets[kpi.name];
+    const target = targets[kpi.name] || 0;
     if (kpi.isPercentage) return formatPercentage(target);
     if (kpi.unit === "€") return formatCurrency(target);
-    return target.toString();
+    return target.toFixed(2);
   };
 
   return (
@@ -104,20 +97,17 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
 
                 <div className="flex items-center">
                   {kpi.unit === "€" && !kpi.isPercentage && <span className="mr-2 text-gray-500">€</span>}
-
-                  {/* ✅ Input corrigido */}
                   <Input
                     id={`kpi-${index}`}
                     type="number"
-                    value={targets[kpi.name]}
+                    value={targets[kpi.name] || 0}
                     onChange={(e) => handleInputChange(kpi.name, e.target.value)}
-                    step={kpi.isPercentage ? 1 : kpi.unit === "€" ? 0.01 : 1}
-                    min={kpi.isPercentage ? 0 : undefined}
+                    step={kpi.isPercentage ? 0.01 : kpi.unit === "€" ? 0.01 : 1}
+                    min={0}
                     max={kpi.isPercentage ? 100 : undefined}
-                    onWheel={(e) => (e.currentTarget as HTMLInputElement).blur()} // impede rolagem
+                    onWheel={(e) => e.currentTarget.blur()}
                     className="w-full text-right"
                   />
-
                   {kpi.isPercentage && <span className="ml-2 text-gray-500">%</span>}
                   {!kpi.isPercentage && kpi.unit !== "€" && <span className="ml-2 text-gray-500">{kpi.unit}</span>}
                 </div>

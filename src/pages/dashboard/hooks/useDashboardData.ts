@@ -1,5 +1,5 @@
 import { useData } from '@/contexts/DataContext';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { 
   createMonthlyDataMap, 
   processExitsForMonthlyData,
@@ -20,25 +20,34 @@ import {
   getMonthlyExpensesData
 } from './utils/financialUtils';
 
+interface FinancialMetrics {
+  totalSpentWithExpenses: number;
+  totalProfitWithExpenses: number;
+  profitMarginPercentWithExpenses: number;
+  roiValueWithExpenses: number;
+  roiPercentWithExpenses: number;
+  monthlyExpensesData: Record<string, number>;
+}
+
 export const useDashboardData = () => {
   const { products, stockEntries, stockExits, orders } = useData();
   
-  // State for values that include expenses
-  const [totalSpentWithExpenses, setTotalSpentWithExpenses] = useState(0);
-  const [totalProfitWithExpenses, setTotalProfitWithExpenses] = useState(0);
-  const [profitMarginPercentWithExpenses, setProfitMarginPercentWithExpenses] = useState(0);
-  const [roiValueWithExpenses, setRoiValueWithExpenses] = useState(0);
-  const [roiPercentWithExpenses, setRoiPercentWithExpenses] = useState(0);
-  const [monthlyExpensesData, setMonthlyExpensesData] = useState<Record<string, number>>({});
+  const [financialMetrics, setFinancialMetrics] = useState<FinancialMetrics>({
+    totalSpentWithExpenses: 0,
+    totalProfitWithExpenses: 0,
+    profitMarginPercentWithExpenses: 0,
+    roiValueWithExpenses: 0,
+    roiPercentWithExpenses: 0,
+    monthlyExpensesData: {}
+  });
 
-  // Prepare monthly data for charts (now including expenses)
+  // Monthly data for charts (includes expenses)
   const monthlyData = useMemo(() => {
     const dataMap = createMonthlyDataMap();
     processExitsForMonthlyData(stockExits, dataMap);
     processEntriesForMonthlyData(stockEntries, dataMap);
     
-    // Add expenses data to monthly chart
-    Object.entries(monthlyExpensesData).forEach(([monthKey, expenseValue]) => {
+    Object.entries(financialMetrics.monthlyExpensesData).forEach(([monthKey, expenseValue]) => {
       const [year, month] = monthKey.split('-');
       const monthDate = new Date(parseInt(year), parseInt(month) - 1);
       const monthName = monthDate.toLocaleDateString('pt-PT', { 
@@ -47,68 +56,56 @@ export const useDashboardData = () => {
       });
       
       if (dataMap.has(monthName)) {
-        const existing = dataMap.get(monthName)!;
-        existing.compras += expenseValue; // Add expenses to purchases
+        dataMap.get(monthName)!.compras += expenseValue;
       }
     });
     
     return Array.from(dataMap.values());
-  }, [stockExits, stockEntries, monthlyExpensesData]);
+  }, [stockExits, stockEntries, financialMetrics.monthlyExpensesData]);
   
-  // Calculate low stock products (only needed for dashboard)
-  const lowStockProducts = useMemo(() => {
-    return identifyLowStockProducts(products);
-  }, [products]);
+  const lowStockProducts = useMemo(() => identifyLowStockProducts(products), [products]);
   
-  // Calculate basic financial metrics (optimized)
-  const { totalSalesValue, totalPurchaseValue, totalStockValue } = useMemo(() => ({
+  const basicFinancials = useMemo(() => ({
     totalSalesValue: calculateTotalSalesValue(stockExits),
     totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
     totalStockValue: calculateTotalStockValue(products)
   }), [stockExits, stockEntries, products]);
 
-  // Calculate financial metrics including expenses - debounced for performance
+  const calculateFinancialMetrics = useCallback(async () => {
+    try {
+      const [totalSpent, totalProfit, profitMargin, roiVal, roiPerc, expenses] = await Promise.all([
+        calculateTotalSpent(stockEntries),
+        calculateTotalProfitWithExpenses(basicFinancials.totalSalesValue, stockEntries),
+        calculateProfitMarginPercentWithExpenses(basicFinancials.totalSalesValue, stockEntries),
+        calculateRoiValueWithExpenses(basicFinancials.totalSalesValue, stockEntries),
+        calculateRoiPercentWithExpenses(basicFinancials.totalSalesValue, stockEntries),
+        getMonthlyExpensesData()
+      ]);
+      
+      setFinancialMetrics({
+        totalSpentWithExpenses: totalSpent,
+        totalProfitWithExpenses: totalProfit,
+        profitMarginPercentWithExpenses: profitMargin,
+        roiValueWithExpenses: roiVal,
+        roiPercentWithExpenses: roiPerc,
+        monthlyExpensesData: expenses
+      });
+    } catch (error) {
+      console.error('Error calculating financial metrics:', error);
+    }
+  }, [stockEntries, basicFinancials.totalSalesValue]);
+
   useEffect(() => {
-    const calculateWithExpenses = async () => {
-      try {
-        const [totalSpent, totalProfitWithExp, profitMarginWithExp, roiValWithExp, roiPercWithExp, expensesData] = await Promise.all([
-          calculateTotalSpent(stockEntries),
-          calculateTotalProfitWithExpenses(totalSalesValue, stockEntries),
-          calculateProfitMarginPercentWithExpenses(totalSalesValue, stockEntries),
-          calculateRoiValueWithExpenses(totalSalesValue, stockEntries),
-          calculateRoiPercentWithExpenses(totalSalesValue, stockEntries),
-          getMonthlyExpensesData()
-        ]);
-        
-        setTotalSpentWithExpenses(totalSpent);
-        setTotalProfitWithExpenses(totalProfitWithExp);
-        setProfitMarginPercentWithExpenses(profitMarginWithExp);
-        setRoiValueWithExpenses(roiValWithExp);
-        setRoiPercentWithExpenses(roiPercWithExp);
-        setMonthlyExpensesData(expensesData);
-      } catch (error) {
-        console.error('Error calculating financial metrics with expenses:', error);
-      }
-    };
-    
-    // Debounce expensive calculations
-    const timer = setTimeout(calculateWithExpenses, 300);
+    const timer = setTimeout(calculateFinancialMetrics, 300);
     return () => clearTimeout(timer);
-  }, [stockEntries, totalSalesValue]);
+  }, [calculateFinancialMetrics]);
 
   return {
     products,
     orders,
     monthlyData,
     lowStockProducts,
-    totalSalesValue,
-    totalPurchaseValue,
-    totalStockValue,
-    // Values including expenses
-    totalSpentWithExpenses,
-    totalProfitWithExpenses,
-    profitMarginPercentWithExpenses,
-    roiValueWithExpenses,
-    roiPercentWithExpenses
+    ...basicFinancials,
+    ...financialMetrics
   };
 };

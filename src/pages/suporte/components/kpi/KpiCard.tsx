@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatCurrency, formatPercentage } from '@/utils/formatting';
 import { Info } from 'lucide-react';
@@ -30,18 +29,15 @@ const KpiCard: React.FC<KpiCardProps> = ({
   iconColor = 'text-blue-500',
   iconBackground = 'bg-blue-100'
 }) => {
-  // Format the value based on prefix, suffix or percentage
-  let formattedValue = '';
-  
-  if (isPercentage) {
-    formattedValue = formatPercentage(value);
-  } else if (prefix === '€') {
-    formattedValue = formatCurrency(value);
-  } else {
-    formattedValue = value.toLocaleString();
-    if (prefix) formattedValue = `${prefix}${formattedValue}`;
-    if (suffix) formattedValue = `${formattedValue}${suffix}`;
-  }
+  const formattedValue = useMemo(() => {
+    if (isPercentage) return formatPercentage(value);
+    if (prefix === '€') return formatCurrency(value);
+    
+    let formatted = value.toLocaleString();
+    if (prefix) formatted = `${prefix}${formatted}`;
+    if (suffix) formatted = `${formatted}${suffix}`;
+    return formatted;
+  }, [value, isPercentage, prefix, suffix]);
 
   return (
     <Card className="shadow-sm">

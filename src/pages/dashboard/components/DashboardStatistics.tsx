@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatCurrency } from '@/utils/formatting';
@@ -15,7 +14,6 @@ interface DashboardStatisticsProps {
   profitMarginPercent: number;
   roiValue: number;
   roiPercent: number;
-  // New props that include expenses
   totalSpentWithExpenses: number;
   totalProfitWithExpenses: number;
   profitMarginPercentWithExpenses: number;
@@ -30,12 +28,7 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
   mostSoldProduct,
   mostFrequentClient,
   mostUsedSupplier,
-  totalPurchaseValue,
   totalSalesValue,
-  totalProfit,
-  profitMarginPercent,
-  roiValue,
-  roiPercent,
   totalSpentWithExpenses,
   totalProfitWithExpenses,
   profitMarginPercentWithExpenses,
@@ -45,6 +38,73 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
   navigateToClientDetail,
   navigateToSupplierDetail
 }) => {
+  const statisticsData = useMemo(() => [
+    {
+      label: 'Produto Mais Vendido',
+      value: mostSoldProduct,
+      type: 'product' as const
+    },
+    {
+      label: 'Cliente Mais Frequente',
+      value: mostFrequentClient,
+      type: 'client' as const
+    },
+    {
+      label: 'Fornecedor Mais Usado',
+      value: mostUsedSupplier,
+      type: 'supplier' as const
+    },
+    {
+      label: 'Total Gasto',
+      value: formatCurrency(totalSpentWithExpenses),
+      className: 'text-red-500'
+    },
+    {
+      label: 'Total Vendas',
+      value: formatCurrency(totalSalesValue),
+      className: 'text-green-600'
+    },
+    {
+      label: 'Lucro',
+      value: formatCurrency(totalProfitWithExpenses),
+      className: 'text-green-600'
+    },
+    {
+      label: 'Margem de Lucro',
+      value: `${profitMarginPercentWithExpenses.toFixed(2)}%`,
+      className: 'text-green-600'
+    },
+    {
+      label: 'ROI (€)',
+      value: formatCurrency(roiValueWithExpenses),
+      className: 'text-green-600'
+    },
+    {
+      label: 'ROI (%)',
+      value: `${roiPercentWithExpenses.toFixed(2)}%`,
+      className: 'text-green-600',
+      noBorder: true
+    }
+  ], [
+    mostSoldProduct,
+    mostFrequentClient,
+    mostUsedSupplier,
+    totalSalesValue,
+    totalSpentWithExpenses,
+    totalProfitWithExpenses,
+    profitMarginPercentWithExpenses,
+    roiValueWithExpenses,
+    roiPercentWithExpenses
+  ]);
+
+  const handleNavigation = (type: 'product' | 'client' | 'supplier', id: string) => {
+    const navigationMap = {
+      product: navigateToProductDetail,
+      client: navigateToClientDetail,
+      supplier: navigateToSupplierDetail
+    };
+    navigationMap[type]?.(id);
+  };
   return (
     <Card className="h-full">
       <CardHeader>
@@ -52,88 +112,27 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
       </CardHeader>
       <CardContent>
         <dl className="space-y-4">
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Produto Mais Vendido</dt>
-            <dd className="text-gray-800 text-right w-auto">
-              {mostSoldProduct ? (
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
-                  onClick={() => mostSoldProduct && navigateToProductDetail(mostSoldProduct.id)}
-                >
-                  {mostSoldProduct.name}
-                </Button>
-              ) : 'N/A'}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Cliente Mais Frequente</dt>
-            <dd className="text-gray-800 text-right w-auto">
-              {mostFrequentClient ? (
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
-                  onClick={() => mostFrequentClient && navigateToClientDetail(mostFrequentClient.id)}
-                >
-                  {mostFrequentClient.name}
-                </Button>
-              ) : 'N/A'}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Fornecedor Mais Usado</dt>
-            <dd className="text-gray-800 text-right w-auto">
-              {mostUsedSupplier ? (
-                <Button 
-                  variant="link" 
-                  className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
-                  onClick={() => mostUsedSupplier && navigateToSupplierDetail(mostUsedSupplier.id)}
-                >
-                  {mostUsedSupplier.name}
-                </Button>
-              ) : 'N/A'}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Total Gasto</dt>
-            <dd className="font-semibold text-red-500 text-right">
-              {formatCurrency(totalSpentWithExpenses)}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Total Vendas</dt>
-            <dd className="font-semibold text-green-600 text-right">
-              {formatCurrency(totalSalesValue)}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Lucro</dt>
-            <dd className="font-semibold text-green-600 text-right">
-              {formatCurrency(totalProfitWithExpenses)}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-gray-500 font-medium text-left">Margem de Lucro</dt>
-            <dd className="font-semibold text-green-600 text-right">
-              {profitMarginPercentWithExpenses.toFixed(2)}%
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2 border-b">
-            <dt className="flex items-center text-gray-500 font-medium text-left">
-              ROI (€)
-            </dt>
-            <dd className="font-semibold text-green-600 text-right">
-              {formatCurrency(roiValueWithExpenses)}
-            </dd>
-          </div>
-          <div className="flex justify-between items-center py-2">
-            <dt className="flex items-center text-gray-500 font-medium text-left">
-              ROI (%)
-            </dt>
-            <dd className="font-semibold text-green-600 text-right">
-              {roiPercentWithExpenses.toFixed(2)}%
-            </dd>
-          </div>
+          {statisticsData.map((stat, index) => (
+            <div 
+              key={index}
+              className={`flex justify-between items-center py-2 ${stat.noBorder ? '' : 'border-b'}`}
+            >
+              <dt className="text-gray-500 font-medium text-left">{stat.label}</dt>
+              <dd className={`font-semibold text-right ${stat.className || 'text-gray-800'}`}>
+                {stat.type && stat.value && typeof stat.value === 'object' ? (
+                  <Button 
+                    variant="link" 
+                    className="p-0 h-auto text-blue-500 hover:underline transition-colors text-right w-full justify-end"
+                    onClick={() => handleNavigation(stat.type!, (stat.value as any).id)}
+                  >
+                    {(stat.value as any).name}
+                  </Button>
+                ) : (
+                  (typeof stat.value === 'string' ? stat.value : 'N/A')
+                )}
+              </dd>
+            </div>
+          ))}
         </dl>
       </CardContent>
     </Card>
