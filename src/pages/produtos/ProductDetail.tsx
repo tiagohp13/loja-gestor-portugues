@@ -1,26 +1,26 @@
-
-import React, { useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import ProductDetailHeader from './components/ProductDetailHeader';
-import ProductImageCard from './components/ProductImageCard';
-import ProductDetailCard from './components/ProductDetailCard';
-import ProductStockCard from './components/ProductStockCard';
-import ProductNotFound from './components/ProductNotFound';
-import HistoryTables from './components/HistoryTables';
-import { ProductPriceHistory } from './components/ProductPriceHistory';
-import { useProductHistory } from './hooks/useProductHistory';
-import { useProductDetail } from './hooks/useProductDetail';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle } from 'lucide-react';
+import React, { useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useData } from "../../contexts/DataContext";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import ProductDetailHeader from "./components/ProductDetailHeader";
+import ProductSuggestions from "./components/ProductSuggestions";
+import ProductImageCard from "./components/ProductImageCard";
+import ProductDetailCard from "./components/ProductDetailCard";
+import ProductStockCard from "./components/ProductStockCard";
+import ProductNotFound from "./components/ProductNotFound";
+import HistoryTables from "./components/HistoryTables";
+import { ProductPriceHistory } from "./components/ProductPriceHistory";
+import { useProductHistory } from "./hooks/useProductHistory";
+import { useProductDetail } from "./hooks/useProductDetail";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { getProduct, isLoading } = useData();
   const { isDeleted } = useProductDetail();
   const navigate = useNavigate();
-  
+
   // Get product history
   const {
     entriesForProduct,
@@ -29,43 +29,42 @@ const ProductDetail: React.FC = () => {
     totalUnitsSold,
     totalUnitsPurchased,
     totalAmountSpent,
-    totalAmountSold
+    totalAmountSold,
   } = useProductHistory(id);
-  
+
   // Force scroll to top when product changes or page loads
   useEffect(() => {
-    // Multiple approaches to ensure scroll works
     window.scrollTo(0, 0);
-    document.documentElement.scrollTop = 0;
-    document.body.scrollTop = 0;
   }, [id]);
-  
+
   if (isLoading) return <LoadingSpinner />;
-  
+
   const product = id ? getProduct(id) : null;
-  
-  if (!product) {
-    return <ProductNotFound />;
-  }
-  
+  if (!product) return <ProductNotFound />;
+
   return (
     <div className="container mx-auto px-4 py-6">
-      <ProductDetailHeader 
-        productName={product.name} 
-        productCode={product.code}
-        productId={id}
-        isDeleted={isDeleted}
+      {/* Cabeçalho do produto */}
+      <ProductDetailHeader productName={product.name} productCode={product.code} productId={id} isDeleted={isDeleted} />
+
+      {/* Sugestões inteligentes */}
+      <ProductSuggestions
+        totalUnitsSoldLast30={totalUnitsSold}
+        lastEntryDate={entriesForProduct[0]?.date}
+        currentStock={product.currentStock}
+        minStock={product.minStock}
+        salePrice={product.salePrice}
+        averageCost={product.averageCost}
       />
 
+      {/* Alerta se o produto estiver apagado */}
       {isDeleted && (
         <Alert variant="destructive" className="mt-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Este registo foi apagado e está em modo de leitura apenas.
-          </AlertDescription>
+          <AlertDescription>Este registo foi apagado e está em modo de leitura apenas.</AlertDescription>
         </Alert>
       )}
-      
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
         {/* Product Image Card */}
         {product.image && (
@@ -73,33 +72,30 @@ const ProductDetail: React.FC = () => {
             <ProductImageCard image={product.image} name={product.name} />
           </div>
         )}
-        
-        {/* Product Details Card - Takes remaining space */}
+
+        {/* Product Details Card */}
         <div className={product.image ? "lg:col-span-5" : "lg:col-span-8"}>
-          <ProductDetailCard 
-            product={product} 
-            totalUnitsSold={totalUnitsSold}
-          />
+          <ProductDetailCard product={product} totalUnitsSold={totalUnitsSold} />
         </div>
-        
+
         {/* Stock Card */}
         <div className="lg:col-span-3">
-          <ProductStockCard 
-            currentStock={product.currentStock} 
+          <ProductStockCard
+            currentStock={product.currentStock}
             minStock={product.minStock}
-            hasImage={!!product.image} 
+            hasImage={!!product.image}
           />
         </div>
       </div>
-      
+
       {/* Price History */}
       <div className="mt-6">
         <ProductPriceHistory productId={id!} />
       </div>
-      
+
       {/* History Tables */}
-      <HistoryTables 
-        entriesForProduct={entriesForProduct} 
+      <HistoryTables
+        entriesForProduct={entriesForProduct}
         exitsForProduct={exitsForProduct}
         pendingOrdersForProduct={pendingOrdersForProduct}
         totalUnitsPurchased={totalUnitsPurchased}
