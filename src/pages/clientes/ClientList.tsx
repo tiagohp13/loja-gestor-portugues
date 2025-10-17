@@ -28,6 +28,9 @@ import { formatCurrency } from '@/utils/formatting';
 import { calculateClientTag } from '@/utils/clientTags';
 import ClientTag from '@/components/common/ClientTag';
 import { format } from 'date-fns';
+import { useClientKpis } from './hooks/useClientKpis';
+import ClientKpis from './components/ClientKpis';
+import ClientInsights from './components/ClientInsights';
 
 const ClientList = () => {
   const navigate = useNavigate();
@@ -39,6 +42,9 @@ const ClientList = () => {
   
   // Use sortable clients hook
   const { clients, isLoading, handleSort, getSortIcon } = useSortableClients();
+  
+  // Calculate client KPIs
+  const kpis = useClientKpis(clients, stockExits);
 
   const handleViewAllTopClients = () => {
     // Ensure we sort by totalSpent in descending order
@@ -112,6 +118,24 @@ const ClientList = () => {
         title="Total de clientes"
         count={clients.length}
         icon={Users}
+      />
+      
+      {/* Client KPIs */}
+      <ClientKpis
+        activeClients30d={kpis.activeClients30d}
+        newClients30d={kpis.newClients30d}
+        totalSpentCurrentMonth={kpis.totalSpentCurrentMonth}
+        avgSpentPerActiveClient={kpis.avgSpentPerActiveClient}
+        top5Percentage={kpis.top5Percentage}
+      />
+      
+      {/* Client Insights */}
+      <ClientInsights
+        inactiveClients90d={kpis.inactiveClients90d}
+        newClients30d={kpis.newClients30d}
+        top5Percentage={kpis.top5Percentage}
+        avgSpentChange={kpis.avgSpentChange}
+        totalClients={clients.length}
       />
       
       {/* Top 5 Clientes Section */}
