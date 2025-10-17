@@ -1,13 +1,11 @@
 import React, { useState, useMemo, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDashboardData } from "./dashboard/hooks/useDashboardData";
-import { useKpiDeltas } from "./dashboard/hooks/useKpiDeltas";
-import { useSupportData } from "./suporte/hooks/useSupportData";
-import { useData } from "@/contexts/DataContext";
+import { useDashboardOptimized } from "./dashboard/hooks/useDashboardOptimized";
 import PageHeader from "../components/ui/PageHeader";
 import QuickActions from "@/components/ui/QuickActions";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import ChartSkeleton from "@/components/ui/ChartSkeleton";
+import SummaryCardSkeleton from "@/components/ui/SummaryCardSkeleton";
 import { WidgetConfig } from "@/components/ui/DashboardCustomization/types";
 
 // Lazy load heavy components for better performance
@@ -30,21 +28,20 @@ const defaultDashboardConfig: WidgetConfig[] = [
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { isLoading: isLoadingSupportData, stats: supportStats, kpis } = useSupportData();
-  const { stockExits, stockEntries } = useData();
-
+  
+  // Single optimized hook with all data fetched in parallel
   const {
+    isLoading,
     products,
     orders,
     monthlyData,
     lowStockProducts,
-    totalSpentWithExpenses,
-    totalProfitWithExpenses,
-    profitMarginPercentWithExpenses,
-  } = useDashboardData();
-
-  // Calculate KPI deltas (30 days and Month over Month variations)
-  const kpiDeltas = useKpiDeltas(stockExits, stockEntries);
+    kpis,
+    kpiDeltas,
+    supportStats,
+    insufficientStockItems,
+    pendingOrders: filteredPendingOrders
+  } = useDashboardOptimized();
 
   const [dashboardConfig] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem("dashboard-layout-config");
@@ -59,47 +56,20 @@ const DashboardPage: React.FC = () => {
     return defaultDashboardConfig;
   });
 
-  const { insufficientStockItems, pendingOrders: filteredPendingOrders } = useMemo(() => {
-    const findInsufficientStockOrders = (orders: any[], products: any[]) => {
-      return orders.reduce((acc: any[], order) => {
-        if (order.convertedToStockExitId || order.status === "deleted") return acc;
-        order.items.forEach((item: any) => {
-          const product = products.find((p) => p.id === item.productId);
-          if (product && product.currentStock < item.quantity) {
-            acc.push({ product, order, item, shortfall: item.quantity - product.currentStock });
-          }
-        });
-        return acc;
-      }, []);
-    };
-    return {
-      insufficientStockItems: findInsufficientStockOrders(orders, products),
-      pendingOrders: orders.filter((order) => !order.convertedToStockExitId && order.status !== "deleted"),
-    };
-  }, [orders, products]);
-
   const navigateToProductDetail = (id: string) => navigate(`/produtos/${id}`);
   const navigateToClientDetail = (id: string) => navigate(`/clientes/detalhe/${id}`);
   const navigateToOrderDetail = (id: string) => navigate(`/encomendas/${id}`);
-
-  const isLoading = isLoadingSupportData;
-
-  const updatedStats = useMemo(
-    () => ({
-      ...supportStats,
-      totalSpent: totalSpentWithExpenses,
-      profit: totalProfitWithExpenses,
-      profitMargin: profitMarginPercentWithExpenses,
-    }),
-    [supportStats, totalSpentWithExpenses, totalProfitWithExpenses, profitMarginPercentWithExpenses],
-  );
 
   const componentMap: { [key: string]: React.ReactNode } = useMemo(
     () => ({
       "quick-actions": <QuickActions />,
       "summary-cards": (
-        <Suspense fallback={<TableSkeleton title="Cartões de Resumo" rows={2} columns={2} />}>
-          <SummaryCards stats={updatedStats} isLoading={isLoading} deltas={kpiDeltas} />
+        <Suspense fallback={
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map(i => <SummaryCardSkeleton key={i} />)}
+          </div>
+        }>
+          <SummaryCards stats={supportStats} isLoading={isLoading} deltas={kpiDeltas} />
         </Suspense>
       ),
       "sales-purchases-chart": (
@@ -138,7 +108,7 @@ const DashboardPage: React.FC = () => {
       ),
     }),
     [
-      updatedStats,
+      supportStats,
       isLoading,
       monthlyData,
       lowStockProducts,
