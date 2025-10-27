@@ -29,7 +29,6 @@ import { calculateClientTag } from '@/utils/clientTags';
 import ClientTag from '@/components/common/ClientTag';
 import { format } from 'date-fns';
 import { useClientKpis } from './hooks/useClientKpis';
-import ClientKpis from './components/ClientKpis';
 import ClientInsights from './components/ClientInsights';
 
 const ClientList = () => {
@@ -118,15 +117,6 @@ const ClientList = () => {
         title="Total de clientes"
         count={clients.length}
         icon={Users}
-      />
-      
-      {/* Client KPIs */}
-      <ClientKpis
-        activeClients30d={kpis.activeClients30d}
-        newClients30d={kpis.newClients30d}
-        totalSpentCurrentMonth={kpis.totalSpentCurrentMonth}
-        avgSpentPerActiveClient={kpis.avgSpentPerActiveClient}
-        top5Percentage={kpis.top5Percentage}
       />
       
       {/* Client Insights */}
