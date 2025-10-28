@@ -77,17 +77,17 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
     if (top5Percentage > 70) type = 'critical';
     else if (top5Percentage > 50) type = 'warning';
 
-    insights.push({
-      type,
-      icon: Target,
-      title: `Os 5 principais clientes representam ${top5Percentage.toFixed(1)}% do total faturado este mês.`,
-      suggestion: `Concentração ${concentrationLevel}.`,
-      action: {
-        label: 'Ver Top 5',
-        onClick: () => openModal('top5'),
-      },
-    });
-  }
+insights.push({
+  type,
+  icon: Target,
+  title: `${emoji} Os 5 maiores clientes deste mês contribuíram com ${top5Percentage.toFixed(1)}% da faturação mensal (concentração ${concentrationLevel}).`,
+  suggestion: `Concentração ${concentrationLevel}.`,
+  action: {
+    label: 'Ver Top 5',
+    onClick: () => openModal('top5'),
+  },
+});
+
 
   // 💸 Mudança no valor médio gasto
   if (avgSpentChange !== 0) {
