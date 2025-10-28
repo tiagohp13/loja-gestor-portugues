@@ -678,20 +678,22 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const updateProduct = async (id: string, product: Partial<Product>) => {
     try {
+      const updateData: any = {};
+      
+      if (product.code !== undefined) updateData.code = product.code;
+      if (product.name !== undefined) updateData.name = product.name;
+      if (product.description !== undefined) updateData.description = product.description;
+      if (product.category !== undefined) updateData.category = product.category;
+      if (product.purchasePrice !== undefined) updateData.purchase_price = Number(product.purchasePrice);
+      if (product.salePrice !== undefined) updateData.sale_price = Number(product.salePrice);
+      if (product.currentStock !== undefined) updateData.current_stock = Number(product.currentStock);
+      if (product.minStock !== undefined) updateData.min_stock = Number(product.minStock);
+      if (product.image !== undefined) updateData.image = product.image;
+      if (product.status !== undefined) updateData.status = product.status;
+
       const { error } = await supabase
         .from("products")
-        .update({
-          code: product.code,
-          name: product.name,
-          description: product.description,
-          category: product.category,
-          purchase_price: product.purchasePrice,
-          sale_price: product.salePrice,
-          current_stock: product.currentStock,
-          min_stock: product.minStock,
-          image: product.image,
-          status: product.status,
-        })
+        .update(updateData)
         .eq("id", id);
 
       if (error) throw error;

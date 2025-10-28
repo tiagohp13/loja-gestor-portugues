@@ -63,7 +63,7 @@ const ProductEdit = () => {
       ...prev,
       [name]:
         name === "purchasePrice" || name === "salePrice" || name === "currentStock" || name === "minStock"
-          ? parseFloat(value) || 0
+          ? (value === "" ? 0 : Number(value))
           : value,
     }));
   };
@@ -197,7 +197,7 @@ const ProductEdit = () => {
                 id="purchasePrice"
                 name="purchasePrice"
                 type="number"
-                step="1"
+                step="0.01"
                 min="0"
                 value={product.purchasePrice}
                 onChange={handleChange}
@@ -213,7 +213,7 @@ const ProductEdit = () => {
                 id="salePrice"
                 name="salePrice"
                 type="number"
-                step="1"
+                step="0.01"
                 min="0"
                 value={product.salePrice}
                 onChange={handleChange}
