@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useNavigate } from 'react-router-dom';
+import ClientInsightsModal from './ClientInsightsModal';
+import { useData } from '@/contexts/DataContext';
 
 interface ClientInsightsProps {
   inactiveClients90d: number;
@@ -19,7 +20,15 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
   avgSpentChange,
   totalClients,
 }) => {
-  const navigate = useNavigate();
+  const { clients, stockExits } = useData();
+  const [modalType, setModalType] = useState<'inactive' | 'new' | 'top5' | 'avgSpent' | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openModal = (type: 'inactive' | 'new' | 'top5' | 'avgSpent') => {
+    setModalType(type);
+    setIsModalOpen(true);
+  };
+
   const insights: {
     type: 'info' | 'warning' | 'critical' | 'success';
     icon: React.ElementType;
@@ -42,7 +51,7 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
       suggestion: 'Considere reativar esses clientes com uma promoção.',
       action: {
         label: 'Ver lista',
-        onClick: () => navigate('/clientes?status=Inativo'),
+        onClick: () => openModal('inactive'),
       },
     });
   }
@@ -56,7 +65,7 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
       suggestion: 'O crescimento está positivo!',
       action: {
         label: 'Ver novos',
-        onClick: () => navigate('/clientes?novo=1'),
+        onClick: () => openModal('new'),
       },
     });
   }
@@ -75,7 +84,7 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
       suggestion: `Concentração ${concentrationLevel}.`,
       action: {
         label: 'Ver Top 5',
-        onClick: () => navigate('/clientes?view=top5'),
+        onClick: () => openModal('top5'),
       },
     });
   }
@@ -95,8 +104,8 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
           ? 'Bom sinal — ticket médio em crescimento.'
           : 'Avalie a causa da redução no ticket médio.',
         action: {
-          label: 'Ver vendas',
-          onClick: () => navigate('/estatisticas'),
+          label: 'Ver detalhes',
+          onClick: () => openModal('avgSpent'),
         },
       });
     }
@@ -168,6 +177,14 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
       <div className="mt-3 text-sm text-muted-foreground italic">
         💬 {summary}
       </div>
+
+      <ClientInsightsModal
+        type={modalType}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        clients={clients}
+        stockExits={stockExits}
+      />
     </div>
   );
 };
