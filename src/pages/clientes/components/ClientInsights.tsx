@@ -80,10 +80,9 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
 insights.push({
   type,
   icon: Target,
- title: `Os 5 maiores clientes deste mês contribuíram com ${top5Percentage.toFixed(
-  1
-)}% da faturação mensal (concentração ${concentrationLevel}).`,
-
+  title: `Os 5 maiores clientes deste mês contribuíram com ${top5Percentage.toFixed(
+    1
+  )}% da faturação mensal (concentração ${concentrationLevel}).`,
   suggestion: `Concentração ${concentrationLevel}.`,
   action: {
     label: 'Ver Top 5',
