@@ -78,7 +78,7 @@ const DashboardPage: React.FC = () => {
         </Suspense>
       ),
       "pending-orders": (
-        <Suspense fallback={<TableSkeleton title="Encomendas Pendentes" rows={4} columns={7} />}>
+        <Suspense fallback={<TableSkeleton title="Encomendas Pendentes" rows={3} columns={5} />}>
           <PendingOrders
             pendingOrders={filteredPendingOrders}
             navigateToOrderDetail={navigateToOrderDetail}
@@ -102,7 +102,7 @@ const DashboardPage: React.FC = () => {
         </Suspense>
       ),
       "kpi-panel": (
-        <Suspense fallback={<TableSkeleton title="Indicadores de Performance" rows={4} columns={2} />}>
+        <Suspense fallback={<div className="h-48 animate-pulse bg-muted rounded-lg" />}>
           <KPIPanel title="Indicadores de Performance" description="Principais KPIs do negócio" kpis={kpis} />
         </Suspense>
       ),

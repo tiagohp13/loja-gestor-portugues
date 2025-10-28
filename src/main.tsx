@@ -15,10 +15,11 @@ if (!rootElement) {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60 * 1000, // 2 minutes
-      gcTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 10 * 60 * 1000, // 10 minutes - aggressive caching for better performance
+      gcTime: 15 * 60 * 1000, // 15 minutes
       refetchOnWindowFocus: false,
       refetchOnMount: false,
+      refetchOnReconnect: false,
       retry: 1,
     },
   },

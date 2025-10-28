@@ -215,10 +215,11 @@ export const useDashboardOptimized = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-all-data', products.length, orders.length, stockExits.length, stockEntries.length, clients.length],
     queryFn: () => fetchAllDashboardData(products, stockExits, stockEntries, clients),
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes (formerly cacheTime)
+    staleTime: 10 * 60 * 1000, // 10 minutes - dashboard data doesn't need frequent updates
+    gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
-    refetchOnMount: false
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   // Memoize derived data

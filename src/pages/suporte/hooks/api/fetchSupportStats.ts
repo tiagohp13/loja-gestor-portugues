@@ -10,8 +10,8 @@ const cache = {
   lastFetch: 0
 };
 
-// Cache de 5 minutos para melhor performance
-const CACHE_DURATION = 5 * 60 * 1000;
+// Cache de 10 minutos para melhor performance
+const CACHE_DURATION = 10 * 60 * 1000;
 
 export const fetchSupportStats = async (): Promise<SupportStats> => {
   // Verificar se temos dados em cache válidos
