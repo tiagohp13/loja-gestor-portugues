@@ -26,4 +26,9 @@ export default defineConfig(({ mode }) => ({
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0a3Fvc3Jjb3Buc2NsZ3lyanFoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM5Nzg2MzUsImV4cCI6MjA1OTU1NDYzNX0.02iDkud89OEj98hFFkOt8_QNhs_N6uqAXj4laoZi7Mk"
     ),
   },
+  test: {
+    globals: true,
+    environment: "jsdom",
+    setupFiles: "./src/tests/setup.ts",
+  },
 }));
