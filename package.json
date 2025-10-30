@@ -53,6 +53,7 @@
     "html2pdf.js": "^0.9.3",
     "input-otp": "^1.2.4",
     "jsdom": "^27.0.1",
+    "jspdf": "^3.0.3",
     "lucide-react": "^0.462.0",
     "next-themes": "^0.3.0",
     "react": "^18.3.1",

@@ -6,7 +6,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield, BarChart2
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -92,6 +92,12 @@ const AppSidebar: React.FC = () => {
       label: 'Estatísticas', 
       icon: <BarChart className="w-5 h-5" />,
       isActive: location.pathname.includes('/suporte')
+    },
+    { 
+      path: '/relatorios', 
+      label: 'Relatórios', 
+      icon: <BarChart2 className="w-5 h-5" />,
+      isActive: location.pathname.includes('/relatorios')
     },
     { 
       path: '/reciclagem', 
