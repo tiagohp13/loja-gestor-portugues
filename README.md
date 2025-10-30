@@ -60,6 +60,21 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
+## Testes Automatizados
+
+Para correr todos os testes:
+
+```bash
+npm run test
+```
+
+Os testes estão localizados em `src/tests/` e cobrem:
+- Cálculos de totais e descontos
+- Gestão de stock
+- Componentes React
+
+Para mais informações, consulte [src/tests/README.md](src/tests/README.md)
+
 ## How can I deploy this project?
 
 Simply open [Lovable](https://lovable.dev/projects/eaf2d2fd-7c5b-4405-a1d4-bfeddba4bcd7) and click on Share -> Publish.
