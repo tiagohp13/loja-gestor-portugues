@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase, snakeToCamel, increment, decrement } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { toast } from "sonner";
+import { getUserFriendlyError } from "@/utils/errorUtils";
 import {
   Product,
   Category,
@@ -665,13 +666,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         const newProduct = mapDbProductToProduct(data);
         setProducts([...products, newProduct]);
+        toast.success("Produto criado com sucesso");
         return newProduct;
       }
 
       throw new Error("Failed to add product");
     } catch (error) {
       console.error("Error adding product:", error);
-      toast.error("Erro ao adicionar produto");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar o produto"));
       throw error;
     }
   };
@@ -699,9 +701,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       setProducts(products.map((p) => (p.id === id ? { ...p, ...product } : p)));
+      toast.success("Produto atualizado com sucesso");
     } catch (error) {
       console.error("Error updating product:", error);
-      toast.error("Erro ao atualizar produto");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar o produto"));
       throw error;
     }
   };
@@ -717,10 +720,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setProducts(products.filter((p) => p.id !== id));
-      toast.success("Produto movido para a reciclagem");
+      toast.success("Produto eliminado com sucesso");
     } catch (error) {
       console.error("Error soft deleting product:", error);
-      toast.error("Erro ao apagar produto");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar o produto"));
       throw error;
     }
   };
@@ -743,13 +746,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         const newCategory = mapDbCategoryToCategory(data);
         setCategories([...categories, newCategory]);
+        toast.success("Categoria criada com sucesso");
         return newCategory;
       }
 
       throw new Error("Failed to add category");
     } catch (error) {
       console.error("Error adding category:", error);
-      toast.error("Erro ao adicionar categoria");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar a categoria"));
       throw error;
     }
   };
@@ -769,9 +773,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       setCategories(categories.map((c) => (c.id === id ? { ...c, ...category } : c)));
+      toast.success("Categoria atualizada com sucesso");
     } catch (error) {
       console.error("Error updating category:", error);
-      toast.error("Erro ao atualizar categoria");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a categoria"));
       throw error;
     }
   };
@@ -787,10 +792,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setCategories(categories.filter((c) => c.id !== id));
-      toast.success("Categoria movida para a reciclagem");
+      toast.success("Categoria eliminada com sucesso");
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast.error("Erro ao eliminar categoria");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a categoria"));
       throw error;
     }
   };
@@ -816,13 +821,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         const newClient = mapDbClientToClient(data);
         setClients([...clients, newClient]);
+        toast.success("Cliente criado com sucesso");
         return newClient;
       }
 
       throw new Error("Failed to add client");
     } catch (error) {
       console.error("Error adding client:", error);
-      toast.error("Erro ao adicionar cliente");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar o cliente"));
       throw error;
     }
   };
@@ -845,9 +851,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       setClients(clients.map((c) => (c.id === id ? { ...c, ...client } : c)));
+      toast.success("Cliente atualizado com sucesso");
     } catch (error) {
       console.error("Error updating client:", error);
-      toast.error("Erro ao atualizar cliente");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar o cliente"));
       throw error;
     }
   };
@@ -863,10 +870,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setClients(clients.filter((c) => c.id !== id));
-      toast.success("Cliente movido para a reciclagem");
+      toast.success("Cliente eliminado com sucesso");
     } catch (error) {
       console.error("Error deleting client:", error);
-      toast.error("Erro ao eliminar cliente");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar o cliente"));
       throw error;
     }
   };
@@ -893,13 +900,14 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (data) {
         const newSupplier = mapDbSupplierToSupplier(data);
         setSuppliers([...suppliers, newSupplier]);
+        toast.success("Fornecedor criado com sucesso");
         return newSupplier;
       }
 
       throw new Error("Failed to add supplier");
     } catch (error) {
       console.error("Error adding supplier:", error);
-      toast.error("Erro ao adicionar fornecedor");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar o fornecedor"));
       throw error;
     }
   };
@@ -923,9 +931,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       setSuppliers(suppliers.map((s) => (s.id === id ? { ...s, ...supplier } : s)));
+      toast.success("Fornecedor atualizado com sucesso");
     } catch (error) {
       console.error("Error updating supplier:", error);
-      toast.error("Erro ao atualizar fornecedor");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar o fornecedor"));
       throw error;
     }
   };
@@ -941,10 +950,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setSuppliers(suppliers.filter((s) => s.id !== id));
-      toast.success("Fornecedor movido para a reciclagem");
+      toast.success("Fornecedor eliminado com sucesso");
     } catch (error) {
       console.error("Error deleting supplier:", error);
-      toast.error("Erro ao eliminar fornecedor");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar o fornecedor"));
       throw error;
     }
   };
@@ -1014,10 +1023,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
 
       setOrders([newOrder, ...orders]);
+      toast.success("Encomenda criada com sucesso");
       return newOrder;
     } catch (error) {
       console.error("Error adding order:", error);
-      toast.error("Erro ao adicionar encomenda");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar a encomenda"));
       throw error;
     }
   };
@@ -1067,9 +1077,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return o;
         }),
       );
+      toast.success("Encomenda atualizada com sucesso");
     } catch (error) {
       console.error("Error updating order:", error);
-      toast.error("Erro ao atualizar encomenda");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a encomenda"));
       throw error;
     }
   };
@@ -1085,10 +1096,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setOrders(orders.filter((o) => o.id !== id));
-      toast.success("Encomenda movida para a reciclagem");
+      toast.success("Encomenda eliminada com sucesso");
     } catch (error) {
       console.error("Error deleting order:", error);
-      toast.error("Erro ao eliminar encomenda");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a encomenda"));
       throw error;
     }
   };
@@ -1193,7 +1204,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       };
     } catch (error) {
       console.error("Error adding stock entry:", error);
-      toast.error("Erro ao adicionar entrada de stock");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar a compra"));
       throw error;
     }
   };
@@ -1215,9 +1226,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       setStockEntries(stockEntries.map((e) => (e.id === id ? { ...e, ...entry } : e)));
+      toast.success("Compra atualizada com sucesso");
     } catch (error) {
       console.error("Error updating stock entry:", error);
-      toast.error("Erro ao atualizar entrada de stock");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a compra"));
       throw error;
     }
   };
@@ -1233,10 +1245,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setStockEntries(stockEntries.filter((e) => e.id !== id));
-      toast.success("Compra movida para a reciclagem");
+      toast.success("Compra eliminada com sucesso");
     } catch (error) {
       console.error("Error deleting stock entry:", error);
-      toast.error("Erro ao eliminar entrada de stock");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a compra"));
       throw error;
     }
   };
@@ -1357,11 +1369,11 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       await fetchProducts();
       await fetchOrders();
       setStockExits([newExit, ...stockExits]);
-      toast.success("Saída registada com sucesso");
+      toast.success("Venda criada com sucesso");
       return newExit;
     } catch (error) {
       console.error("Error adding stock exit:", error);
-      toast.error("Erro ao adicionar saída de stock");
+      toast.error(getUserFriendlyError(error, "Não foi possível criar a venda"));
       throw error;
     }
   };
@@ -1383,9 +1395,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (error) throw error;
 
       setStockExits(stockExits.map((e) => (e.id === id ? { ...e, ...exit } : e)));
+      toast.success("Venda atualizada com sucesso");
     } catch (error) {
       console.error("Error updating stock exit:", error);
-      toast.error("Erro ao atualizar saída de stock");
+      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a venda"));
       throw error;
     }
   };
@@ -1428,10 +1441,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       // Remove from local state
       setStockExits(stockExits.filter((e) => e.id !== id));
-      toast.success("Venda movida para a reciclagem");
+      toast.success("Venda eliminada com sucesso");
     } catch (error) {
       console.error("Error deleting stock exit:", error);
-      toast.error("Erro ao eliminar saída de stock");
+      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a venda"));
       throw error;
     }
   };
