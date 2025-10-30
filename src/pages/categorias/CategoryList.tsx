@@ -180,14 +180,14 @@ const CategoryList: React.FC = () => {
                           <Package size={18} className="text-gestorApp-blue shrink-0" />
                           <span className="text-lg truncate">{category.name}</span>
                         </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                        <div className="flex items-center justify-end gap-1 shrink-0">
                           {canEdit && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
+                                  size="icon"
+                                  className="h-8 w-8"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditCategory(category.id);
@@ -210,8 +210,8 @@ const CategoryList: React.FC = () => {
                                   trigger={
                                     <Button 
                                       variant="ghost" 
-                                      size="sm"
-                                      className="h-8 w-8 p-0"
+                                      size="icon"
+                                      className="h-8 w-8"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                       }}
