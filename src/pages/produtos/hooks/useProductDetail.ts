@@ -1,8 +1,9 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
-import { useProducts } from '@/contexts/ProductsContext';
+import { useProductsQuery } from '@/hooks/queries/useProducts';
+import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
 import { Product, StockEntry, StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProductToProduct } from '@/utils/mappers';
@@ -10,19 +11,33 @@ import { mapDbProductToProduct } from '@/utils/mappers';
 export const useProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, isLoading } = useProducts();
-  const { getProductHistory } = useData();
-  const getProduct = (id: string) => products.find(p => p.id === id);
+  const { products, isLoading } = useProductsQuery();
+  const { stockEntries: allStockEntries } = useStockEntriesQuery();
+  const { stockExits: allStockExits } = useStockExitsQuery();
+  
   const [product, setProduct] = useState<Product | null>(null);
-  const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
-  const [stockExits, setStockExits] = useState<StockExit[]>([]);
   const [isDeleted, setIsDeleted] = useState(false);
+
+  // Get product history
+  const stockEntries = useMemo(() => {
+    if (!id) return [];
+    return allStockEntries.filter((entry) => 
+      entry.items.some((item) => item.productId === id)
+    );
+  }, [id, allStockEntries]);
+
+  const stockExits = useMemo(() => {
+    if (!id) return [];
+    return allStockExits.filter((exit) => 
+      exit.items.some((item) => item.productId === id)
+    );
+  }, [id, allStockExits]);
 
   useEffect(() => {
     const fetchProduct = async () => {
       if (!id) return;
 
-      let foundProduct = getProduct(id);
+      let foundProduct = products.find(p => p.id === id);
       
       // If not found in context, try to fetch from database (including deleted)
       if (!foundProduct) {
@@ -50,13 +65,10 @@ export const useProductDetail = () => {
       }
 
       setProduct(foundProduct);
-      const history = getProductHistory(id);
-      setStockEntries(history.entries);
-      setStockExits(history.exits);
     };
 
     fetchProduct();
-  }, [id, getProduct, getProductHistory]);
+  }, [id, products]);
 
   const handleNavigate = (path: string) => {
     navigate(path);

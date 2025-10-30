@@ -1,18 +1,29 @@
 
 import { useMemo } from 'react';
-import { useData } from '@/contexts/DataContext';
-import { useOrders } from '@/contexts/OrdersContext';
+import { useOrdersQuery } from '@/hooks/queries/useOrders';
+import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
 import { StockEntryItem, StockExitItem, OrderItem } from '@/types';
 import { EntryItem, ExitItem, PendingOrderItem } from '../types/productHistoryTypes';
 
 export const useProductHistory = (productId: string | undefined) => {
-  const { getProductHistory } = useData();
-  const { orders } = useOrders();
+  const { orders } = useOrdersQuery();
+  const { stockEntries } = useStockEntriesQuery();
+  const { stockExits } = useStockExitsQuery();
   
   const productHistory = useMemo(() => {
     if (!productId) return { entries: [], exits: [] };
-    return getProductHistory(productId) || { entries: [], exits: [] };
-  }, [productId, getProductHistory]);
+    
+    const entries = stockEntries.filter((entry) =>
+      entry.items.some((item) => item.productId === productId)
+    );
+    
+    const exits = stockExits.filter((exit) =>
+      exit.items.some((item) => item.productId === productId)
+    );
+    
+    return { entries, exits };
+  }, [productId, stockEntries, stockExits]);
   
   // Get stock movement for this product from entries and exits
   const entriesForProduct = useMemo(() => {

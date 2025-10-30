@@ -1,7 +1,6 @@
 import React, { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
-import { DataProvider } from './contexts/DataContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ProductsProvider } from './contexts/ProductsContext';
 import { CategoriesProvider } from './contexts/CategoriesContext';
@@ -111,8 +110,7 @@ function App() {
                 <SuppliersProvider>
                   <OrdersProvider>
                     <StockProvider>
-                      <DataProvider>
-                        <Suspense fallback={<LoadingSpinner />}>
+                      <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 
@@ -173,7 +171,6 @@ function App() {
               </Routes>
               <Toaster />
             </Suspense>
-          </DataProvider>
         </StockProvider>
       </OrdersProvider>
     </SuppliersProvider>
