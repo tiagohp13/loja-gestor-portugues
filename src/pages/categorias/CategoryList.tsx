@@ -7,7 +7,7 @@ import { validatePermission } from '@/utils/permissionUtils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Edit, Trash, Plus, Search, ArrowUpDown, ArrowUp, ArrowDown, Package } from 'lucide-react';
+import { Edit, Trash, Plus, Search, ArrowUp, ArrowDown, Package } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,

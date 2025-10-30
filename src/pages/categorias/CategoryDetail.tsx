@@ -1,8 +1,7 @@
-
-import React, { useEffect, useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useCategories } from '@/contexts/CategoriesContext';
-import { useProducts } from '@/contexts/ProductsContext';
+import { useCategoryQuery } from '@/hooks/queries/useCategories';
+import { useProductsByCategory } from './hooks/useProductsByCategory';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
 import { Edit, ChevronUp, ChevronDown } from 'lucide-react';
@@ -17,49 +16,41 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { SortField, SortDirection } from '@/pages/produtos/hooks/useProductSort';
-import { naturalSort } from '@/pages/produtos/hooks/useProductSort';
+import TableSkeleton from '@/components/ui/TableSkeleton';
+
+type SortField = 'code' | 'name' | 'currentStock' | 'salePrice';
+type SortDirection = 'asc' | 'desc';
+
+function naturalSort(a: string, b: string, direction: SortDirection): number {
+  const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, '');
+  const aVal = normalize(a);
+  const bVal = normalize(b);
+  const result = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+  return direction === 'asc' ? result : -result;
+}
 
 const CategoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCategory } = useCategories();
-  const { products } = useProducts();
+  const { data: category, isLoading: categoryLoading } = useCategoryQuery(id);
+  const { data: products = [], isLoading: productsLoading } = useProductsByCategory(id);
   const { canEdit, canCreate } = usePermissions();
-  const [category, setCategory] = useState<any | null>(null);
-  const [categoryProducts, setCategoryProducts] = useState<any[]>([]);
   const [sortField, setSortField] = useState<SortField>('code');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  useEffect(() => {
-    if (id) {
-      const foundCategory = getCategory(id);
-      setCategory(foundCategory);
-
-      // Filter products by this category
-      const filteredProducts = products.filter(
-        product => product.category === foundCategory?.name
-      );
-      setCategoryProducts(filteredProducts);
-    }
-  }, [id, getCategory, products]);
-
-  useEffect(() => {
-    // Apply sorting to the products when sortField or sortDirection changes
-    if (categoryProducts.length > 0) {
-      const sortedProducts = [...categoryProducts].sort((a, b) => {
-        if (sortField === 'name' || sortField === 'code' || sortField === 'category') {
-          return naturalSort(String(a[sortField] || ''), String(b[sortField] || ''), sortDirection);
-        } else {
-          // For numeric fields
-          const aValue = a[sortField] || 0;
-          const bValue = b[sortField] || 0;
-          return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-        }
-      });
-      setCategoryProducts(sortedProducts);
-    }
-  }, [sortField, sortDirection]);
+  const sortedProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    
+    return [...products].sort((a, b) => {
+      if (sortField === 'name' || sortField === 'code') {
+        return naturalSort(String(a[sortField] || ''), String(b[sortField] || ''), sortDirection);
+      } else {
+        const aValue = a[sortField] || 0;
+        const bValue = b[sortField] || 0;
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
+    });
+  }, [products, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -74,6 +65,14 @@ const CategoryDetail: React.FC = () => {
     if (sortField !== field) return null;
     return sortDirection === 'asc' ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />;
   };
+
+  if (categoryLoading || productsLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <TableSkeleton />
+      </div>
+    );
+  }
 
   if (!category) {
     return (
@@ -143,7 +142,7 @@ const CategoryDetail: React.FC = () => {
         <div className="bg-card rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Produtos Nesta Categoria</h2>
           
-          {categoryProducts.length > 0 ? (
+          {sortedProducts.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -187,7 +186,7 @@ const CategoryDetail: React.FC = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {categoryProducts.map(product => (
+                  {sortedProducts.map(product => (
                     <TableRow 
                       key={product.id} 
                       className="hover:bg-gray-50 cursor-pointer"

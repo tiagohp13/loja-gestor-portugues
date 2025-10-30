@@ -1,19 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useCategories } from '@/contexts/CategoriesContext';
-import { useProducts } from '@/contexts/ProductsContext';
+import { useCategoryQuery } from '@/hooks/queries/useCategories';
+import { useProductsByCategory } from '../hooks/useProductsByCategory';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Package, ChevronUp, ChevronDown } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
 import { Badge } from '@/components/ui/badge';
 import EmptyState from '@/components/common/EmptyState';
-import { naturalSort } from '@/pages/produtos/hooks/useProductSort';
+
+function naturalSort(a: string, b: string, direction: 'asc' | 'desc'): number {
+  const normalize = (str: string) => str.toLowerCase().replace(/\s+/g, '');
+  const aVal = normalize(a);
+  const bVal = normalize(b);
+  const result = aVal.localeCompare(bVal, undefined, { numeric: true, sensitivity: 'base' });
+  return direction === 'asc' ? result : -result;
+}
 
 interface CategoryProductsModalProps {
   isOpen: boolean;
@@ -31,44 +38,35 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
   categoryId,
   categoryName
 }) => {
-  const { products } = useProducts();
-  const { getCategory } = useCategories();
-  const [category, setCategory] = useState<any>(null);
+  const { data: category } = useCategoryQuery(categoryId);
+  const { data: products = [], isLoading } = useProductsByCategory(categoryId);
   const [sortField, setSortField] = useState<SortField>('code');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-  useEffect(() => {
-    if (isOpen && categoryId) {
-      const foundCategory = getCategory(categoryId);
-      setCategory(foundCategory);
-    }
-  }, [isOpen, categoryId, getCategory]);
+  const sortedProducts = useMemo(() => {
+    if (!products || products.length === 0) return [];
+    
+    return [...products].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
 
-  const categoryProducts = products.filter(
-    product => product.category === categoryName
-  );
+      if (sortField === 'code' && typeof aValue === 'string' && typeof bValue === 'string') {
+        return naturalSort(aValue, bValue, sortDirection);
+      }
 
-  const sortedProducts = [...categoryProducts].sort((a, b) => {
-    const aValue = a[sortField];
-    const bValue = b[sortField];
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
 
-    // Use natural sort for code to handle numeric ordering
-    if (sortField === 'code' && typeof aValue === 'string' && typeof bValue === 'string') {
-      return naturalSort(aValue, bValue, sortDirection);
-    }
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
 
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortDirection === 'asc'
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    }
-
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-    }
-
-    return 0;
-  });
+      return 0;
+    });
+  }, [products, sortField, sortDirection]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -120,7 +118,7 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center justify-between">
-                <span>Produtos ({categoryProducts.length})</span>
+                <span>Produtos ({products.length})</span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -196,10 +194,10 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
           </Card>
 
           <div className="flex justify-between items-center text-sm text-muted-foreground pt-2 border-t">
-            <span>Total de produtos: {categoryProducts.length}</span>
+            <span>Total de produtos: {products.length}</span>
             <span>
               Valor total em stock: {formatCurrency(
-                categoryProducts.reduce(
+                products.reduce(
                   (sum, p) => sum + (p.currentStock * p.salePrice), 
                   0
                 )
