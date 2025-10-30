@@ -86,7 +86,7 @@ const StockExitNew = () => {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-card rounded-lg shadow p-6">
         <form className="space-y-6">
           <div className="grid md:grid-cols-2 gap-6">
             <ClientSelector

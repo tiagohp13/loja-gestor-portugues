@@ -36,8 +36,8 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
         <DialogHeader className="relative pb-3">
           <div className="flex justify-between items-start">
             <div className="flex items-center gap-2">
-              <Info className="h-5 w-5 text-gray-500" />
-              <DialogTitle className="text-xl font-semibold text-gray-900 tracking-tight">{kpi.name}</DialogTitle>
+              <Info className="h-5 w-5 text-muted-foreground" />
+              <DialogTitle className="text-xl font-semibold text-foreground tracking-tight">{kpi.name}</DialogTitle>
             </div>
 
             <div className="flex gap-1">
@@ -75,13 +75,13 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
 
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Valor Atual</span>
-            <span className="font-semibold text-gray-900 text-base sm:text-lg">{renderValue(kpi.value)}</span>
+            <span className="text-sm text-muted-foreground">Valor Atual</span>
+            <span className="font-semibold text-foreground text-base sm:text-lg">{renderValue(kpi.value)}</span>
           </div>
 
           <div className="flex justify-between">
-            <span className="text-sm text-gray-600">Meta</span>
-            <span className="font-semibold text-gray-900 text-base">{renderValue(kpi.target)}</span>
+            <span className="text-sm text-muted-foreground">Meta</span>
+            <span className="font-semibold text-foreground text-base">{renderValue(kpi.target)}</span>
           </div>
 
           <Separator className="my-2" />

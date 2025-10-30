@@ -92,7 +92,7 @@ const StockEntryList = () => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-card rounded-lg shadow p-6">
         <StockEntryTable
           entries={sortedEntries}
           sortField={sortField}

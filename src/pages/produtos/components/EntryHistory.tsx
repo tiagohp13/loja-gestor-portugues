@@ -23,7 +23,7 @@ const EntryHistory: React.FC<EntryHistoryProps> = ({
       {entriesForProduct.length === 0 ? (
         <p className="text-muted-foreground">Sem entradas registadas para este produto.</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <div className="bg-card rounded-lg shadow overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

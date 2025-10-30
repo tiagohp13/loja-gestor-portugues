@@ -14,8 +14,8 @@ const RecordCount: React.FC<RecordCountProps> = ({ title, count, icon: Icon }) =
     <Card className="mb-4">
       <CardContent className="flex items-center gap-3 py-3">
         {Icon && <Icon className="h-5 w-5 text-blue-600" />}
-        <span className="text-sm text-gray-600">
-          {title}: <span className="font-medium text-gray-900">{count}</span>
+        <span className="text-sm text-muted-foreground">
+          {title}: <span className="font-medium text-foreground">{count}</span>
         </span>
       </CardContent>
     </Card>

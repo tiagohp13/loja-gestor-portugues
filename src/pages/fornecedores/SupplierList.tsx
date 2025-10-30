@@ -90,7 +90,7 @@ const SupplierList = () => {
         )}
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-card rounded-lg shadow p-6">
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>

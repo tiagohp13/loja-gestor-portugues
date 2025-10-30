@@ -22,7 +22,7 @@ const PendingOrdersHistory: React.FC<PendingOrdersHistoryProps> = ({
       {pendingOrdersForProduct.length === 0 ? (
         <p className="text-muted-foreground">Sem encomendas pendentes para este produto.</p>
       ) : (
-        <div className="bg-white rounded-lg shadow overflow-x-auto">
+        <div className="bg-card rounded-lg shadow overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>

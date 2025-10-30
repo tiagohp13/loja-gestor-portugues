@@ -43,7 +43,7 @@ const ChartDropdown: React.FC<ChartDropdownProps> = ({ currentType, title, onSel
       <DropdownMenuTrigger className="flex items-center cursor-pointer text-blue-600 hover:text-blue-800">
         {getChartTitle(currentType)} <ChevronDown className="ml-1 h-4 w-4" />
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="bg-white z-50">
+      <DropdownMenuContent className="bg-popover z-50">
         <DropdownMenuItem onSelect={() => onSelect('resumo')}>Resumo Financeiro (6 meses)</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('vendas')}>Vendas</DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onSelect('compras')}>Compras</DropdownMenuItem>

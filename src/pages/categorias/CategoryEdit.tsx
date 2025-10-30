@@ -101,7 +101,7 @@ const CategoryEdit: React.FC = () => {
         }
       />
 
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-card rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="space-y-2">
             <Label htmlFor="name">Nome da Categoria</Label>

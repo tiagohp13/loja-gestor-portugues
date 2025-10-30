@@ -139,7 +139,7 @@ const ProductEdit = () => {
         }
       />
 
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-card rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="grid gap-6">
           <div className="grid md:grid-cols-2 gap-4">
             <div className="space-y-2">

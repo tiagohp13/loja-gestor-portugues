@@ -63,7 +63,7 @@ const StockEntryEditProductTable: React.FC<StockEntryEditProductTableProps> = ({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-card divide-y divide-border">
             {items.map((item, index) => (
               <StockEntryEditProductRow
                 key={index}

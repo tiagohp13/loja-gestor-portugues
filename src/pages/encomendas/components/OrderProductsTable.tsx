@@ -31,7 +31,7 @@ const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
             <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-card divide-y divide-border">
           {orderItems.length === 0 ? (
             <tr>
               <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
@@ -41,7 +41,7 @@ const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
           ) : (
             orderItems.map((item, index) => (
               <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                   {item.productName}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -81,7 +81,7 @@ const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
         </tbody>
         <tfoot className="bg-gray-50">
           <tr>
-            <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
               Total
             </td>
             <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gestorApp-blue">

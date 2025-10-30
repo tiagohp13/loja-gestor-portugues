@@ -131,7 +131,7 @@ const CategoryList: React.FC = () => {
 
         <RecordCount title="Total de categorias" count={categories.length} />
 
-        <div className="bg-white dark:bg-card rounded-lg shadow p-6 mt-6">
+        <div className="bg-card rounded-lg shadow p-6 mt-6">
           <div className="mb-6 relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" size={18} />
             <Input

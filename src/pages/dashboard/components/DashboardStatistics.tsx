@@ -117,8 +117,8 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
               key={index}
               className={`flex justify-between items-center py-2 ${stat.noBorder ? '' : 'border-b'}`}
             >
-              <dt className="text-gray-500 font-medium text-left">{stat.label}</dt>
-              <dd className={`font-semibold text-right ${stat.className || 'text-gray-800'}`}>
+              <dt className="text-muted-foreground font-medium text-left">{stat.label}</dt>
+              <dd className={`font-semibold text-right ${stat.className || 'text-foreground'}`}>
                 {stat.type && stat.value && typeof stat.value === 'object' ? (
                   <Button 
                     variant="link" 

@@ -146,7 +146,7 @@ const ClientList = () => {
       {/* Top 5 Clientes Section */}
       <TopClientsSection onViewAllClick={handleViewAllTopClients} />
       
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-card rounded-lg shadow p-6 mt-6">
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />
           <Input

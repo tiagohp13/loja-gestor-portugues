@@ -112,7 +112,7 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
           {/* Fundo: valor e meta */}
           <div className="flex flex-col justify-end min-h-[70px] mt-auto">
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-semibold text-gray-900 leading-none">
+              <div className="text-2xl font-semibold text-foreground leading-none">
                 {kpi.unit === "€" && !kpi.isPercentage && "€ "}
                 {formatValue(kpi.value)}
                 {kpi.unit !== "€" && !kpi.isPercentage && ` ${kpi.unit}`}

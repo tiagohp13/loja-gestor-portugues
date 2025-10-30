@@ -116,7 +116,7 @@ const CategoryDetail: React.FC = () => {
       />
 
       <div className="grid grid-cols-1 gap-6 mt-6">
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Detalhes da Categoria</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -140,7 +140,7 @@ const CategoryDetail: React.FC = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-card rounded-lg shadow p-6">
           <h2 className="text-xl font-semibold mb-4">Produtos Nesta Categoria</h2>
           
           {categoryProducts.length > 0 ? (

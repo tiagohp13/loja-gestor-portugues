@@ -18,8 +18,8 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
   children,
   icon: Icon
 }) => {
-  let bgColor = 'bg-gray-100';
-  let textColor = 'text-gray-800';
+  let bgColor = 'bg-muted';
+  let textColor = 'text-foreground';
   
   // Se variant foi fornecido, usamos ele para definir as cores
   if (variant) {

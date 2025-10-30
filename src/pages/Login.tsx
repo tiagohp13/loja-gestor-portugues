@@ -91,7 +91,7 @@ const Login: React.FC = () => {
       </div>
 
       {/* Container de Login */}
-      <div className="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden relative z-10 dark:bg-gray-800">
+      <div className="w-full max-w-md bg-card rounded-lg shadow-lg overflow-hidden relative z-10">
         <div className="p-4 sm:p-6">
           {/* Logo sem efeito de desfoque */}
           <div className="flex justify-center mb-2">
@@ -104,7 +104,7 @@ const Login: React.FC = () => {
 
           {/* Título e descrição */}
           <div className="text-center mb-6">
-            <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-gray-900 dark:text-gray-100">
+            <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-foreground">
               Iniciar Sessão
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -122,7 +122,7 @@ const Login: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4 w-full px-2 sm:px-4">
             {/* Campo de Email */}
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-800 dark:text-gray-200">
+              <Label htmlFor="email" className="text-foreground">
                 Email
               </Label>
               <Input
@@ -142,7 +142,7 @@ const Login: React.FC = () => {
 
             {/* Campo de Password */}
             <div className="space-y-1">
-              <Label htmlFor="password" className="text-gray-800 dark:text-gray-200">
+              <Label htmlFor="password" className="text-foreground">
                 Palavra-passe
               </Label>
               <div className="relative">

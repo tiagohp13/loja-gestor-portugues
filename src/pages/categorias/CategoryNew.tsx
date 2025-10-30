@@ -68,7 +68,7 @@ const CategoryNew = () => {
         }
       />
 
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-card rounded-lg shadow p-6 mt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="name">Nome da Categoria</Label>

@@ -27,7 +27,7 @@ const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = ({
             <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-card divide-y divide-border">
           {items.length === 0 ? (
             <tr>
               <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
@@ -37,8 +37,8 @@ const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = ({
           ) : (
             items.map((item, index) => (
               <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{item.productName}</td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.quantity}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{item.productName}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.quantity}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.purchasePrice.toFixed(2)} €</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">{(item.quantity * item.purchasePrice).toFixed(2)} €</td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -57,7 +57,7 @@ const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = ({
         </tbody>
         <tfoot className="bg-gray-50">
           <tr>
-            <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+            <td colSpan={3} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
               Total
             </td>
             <td colSpan={2} className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">

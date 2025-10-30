@@ -32,7 +32,7 @@ const LowStockProducts: React.FC<LowStockProductsProps> = ({
                   <div>
                     <Button 
                       variant="link" 
-                      className="p-0 h-auto text-gray-800 hover:text-blue-600 hover:underline transition-colors whitespace-normal text-left justify-start min-h-[24px]"
+                      className="p-0 h-auto text-foreground hover:text-primary hover:underline transition-colors whitespace-normal text-left justify-start min-h-[24px]"
                       onClick={() => navigateToProductDetail(product.id)}
                     >
                       {product.name}

@@ -106,7 +106,7 @@ const ProductList = () => {
 
       <RecordCount title="Total de produtos" count={allProducts.length} icon={Package} />
 
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-card rounded-lg shadow p-6 mt-6">
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray" />

@@ -42,7 +42,7 @@ const DeltaCard: React.FC<DeltaCardProps> = ({ delta, label }) => {
     <div className={`${bgClass} rounded-lg p-4`}>
       <div className="flex items-center gap-2 mb-2">
         <Icon className={`h-5 w-5 ${colorClass}`} />
-        <span className="font-semibold text-gray-900">{label}</span>
+        <span className="font-semibold text-foreground">{label}</span>
       </div>
       <div className={`text-2xl font-bold ${colorClass}`}>
         {isPositive ? '+' : ''}{delta.toFixed(1)}%
@@ -68,7 +68,7 @@ const KpiDetailModal: React.FC<KpiDetailModalProps> = ({
       <DialogContent className="max-w-lg rounded-xl shadow-lg">
         <DialogHeader className="relative pb-3">
           <div className="flex justify-between items-start">
-            <DialogTitle className="text-2xl font-semibold text-gray-900">
+            <DialogTitle className="text-2xl font-semibold text-foreground">
               {title}
             </DialogTitle>
             <DialogClose asChild>
@@ -89,8 +89,8 @@ const KpiDetailModal: React.FC<KpiDetailModalProps> = ({
 
         <div className="space-y-4">
           <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm text-gray-600 mb-1">Valor Atual</p>
-            <p className="text-3xl font-bold text-gray-900">{value}</p>
+            <p className="text-sm text-muted-foreground mb-1">Valor Atual</p>
+            <p className="text-3xl font-bold text-foreground">{value}</p>
           </div>
 
           <Separator />

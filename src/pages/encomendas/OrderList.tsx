@@ -201,7 +201,7 @@ const OrderList = () => {
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
+                <tbody className="bg-card divide-y divide-border">
                   {filteredOrders.map((order) => (
                     <tr
                       key={order.id}
@@ -212,13 +212,13 @@ const OrderList = () => {
                         <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{order.number}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-gray-100">{formatDate(order.date)}</span>
+                        <span className="text-sm text-foreground">{formatDate(order.date)}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm text-gray-900 dark:text-gray-100">{order.clientName}</span>
+                        <span className="text-sm text-foreground">{order.clientName}</span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        <span className="text-sm font-medium text-foreground">
                           {formatCurrency(order.total || 0)}
                         </span>
                       </td>
@@ -239,7 +239,7 @@ const OrderList = () => {
                       <td className="px-6 py-4">
                         {order.expectedDeliveryDate ? (
                           <div className="space-y-0.5">
-                            <div className="text-sm text-gray-900 dark:text-gray-100">
+                            <div className="text-sm text-foreground">
                               {formatDate(order.expectedDeliveryDate)}
                             </div>
                             {order.expectedDeliveryTime && (

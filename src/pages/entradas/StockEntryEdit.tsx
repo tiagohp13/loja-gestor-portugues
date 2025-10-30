@@ -12,7 +12,7 @@ const StockEntryEdit = () => {
     <div className="container mx-auto px-4 py-6">
       <StockEntryEditHeader isNewEntry={isNewEntry} />
       
-      <div className="bg-white rounded-lg shadow p-6 mt-6">
+      <div className="bg-card rounded-lg shadow p-6 mt-6">
         <StockEntryEditForm id={id} />
       </div>
     </div>

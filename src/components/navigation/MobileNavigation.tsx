@@ -48,7 +48,7 @@ const MobileNavigation: React.FC = () => {
   };
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+    <div className="md:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
       <div className="flex justify-around items-center h-16">
         {navigationItems.map((item, index) => (
           <button

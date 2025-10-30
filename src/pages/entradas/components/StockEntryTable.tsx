@@ -60,7 +60,7 @@ const StockEntryTable: React.FC<StockEntryTableProps> = ({
           sortOrder={sortOrder}
           onSortChange={onSortChange}
         />
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-card divide-y divide-border">
           {entries.map((entry) => (
             <StockEntryItem
               key={entry.id}

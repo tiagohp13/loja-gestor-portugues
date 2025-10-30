@@ -85,7 +85,7 @@ const OrderTable: React.FC<OrderTableProps> = ({
             </th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
+        <tbody className="bg-card divide-y divide-border">
           {orders.map((order) => (
             <tr 
               key={order.id} 
