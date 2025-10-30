@@ -66,8 +66,10 @@ export function useCategoriesQuery() {
   const query = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
+    gcTime: 1000 * 60 * 15, // 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const deleteMutation = useMutation({

@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
 import { useMemo } from 'react';
-import { useProducts } from '@/contexts/ProductsContext';
-import { useOrders } from '@/contexts/OrdersContext';
-import { useStock } from '@/contexts/StockContext';
-import { useClients } from '@/contexts/ClientsContext';
-import { useSuppliers } from '@/contexts/SuppliersContext';
-import { useCategories } from '@/contexts/CategoriesContext';
+import { useProductsQuery } from '@/hooks/queries/useProducts';
+import { useOrdersQuery } from '@/hooks/queries/useOrders';
+import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
+import { useClientsQuery } from '@/hooks/queries/useClients';
+import { useSuppliersQuery } from '@/hooks/queries/useSuppliers';
+import { useCategoriesQuery } from '@/hooks/queries/useCategories';
 import { fetchSupportStats } from '@/pages/suporte/hooks/api/fetchSupportStats';
 import { generateKPIs } from '@/pages/suporte/hooks/utils/kpiUtils';
 import { loadKpiTargets } from '@/services/kpiService';
@@ -214,12 +215,13 @@ const fetchAllDashboardData = async (
 };
 
 export const useDashboardOptimized = () => {
-  const { products } = useProducts();
-  const { orders } = useOrders();
-  const { stockExits, stockEntries } = useStock();
-  const { clients } = useClients();
-  const { suppliers } = useSuppliers();
-  const { categories } = useCategories();
+  const { products } = useProductsQuery();
+  const { orders } = useOrdersQuery();
+  const { stockExits } = useStockExitsQuery();
+  const { stockEntries } = useStockEntriesQuery();
+  const { clients } = useClientsQuery();
+  const { suppliers } = useSuppliersQuery();
+  const { categories } = useCategoriesQuery();
 
   // Single query that fetches all data in parallel with React Query for caching
   const { data, isLoading, error } = useQuery({
@@ -232,8 +234,8 @@ export const useDashboardOptimized = () => {
       clients?.length ?? 0
     ],
     queryFn: () => fetchAllDashboardData(products || [], stockExits || [], stockEntries || [], clients || []),
-    staleTime: 10 * 60 * 1000, // 10 minutes - dashboard data doesn't need frequent updates
-    gcTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching
+    gcTime: 1000 * 60 * 15, // 15 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     refetchOnReconnect: false,

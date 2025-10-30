@@ -48,8 +48,10 @@ export function useStockEntriesQuery() {
   const query = useQuery({
     queryKey: ["stock-entries"],
     queryFn: fetchStockEntries,
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
+    gcTime: 1000 * 60 * 15, // 15 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const deleteMutation = useMutation({
