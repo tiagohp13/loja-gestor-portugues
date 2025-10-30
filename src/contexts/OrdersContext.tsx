@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUserFriendlyError } from "@/utils/errorUtils";
-import { Order } from "../types";
+import { Order, StockExit } from "../types";
 import { mapDbOrderToOrder, mapOrderItemToDbOrderItem } from "../utils/mappers";
 
 interface OrdersContextType {
@@ -12,6 +12,7 @@ interface OrdersContextType {
   updateOrder: (id: string, order: Partial<Order>) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
   findOrder: (id: string) => Order | undefined;
+  convertOrderToStockExit: (orderId: string, invoiceNumber?: string) => Promise<StockExit | undefined>;
   isLoading: boolean;
   refreshOrders: () => Promise<void>;
 }
@@ -240,6 +241,143 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     await fetchOrders();
   };
 
+  const convertOrderToStockExit = async (orderId: string, invoiceNumber?: string): Promise<StockExit | undefined> => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) {
+      toast.error("Encomenda não encontrada");
+      return undefined;
+    }
+
+    try {
+      // Get next stock exit number
+      const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter", {
+        counter_id: "exit",
+      });
+
+      if (exitNumberError) throw exitNumberError;
+
+      const exitNumber =
+        exitNumberData ||
+        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
+          .toString()
+          .padStart(3, "0")}`;
+
+      // Create stock exit
+      const { data: exitData, error: exitError } = await supabase
+        .from("stock_exits")
+        .insert({
+          number: exitNumber,
+          client_id: order.clientId,
+          client_name: order.clientName || "",
+          date: order.date,
+          invoice_number: invoiceNumber || "",
+          notes: `Converted from order ${order.number}`,
+          from_order_id: order.id,
+          from_order_number: order.number,
+          discount: order.discount || 0,
+        })
+        .select()
+        .single();
+
+      if (exitError) throw exitError;
+      if (!exitData) throw new Error("Failed to create stock exit");
+
+      // Create stock exit items
+      const exitItems = order.items.map((item) => ({
+        exit_id: exitData.id,
+        product_id: item.productId,
+        product_name: item.productName,
+        quantity: item.quantity,
+        sale_price: item.salePrice,
+        discount_percent: item.discountPercent || 0,
+      }));
+
+      const { error: itemsError } = await supabase.from("stock_exit_items").insert(exitItems);
+      if (itemsError) throw itemsError;
+
+      // Update product stock
+      for (const item of order.items) {
+        const { error: updateError } = await supabase
+          .from("products")
+          .select("current_stock")
+          .eq("id", item.productId)
+          .single()
+          .then(({ data, error }) => {
+            if (!error && data) {
+              return supabase
+                .from("products")
+                .update({
+                  current_stock: Math.max(0, data.current_stock - item.quantity),
+                })
+                .eq("id", item.productId);
+            }
+            return { error };
+          });
+
+        if (updateError) {
+          console.error("Error updating product stock:", updateError);
+        }
+      }
+
+      // Update order to mark as converted
+      const { error: orderUpdateError } = await supabase
+        .from("orders")
+        .update({
+          converted_to_stock_exit_id: exitData.id,
+          converted_to_stock_exit_number: exitNumber,
+        })
+        .eq("id", orderId);
+
+      if (orderUpdateError) throw orderUpdateError;
+
+      // Update local state
+      setOrders(
+        orders.map((o) =>
+          o.id === orderId
+            ? {
+                ...o,
+                convertedToStockExitId: exitData.id,
+                convertedToStockExitNumber: exitNumber,
+              }
+            : o
+        )
+      );
+
+      const result: StockExit = {
+        id: exitData.id,
+        number: exitData.number,
+        clientId: exitData.client_id || "",
+        clientName: exitData.client_name,
+        date: exitData.date,
+        invoiceNumber: exitData.invoice_number || "",
+        notes: exitData.notes,
+        fromOrderId: exitData.from_order_id,
+        fromOrderNumber: exitData.from_order_number,
+        discount: Number(exitData.discount || 0),
+        createdAt: exitData.created_at,
+        updatedAt: exitData.updated_at,
+        items: order.items.map((item) => ({
+          id: crypto.randomUUID(),
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          salePrice: item.salePrice,
+          discountPercent: item.discountPercent || 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        })),
+        total: order.total,
+      };
+
+      toast.success("Encomenda convertida com sucesso");
+      return result;
+    } catch (error) {
+      console.error("Error converting order to stock exit:", error);
+      toast.error(getUserFriendlyError(error, "Não foi possível converter a encomenda"));
+      throw error;
+    }
+  };
+
   return (
     <OrdersContext.Provider
       value={{
@@ -249,6 +387,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         updateOrder,
         deleteOrder,
         findOrder,
+        convertOrderToStockExit,
         isLoading,
         refreshOrders,
       }}

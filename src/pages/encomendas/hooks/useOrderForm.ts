@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useOrders } from '@/contexts/OrdersContext';
 import { OrderItem } from './order-form/types';
 import { useOrderFormState } from './order-form/useOrderFormState';
 import { useOrderFilters } from './order-form/useOrderFilters';
@@ -14,7 +16,9 @@ export type { OrderItem };
 export const useOrderForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { clients, products, addOrder } = useData();
+  const { clients } = useClients();
+  const { products } = useProducts();
+  const { addOrder } = useOrders();
   
   // Check if we have duplicate data from navigation state
   const duplicateData = location.state?.duplicateData;

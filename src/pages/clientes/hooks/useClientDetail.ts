@@ -1,7 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useOrders } from '@/contexts/OrdersContext';
+import { useStock } from '@/contexts/StockContext';
 import { Client, Order, StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbClientToClient } from '@/utils/mappers';
@@ -9,7 +11,16 @@ import { mapDbClientToClient } from '@/utils/mappers';
 export const useClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getClient, getClientHistory } = useData();
+  const { clients } = useClients();
+  const { orders } = useOrders();
+  const { stockExits } = useStock();
+  
+  const getClient = (id: string) => clients.find(c => c.id === id);
+  const getClientHistory = (id: string) => {
+    const clientOrders = orders.filter(o => o.clientId === id);
+    const clientExits = stockExits.filter(e => e.clientId === id);
+    return { orders: clientOrders, exits: clientExits };
+  };
   const [client, setClient] = useState<Client | null>(null);
   const [clientOrders, setClientOrders] = useState<Order[]>([]);
   const [clientExits, setClientExits] = useState<StockExit[]>([]);

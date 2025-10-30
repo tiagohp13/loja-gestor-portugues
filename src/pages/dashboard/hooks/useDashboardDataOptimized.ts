@@ -1,4 +1,6 @@
-import { useData } from '@/contexts/DataContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useStock } from '@/contexts/StockContext';
+import { useOrders } from '@/contexts/OrdersContext';
 import { useMemo, useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { 
@@ -21,7 +23,9 @@ import {
 } from './utils/financialUtils';
 
 export const useDashboardDataOptimized = () => {
-  const { products, stockEntries, stockExits, orders } = useData();
+  const { products } = useProducts();
+  const { stockEntries, stockExits } = useStock();
+  const { orders } = useOrders();
   
   // State for values that include expenses
   const [financialMetrics, setFinancialMetrics] = useState({

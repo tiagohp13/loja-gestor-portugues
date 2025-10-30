@@ -1,7 +1,9 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useOrders } from '@/contexts/OrdersContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useStock } from '@/contexts/StockContext';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,7 +15,10 @@ import { mapDbOrderToOrder, mapDbOrderItemToOrderItem } from '@/utils/mappers';
  */
 export const useOrderDetail = (id: string | undefined) => {
   const navigate = useNavigate();
-  const { orders, clients, stockExits, isLoading } = useData();
+  const { orders, isLoading: ordersLoading } = useOrders();
+  const { clients } = useClients();
+  const { stockExits } = useStock();
+  const isLoading = ordersLoading;
   const [order, setOrder] = useState<Order | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);

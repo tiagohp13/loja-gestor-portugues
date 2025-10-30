@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useCategories } from "../../contexts/CategoriesContext";
+import { useProducts } from "../../contexts/ProductsContext";
 import { Search, Plus, Package, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,8 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 const ProductList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { categories, deleteProduct } = useData();
+  const { categories } = useCategories();
+  const { deleteProduct } = useProducts();
   const { products: allProducts, isLoading, handleSort, getSortIcon } = useSortableProducts();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL_CATEGORIES");
@@ -68,7 +70,7 @@ const ProductList = () => {
     setCategoryFilter("ALL_CATEGORIES");
   };
 
-  const uniqueCategories = [...new Set(categories.map((cat) => cat.name))].sort();
+  const uniqueCategories = [...new Set((categories || []).map((cat) => cat.name))].sort();
 
   if (isLoading) {
     return (
@@ -124,7 +126,7 @@ const ProductList = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="ALL_CATEGORIES">Todas as categorias</SelectItem>
-                {uniqueCategories.map((category) => (
+                {uniqueCategories.map((category: string) => (
                   <SelectItem key={category} value={category}>
                     {category}
                   </SelectItem>

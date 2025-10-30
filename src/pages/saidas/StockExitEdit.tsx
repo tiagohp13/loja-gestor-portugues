@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { StockExitItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/ui/PageHeader";
-import { useData } from "@/contexts/DataContext";
+import { useProducts } from "@/contexts/ProductsContext";
 
 interface StockExitFormData {
   clientId: string;
@@ -27,7 +27,7 @@ interface StockExitFormData {
 const StockExitEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
-  const { products } = useData();
+  const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StockExitFormData>({
     clientId: "",

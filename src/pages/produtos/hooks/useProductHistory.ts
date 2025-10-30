@@ -1,11 +1,13 @@
 
 import { useMemo } from 'react';
 import { useData } from '@/contexts/DataContext';
+import { useOrders } from '@/contexts/OrdersContext';
 import { StockEntryItem, StockExitItem, OrderItem } from '@/types';
 import { EntryItem, ExitItem, PendingOrderItem } from '../types/productHistoryTypes';
 
 export const useProductHistory = (productId: string | undefined) => {
-  const { getProductHistory, orders } = useData();
+  const { getProductHistory } = useData();
+  const { orders } = useOrders();
   
   const productHistory = useMemo(() => {
     if (!productId) return { entries: [], exits: [] };

@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useProducts } from "../../contexts/ProductsContext";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ProductDetailHeader from "./components/ProductDetailHeader";
 import ProductSuggestions from "./components/ProductSuggestions";
@@ -17,7 +17,8 @@ import { AlertCircle } from "lucide-react";
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { getProduct, isLoading } = useData();
+  const { products, isLoading } = useProducts();
+  const getProduct = (id: string) => products.find(p => p.id === id);
   const { isDeleted } = useProductDetail();
   const navigate = useNavigate();
 

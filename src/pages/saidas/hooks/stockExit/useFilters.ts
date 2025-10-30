@@ -1,5 +1,6 @@
 
-import { useData } from '@/contexts/DataContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useClients } from '@/contexts/ClientsContext';
 
 interface UseFiltersProps {
   searchTerm: string;
@@ -7,7 +8,8 @@ interface UseFiltersProps {
 }
 
 export const useFilters = ({ searchTerm, clientSearchTerm }: UseFiltersProps) => {
-  const { products, clients } = useData();
+  const { products } = useProducts();
+  const { clients } = useClients();
   
   // Filter products based on search term
   const filteredProducts = searchTerm.trim() === '' ? 

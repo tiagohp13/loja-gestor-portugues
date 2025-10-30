@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useSuppliers } from '@/contexts/SuppliersContext';
 import { supabase } from '@/integrations/supabase/client';
 import { Supplier, StockEntry } from '@/types';
 import { mapDbSupplierToSupplier } from '@/utils/mappers';
@@ -9,7 +9,8 @@ import { mapDbSupplierToSupplier } from '@/utils/mappers';
 export const useSupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getSupplier, getSupplierHistory } = useData();
+  const { suppliers } = useSuppliers();
+  const getSupplier = (id: string) => suppliers.find(s => s.id === id);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [supplierEntries, setSupplierEntries] = useState<any[]>([]);
   const [supplierExpenses, setSupplierExpenses] = useState<any[]>([]);

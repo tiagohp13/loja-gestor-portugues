@@ -16,7 +16,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { toast } from '@/components/ui/use-toast';
-import { useData } from '@/contexts/DataContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useOrders } from '@/contexts/OrdersContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 interface OrderDetailHeaderProps {
@@ -29,7 +30,8 @@ interface OrderDetailHeaderProps {
 
 const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit, orderId, orderNumber, isDeleted = false }) => {
   const navigate = useNavigate();
-  const { convertOrderToStockExit, products } = useData();
+  const { products } = useProducts();
+  const { convertOrderToStockExit } = useOrders();
   const isPending = !order.convertedToStockExitId;
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isStockWarningOpen, setIsStockWarningOpen] = useState(false);

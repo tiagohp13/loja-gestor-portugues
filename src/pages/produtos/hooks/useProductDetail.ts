@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useData } from '@/contexts/DataContext';
+import { useProducts } from '@/contexts/ProductsContext';
 import { Product, StockEntry, StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbProductToProduct } from '@/utils/mappers';
@@ -9,7 +10,9 @@ import { mapDbProductToProduct } from '@/utils/mappers';
 export const useProductDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProduct, getProductHistory, isLoading } = useData();
+  const { products, isLoading } = useProducts();
+  const { getProductHistory } = useData();
+  const getProduct = (id: string) => products.find(p => p.id === id);
   const [product, setProduct] = useState<Product | null>(null);
   const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
   const [stockExits, setStockExits] = useState<StockExit[]>([]);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useSuppliers } from "../../contexts/SuppliersContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,8 @@ import { ArrowLeft, Save } from "lucide-react";
 const SupplierEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getSupplier, updateSupplier } = useData();
+  const { suppliers, updateSupplier } = useSuppliers();
+  const getSupplier = (id: string) => suppliers.find(s => s.id === id);
 
   const [supplier, setSupplier] = useState({
     name: "",

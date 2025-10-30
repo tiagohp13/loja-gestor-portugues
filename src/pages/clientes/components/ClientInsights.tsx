@@ -3,7 +3,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertTriangle, TrendingUp, TrendingDown, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import ClientInsightsModal from './ClientInsightsModal';
-import { useData } from '@/contexts/DataContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useStock } from '@/contexts/StockContext';
 
 interface ClientInsightsProps {
   inactiveClients90d: number;
@@ -20,7 +21,8 @@ const ClientInsights: React.FC<ClientInsightsProps> = ({
   avgSpentChange,
   totalClients,
 }) => {
-  const { clients, stockExits } = useData();
+  const { clients } = useClients();
+  const { stockExits } = useStock();
   const [modalType, setModalType] = useState<'inactive' | 'new' | 'top5' | 'avgSpent' | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 

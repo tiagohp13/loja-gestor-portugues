@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useStock } from '@/contexts/StockContext';
+import { useClients } from '@/contexts/ClientsContext';
 import { ClientWithAddress } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -9,7 +10,8 @@ import { mapDbStockExitToStockExit, mapDbStockExitItemToStockExitItem } from '@/
 export const useStockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockExits, clients } = useData();
+  const { stockExits } = useStock();
+  const { clients } = useClients();
   const [stockExit, setStockExit] = useState<any | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);

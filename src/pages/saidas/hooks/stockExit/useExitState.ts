@@ -2,11 +2,11 @@
 import { useState, useEffect } from 'react';
 import { StockExit } from '@/types';
 import { ExitDetails, ExitItem, UseExitStateReturn } from './types';
-import { useData } from '@/contexts/DataContext';
+import { useStock } from '@/contexts/StockContext';
 import { v4 as uuidv4 } from 'uuid';
 
 export const useExitState = (exitId?: string): UseExitStateReturn => {
-  const { stockExits } = useData();
+  const { stockExits } = useStock();
   
   const initialExitDetails: ExitDetails = {
     clientId: '',

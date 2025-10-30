@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useSuppliers } from "../../contexts/SuppliersContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const SupplierNew = () => {
   const navigate = useNavigate();
-  const { addSupplier } = useData();
+  const { addSupplier } = useSuppliers();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");

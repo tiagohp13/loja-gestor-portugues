@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useProducts } from "../../contexts/ProductsContext";
+import { useCategories } from "../../contexts/CategoriesContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,7 +13,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const ProductEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getProduct, updateProduct, categories } = useData();
+  const { products, updateProduct } = useProducts();
+  const { categories } = useCategories();
+  const getProduct = (id: string) => products.find(p => p.id === id);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [product, setProduct] = useState({

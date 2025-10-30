@@ -1,7 +1,9 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { useClients } from '../../contexts/ClientsContext';
+import { useOrders } from '../../contexts/OrdersContext';
+import { useStock } from '../../contexts/StockContext';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -19,7 +21,16 @@ import { AlertCircle } from 'lucide-react';
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getClient, getClientHistory, isLoading } = useData();
+  const { clients, isLoading } = useClients();
+  const { orders } = useOrders();
+  const { stockExits } = useStock();
+  
+  const getClient = (id: string) => clients.find(c => c.id === id);
+  const getClientHistory = (id: string) => {
+    const clientOrders = orders.filter(o => o.clientId === id);
+    const clientExits = stockExits.filter(e => e.clientId === id);
+    return { orders: clientOrders, exits: clientExits };
+  };
   const { canEdit } = usePermissions();
   const { isDeleted } = useClientDetail();
   const [clientHistory, setClientHistory] = useState<{ orders: any[], exits: any[] }>({ orders: [], exits: [] });

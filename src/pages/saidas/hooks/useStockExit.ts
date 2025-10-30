@@ -1,5 +1,7 @@
 
-import { useData } from '@/contexts/DataContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useStock } from '@/contexts/StockContext';
 import { useExitState } from './stockExit/useExitState';
 import { useFilters } from './stockExit/useFilters';
 import { useHandlers } from './stockExit/useHandlers';
@@ -9,7 +11,9 @@ import { StockExit } from '@/types';
 import { ExitItem } from './stockExit/types';
 
 export const useStockExit = (exitId?: string) => {
-  const { clients, products, addStockExit, updateStockExit } = useData();
+  const { clients } = useClients();
+  const { products } = useProducts();
+  const { addStockExit, updateStockExit } = useStock();
   
   const state = useExitState(exitId);
   

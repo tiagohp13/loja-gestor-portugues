@@ -14,14 +14,14 @@ import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
-import { useData } from "@/contexts/DataContext";
+import { useOrders } from "@/contexts/OrdersContext";
 import { useSortableOrders } from "@/hooks/useSortableOrders";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const { deleteOrder } = useData();
+  const { deleteOrder } = useOrders();
   const { orders, isLoading } = useSortableOrders();
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

@@ -1,5 +1,7 @@
 
-import { useData } from '@/contexts/DataContext';
+import { useStock } from '@/contexts/StockContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useSuppliers } from '@/contexts/SuppliersContext';
 import { useFormState } from './stockEntryForm/useFormState';
 import { useFormHandlers } from './stockEntryForm/useFormHandlers';
 import { useFilters } from './stockEntryForm/useFilters';
@@ -9,7 +11,9 @@ import { useCalculations } from './stockEntryForm/useCalculations';
 import { UseStockEntryFormReturn } from './stockEntryForm/types';
 
 export const useStockEntryForm = (): UseStockEntryFormReturn => {
-  const { addStockEntry, products, suppliers } = useData();
+  const { addStockEntry } = useStock();
+  const { products } = useProducts();
+  const { suppliers } = useSuppliers();
   
   const {
     entryDetails,

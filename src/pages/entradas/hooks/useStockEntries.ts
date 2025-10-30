@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { StockEntry } from '@/types';
-import { useData } from '@/contexts/DataContext';
+import { useStock } from '@/contexts/StockContext';
 import { StockEntrySortField } from './stockEntryForm/types';
 
 export const useStockEntries = () => {
-  const { stockEntries: contextEntries, deleteStockEntry } = useData();
+  const { stockEntries: contextEntries, deleteStockEntry } = useStock();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<StockEntrySortField>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');

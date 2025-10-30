@@ -5,7 +5,7 @@ import StatusBadge from '@/components/common/StatusBadge';
 import { formatDateString, formatCurrency } from '@/utils/formatting';
 import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, TrendingUp, Tag } from 'lucide-react';
 import { Client } from '@/types';
-import { useData } from '@/contexts/DataContext';
+import { useStock } from '@/contexts/StockContext';
 import { calculateClientTag } from '@/utils/clientTags';
 import ClientTag from '@/components/common/ClientTag';
 import { useClientTags } from '@/hooks/useClientTags';
@@ -17,7 +17,7 @@ interface ClientInfoCardProps {
 }
 
 const ClientInfoCard: React.FC<ClientInfoCardProps> = ({ client, totalSpent, isLoadingTotal }) => {
-  const { stockExits } = useData();
+  const { stockExits } = useStock();
   const { config: tagConfig } = useClientTags();
   const clientTag = calculateClientTag(client, stockExits, tagConfig);
   return (

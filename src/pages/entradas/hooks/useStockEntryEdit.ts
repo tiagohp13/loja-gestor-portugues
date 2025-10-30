@@ -1,5 +1,7 @@
 
-import { useData } from '@/contexts/DataContext';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useSuppliers } from '@/contexts/SuppliersContext';
+import { useStock } from '@/contexts/StockContext';
 import { useEntryFetch } from './stockEntryEdit/useEntryFetch';
 import { useEntryForm } from './stockEntryEdit/useEntryForm';
 import { useEntrySubmit } from './stockEntryEdit/useEntrySubmit';
@@ -18,7 +20,9 @@ declare global {
 }
 
 export const useStockEntryEdit = (id?: string): UseStockEntryEditReturn => {
-  const { products, suppliers, stockEntries } = useData();
+  const { products } = useProducts();
+  const { suppliers } = useSuppliers();
+  const { stockEntries } = useStock();
   
   // Store these in window so other hooks can access them without circular deps
   window.products = products;

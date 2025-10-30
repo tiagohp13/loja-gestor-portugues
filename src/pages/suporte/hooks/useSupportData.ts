@@ -6,7 +6,10 @@ import { generateKPIs } from './utils/kpiUtils';
 import { SupportStats } from '../types/supportTypes';
 import { loadKpiTargets } from '@/services/kpiService';
 import { supabase } from '@/integrations/supabase/client';
-import { useData } from '@/contexts/DataContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useSuppliers } from '@/contexts/SuppliersContext';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { useProducts } from '@/contexts/ProductsContext';
 
 export type { SupportStats } from '../types/supportTypes';
 
@@ -17,7 +20,10 @@ export interface SupportDataReturn {
 }
 
 export const useSupportData = (): SupportDataReturn => {
-  const { clients, suppliers, categories, products } = useData();
+  const { clients } = useClients();
+  const { suppliers } = useSuppliers();
+  const { categories } = useCategories();
+  const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(true);
   const [stats, setStats] = useState<SupportStats>({
     totalSales: 0,

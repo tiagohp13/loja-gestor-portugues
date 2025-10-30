@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useSuppliers } from "../../contexts/SuppliersContext";
 import { Search, Edit, Trash2, History, Plus, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const SupplierList = () => {
   const navigate = useNavigate();
-  const { deleteSupplier } = useData();
+  const { deleteSupplier } = useSuppliers();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
   const { suppliers, isLoading } = useSortableSuppliers();

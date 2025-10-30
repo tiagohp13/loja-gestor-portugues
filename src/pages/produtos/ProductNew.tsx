@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useData } from "@/contexts/DataContext";
+import { useProducts } from "@/contexts/ProductsContext";
+import { useCategories } from "@/contexts/CategoriesContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +12,8 @@ import { Save, ArrowLeft } from "lucide-react";
 
 const ProductNew = () => {
   const navigate = useNavigate();
-  const { addProduct, categories } = useData();
+  const { addProduct } = useProducts();
+  const { categories } = useCategories();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [description, setDescription] = useState("");

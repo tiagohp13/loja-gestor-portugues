@@ -1,7 +1,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '@/contexts/DataContext';
+import { useStock } from '@/contexts/StockContext';
+import { useSuppliers } from '@/contexts/SuppliersContext';
 import { SupplierWithAddress } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 import { toast } from 'sonner';
@@ -10,7 +11,8 @@ import { mapDbStockEntryToStockEntry } from '@/utils/mappers';
 
 export const useStockEntryDetail = (id: string | undefined) => {
   const navigate = useNavigate();
-  const { stockEntries, suppliers } = useData();
+  const { stockEntries } = useStock();
+  const { suppliers } = useSuppliers();
   const [stockEntry, setStockEntry] = useState<any | null>(null);
   const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);

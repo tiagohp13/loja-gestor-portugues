@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/ui/PageHeader";
 import { StockExit } from "@/types";
-import { useData } from "@/contexts/DataContext";
+import { useStock } from "@/contexts/StockContext";
 import { mapDbStockExitToStockExit } from "@/utils/mappers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ type SortField = "date" | "number" | "client";
 
 const StockExitList = () => {
   const navigate = useNavigate();
-  const { deleteStockExit } = useData();
+  const { deleteStockExit } = useStock();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const { stockExits, isLoading } = useSortableStockExits();
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
