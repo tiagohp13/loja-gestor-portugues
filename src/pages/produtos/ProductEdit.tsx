@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useProducts } from "../../contexts/ProductsContext";
-import { useCategories } from "../../contexts/CategoriesContext";
+import { useProductQuery, useProductsQuery } from "@/hooks/queries/useProducts";
+import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,13 +9,14 @@ import PageHeader from "@/components/ui/PageHeader";
 import { Upload, X, Link as LinkIcon, ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const ProductEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { products, updateProduct } = useProducts();
-  const { categories } = useCategories();
-  const getProduct = (id: string) => products.find(p => p.id === id);
+  const { data: foundProduct, isLoading } = useProductQuery(id);
+  const { updateProduct } = useProductsQuery();
+  const { categories } = useCategoriesQuery();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [product, setProduct] = useState({
@@ -35,30 +36,31 @@ const ProductEdit = () => {
   const [activeTab, setActiveTab] = useState("upload");
 
   useEffect(() => {
-    if (id) {
-      const foundProduct = getProduct(id);
-      if (foundProduct) {
-        setProduct({
-          name: foundProduct.name || "",
-          code: foundProduct.code || "",
-          purchasePrice: foundProduct.purchasePrice || 0,
-          salePrice: foundProduct.salePrice || 0,
-          currentStock: foundProduct.currentStock || 0,
-          minStock: foundProduct.minStock || 0,
-          category: foundProduct.category || "",
-          description: foundProduct.description || "",
-          image: foundProduct.image || "",
-        });
+    if (foundProduct) {
+      setProduct({
+        name: foundProduct.name || "",
+        code: foundProduct.code || "",
+        purchasePrice: foundProduct.purchasePrice || 0,
+        salePrice: foundProduct.salePrice || 0,
+        currentStock: foundProduct.currentStock || 0,
+        minStock: foundProduct.minStock || 0,
+        category: foundProduct.category || "",
+        description: foundProduct.description || "",
+        image: foundProduct.image || "",
+      });
 
-        if (foundProduct.image) {
-          setPreviewImage(foundProduct.image);
-        }
-      } else {
-        toast.error("Produto não encontrado");
-        navigate("/produtos/consultar");
+      if (foundProduct.image) {
+        setPreviewImage(foundProduct.image);
       }
     }
-  }, [id, getProduct, navigate]);
+  }, [foundProduct]);
+
+  useEffect(() => {
+    if (!isLoading && !foundProduct && id) {
+      toast.error("Produto não encontrado");
+      navigate("/produtos/consultar");
+    }
+  }, [foundProduct, isLoading, id, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -114,11 +116,25 @@ const ProductEdit = () => {
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (id) {
-      updateProduct(id, product);
-      toast.success("Produto atualizado com sucesso!");
-      navigate(`/produtos/${id}`);
+      updateProduct({ id, ...product } as any, {
+        onSuccess: () => {
+          navigate(`/produtos/${id}`);
+        },
+      });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader
+          title="Editar Produto"
+          description="Atualize os detalhes do produto"
+        />
+        <TableSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

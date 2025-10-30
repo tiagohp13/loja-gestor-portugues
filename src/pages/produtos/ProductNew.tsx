@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProducts } from "@/contexts/ProductsContext";
-import { useCategories } from "@/contexts/CategoriesContext";
+import { useProductsQuery } from "@/hooks/queries/useProducts";
+import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,8 +12,8 @@ import { Save, ArrowLeft } from "lucide-react";
 
 const ProductNew = () => {
   const navigate = useNavigate();
-  const { addProduct } = useProducts();
-  const { categories } = useCategories();
+  const { createProduct } = useProductsQuery();
+  const { categories } = useCategoriesQuery();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [description, setDescription] = useState("");
@@ -40,7 +40,7 @@ const ProductNew = () => {
     setIsSubmitting(true);
 
     try {
-      await addProduct({
+      createProduct({
         name,
         code,
         description,
@@ -51,13 +51,13 @@ const ProductNew = () => {
         minStock,
         image,
         status: "active",
+      } as any, {
+        onSuccess: () => {
+          navigate("/produtos/consultar");
+        },
       });
-
-      toast.success("Produto adicionado com sucesso!");
-      navigate("/produtos/consultar");
     } catch (error) {
       console.error("Error adding product:", error);
-      toast.error("Erro ao adicionar produto");
     } finally {
       setIsSubmitting(false);
     }

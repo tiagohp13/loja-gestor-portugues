@@ -48,6 +48,18 @@ async function updateProduct({ id, ...updates }: Partial<Product> & { id: string
   return data;
 }
 
+async function getProductById(id: string) {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+  
+  if (error) throw error;
+  return data ? mapProduct(data) : null;
+}
+
 export function useProductsQuery() {
   const queryClient = useQueryClient();
 
@@ -96,4 +108,13 @@ export function useProductsQuery() {
     createProduct: createMutation.mutate,
     updateProduct: updateMutation.mutate,
   };
+}
+
+export function useProductQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: ["product", id],
+    queryFn: () => getProductById(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  });
 }
