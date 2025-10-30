@@ -1,94 +1,63 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 import { useSortableTable } from './useSortableTable';
-import { mapDbStockExitToStockExit } from '@/utils/mappers';
 import { StockExit } from '@/types';
+import { useStockExitsQuery } from './queries/useStockExits';
 
 export const useSortableStockExits = () => {
-  const [stockExits, setStockExits] = useState<StockExit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { stockExits: rawStockExits, isLoading } = useStockExitsQuery();
   const { sortState, handleSort, getSortIcon, getSupabaseOrder } = useSortableTable({
     column: 'date',
     direction: 'desc'
   });
 
-  const fetchStockExits = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('stock_exits')
-        .select('*')
-        .neq('status', 'deleted');
-
-      // Apply sorting
-      const order = getSupabaseOrder();
-      if (order) {
-        // Map frontend column names to database column names
-        const columnMap: Record<string, string> = {
-          'number': 'number',
-          'clientName': 'client_name',
-          'date': 'date',
-          'invoiceNumber': 'invoice_number',
-          'discount': 'discount',
-          'created_at': 'created_at'
-        };
+  const stockExits = useMemo(() => {
+    let sortedExits = [...rawStockExits];
+    
+    const order = getSupabaseOrder();
+    if (order) {
+      sortedExits.sort((a, b) => {
+        let aValue: any, bValue: any;
         
-        const dbColumn = columnMap[order.column] || order.column;
-        query = query.order(dbColumn, { ascending: order.ascending });
-      } else {
-        // Default sorting
-        query = query.order('date', { ascending: false });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedExits = await Promise.all(
-          data.map(async (dbExit) => {
-            // Fetch exit items
-            const { data: items, error: itemsError } = await supabase
-              .from('stock_exit_items')
-              .select('*')
-              .eq('exit_id', dbExit.id);
-
-            if (itemsError) {
-              console.error('Error fetching exit items:', itemsError);
-              return { ...mapDbStockExitToStockExit(dbExit), items: [] };
-            }
-
-            // Map items to frontend format
-            const mappedItems = (items || []).map(item => ({
-              id: item.id,
-              productId: item.product_id,
-              productName: item.product_name,
-              quantity: item.quantity,
-              salePrice: item.sale_price,
-              discountPercent: item.discount_percent,
-              createdAt: item.created_at,
-              updatedAt: item.updated_at
-            }));
-
-            return {
-              ...mapDbStockExitToStockExit(dbExit),
-              items: mappedItems
-            };
-          })
-        );
+        switch (order.column) {
+          case 'number':
+            aValue = a.number || '';
+            bValue = b.number || '';
+            break;
+          case 'clientName':
+            aValue = a.clientName || '';
+            bValue = b.clientName || '';
+            break;
+          case 'date':
+            aValue = new Date(a.date).getTime();
+            bValue = new Date(b.date).getTime();
+            break;
+          case 'invoiceNumber':
+            aValue = a.invoiceNumber || '';
+            bValue = b.invoiceNumber || '';
+            break;
+          case 'discount':
+            aValue = a.discount || 0;
+            bValue = b.discount || 0;
+            break;
+          default:
+            return 0;
+        }
         
-        setStockExits(formattedExits);
-      }
-    } catch (error) {
-      console.error('Error fetching sorted stock exits:', error);
-    } finally {
-      setIsLoading(false);
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue, undefined, { numeric: true });
+          return order.ascending ? comparison : -comparison;
+        } else {
+          const diff = aValue - bValue;
+          return order.ascending ? diff : -diff;
+        }
+      });
+    } else {
+      // Default sorting by date desc
+      sortedExits.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
-  };
-
-  useEffect(() => {
-    fetchStockExits();
-  }, [sortState]);
+    
+    return sortedExits;
+  }, [rawStockExits, sortState]);
 
   return {
     stockExits,

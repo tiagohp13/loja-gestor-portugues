@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useClients } from '@/contexts/ClientsContext';
-import { useStock } from '@/contexts/StockContext';
 import { Search, Edit, Trash2, History, Plus, Users } from 'lucide-react';
+import { useClientsQuery } from '@/hooks/queries/useClients';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
@@ -35,8 +35,8 @@ import ClientInsights from './components/ClientInsights';
 
 const ClientList = () => {
   const navigate = useNavigate();
-  const { stockExits } = useStock();
-  const { deleteClient } = useClients();
+  const { stockExits } = useStockExitsQuery();
+  const { deleteClient } = useClientsQuery();
   const { config: tagConfig } = useClientTags();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');

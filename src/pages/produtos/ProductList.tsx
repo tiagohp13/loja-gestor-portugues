@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useCategories } from "../../contexts/CategoriesContext";
-import { useProducts } from "../../contexts/ProductsContext";
 import { Search, Plus, Package, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,12 +15,14 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { useProductsQuery } from "@/hooks/queries/useProducts";
+import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 
 const ProductList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { categories } = useCategories();
-  const { deleteProduct } = useProducts();
+  const { categories } = useCategoriesQuery();
+  const { deleteProduct } = useProductsQuery();
   const { products: allProducts, isLoading, handleSort, getSortIcon } = useSortableProducts();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL_CATEGORIES");

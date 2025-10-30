@@ -12,6 +12,7 @@ import { Package, Plus, Search } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { useStockEntriesQuery } from "@/hooks/queries/useStockEntries";
 
 const StockEntryList = () => {
   const navigate = useNavigate();

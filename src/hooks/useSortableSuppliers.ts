@@ -1,62 +1,59 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 import { useSortableTable } from './useSortableTable';
-import { mapDbSupplierToSupplier } from '@/utils/mappers';
 import { Supplier } from '@/types';
+import { useSuppliersQuery } from './queries/useSuppliers';
 
 export const useSortableSuppliers = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { suppliers: rawSuppliers, isLoading } = useSuppliersQuery();
   const { sortState, handleSort, getSortIcon, getSupabaseOrder } = useSortableTable({
     column: 'name',
     direction: 'asc'
   });
 
-  const fetchSuppliers = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('suppliers')
-        .select('*')
-        .neq('status', 'deleted');
-
-      // Apply sorting
-      const order = getSupabaseOrder();
-      if (order) {
-        // Map frontend column names to database column names
-        const columnMap: Record<string, string> = {
-          'name': 'name',
-          'email': 'email',
-          'phone': 'phone',
-          'address': 'address',
-          'created_at': 'created_at'
-        };
+  const suppliers = useMemo(() => {
+    let sortedSuppliers = [...rawSuppliers];
+    
+    const order = getSupabaseOrder();
+    if (order) {
+      sortedSuppliers.sort((a, b) => {
+        let aValue: any, bValue: any;
         
-        const dbColumn = columnMap[order.column] || order.column;
-        query = query.order(dbColumn, { ascending: order.ascending });
-      } else {
-        // Default sorting
-        query = query.order('name', { ascending: true });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedSuppliers = data.map(mapDbSupplierToSupplier);
-        setSuppliers(formattedSuppliers);
-      }
-    } catch (error) {
-      console.error('Error fetching sorted suppliers:', error);
-    } finally {
-      setIsLoading(false);
+        switch (order.column) {
+          case 'name':
+            aValue = a.name || '';
+            bValue = b.name || '';
+            break;
+          case 'email':
+            aValue = a.email || '';
+            bValue = b.email || '';
+            break;
+          case 'phone':
+            aValue = a.phone || '';
+            bValue = b.phone || '';
+            break;
+          case 'address':
+            aValue = a.address || '';
+            bValue = b.address || '';
+            break;
+          default:
+            return 0;
+        }
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue);
+          return order.ascending ? comparison : -comparison;
+        } else {
+          const diff = aValue - bValue;
+          return order.ascending ? diff : -diff;
+        }
+      });
+    } else {
+      // Default sorting by name
+      sortedSuppliers.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
-  };
-
-  useEffect(() => {
-    fetchSuppliers();
-  }, [sortState]);
+    
+    return sortedSuppliers;
+  }, [rawSuppliers, sortState]);
 
   return {
     suppliers,

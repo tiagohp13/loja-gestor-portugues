@@ -1,20 +1,14 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { StockEntry } from '@/types';
-import { useStock } from '@/contexts/StockContext';
 import { StockEntrySortField } from './stockEntryForm/types';
+import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
 
 export const useStockEntries = () => {
-  const { stockEntries: contextEntries, deleteStockEntry } = useStock();
+  const { stockEntries: localEntries, isLoading, deleteStockEntry } = useStockEntriesQuery();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<StockEntrySortField>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [isLoading, setIsLoading] = useState(false);
-  const [localEntries, setLocalEntries] = useState<StockEntry[]>([]);
-
-  useEffect(() => {
-    setLocalEntries(contextEntries);
-  }, [contextEntries]);
 
   const filteredEntries = localEntries.filter(entry => {
     const searchLower = searchTerm.toLowerCase();
@@ -74,8 +68,7 @@ export const useStockEntries = () => {
 
   const handleDeleteEntry = async (id: string) => {
     try {
-      await deleteStockEntry(id);
-      setLocalEntries(prev => prev.filter(entry => entry.id !== id));
+      deleteStockEntry(id);
     } catch (error) {
       console.error('Error deleting entry:', error);
     }

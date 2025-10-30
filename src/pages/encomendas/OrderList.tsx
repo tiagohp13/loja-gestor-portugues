@@ -7,21 +7,20 @@ import { Badge } from "@/components/ui/badge";
 import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/ui/PageHeader";
 import EmptyState from "@/components/common/EmptyState";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
-import { useOrders } from "@/contexts/OrdersContext";
 import { useSortableOrders } from "@/hooks/useSortableOrders";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { useOrdersQuery } from "@/hooks/queries/useOrders";
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const { deleteOrder } = useOrders();
+  const { deleteOrder } = useOrdersQuery();
   const { orders, isLoading } = useSortableOrders();
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

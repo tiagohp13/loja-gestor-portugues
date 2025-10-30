@@ -1,93 +1,59 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 import { useSortableTable } from './useSortableTable';
-import { mapDbOrderToOrder } from '@/utils/mappers';
 import { Order } from '@/types';
+import { useOrdersQuery } from './queries/useOrders';
 
 export const useSortableOrders = () => {
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { orders: rawOrders, isLoading } = useOrdersQuery();
   const { sortState, handleSort, getSortIcon, getSupabaseOrder } = useSortableTable({
     column: 'date',
     direction: 'desc'
   });
 
-  const fetchOrders = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('orders')
-        .select('*')
-        .neq('status', 'deleted');
-
-      // Apply sorting
-      const order = getSupabaseOrder();
-      if (order) {
-        // Map frontend column names to database column names
-        const columnMap: Record<string, string> = {
-          'number': 'number',
-          'clientName': 'client_name',
-          'date': 'date',
-          'discount': 'discount',
-          'created_at': 'created_at'
-        };
+  const orders = useMemo(() => {
+    let sortedOrders = [...rawOrders];
+    
+    const order = getSupabaseOrder();
+    if (order) {
+      sortedOrders.sort((a, b) => {
+        let aValue: any, bValue: any;
         
-        const dbColumn = columnMap[order.column] || order.column;
-        query = query.order(dbColumn, { ascending: order.ascending });
-      } else {
-        // Default sorting
-        query = query.order('date', { ascending: false });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedOrders = await Promise.all(
-          data.map(async (dbOrder) => {
-            // Fetch order items
-            const { data: items, error: itemsError } = await supabase
-              .from('order_items')
-              .select('*')
-              .eq('order_id', dbOrder.id);
-
-            if (itemsError) {
-              console.error('Error fetching order items:', itemsError);
-              return { ...mapDbOrderToOrder(dbOrder), items: [] };
-            }
-
-            // Map items to frontend format
-            const mappedItems = (items || []).map(item => ({
-              id: item.id,
-              productId: item.product_id,
-              productName: item.product_name,
-              quantity: item.quantity,
-              salePrice: item.sale_price,
-              discountPercent: item.discount_percent,
-              createdAt: item.created_at,
-              updatedAt: item.updated_at
-            }));
-
-            return {
-              ...mapDbOrderToOrder(dbOrder),
-              items: mappedItems
-            };
-          })
-        );
+        switch (order.column) {
+          case 'number':
+            aValue = a.number || '';
+            bValue = b.number || '';
+            break;
+          case 'clientName':
+            aValue = a.clientName || '';
+            bValue = b.clientName || '';
+            break;
+          case 'date':
+            aValue = new Date(a.date).getTime();
+            bValue = new Date(b.date).getTime();
+            break;
+          case 'discount':
+            aValue = a.discount || 0;
+            bValue = b.discount || 0;
+            break;
+          default:
+            return 0;
+        }
         
-        setOrders(formattedOrders);
-      }
-    } catch (error) {
-      console.error('Error fetching sorted orders:', error);
-    } finally {
-      setIsLoading(false);
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue, undefined, { numeric: true });
+          return order.ascending ? comparison : -comparison;
+        } else {
+          const diff = aValue - bValue;
+          return order.ascending ? diff : -diff;
+        }
+      });
+    } else {
+      // Default sorting by date desc
+      sortedOrders.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
     }
-  };
-
-  useEffect(() => {
-    fetchOrders();
-  }, [sortState]);
+    
+    return sortedOrders;
+  }, [rawOrders, sortState]);
 
   return {
     orders,

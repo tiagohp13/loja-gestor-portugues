@@ -1,98 +1,90 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { useMemo } from 'react';
 import { useSortableTable } from './useSortableTable';
 import { getClientTotalSpent, getClientLastPurchaseDate } from '@/integrations/supabase/utils/financialUtils';
-import { mapDbClientToClient } from '@/utils/mappers';
 import { Client } from '@/types';
+import { useClientsQuery } from './queries/useClients';
+import { useQuery } from '@tanstack/react-query';
 
 export const useSortableClients = () => {
-  const [clients, setClients] = useState<Array<Client & { totalSpent: number }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { clients: rawClients, isLoading: clientsLoading } = useClientsQuery();
   const { sortState, handleSort, getSortIcon, getSupabaseOrder } = useSortableTable({
     column: 'name',
     direction: 'asc'
   });
 
-  const fetchClients = async () => {
-    setIsLoading(true);
-    try {
-      let query = supabase
-        .from('clients')
-        .select('*')
-        .neq('status', 'deleted');
+  // Fetch client totals and dates
+  const { data: clientsWithTotals = [], isLoading: totalsLoading } = useQuery({
+    queryKey: ['clients-with-totals', rawClients],
+    queryFn: async () => {
+      return Promise.all(
+        rawClients.map(async (client) => {
+          const [totalSpent, lastPurchaseDate] = await Promise.all([
+            getClientTotalSpent(client.id),
+            getClientLastPurchaseDate(client.id)
+          ]);
+          return {
+            ...client,
+            totalSpent,
+            lastPurchaseDate
+          };
+        })
+      );
+    },
+    enabled: rawClients.length > 0,
+  });
 
-      // Apply sorting
-      const order = getSupabaseOrder();
-      if (order) {
-        // Map frontend column names to database column names
-        const columnMap: Record<string, string> = {
-          'name': 'name',
-          'email': 'email',
-          'phone': 'phone',
-          'lastPurchaseDate': 'last_purchase_date',
-          'created_at': 'created_at'
-        };
+  const clients = useMemo(() => {
+    let sortedClients = [...clientsWithTotals];
+    
+    const order = getSupabaseOrder();
+    if (order) {
+      sortedClients.sort((a, b) => {
+        let aValue: any, bValue: any;
         
-        const dbColumn = columnMap[order.column] || order.column;
-        query = query.order(dbColumn, { ascending: order.ascending });
-      } else {
-        // Default sorting
-        query = query.order('name', { ascending: true });
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-
-      if (data) {
-        // Map database clients to frontend format and fetch total spent
-        const formattedClients = data.map(mapDbClientToClient);
-        
-        const clientsWithTotals = await Promise.all(
-          formattedClients.map(async (client) => {
-            const [totalSpent, lastPurchaseDate] = await Promise.all([
-              getClientTotalSpent(client.id),
-              getClientLastPurchaseDate(client.id)
-            ]);
-            return {
-              ...client,
-              totalSpent,
-              lastPurchaseDate
-            };
-          })
-        );
-
-        // If sorting by totalSpent or lastPurchaseDate that need frontend sorting
-        if (order?.column === 'totalSpent') {
-          clientsWithTotals.sort((a, b) => {
-            const diff = a.totalSpent - b.totalSpent;
-            return order.ascending ? diff : -diff;
-          });
-        } else if (order?.column === 'lastPurchaseDate') {
-          clientsWithTotals.sort((a, b) => {
-            const aDate = a.lastPurchaseDate ? new Date(a.lastPurchaseDate).getTime() : 0;
-            const bDate = b.lastPurchaseDate ? new Date(b.lastPurchaseDate).getTime() : 0;
-            const diff = aDate - bDate;
-            return order.ascending ? diff : -diff;
-          });
+        switch (order.column) {
+          case 'name':
+            aValue = a.name || '';
+            bValue = b.name || '';
+            break;
+          case 'email':
+            aValue = a.email || '';
+            bValue = b.email || '';
+            break;
+          case 'phone':
+            aValue = a.phone || '';
+            bValue = b.phone || '';
+            break;
+          case 'totalSpent':
+            aValue = a.totalSpent || 0;
+            bValue = b.totalSpent || 0;
+            break;
+          case 'lastPurchaseDate':
+            aValue = a.lastPurchaseDate ? new Date(a.lastPurchaseDate).getTime() : 0;
+            bValue = b.lastPurchaseDate ? new Date(b.lastPurchaseDate).getTime() : 0;
+            break;
+          default:
+            return 0;
         }
-
-        setClients(clientsWithTotals);
-      }
-    } catch (error) {
-      console.error('Error fetching sorted clients:', error);
-    } finally {
-      setIsLoading(false);
+        
+        if (typeof aValue === 'string' && typeof bValue === 'string') {
+          const comparison = aValue.localeCompare(bValue);
+          return order.ascending ? comparison : -comparison;
+        } else {
+          const diff = aValue - bValue;
+          return order.ascending ? diff : -diff;
+        }
+      });
+    } else {
+      // Default sorting by name
+      sortedClients.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
-  };
-
-  useEffect(() => {
-    fetchClients();
-  }, [sortState]);
+    
+    return sortedClients;
+  }, [clientsWithTotals, sortState]);
 
   return {
     clients,
-    isLoading,
+    isLoading: clientsLoading || totalsLoading,
     sortState,
     handleSort,
     getSortIcon
