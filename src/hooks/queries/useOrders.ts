@@ -47,6 +47,12 @@ async function deleteOrder(id: string) {
 async function createOrder(order: any) {
   const { items, ...orderData } = order;
   
+  // Convert total to total_amount if present
+  if ("total" in orderData) {
+    orderData.total_amount = orderData.total;
+    delete orderData.total;
+  }
+  
   // Convert order data to snake_case
   const orderPayload = toInsert(orderData);
   
@@ -75,6 +81,12 @@ async function createOrder(order: any) {
 }
 
 async function updateOrder({ id, items, ...updates }: any) {
+  // Convert total to total_amount if present
+  if ("total" in updates) {
+    updates.total_amount = updates.total;
+    delete updates.total;
+  }
+  
   // Convert updates to snake_case
   const updatePayload = toUpdate(updates);
   
