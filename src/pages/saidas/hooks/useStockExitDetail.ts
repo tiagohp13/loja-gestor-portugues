@@ -1,17 +1,17 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useStock } from '@/contexts/StockContext';
-import { useClients } from '@/contexts/ClientsContext';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
+import { useClientsQuery } from '@/hooks/queries/useClients';
 import { ClientWithAddress } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { mapDbStockExitToStockExit, mapDbStockExitItemToStockExitItem } from '@/utils/mappers';
+import { mapDbStockExitToStockExit } from '@/utils/mappers';
 
 export const useStockExitDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { stockExits } = useStock();
-  const { clients } = useClients();
+  const { stockExits, isLoading: exitsLoading } = useStockExitsQuery();
+  const { clients, isLoading: clientsLoading } = useClientsQuery();
   const [stockExit, setStockExit] = useState<any | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
@@ -26,9 +26,9 @@ export const useStockExitDetail = () => {
 
   useEffect(() => {
     const fetchStockExit = async () => {
-      if (!id) return;
+      if (!id || exitsLoading || clientsLoading) return;
 
-      // Try to find in context first
+      // Try to find in loaded data first
       let exit = stockExits.find(exit => exit.id === id);
       
       // If not found, fetch from database (including deleted)
@@ -92,7 +92,7 @@ export const useStockExitDetail = () => {
     };
 
     fetchStockExit();
-  }, [id, stockExits, navigate, clients]);
+  }, [id, stockExits, navigate, clients, exitsLoading, clientsLoading]);
 
   const handleViewClient = () => {
     if (client) {

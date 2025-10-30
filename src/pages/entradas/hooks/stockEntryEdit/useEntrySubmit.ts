@@ -4,16 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { StockEntryFormState } from './types';
 import { supabase, withUserData } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
-import { StockEntryItem } from '@/types';
+import { StockEntryItem, Supplier, StockEntry } from '@/types';
 
-export const useEntrySubmit = (id: string | undefined, entry: StockEntryFormState) => {
+export const useEntrySubmit = (
+  id: string | undefined, 
+  entry: StockEntryFormState,
+  suppliers: Supplier[],
+  stockEntries: StockEntry[]
+) => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isNewEntry = !id;
-
-  // Get products and suppliers from the window object (populated by DataContext)
-  // This avoids circular dependencies
-  const { suppliers, stockEntries } = window;
 
   const validateForm = () => {
     if (entry.items.length === 0) {

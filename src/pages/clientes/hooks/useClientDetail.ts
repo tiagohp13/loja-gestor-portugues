@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useClients } from '@/contexts/ClientsContext';
-import { useOrders } from '@/contexts/OrdersContext';
-import { useStock } from '@/contexts/StockContext';
+import { useClientsQuery } from '@/hooks/queries/useClients';
+import { useOrdersQuery } from '@/hooks/queries/useOrders';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
 import { Client, Order, StockExit } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { mapDbClientToClient } from '@/utils/mappers';
@@ -11,16 +11,10 @@ import { mapDbClientToClient } from '@/utils/mappers';
 export const useClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients } = useClients();
-  const { orders } = useOrders();
-  const { stockExits } = useStock();
+  const { clients, isLoading: clientsLoading } = useClientsQuery();
+  const { orders, isLoading: ordersLoading } = useOrdersQuery();
+  const { stockExits, isLoading: exitsLoading } = useStockExitsQuery();
   
-  const getClient = (id: string) => clients.find(c => c.id === id);
-  const getClientHistory = (id: string) => {
-    const clientOrders = orders.filter(o => o.clientId === id);
-    const clientExits = stockExits.filter(e => e.clientId === id);
-    return { orders: clientOrders, exits: clientExits };
-  };
   const [client, setClient] = useState<Client | null>(null);
   const [clientOrders, setClientOrders] = useState<Order[]>([]);
   const [clientExits, setClientExits] = useState<StockExit[]>([]);
@@ -29,11 +23,11 @@ export const useClientDetail = () => {
 
   useEffect(() => {
     const fetchClient = async () => {
-      if (!id) return;
+      if (!id || clientsLoading || ordersLoading || exitsLoading) return;
     
       setIsLoading(true);
       
-      let foundClient = getClient(id);
+      let foundClient = clients.find(c => c.id === id);
       
       // If not found in context, try to fetch from database (including deleted)
       if (!foundClient) {
@@ -64,15 +58,17 @@ export const useClientDetail = () => {
 
       setClient(foundClient);
       
-      const history = getClientHistory(id);
-      setClientOrders(history.orders);
-      setClientExits(history.exits);
+      // Get client history
+      const clientOrdersList = orders.filter(o => o.clientId === id);
+      const clientExitsList = stockExits.filter(e => e.clientId === id);
+      setClientOrders(clientOrdersList);
+      setClientExits(clientExitsList);
       
       setIsLoading(false);
     };
 
     fetchClient();
-  }, [id, getClient, getClientHistory]);
+  }, [id, clients, orders, stockExits, clientsLoading, ordersLoading, exitsLoading]);
 
   const handleNavigate = (path: string) => {
     navigate(path);

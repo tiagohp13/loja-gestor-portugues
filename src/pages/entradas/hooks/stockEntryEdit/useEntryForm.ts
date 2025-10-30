@@ -1,21 +1,16 @@
 
-import { StockEntryFormState } from './types';
+import { StockEntryFormState, UseEntryFormProps } from './types';
 import { StockEntryItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
-interface UseEntryFormProps {
-  entry: StockEntryFormState;
-  setEntry: React.Dispatch<React.SetStateAction<StockEntryFormState>>;
-}
-
-export const useEntryForm = ({ entry, setEntry }: UseEntryFormProps) => {
+export const useEntryForm = ({ entry, setEntry, suppliers }: UseEntryFormProps) => {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setEntry(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSupplierChange = (value: string) => {
-    const supplier = window.suppliers?.find((s: any) => s.id === value);
+    const supplier = suppliers?.find(s => s.id === value);
     setEntry(prev => ({
       ...prev,
       supplierId: value

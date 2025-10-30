@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useStock } from '@/contexts/StockContext';
-import { useSuppliers } from '@/contexts/SuppliersContext';
+import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
+import { useSuppliersQuery } from '@/hooks/queries/useSuppliers';
 import { SupplierWithAddress } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 import { toast } from 'sonner';
@@ -11,8 +11,8 @@ import { mapDbStockEntryToStockEntry } from '@/utils/mappers';
 
 export const useStockEntryDetail = (id: string | undefined) => {
   const navigate = useNavigate();
-  const { stockEntries } = useStock();
-  const { suppliers } = useSuppliers();
+  const { stockEntries, isLoading: entriesLoading } = useStockEntriesQuery();
+  const { suppliers, isLoading: suppliersLoading } = useSuppliersQuery();
   const [stockEntry, setStockEntry] = useState<any | null>(null);
   const [supplier, setSupplier] = useState<SupplierWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
@@ -21,7 +21,7 @@ export const useStockEntryDetail = (id: string | undefined) => {
 
   useEffect(() => {
     const fetchEntry = async () => {
-      if (!id) return;
+      if (!id || entriesLoading || suppliersLoading) return;
 
       let entry = stockEntries.find(entry => entry.id === id);
       
@@ -81,7 +81,7 @@ export const useStockEntryDetail = (id: string | undefined) => {
     };
 
     fetchEntry();
-  }, [id, stockEntries, navigate, suppliers]);
+  }, [id, stockEntries, navigate, suppliers, entriesLoading, suppliersLoading]);
 
   const handleExportToPdf = async () => {
     if (stockEntry && stockEntry.number) {

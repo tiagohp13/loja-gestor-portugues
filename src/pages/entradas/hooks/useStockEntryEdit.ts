@@ -1,7 +1,7 @@
 
-import { useProducts } from '@/contexts/ProductsContext';
-import { useSuppliers } from '@/contexts/SuppliersContext';
-import { useStock } from '@/contexts/StockContext';
+import { useProductsQuery } from '@/hooks/queries/useProducts';
+import { useSuppliersQuery } from '@/hooks/queries/useSuppliers';
+import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
 import { useEntryFetch } from './stockEntryEdit/useEntryFetch';
 import { useEntryForm } from './stockEntryEdit/useEntryForm';
 import { useEntrySubmit } from './stockEntryEdit/useEntrySubmit';
@@ -20,14 +20,9 @@ declare global {
 }
 
 export const useStockEntryEdit = (id?: string): UseStockEntryEditReturn => {
-  const { products } = useProducts();
-  const { suppliers } = useSuppliers();
-  const { stockEntries } = useStock();
-  
-  // Store these in window so other hooks can access them without circular deps
-  window.products = products;
-  window.suppliers = suppliers;
-  window.stockEntries = stockEntries;
+  const { products } = useProductsQuery();
+  const { suppliers } = useSuppliersQuery();
+  const { stockEntries } = useStockEntriesQuery();
   
   // Fetch entry data from API
   const { entry, setEntry } = useEntryFetch(id);
@@ -39,10 +34,10 @@ export const useStockEntryEdit = (id?: string): UseStockEntryEditReturn => {
     handleItemChange, 
     addNewItem, 
     removeItem 
-  } = useEntryForm({ entry, setEntry });
+  } = useEntryForm({ entry, setEntry, suppliers });
   
   // Form submission
-  const { handleSubmit, isSubmitting, isNewEntry } = useEntrySubmit(id, entry);
+  const { handleSubmit, isSubmitting, isNewEntry } = useEntrySubmit(id, entry, suppliers, stockEntries);
 
   return {
     entry,

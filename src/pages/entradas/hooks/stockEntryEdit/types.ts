@@ -1,5 +1,5 @@
 
-import { StockEntryItem } from '@/types';
+import { StockEntryItem, Supplier } from '@/types';
 
 export interface StockEntryFormState {
   supplierId: string;
@@ -9,8 +9,10 @@ export interface StockEntryFormState {
   notes: string;
 }
 
-export interface UseStockEntryEditProps {
-  id?: string;
+export interface UseEntryFormProps {
+  entry: StockEntryFormState;
+  setEntry: React.Dispatch<React.SetStateAction<StockEntryFormState>>;
+  suppliers: Supplier[];
 }
 
 export interface UseStockEntryEditReturn {

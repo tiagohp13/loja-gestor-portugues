@@ -1,13 +1,13 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useOrders } from '@/contexts/OrdersContext';
-import { useClients } from '@/contexts/ClientsContext';
-import { useStock } from '@/contexts/StockContext';
+import { useOrdersQuery } from '@/hooks/queries/useOrders';
+import { useClientsQuery } from '@/hooks/queries/useClients';
+import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
 import { ClientWithAddress, Order, StockExit } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
-import { mapDbOrderToOrder, mapDbOrderItemToOrderItem } from '@/utils/mappers';
+import { mapDbOrderToOrder } from '@/utils/mappers';
 
 /**
  * Hook for fetching and managing order detail data
@@ -15,10 +15,9 @@ import { mapDbOrderToOrder, mapDbOrderItemToOrderItem } from '@/utils/mappers';
  */
 export const useOrderDetail = (id: string | undefined) => {
   const navigate = useNavigate();
-  const { orders, isLoading: ordersLoading } = useOrders();
-  const { clients } = useClients();
-  const { stockExits } = useStock();
-  const isLoading = ordersLoading;
+  const { orders, isLoading: ordersLoading } = useOrdersQuery();
+  const { clients, isLoading: clientsLoading } = useClientsQuery();
+  const { stockExits, isLoading: exitsLoading } = useStockExitsQuery();
   const [order, setOrder] = useState<Order | null>(null);
   const [client, setClient] = useState<ClientWithAddress | null>(null);
   const [totalValue, setTotalValue] = useState(0);
@@ -28,7 +27,7 @@ export const useOrderDetail = (id: string | undefined) => {
   useEffect(() => {
     const fetchOrder = async () => {
       // Don't proceed if still loading data
-      if (isLoading) {
+      if (ordersLoading || clientsLoading || exitsLoading) {
         return;
       }
       
@@ -104,7 +103,7 @@ export const useOrderDetail = (id: string | undefined) => {
     };
 
     fetchOrder();
-  }, [id, orders, clients, navigate, stockExits, isLoading]);
+  }, [id, orders, clients, navigate, stockExits, ordersLoading, clientsLoading, exitsLoading]);
 
   return {
     order,
