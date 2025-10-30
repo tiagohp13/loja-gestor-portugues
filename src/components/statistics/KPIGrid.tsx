@@ -58,7 +58,7 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis, onSaveKpis }) => {
             {/* Cabeçalho */}
             <CardHeader className="flex-grow">
               <CardTitle className="text-sm">{kpi.name}</CardTitle>
-              <CardDescription className="text-xs text-gray-500 line-clamp-2">{kpi.description}</CardDescription>
+              <CardDescription className="text-xs text-muted-foreground line-clamp-2">{kpi.description}</CardDescription>
             </CardHeader>
 
             {/* Conteúdo inferior (valor e meta) */}

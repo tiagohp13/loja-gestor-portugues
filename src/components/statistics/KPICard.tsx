@@ -55,7 +55,7 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
     if (name.includes("Lucro Médio por Venda")) return <Info className="h-4 w-4 text-teal-500" />;
     if (name.includes("Lucro Total")) return <Info className="h-4 w-4 text-amber-500" />;
     if (name.includes("Lucro por Cliente")) return <Info className="h-4 w-4 text-indigo-500" />;
-    return <Info className="h-4 w-4 text-gray-500" />;
+    return <Info className="h-4 w-4 text-muted-foreground" />;
   };
 
   const getAlertMessage = () => {
@@ -80,7 +80,7 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
   return (
     <TooltipProvider>
       <Card
-        className={`shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-gray-300 ${
+        className={`shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-border ${
           belowTarget ? "border-orange-300" : ""
         }`}
         onClick={onClick}
@@ -106,7 +106,7 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
                 </TooltipContent>
               </Tooltip>
             </div>
-            <p className="text-sm text-gray-500 leading-snug line-clamp-2">{kpi.description}</p>
+            <p className="text-sm text-muted-foreground leading-snug line-clamp-2">{kpi.description}</p>
           </div>
 
           {/* Fundo: valor e meta */}
@@ -119,14 +119,14 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
               </div>
               {getTrendIcon()}
             </div>
-            <p className="text-sm text-gray-500 mt-1">
-              Meta: <span className="font-medium text-gray-700">{formatValue(kpi.target)}</span>
+            <p className="text-sm text-muted-foreground mt-1">
+              Meta: <span className="font-medium text-foreground">{formatValue(kpi.target)}</span>
             </p>
           </div>
 
           {/* Barra de progresso e alerta */}
           <div className="mt-3">
-            <Progress value={progress} className="h-2 bg-gray-100" />
+            <Progress value={progress} className="h-2 bg-muted" />
             {belowTarget && (
               <Alert className="mt-2 py-2 bg-rose-50 border-rose-200">
                 <AlertTriangle className="h-3.5 w-3.5 text-rose-500" />

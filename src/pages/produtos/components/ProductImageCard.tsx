@@ -29,8 +29,8 @@ const ProductImageCard: React.FC<ProductImageCardProps> = ({ image, name }) => {
                 loading="lazy"
               />
               <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="bg-black bg-opacity-40 rounded-full p-2">
-                  <ZoomIn className="w-6 h-6 text-white" />
+                <div className="bg-background/40 rounded-full p-2">
+                  <ZoomIn className="w-6 h-6 text-foreground" />
                 </div>
               </div>
             </div>

@@ -197,7 +197,7 @@ const ProductEdit = () => {
                 name="category"
                 value={product.category}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
+                className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-gestorApp-blue focus:border-gestorApp-blue"
               >
                 <option value="">Selecione uma categoria</option>
                 {categories?.map((category) => (

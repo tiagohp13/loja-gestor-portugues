@@ -225,7 +225,7 @@ const ClientList = () => {
                 filteredClients.map((client) => (
                   <TableRow 
                     key={client.id}
-                    className="cursor-pointer hover:bg-gray-50"
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleViewClient(client.id)}
                   >
                     <TableCell className="font-medium">{client.name}</TableCell>

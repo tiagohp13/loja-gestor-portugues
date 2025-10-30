@@ -202,7 +202,7 @@ const CategoryDetail: React.FC = () => {
               </Table>
             </div>
           ) : (
-            <div className="text-center py-6 bg-gray-50 rounded-lg">
+            <div className="text-center py-6 bg-muted/30 rounded-lg">
               <p className="text-gestorApp-gray-dark mb-2">Nenhum produto nesta categoria</p>
               {canCreate && (
                 <Link to="/produtos/novo" className="text-gestorApp-blue hover:underline">

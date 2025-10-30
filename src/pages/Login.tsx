@@ -107,7 +107,7 @@ const Login: React.FC = () => {
             <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-foreground">
               Iniciar Sessão
             </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-300">
+            <p className="text-sm text-muted-foreground">
               Aceda ao painel de controlo do seu stock e vendas.
             </p>
           </div>
@@ -162,7 +162,7 @@ const Login: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowPass((prev) => !prev)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-500 focus:outline-none"
+                  className="absolute inset-y-0 right-3 flex items-center text-muted-foreground focus:outline-none"
                   aria-label={showPass ? 'Esconder password' : 'Mostrar password'}
                 >
                   {showPass ? (
@@ -208,9 +208,9 @@ const Login: React.FC = () => {
                 type="checkbox"
                 checked={rememberMe}
                 onChange={() => setRememberMe((v) => !v)}
-                className="h-4 w-4 text-gestorApp-blue focus:ring-gestorApp-blue-dark border-gray-300 rounded"
+                className="h-4 w-4 text-gestorApp-blue focus:ring-gestorApp-blue-dark border-border rounded"
               />
-              <label htmlFor="remember" className="text-sm text-gray-600 dark:text-gray-300">
+              <label htmlFor="remember" className="text-sm text-muted-foreground">
                 Lembrar-me
               </label>
             </div>
@@ -253,7 +253,7 @@ const Login: React.FC = () => {
 
       {/* Footer */}
       <footer className="mt-8 text-center relative z-10">
-        <p className="text-xs text-gray-400 dark:text-gray-500">
+        <p className="text-xs text-muted-foreground">
           © 2025 Aqua Paraíso · Todos os direitos reservados
         </p>
       </footer>

@@ -84,7 +84,7 @@ const ProductNew = () => {
               type="submit"
               form="product-form"
               disabled={isSubmitting}
-              className="bg-primary text-white sm:h-10 sm:px-6"
+              className="bg-primary text-primary-foreground sm:h-10 sm:px-6"
             >
               <Save className="mr-2 h-4 w-4" />
               {isSubmitting ? "A guardar..." : "Guardar Produto"}

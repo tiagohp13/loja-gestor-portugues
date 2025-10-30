@@ -51,14 +51,14 @@ const ClientTagSettings: React.FC<ClientTagSettingsProps> = ({
             onChange={(e) => setInactivityMonths(Number(e.target.value))}
             placeholder="Número de meses sem compras para considerar inativo"
           />
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-muted-foreground">
             Clientes que não fizeram compras nos últimos {inactivityMonths} meses serão marcados como "Inativo"
           </p>
         </div>
 
         <div className="space-y-2">
           <h4 className="font-medium">Regras das Etiquetas:</h4>
-          <ul className="text-sm text-gray-600 space-y-1">
+          <ul className="text-sm text-muted-foreground space-y-1">
             <li>• <strong>Novo:</strong> Clientes com apenas 1 compra registada</li>
             <li>• <strong>Recorrente:</strong> Clientes com mais de 1 compra registada</li>
             <li>• <strong>Inativo:</strong> Clientes sem compras nos últimos {inactivityMonths} meses</li>

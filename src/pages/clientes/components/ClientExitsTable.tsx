@@ -12,18 +12,18 @@ const ClientExitsTable: React.FC<ClientExitsTableProps> = ({ exits }) => {
   const navigate = useNavigate();
 
   if (!exits || exits.length === 0) {
-    return <p className="text-gray-500">Sem saídas registadas.</p>;
+    return <p className="text-muted-foreground">Sem saídas registadas.</p>;
   }
 
   return (
     <div className="bg-card rounded-lg shadow overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full divide-y divide-border">
+        <thead className="bg-muted/50">
           <tr>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fatura</th>
-            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Nº</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Data</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Fatura</th>
+            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">Valor</th>
           </tr>
         </thead>
         <tbody className="bg-card divide-y divide-border">
@@ -37,9 +37,9 @@ const ClientExitsTable: React.FC<ClientExitsTableProps> = ({ exits }) => {
                   {exit.number}
                 </button>
               </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDateString(exit.date)}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{exit.invoiceNumber || '-'}</td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{formatDateString(exit.date)}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{exit.invoiceNumber || '-'}</td>
+              <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
                 {exit.items.reduce((total, item) => 
                   total + (item.quantity * item.salePrice * (1 - (item.discountPercent || 0) / 100)), 0).toFixed(2)} €
               </td>

@@ -25,7 +25,7 @@ const ProductStockCard: React.FC<ProductStockCardProps> = ({
       <CardContent className="space-y-4">
         <div className="text-center">
           <p className="text-2xl font-bold">{currentStock}</p>
-          <p className="text-sm text-gray-500">Unidades em Stock</p>
+          <p className="text-sm text-muted-foreground">Unidades em Stock</p>
         </div>
         
         <div>

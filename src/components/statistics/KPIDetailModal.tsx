@@ -47,27 +47,27 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
                   size="icon"
                   onClick={onEdit}
                   title="Editar meta"
-                  className="hover:bg-gray-100 hover:text-sky-600 transition-colors"
+                  className="hover:bg-muted hover:text-sky-600 transition-colors"
                 >
-                  <Pencil className="h-4 w-4 text-gray-500" />
+                  <Pencil className="h-4 w-4 text-muted-foreground" />
                 </Button>
               )}
               <DialogClose asChild>
-                <Button variant="ghost" size="icon" title="Fechar" className="hover:bg-gray-100">
-                  <X className="h-4 w-4 text-gray-500" />
+                <Button variant="ghost" size="icon" title="Fechar" className="hover:bg-muted">
+                  <X className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </DialogClose>
             </div>
           </div>
 
           {kpi.description && (
-            <DialogDescription className="text-sm text-gray-500 mt-1 mb-2">{kpi.description}</DialogDescription>
+            <DialogDescription className="text-sm text-muted-foreground mt-1 mb-2">{kpi.description}</DialogDescription>
           )}
 
           {/* Fórmula (sem rótulo “Como é calculado”) */}
           {kpi.formula && (
-            <div className="mt-2 flex items-center gap-2 text-sm font-mono text-gray-700">
-              <Sigma className="h-4 w-4 text-gray-500" />
+            <div className="mt-2 flex items-center gap-2 text-sm font-mono text-foreground">
+              <Sigma className="h-4 w-4 text-muted-foreground" />
               <span>{kpi.formula}</span>
             </div>
           )}
@@ -87,7 +87,7 @@ const KPIDetailModal: React.FC<KPIDetailModalProps> = ({ kpi, isOpen, onClose, o
           <Separator className="my-2" />
 
           {kpi.tooltip && (
-            <div className="text-sm text-gray-600">
+            <div className="text-sm text-muted-foreground">
               <strong>Observações:</strong> {kpi.tooltip}
             </div>
           )}

@@ -85,7 +85,7 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
               <div key={index} className="grid grid-cols-1 gap-2">
                 <Label htmlFor={`kpi-${index}`} className="font-medium">
                   {kpi.name}
-                  <span className="text-xs text-gray-500 block">
+                  <span className="text-xs text-muted-foreground block">
                     Valor atual:{" "}
                     {kpi.isPercentage
                       ? formatPercentage(kpi.value)
@@ -96,7 +96,7 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
                 </Label>
 
                 <div className="flex items-center">
-                  {kpi.unit === "€" && !kpi.isPercentage && <span className="mr-2 text-gray-500">€</span>}
+                  {kpi.unit === "€" && !kpi.isPercentage && <span className="mr-2 text-muted-foreground">€</span>}
                   <Input
                     id={`kpi-${index}`}
                     type="number"
@@ -108,11 +108,11 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
                     onWheel={(e) => e.currentTarget.blur()}
                     className="w-full text-right"
                   />
-                  {kpi.isPercentage && <span className="ml-2 text-gray-500">%</span>}
-                  {!kpi.isPercentage && kpi.unit !== "€" && <span className="ml-2 text-gray-500">{kpi.unit}</span>}
+                  {kpi.isPercentage && <span className="ml-2 text-muted-foreground">%</span>}
+                  {!kpi.isPercentage && kpi.unit !== "€" && <span className="ml-2 text-muted-foreground">{kpi.unit}</span>}
                 </div>
 
-                <div className="text-xs text-gray-500">Nova meta: {formatDisplayValue(kpi)}</div>
+                <div className="text-xs text-muted-foreground">Nova meta: {formatDisplayValue(kpi)}</div>
               </div>
             ))}
           </div>

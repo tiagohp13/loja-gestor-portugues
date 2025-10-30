@@ -29,12 +29,12 @@ const ProductDetailCard: React.FC<ProductDetailCardProps> = ({ product, totalUni
       <CardContent className="space-y-4">
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium text-gray-500">Descrição</p>
+            <p className="text-sm font-medium text-muted-foreground">Descrição</p>
             <p className="whitespace-pre-wrap">{product.description || '-'}</p>
           </div>
           
           <div>
-            <p className="text-sm font-medium text-gray-500">Categoria</p>
+            <p className="text-sm font-medium text-muted-foreground">Categoria</p>
             <p>{product.category || '-'}</p>
           </div>
         </div>
@@ -43,12 +43,12 @@ const ProductDetailCard: React.FC<ProductDetailCardProps> = ({ product, totalUni
         
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium text-gray-500">Preço de Compra</p>
+            <p className="text-sm font-medium text-muted-foreground">Preço de Compra</p>
             <p className="text-lg font-semibold">{formatCurrency(product.purchasePrice)}</p>
           </div>
           
           <div>
-            <p className="text-sm font-medium text-gray-500">Preço de Venda</p>
+            <p className="text-sm font-medium text-muted-foreground">Preço de Venda</p>
             <p className="text-lg font-semibold">{formatCurrency(product.salePrice)}</p>
           </div>
         </div>
@@ -57,12 +57,12 @@ const ProductDetailCard: React.FC<ProductDetailCardProps> = ({ product, totalUni
         
         <div className="grid md:grid-cols-2 gap-4">
           <div>
-            <p className="text-sm font-medium text-gray-500">Data de Criação</p>
+            <p className="text-sm font-medium text-muted-foreground">Data de Criação</p>
             <p>{formatDateString(product.createdAt)}</p>
           </div>
           
           <div>
-            <p className="text-sm font-medium text-gray-500">Total de Unidades Vendidas</p>
+            <p className="text-sm font-medium text-muted-foreground">Total de Unidades Vendidas</p>
             <p className="text-lg font-semibold">{totalUnitsSold}</p>
           </div>
         </div>

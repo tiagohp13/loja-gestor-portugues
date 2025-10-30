@@ -27,7 +27,7 @@ const ProductTableRow = ({
   canDelete,
 }: ProductTableRowProps) => {
   return (
-    <TableRow key={product.id} className="cursor-pointer hover:bg-gray-50" onClick={() => onViewProduct(product.id)}>
+    <TableRow key={product.id} className="cursor-pointer hover:bg-muted/50" onClick={() => onViewProduct(product.id)}>
       <TableCell className="font-medium">{product.code}</TableCell>
 
       <TableCell>
@@ -62,7 +62,7 @@ const ProductTableRow = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 p-0 hover:bg-gray-100"
+            className="h-8 w-8 p-0 hover:bg-muted"
             title="Histórico"
             onClick={(e) => onViewHistory(product.id, e)}
           >
@@ -74,7 +74,7 @@ const ProductTableRow = ({
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 p-0 hover:bg-gray-100"
+              className="h-8 w-8 p-0 hover:bg-muted"
               title="Editar"
               onClick={(e) => onEdit(product.id, e)}
             >
@@ -90,7 +90,7 @@ const ProductTableRow = ({
               onDelete={() => onDelete(product.id)}
               checkDependencies={() => checkProductDependencies(product.id)}
               trigger={
-                <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-gray-100" title="Eliminar">
+                <Button variant="ghost" size="icon" className="h-8 w-8 p-0 hover:bg-muted" title="Eliminar">
                   <Trash2 className="w-4 h-4" />
                 </Button>
               }
