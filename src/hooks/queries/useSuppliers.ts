@@ -57,35 +57,33 @@ export function useSuppliersQuery() {
   const query = useQuery({
     queryKey: ["suppliers"],
     queryFn: fetchSuppliers,
-    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
-    gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteSupplier,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Fornecedor eliminado com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      await queryClient.invalidateQueries({ queryKey: ["suppliers"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar fornecedor"),
   });
 
   const createMutation = useMutation({
     mutationFn: createSupplier,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Fornecedor criado com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      await queryClient.invalidateQueries({ queryKey: ["suppliers"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar fornecedor"),
   });
 
   const updateMutation = useMutation({
     mutationFn: updateSupplier,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Fornecedor atualizado com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["suppliers"] });
+      await queryClient.invalidateQueries({ queryKey: ["suppliers"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar fornecedor"),
   });

@@ -142,35 +142,34 @@ export function useOrdersQuery() {
   const query = useQuery({
     queryKey: ["orders"],
     queryFn: fetchOrders,
-    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
-    gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteOrder,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Encomenda eliminada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar encomenda"),
   });
 
   const createMutation = useMutation({
     mutationFn: createOrder,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Encomenda criada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar encomenda"),
   });
 
   const updateMutation = useMutation({
     mutationFn: updateOrder,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Encomenda atualizada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar encomenda"),
   });

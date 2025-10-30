@@ -50,18 +50,16 @@ export function useStockEntriesQuery() {
   const query = useQuery({
     queryKey: ["stock-entries"],
     queryFn: fetchStockEntries,
-    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
-    gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteStockEntry,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Entrada eliminada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["stock-entries"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["stock-entries"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar entrada"),
   });

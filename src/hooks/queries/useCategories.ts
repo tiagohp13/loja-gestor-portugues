@@ -69,35 +69,35 @@ export function useCategoriesQuery() {
   const query = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
-    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
-    gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteCategory,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Categoria eliminada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar categoria"),
   });
 
   const createMutation = useMutation({
     mutationFn: createCategory,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Categoria criada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar categoria"),
   });
 
   const updateMutation = useMutation({
     mutationFn: updateCategory,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Categoria atualizada com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar categoria"),
   });

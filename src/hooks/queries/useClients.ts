@@ -69,35 +69,33 @@ export function useClientsQuery() {
   const query = useQuery({
     queryKey: ["clients"],
     queryFn: fetchClients,
-    staleTime: 1000 * 60 * 10, // 10 minutes - aggressive caching for dashboard performance
-    gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
   const deleteMutation = useMutation({
     mutationFn: deleteClient,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Cliente eliminado com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      await queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar cliente"),
   });
 
   const createMutation = useMutation({
     mutationFn: createClient,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Cliente criado com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      await queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar cliente"),
   });
 
   const updateMutation = useMutation({
     mutationFn: updateClient,
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Cliente atualizado com sucesso");
-      queryClient.invalidateQueries({ queryKey: ["clients"] });
+      await queryClient.invalidateQueries({ queryKey: ["clients"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar cliente"),
   });
