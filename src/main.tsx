@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import './index.css';
+import { fetchAllDashboardData } from '@/pages/dashboard/hooks/useDashboardOptimized';
 
 const rootElement = document.getElementById('root');
 
@@ -23,6 +24,13 @@ const queryClient = new QueryClient({
       retry: 1,
     },
   },
+});
+
+// Prefetch dashboard data on app load for instant rendering
+queryClient.prefetchQuery({
+  queryKey: ['dashboard-optimized'],
+  queryFn: fetchAllDashboardData,
+  staleTime: 10 * 60 * 1000,
 });
 
 const root = createRoot(rootElement);
