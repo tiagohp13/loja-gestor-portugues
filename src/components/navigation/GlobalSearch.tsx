@@ -5,9 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useGlobalSearch, SearchResult } from '@/hooks/useGlobalSearch';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const GlobalSearch: React.FC = () => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +36,9 @@ const GlobalSearch: React.FC = () => {
   const handleClearSearch = () => {
     clearSearch();
     setIsOpen(false);
-    inputRef.current?.focus();
+    if (!isMobile) {
+      inputRef.current?.focus();
+    }
   };
 
   const getTypeIcon = (type: SearchResult['type']) => {
@@ -105,8 +109,14 @@ const GlobalSearch: React.FC = () => {
             setQuery(e.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => setIsOpen(true)}
+          onFocus={() => {
+            if (!isMobile) {
+              setIsOpen(true);
+            }
+          }}
+          onClick={() => setIsOpen(true)}
           className="pl-10 pr-10"
+          inputMode={isMobile ? "search" : undefined}
         />
         {query && (
           <Button
