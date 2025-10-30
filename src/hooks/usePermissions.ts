@@ -1,11 +1,18 @@
 import { useUserProfile } from './useUserProfile';
+import { useRolePermissions } from './useRolePermissions';
 
 export type AccessLevel = 'admin' | 'editor' | 'viewer';
 
+/**
+ * Hook unificado de permissões
+ * Usa o novo sistema RBAC mas mantém compatibilidade com o código existente
+ */
 export const usePermissions = () => {
   const { profile, loading } = useUserProfile();
+  const rbac = useRolePermissions();
   
-  const accessLevel = (profile?.access_level as AccessLevel) || 'viewer';
+  // Usar o role do RBAC se disponível, senão fallback para access_level
+  const accessLevel = (rbac.role || profile?.access_level || 'viewer') as AccessLevel;
   
   const isAdmin  = accessLevel === 'admin';
   const isEditor = accessLevel === 'editor';
@@ -36,6 +43,11 @@ export const usePermissions = () => {
     canDelete,
     canView,
     checkPermission,
-    loading
+    loading: loading || rbac.isLoading,
+    // Novas funcionalidades RBAC
+    can: rbac.can,
+    hasRole: rbac.hasRole,
+    hasAnyRole: rbac.hasAnyRole,
+    roleName: rbac.roleName,
   };
 };

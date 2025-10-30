@@ -840,19 +840,37 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      can_delete_data: {
-        Args: { user_id?: string }
-        Returns: boolean
-      }
-      can_write_data: {
-        Args: { user_id?: string }
-        Returns: boolean
-      }
+      can_delete_data: { Args: { user_id?: string }; Returns: boolean }
+      can_write_data: { Args: { user_id?: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
           max_attempts?: number
@@ -861,23 +879,28 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_old_deleted_records: {
-        Args: Record<PropertyKey, never>
-        Returns: number
-      }
+      cleanup_old_deleted_records: { Args: never; Returns: number }
       duplicate_order: {
         Args: { order_id_to_duplicate: string }
         Returns: string
       }
-      generate_padded_sequence: {
-        Args: { items: Json; prefix: string } | { items: Json; prefix?: string }
-        Returns: {
-          id: string
-          new_number: string
-        }[]
-      }
+      generate_padded_sequence:
+        | {
+            Args: { items: Json; prefix?: string }
+            Returns: {
+              id: string
+              new_number: string
+            }[]
+          }
+        | {
+            Args: { items: Json; prefix: string }
+            Returns: {
+              id: string
+              new_number: string
+            }[]
+          }
       get_deleted_records: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           additional_info: Json
           deleted_at: string
@@ -886,10 +909,7 @@ export type Database = {
           table_type: string
         }[]
       }
-      get_next_counter: {
-        Args: { counter_id: string }
-        Returns: string
-      }
+      get_next_counter: { Args: { counter_id: string }; Returns: string }
       get_next_counter_by_year: {
         Args: { counter_id: string; target_year: number }
         Returns: string
@@ -906,7 +926,7 @@ export type Database = {
         }[]
       }
       get_orders: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           client_id: string
           client_name: string
@@ -922,7 +942,7 @@ export type Database = {
         }[]
       }
       get_stock_entries: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           created_at: string
           date: string
@@ -966,19 +986,21 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_stock_exit_items: {
-        Args: { p_exit_id: number } | { p_exit_id: string }
-        Returns: {
-          exit_id: string
-          id: string
-          product_id: string
-          product_name: string
-          quantity: number
-          sale_price: number
-        }[]
-      }
+      get_stock_exit_items:
+        | {
+            Args: { p_exit_id: number }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_stock_exit_items(p_exit_id => int8), public.get_stock_exit_items(p_exit_id => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
+        | {
+            Args: { p_exit_id: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.get_stock_exit_items(p_exit_id => int8), public.get_stock_exit_items(p_exit_id => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"[]
+          }
       get_stock_exits: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           client_id: string
           client_name: string
@@ -995,18 +1017,27 @@ export type Database = {
           updated_at: string
         }[]
       }
-      get_user_access_level: {
-        Args: { user_id?: string }
-        Returns: string
+      get_user_access_level: { Args: { user_id?: string }; Returns: string }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
       }
-      is_admin: {
-        Args: Record<PropertyKey, never>
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
         Returns: boolean
       }
-      is_user_admin: {
-        Args: { user_id?: string }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
+      is_user_admin: { Args: { user_id?: string }; Returns: boolean }
       log_security_event: {
         Args: {
           affected_id?: string
@@ -1028,15 +1059,15 @@ export type Database = {
         Args: { record_id: string; table_name: string }
         Returns: boolean
       }
-      table_exists: {
-        Args:
-          | { schema_name: string; table_name: string }
-          | { table_name: string }
-        Returns: boolean
-      }
+      table_exists:
+        | {
+            Args: { schema_name: string; table_name: string }
+            Returns: boolean
+          }
+        | { Args: { table_name: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "editor" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1163,6 +1194,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "editor", "viewer"],
+    },
   },
 } as const

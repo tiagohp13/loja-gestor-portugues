@@ -3,9 +3,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -25,6 +26,7 @@ import GlobalSearch from './GlobalSearch';
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const { profile } = useUserProfile();
+  const { isAdmin } = usePermissions();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
@@ -111,6 +113,16 @@ const AppSidebar: React.FC = () => {
     }
   ];
 
+  // Items apenas para administradores
+  const adminItems = [
+    {
+      path: '/admin/roles',
+      label: 'Gestão de Papéis',
+      icon: <Shield className="w-5 h-5" />,
+      isActive: location.pathname.includes('/admin/roles')
+    }
+  ];
+
   const handleLogout = async () => {
     try {
       await logout();
@@ -182,6 +194,29 @@ const AppSidebar: React.FC = () => {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Seção Admin - apenas visível para administradores */}
+        {isAdmin && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Administração</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminItems.map((item, index) => (
+                  <SidebarMenuItem key={index}>
+                    <SidebarMenuButton 
+                      onClick={() => handleNavigation(item.path)}
+                      isActive={item.isActive}
+                      tooltip={item.label}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
       
       <SidebarFooter className="p-4 border-t">

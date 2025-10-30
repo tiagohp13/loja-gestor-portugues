@@ -79,6 +79,9 @@ import Reciclagem from './pages/Reciclagem';
 // Notifications
 import NotificationsList from './pages/notificacoes/NotificationsList';
 
+// Admin
+import RoleManagement from './pages/admin/RoleManagement';
+
 // Error pages
 import NotFound from './pages/NotFound';
 
@@ -167,6 +170,8 @@ function App() {
                     <Route path="/reciclagem" element={<Reciclagem />} />
                     
                     <Route path="/notificacoes" element={<NotificationsList />} />
+                    
+                    <Route path="/admin/roles" element={<RoleManagement />} />
                     
                     <Route path="/suporte" element={<Support />} />
                   </Route>
