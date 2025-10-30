@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useSuppliers } from '@/contexts/SuppliersContext';
+import { useSuppliersQuery } from '@/hooks/queries/useSuppliers';
 import { supabase } from '@/integrations/supabase/client';
 import { Supplier, StockEntry } from '@/types';
 import { mapDbSupplierToSupplier } from '@/utils/mappers';
@@ -9,8 +8,7 @@ import { mapDbSupplierToSupplier } from '@/utils/mappers';
 export const useSupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { suppliers } = useSuppliers();
-  const getSupplier = (id: string) => suppliers.find(s => s.id === id);
+  const { suppliers, isLoading: suppliersLoading } = useSuppliersQuery();
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [supplierEntries, setSupplierEntries] = useState<any[]>([]);
   const [supplierExpenses, setSupplierExpenses] = useState<any[]>([]);
@@ -18,14 +16,15 @@ export const useSupplierDetail = () => {
   const [isDeleted, setIsDeleted] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
-    
-    setIsLoading(true);
+    if (!id || suppliersLoading) return;
     
     const fetchData = async () => {
-      let foundSupplier = getSupplier(id);
+      setIsLoading(true);
       
-      // If not found in context, try to fetch from database (including deleted)
+      // Try to find in loaded suppliers first
+      let foundSupplier = suppliers.find(s => s.id === id);
+      
+      // If not found in loaded suppliers, try to fetch from database (including deleted)
       if (!foundSupplier) {
         try {
           const { data, error } = await supabase
@@ -41,7 +40,7 @@ export const useSupplierDetail = () => {
             setIsDeleted(data.status === 'deleted');
           }
         } catch (error) {
-          console.error('Error fetching deleted supplier:', error);
+          console.error('Error fetching supplier:', error);
           setIsLoading(false);
           return;
         }
@@ -120,7 +119,7 @@ export const useSupplierDetail = () => {
     };
 
     fetchData();
-  }, [id, getSupplier]);
+  }, [id, suppliers, suppliersLoading]);
 
   const handleNavigate = (path: string) => {
     navigate(path);
