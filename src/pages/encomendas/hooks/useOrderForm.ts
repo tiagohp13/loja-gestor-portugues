@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useClients } from '@/contexts/ClientsContext';
-import { useProducts } from '@/contexts/ProductsContext';
-import { useOrders } from '@/contexts/OrdersContext';
+import { useClientsQuery } from '@/hooks/queries/useClients';
+import { useProductsQuery } from '@/hooks/queries/useProducts';
+import { useOrdersQuery } from '@/hooks/queries/useOrders';
 import { OrderItem } from './order-form/types';
 import { useOrderFormState } from './order-form/useOrderFormState';
 import { useOrderFilters } from './order-form/useOrderFilters';
@@ -16,9 +16,9 @@ export type { OrderItem };
 export const useOrderForm = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { clients } = useClients();
-  const { products } = useProducts();
-  const { addOrder } = useOrders();
+  const { clients } = useClientsQuery();
+  const { products } = useProductsQuery();
+  const { createOrder } = useOrdersQuery();
   
   // Check if we have duplicate data from navigation state
   const duplicateData = location.state?.duplicateData;
@@ -105,7 +105,7 @@ export const useOrderForm = () => {
   
   // Submission
   const { handleSaveOrder } = useOrderSubmit(
-    addOrder,
+    createOrder,
     selectedClientId,
     selectedClient,
     orderDate,
