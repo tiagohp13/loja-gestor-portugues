@@ -1,20 +1,19 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useCategories } from "@/contexts/CategoriesContext";
+import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
-import { Category } from "@/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
 
 const CategoryNew = () => {
   const navigate = useNavigate();
-  const { addCategory } = useCategories();
-  const [category, setCategory] = useState<Omit<Category, "id" | "createdAt" | "updatedAt">>({
+  const { createCategory } = useCategoriesQuery();
+  const [category, setCategory] = useState({
     name: "",
     description: "",
     status: "active",
@@ -38,19 +37,16 @@ const CategoryNew = () => {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    try {
-      if (!category.name.trim()) {
-        toast.error("O nome da categoria é obrigatório");
-        return;
-      }
-
-      await addCategory(category);
-      toast.success("Categoria adicionada com sucesso!");
-      navigate("/categorias/consultar");
-    } catch (error) {
-      console.error("Erro ao adicionar categoria:", error);
-      toast.error("Erro ao adicionar categoria");
+    if (!category.name.trim()) {
+      toast.error("O nome da categoria é obrigatório");
+      return;
     }
+
+    createCategory(category, {
+      onSuccess: () => {
+        navigate("/categorias/consultar");
+      },
+    });
   };
 
   return (

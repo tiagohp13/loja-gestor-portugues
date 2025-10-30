@@ -25,10 +25,10 @@ async function deleteCategory(id: string) {
   return id;
 }
 
-async function createCategory(category: Omit<Category, "id" | "created_at" | "updated_at">) {
+async function createCategory(payload: { name: string; description?: string; status?: string }) {
   const { data, error } = await supabase
     .from("categories")
-    .insert(category)
+    .insert(payload)
     .select()
     .single();
   
@@ -36,10 +36,10 @@ async function createCategory(category: Omit<Category, "id" | "created_at" | "up
   return data;
 }
 
-async function updateCategory({ id, ...updates }: Partial<Category> & { id: string }) {
+async function updateCategory({ id, payload }: { id: string; payload: { name?: string; description?: string; status?: string } }) {
   const { data, error } = await supabase
     .from("categories")
-    .update(updates)
+    .update(payload)
     .eq("id", id)
     .select()
     .single();
@@ -48,13 +48,25 @@ async function updateCategory({ id, ...updates }: Partial<Category> & { id: stri
   return data;
 }
 
+async function getCategoryById(id: string) {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+  
+  if (error) throw error;
+  return data ? mapCategory(data) : null;
+}
+
 export function useCategoriesQuery() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["categories"],
     queryFn: fetchCategories,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: true,
   });
 
@@ -94,4 +106,13 @@ export function useCategoriesQuery() {
     createCategory: createMutation.mutate,
     updateCategory: updateMutation.mutate,
   };
+}
+
+export function useCategoryQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: ["category", id],
+    queryFn: () => getCategoryById(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  });
 }

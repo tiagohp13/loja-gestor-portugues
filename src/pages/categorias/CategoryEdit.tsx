@@ -1,19 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCategories } from "@/contexts/CategoriesContext";
+import { useCategoriesQuery, useCategoryQuery } from "@/hooks/queries/useCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/ui/PageHeader";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ArrowLeft, Save } from "lucide-react";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const CategoryEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCategory, updateCategory } = useCategories();
+  const { data: foundCategory, isLoading } = useCategoryQuery(id);
+  const { updateCategory } = useCategoriesQuery();
   const [category, setCategory] = useState({
     name: "",
     description: "",
@@ -21,24 +23,32 @@ const CategoryEdit: React.FC = () => {
   });
 
   useEffect(() => {
-    if (id) {
-      const foundCategory = getCategory(id);
-      if (foundCategory) {
-        setCategory({
-          name: foundCategory.name || "",
-          description: foundCategory.description || "",
-          status: foundCategory.status || "active",
-        });
-      } else {
-        toast({
-          title: "Erro",
-          description: "Categoria não encontrada",
-          variant: "destructive",
-        });
-        navigate("/categorias/consultar");
-      }
+    if (foundCategory) {
+      setCategory({
+        name: foundCategory.name || "",
+        description: foundCategory.description || "",
+        status: foundCategory.status || "active",
+      });
     }
-  }, [id, getCategory, navigate]);
+  }, [foundCategory]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader
+          title="Editar Categoria"
+          description="Atualize os detalhes da categoria"
+        />
+        <TableSkeleton title="A carregar categoria..." rows={3} columns={1} />
+      </div>
+    );
+  }
+
+  if (!foundCategory && !isLoading) {
+    toast.error("Categoria não encontrada");
+    navigate("/categorias/consultar");
+    return null;
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -58,30 +68,16 @@ const CategoryEdit: React.FC = () => {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    try {
-      if (!category.name.trim()) {
-        toast({
-          title: "Erro",
-          description: "O nome da categoria é obrigatório",
-          variant: "destructive",
-        });
-        return;
-      }
+    if (!category.name.trim()) {
+      toast.error("O nome da categoria é obrigatório");
+      return;
+    }
 
-      if (id) {
-        await updateCategory(id, category);
-        toast({
-          title: "Sucesso",
-          description: "Categoria atualizada com sucesso",
-        });
-        navigate("/categorias/consultar");
-      }
-    } catch (error) {
-      console.error("Error updating category:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar categoria",
-        variant: "destructive",
+    if (id) {
+      updateCategory({ id, payload: category }, {
+        onSuccess: () => {
+          navigate("/categorias/consultar");
+        },
       });
     }
   };
