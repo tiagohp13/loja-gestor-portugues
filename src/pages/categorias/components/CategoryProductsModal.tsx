@@ -5,7 +5,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useData } from '@/contexts/DataContext';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { useProducts } from '@/contexts/ProductsContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Package, ChevronUp, ChevronDown } from 'lucide-react';
@@ -30,7 +31,8 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
   categoryId,
   categoryName
 }) => {
-  const { products, getCategory } = useData();
+  const { products } = useProducts();
+  const { getCategory } = useCategories();
   const [category, setCategory] = useState<any>(null);
   const [sortField, setSortField] = useState<SortField>('code');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useCategories } from "@/contexts/CategoriesContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +13,7 @@ import { ArrowLeft, Save } from "lucide-react";
 
 const CategoryNew = () => {
   const navigate = useNavigate();
-  const { addCategory } = useData();
+  const { addCategory } = useCategories();
   const [category, setCategory] = useState<Omit<Category, "id" | "createdAt" | "updatedAt">>({
     name: "",
     description: "",

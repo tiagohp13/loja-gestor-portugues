@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useCategories } from "@/contexts/CategoriesContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -13,7 +13,7 @@ import { ArrowLeft, Save } from "lucide-react";
 const CategoryEdit: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCategory, updateCategory } = useData();
+  const { getCategory, updateCategory } = useCategories();
   const [category, setCategory] = useState({
     name: "",
     description: "",

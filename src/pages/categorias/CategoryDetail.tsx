@@ -22,7 +22,8 @@ import { naturalSort } from '@/pages/produtos/hooks/useProductSort';
 const CategoryDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getCategory, products } = useData();
+  const { getCategory } = useCategories();
+  const { products } = useProducts();
   const { canEdit, canCreate } = usePermissions();
   const [category, setCategory] = useState<any | null>(null);
   const [categoryProducts, setCategoryProducts] = useState<any[]>([]);

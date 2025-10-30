@@ -26,7 +26,8 @@ type SortDirection = 'asc' | 'desc';
 
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
-  const { categories, deleteCategory, products } = useData();
+  const { categories, deleteCategory, isLoading: categoriesLoading } = useCategories();
+  const { products } = useProducts();
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   const [searchTerm, setSearchTerm] = useState('');

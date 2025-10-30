@@ -3,6 +3,12 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'rea
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ProductsProvider } from './contexts/ProductsContext';
+import { CategoriesProvider } from './contexts/CategoriesContext';
+import { ClientsProvider } from './contexts/ClientsContext';
+import { SuppliersProvider } from './contexts/SuppliersContext';
+import { OrdersProvider } from './contexts/OrdersContext';
+import { StockProvider } from './contexts/StockContext';
 import { Toaster } from 'sonner';
 import LoadingSpinner from './components/ui/LoadingSpinner';
 import { useAuth } from './contexts/AuthContext';
@@ -99,8 +105,14 @@ function App() {
       <ScrollToTop />
       <ThemeProvider>
         <AuthProvider>
-          <DataProvider>
-            <Suspense fallback={<LoadingSpinner />}>
+          <CategoriesProvider>
+            <ProductsProvider>
+              <ClientsProvider>
+                <SuppliersProvider>
+                  <OrdersProvider>
+                    <StockProvider>
+                      <DataProvider>
+                        <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 
@@ -162,9 +174,15 @@ function App() {
               <Toaster />
             </Suspense>
           </DataProvider>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
+        </StockProvider>
+      </OrdersProvider>
+    </SuppliersProvider>
+  </ClientsProvider>
+</ProductsProvider>
+</CategoriesProvider>
+</AuthProvider>
+</ThemeProvider>
+</BrowserRouter>
   );
 }
 

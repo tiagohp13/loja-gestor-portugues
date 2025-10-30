@@ -1,102 +1,24 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase, snakeToCamel, increment, decrement } from "@/integrations/supabase/client";
-import type { Database } from "@/integrations/supabase/types";
+import React, { createContext, useContext, ReactNode } from "react";
 import { toast } from "sonner";
-import { getUserFriendlyError } from "@/utils/errorUtils";
-import {
-  Product,
-  Category,
-  Client,
-  Supplier,
-  Order,
-  OrderItem,
-  StockEntry,
-  StockEntryItem,
-  StockExit,
-  StockExitItem,
-  ExportDataType,
-} from "../types";
-import {
-  mapDbProductToProduct,
-  mapDbCategoryToCategory,
-  mapDbClientToClient,
-  mapDbSupplierToSupplier,
-  mapDbOrderToOrder,
-  mapDbOrderItemToOrderItem,
-  mapDbStockEntryToStockEntry,
-  mapDbStockEntryItemToStockEntryItem,
-  mapDbStockExitToStockExit,
-  mapDbStockExitItemToStockExitItem,
-  mapOrderItemToDbOrderItem,
-  mapStockEntryItemToDbStockEntryItem,
-  mapStockExitItemToDbStockExitItem,
-} from "../utils/mappers";
+import { Product, Client, Order, StockEntry, StockExit, ExportDataType } from "../types";
+import { useProducts } from "./ProductsContext";
+import { useCategories } from "./CategoriesContext";
+import { useClients } from "./ClientsContext";
+import { useSuppliers } from "./SuppliersContext";
+import { useOrders } from "./OrdersContext";
+import { useStock } from "./StockContext";
 
 interface DataContextType {
-  // Products
-  products: Product[];
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-  addProduct: (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => Promise<Product>;
-  updateProduct: (id: string, product: Partial<Product>) => Promise<void>;
-  deleteProduct: (id: string) => Promise<void>;
-  getProduct: (id: string) => Product | undefined;
+  // History functions
   getProductHistory: (id: string) => { entries: StockEntry[]; exits: StockExit[] };
-
-  // Categories
-  categories: Category[];
-  setCategories: React.Dispatch<React.SetStateAction<Category[]>>;
-  addCategory: (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => Promise<Category>;
-  updateCategory: (id: string, category: Partial<Category>) => Promise<void>;
-  deleteCategory: (id: string) => Promise<void>;
-  getCategory: (id: string) => Category | undefined;
-
-  // Clients
-  clients: Client[];
-  setClients: React.Dispatch<React.SetStateAction<Client[]>>;
-  addClient: (client: Omit<Client, "id" | "createdAt" | "updatedAt">) => Promise<Client>;
-  updateClient: (id: string, client: Partial<Client>) => Promise<void>;
-  deleteClient: (id: string) => Promise<void>;
-  getClient: (id: string) => Client | undefined;
   getClientHistory: (id: string) => { orders: Order[]; exits: StockExit[] };
-
-  // Suppliers
-  suppliers: Supplier[];
-  setSuppliers: React.Dispatch<React.SetStateAction<Supplier[]>>;
-  addSupplier: (supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) => Promise<Supplier>;
-  updateSupplier: (id: string, supplier: Partial<Supplier>) => Promise<void>;
-  deleteSupplier: (id: string) => Promise<void>;
-  getSupplier: (id: string) => Supplier | undefined;
   getSupplierHistory: (id: string) => { entries: StockEntry[] };
 
-  // Orders
-  orders: Order[];
-  setOrders: React.Dispatch<React.SetStateAction<Order[]>>;
-  addOrder: (order: Omit<Order, "id" | "number">) => Promise<Order>;
-  updateOrder: (id: string, order: Partial<Order>) => Promise<void>;
-  deleteOrder: (id: string) => Promise<void>;
-  findOrder: (id: string) => Order | undefined;
-  findProduct: (id: string) => Product | undefined;
-  findClient: (id: string) => Client | undefined;
+  // Conversion
   convertOrderToStockExit: (orderId: string, invoiceNumber?: string) => Promise<StockExit | undefined>;
-
-  // Stock Entries
-  stockEntries: StockEntry[];
-  setStockEntries: React.Dispatch<React.SetStateAction<StockEntry[]>>;
-  addStockEntry: (entry: Omit<StockEntry, "id" | "number" | "createdAt">) => Promise<StockEntry>;
-  updateStockEntry: (id: string, entry: Partial<StockEntry>) => Promise<void>;
-  deleteStockEntry: (id: string) => Promise<void>;
-
-  // Stock Exits
-  stockExits: StockExit[];
-  setStockExits: React.Dispatch<React.SetStateAction<StockExit[]>>;
-  addStockExit: (exit: Omit<StockExit, "id" | "number" | "createdAt">) => Promise<StockExit>;
-  updateStockExit: (id: string, exit: Partial<StockExit>) => Promise<void>;
-  deleteStockExit: (id: string) => Promise<void>;
 
   // Export/Import
   exportData: (type: ExportDataType) => void;
-  importData: (type: ExportDataType, data: string) => Promise<void>;
-  updateData: <T extends keyof DataState>(type: T, data: DataState[T]) => void;
 
   // Business Analytics
   getBusinessAnalytics: () => {
@@ -126,20 +48,6 @@ interface DataContextType {
       lastPurchaseDate: string;
     }[];
   };
-
-  // Loading state
-  isLoading: boolean;
-  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-}
-
-interface DataState {
-  products: Product[];
-  categories: Category[];
-  clients: Client[];
-  suppliers: Supplier[];
-  orders: Order[];
-  stockEntries: StockEntry[];
-  stockExits: StockExit[];
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -153,156 +61,72 @@ export const useData = () => {
 };
 
 export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [stockEntries, setStockEntries] = useState<StockEntry[]>([]);
-  const [stockExits, setStockExits] = useState<StockExit[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchAllData = async () => {
-      try {
-        setIsLoading(true);
-        await Promise.all([
-          fetchProducts(),
-          fetchCategories(),
-          fetchClients(),
-          fetchSuppliers(),
-          fetchOrders(),
-          fetchStockEntries(),
-          fetchStockExits(),
-        ]);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        toast.error("Erro ao carregar dados");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAllData();
-  }, []);
-
-  useEffect(() => {
-    // Realtime subscriptions para atualização automática
-    const productsChannel = supabase
-      .channel("public:products")
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
-        fetchProducts();
-      })
-      .subscribe();
-
-    const categoriesChannel = supabase
-      .channel("public:categories")
-      .on("postgres_changes", { event: "*", schema: "public", table: "categories" }, () => {
-        fetchCategories();
-      })
-      .subscribe();
-
-    const clientsChannel = supabase
-      .channel("public:clients")
-      .on("postgres_changes", { event: "*", schema: "public", table: "clients" }, () => {
-        fetchClients();
-      })
-      .subscribe();
-
-    const suppliersChannel = supabase
-      .channel("public:suppliers")
-      .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, () => {
-        fetchSuppliers();
-      })
-      .subscribe();
-
-    const ordersChannel = supabase
-      .channel("public:orders")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        fetchOrders();
-      })
-      .subscribe();
-
-    const stockEntriesChannel = supabase
-      .channel("public:stock_entries")
-      .on("postgres_changes", { event: "*", schema: "public", table: "stock_entries" }, () => {
-        fetchStockEntries();
-      })
-      .subscribe();
-
-    const stockExitsChannel = supabase
-      .channel("public:stock_exits")
-      .on("postgres_changes", { event: "*", schema: "public", table: "stock_exits" }, () => {
-        fetchStockExits();
-      })
-      .subscribe();
-
-    const expensesChannel = supabase
-      .channel("public:expenses")
-      .on("postgres_changes", { event: "*", schema: "public", table: "expenses" }, () => {
-        console.log("Expenses changed, triggering dashboard update");
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(productsChannel);
-      supabase.removeChannel(categoriesChannel);
-      supabase.removeChannel(clientsChannel);
-      supabase.removeChannel(suppliersChannel);
-      supabase.removeChannel(ordersChannel);
-      supabase.removeChannel(stockEntriesChannel);
-      supabase.removeChannel(stockExitsChannel);
-      supabase.removeChannel(expensesChannel);
-    };
-  }, []);
-
-  const getProduct = (id: string): Product | undefined => {
-    return products.find((product) => product.id === id);
-  };
-
-  const findProduct = (id: string): Product | undefined => {
-    return products.find((product) => product.id === id);
-  };
+  const { products } = useProducts();
+  const { categories } = useCategories();
+  const { clients } = useClients();
+  const { suppliers } = useSuppliers();
+  const { orders, setOrders } = useOrders();
+  const { stockEntries, stockExits, addStockExit } = useStock();
 
   const getProductHistory = (id: string) => {
     const entries = stockEntries.filter((entry) => entry.items.some((item) => item.productId === id));
-
     const exits = stockExits.filter((exit) => exit.items.some((item) => item.productId === id));
-
     return { entries, exits };
-  };
-
-  const getCategory = (id: string): Category | undefined => {
-    return categories.find((category) => category.id === id);
-  };
-
-  const getClient = (id: string): Client | undefined => {
-    return clients.find((client) => client.id === id);
-  };
-
-  const findClient = (id: string): Client | undefined => {
-    return clients.find((client) => client.id === id);
   };
 
   const getClientHistory = (id: string) => {
     const clientOrders = orders.filter((order) => order.clientId === id);
     const clientExits = stockExits.filter((exit) => exit.clientId === id);
-
     return { orders: clientOrders, exits: clientExits };
-  };
-
-  const getSupplier = (id: string): Supplier | undefined => {
-    return suppliers.find((supplier) => supplier.id === id);
   };
 
   const getSupplierHistory = (id: string) => {
     const supplierEntries = stockEntries.filter((entry) => entry.supplierId === id);
-
     return { entries: supplierEntries };
   };
 
-  const findOrder = (id: string): Order | undefined => {
-    return orders.find((order) => order.id === id);
+  const convertOrderToStockExit = async (orderId: string, invoiceNumber?: string): Promise<StockExit | undefined> => {
+    const order = orders.find((o) => o.id === orderId);
+    if (!order) return undefined;
+
+    const stockExit: Omit<StockExit, "id" | "number" | "createdAt"> = {
+      clientId: order.clientId,
+      clientName: order.clientName || "",
+      date: order.date,
+      invoiceNumber: invoiceNumber || "",
+      notes: `Converted from order ${order.number}`,
+      fromOrderId: order.id,
+      fromOrderNumber: order.number,
+      discount: order.discount || 0,
+      updatedAt: new Date().toISOString(),
+      items: order.items.map((item) => ({
+        id: crypto.randomUUID(),
+        productId: item.productId,
+        productName: item.productName,
+        quantity: item.quantity,
+        salePrice: item.salePrice,
+        discountPercent: item.discountPercent || 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      })),
+    };
+
+    const result = await addStockExit(stockExit);
+
+    // Update local orders state to reflect conversion
+    setOrders(
+      orders.map((o) =>
+        o.id === orderId
+          ? {
+              ...o,
+              convertedToStockExitId: result.id,
+              convertedToStockExitNumber: result.number,
+            }
+          : o
+      )
+    );
+
+    return result;
   };
 
   const getBusinessAnalytics = () => {
@@ -439,1039 +263,6 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   };
 
-  const convertOrderToStockExit = async (orderId: string, invoiceNumber?: string): Promise<StockExit | undefined> => {
-    const order = orders.find((o) => o.id === orderId);
-    if (!order) return undefined;
-
-    // CRÍTICO: Preservar os preços EXATOS da encomenda, incluindo ofertas (preço 0)
-    const stockExit: Omit<StockExit, "id" | "number" | "createdAt"> = {
-      clientId: order.clientId,
-      clientName: order.clientName || "",
-      date: order.date, // Usar data da encomenda, não data atual
-      invoiceNumber: invoiceNumber || "",
-      notes: `Converted from order ${order.number}`,
-      fromOrderId: order.id,
-      fromOrderNumber: order.number,
-      discount: order.discount || 0,
-      updatedAt: new Date().toISOString(),
-      items: order.items.map((item) => ({
-        id: crypto.randomUUID(),
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        // IMPORTANTE: Usar preços da encomenda, NÃO buscar do produto
-        salePrice: item.salePrice,
-        discountPercent: item.discountPercent || 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      })),
-    };
-
-    return await addStockExit(stockExit);
-  };
-
-  const fetchProducts = async () => {
-    try {
-      const { data, error } = await supabase.from("products").select("*").is("deleted_at", null).order("name");
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedProducts = data.map(mapDbProductToProduct);
-        setProducts(formattedProducts);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("Erro ao carregar produtos");
-    }
-  };
-
-  const fetchCategories = async () => {
-    try {
-      const { data, error } = await supabase.from("categories").select("*").is("deleted_at", null).order("name");
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedCategories = data.map(mapDbCategoryToCategory);
-        setCategories(formattedCategories);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast.error("Erro ao carregar categorias");
-    }
-  };
-
-  const fetchClients = async () => {
-    try {
-      // Fetching clients
-      const { data, error } = await supabase.from("clients").select("*").is("deleted_at", null).order("name");
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedClients = data.map(mapDbClientToClient);
-        setClients(formattedClients);
-      }
-    } catch (error) {
-      console.error("Error fetching clients:", error);
-      toast.error("Erro ao carregar clientes");
-    }
-  };
-
-  const fetchSuppliers = async () => {
-    try {
-      // Fetching suppliers
-      const { data, error } = await supabase.from("suppliers").select("*").is("deleted_at", null).order("name");
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedSuppliers = data.map(mapDbSupplierToSupplier);
-        setSuppliers(formattedSuppliers);
-      }
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-      toast.error("Erro ao carregar fornecedores");
-    }
-  };
-
-  const fetchOrders = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("orders")
-        .select(
-          `
-          *,
-          order_items(*)
-        `,
-        )
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedOrders = data.map((order) => {
-          const items = order.order_items || [];
-          return mapDbOrderToOrder(order, items);
-        });
-
-        // 🧮 Cálculo do total (somando os produtos e descontos)
-        formattedOrders.forEach((order) => {
-          if (order.items && order.items.length > 0) {
-            const total = order.items.reduce((sum, item) => {
-              const subtotal = item.quantity * item.salePrice;
-              const discount = subtotal * ((item.discountPercent || 0) / 100);
-              return sum + (subtotal - discount);
-            }, 0);
-            order.total = total;
-          } else {
-            order.total = 0;
-          }
-        });
-
-        setOrders(formattedOrders);
-      }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-      toast.error("Erro ao carregar encomendas");
-    }
-  };
-
-  const fetchStockEntries = async () => {
-    // Fetching stock entries
-    try {
-      const { data, error } = await supabase
-        .from("stock_entries")
-        .select(
-          `
-          *,
-          stock_entry_items(*)
-        `,
-        )
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        console.error("Error fetching stock entries:", error);
-        throw error;
-      }
-
-      if (data) {
-        // Received stock entries data
-        const formattedEntries = data.map((entry) => {
-          const items = entry.stock_entry_items || [];
-          return mapDbStockEntryToStockEntry(entry, items);
-        });
-
-        setStockEntries(formattedEntries);
-      }
-    } catch (error) {
-      console.error("Error fetching stock entries:", error);
-      toast.error("Erro ao carregar entradas de stock");
-    }
-  };
-
-  const fetchStockExits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("stock_exits")
-        .select(
-          `
-          *,
-          stock_exit_items(*)
-        `,
-        )
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-
-      if (data) {
-        const formattedExits = data.map((exit) => {
-          const items = exit.stock_exit_items || [];
-          return mapDbStockExitToStockExit(exit, items);
-        });
-
-        setStockExits(formattedExits);
-      }
-    } catch (error) {
-      console.error("Error fetching stock exits:", error);
-      toast.error("Erro ao carregar saídas de stock");
-    }
-  };
-
-  const addProduct = async (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .insert({
-          code: product.code,
-          name: product.name,
-          description: product.description,
-          category: product.category,
-          purchase_price: product.purchasePrice,
-          sale_price: product.salePrice,
-          current_stock: product.currentStock,
-          min_stock: product.minStock,
-          image: product.image,
-          status: product.status,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const newProduct = mapDbProductToProduct(data);
-        setProducts([...products, newProduct]);
-        toast.success("Produto criado com sucesso");
-        return newProduct;
-      }
-
-      throw new Error("Failed to add product");
-    } catch (error) {
-      console.error("Error adding product:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar o produto"));
-      throw error;
-    }
-  };
-
-  const updateProduct = async (id: string, product: Partial<Product>) => {
-    try {
-      const updateData: any = {};
-      
-      if (product.code !== undefined) updateData.code = product.code;
-      if (product.name !== undefined) updateData.name = product.name;
-      if (product.description !== undefined) updateData.description = product.description;
-      if (product.category !== undefined) updateData.category = product.category;
-      if (product.purchasePrice !== undefined) updateData.purchase_price = Number(product.purchasePrice);
-      if (product.salePrice !== undefined) updateData.sale_price = Number(product.salePrice);
-      if (product.currentStock !== undefined) updateData.current_stock = Number(product.currentStock);
-      if (product.minStock !== undefined) updateData.min_stock = Number(product.minStock);
-      if (product.image !== undefined) updateData.image = product.image;
-      if (product.status !== undefined) updateData.status = product.status;
-
-      const { error } = await supabase
-        .from("products")
-        .update(updateData)
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setProducts(products.map((p) => (p.id === id ? { ...p, ...product } : p)));
-      toast.success("Produto atualizado com sucesso");
-    } catch (error) {
-      console.error("Error updating product:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar o produto"));
-      throw error;
-    }
-  };
-
-  const deleteProduct = async (id: string) => {
-    try {
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "products",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // Remove from local state
-      setProducts(products.filter((p) => p.id !== id));
-      toast.success("Produto eliminado com sucesso");
-    } catch (error) {
-      console.error("Error soft deleting product:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar o produto"));
-      throw error;
-    }
-  };
-
-  const addCategory = async (category: Omit<Category, "id" | "createdAt" | "updatedAt">) => {
-    try {
-      const { data, error } = await supabase
-        .from("categories")
-        .insert({
-          name: category.name,
-          description: category.description,
-          status: category.status,
-          product_count: category.productCount || 0,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const newCategory = mapDbCategoryToCategory(data);
-        setCategories([...categories, newCategory]);
-        toast.success("Categoria criada com sucesso");
-        return newCategory;
-      }
-
-      throw new Error("Failed to add category");
-    } catch (error) {
-      console.error("Error adding category:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar a categoria"));
-      throw error;
-    }
-  };
-
-  const updateCategory = async (id: string, category: Partial<Category>) => {
-    try {
-      const { error } = await supabase
-        .from("categories")
-        .update({
-          name: category.name,
-          description: category.description,
-          status: category.status,
-          product_count: category.productCount,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setCategories(categories.map((c) => (c.id === id ? { ...c, ...category } : c)));
-      toast.success("Categoria atualizada com sucesso");
-    } catch (error) {
-      console.error("Error updating category:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a categoria"));
-      throw error;
-    }
-  };
-
-  const deleteCategory = async (id: string) => {
-    try {
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "categories",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // Remove from local state
-      setCategories(categories.filter((c) => c.id !== id));
-      toast.success("Categoria eliminada com sucesso");
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a categoria"));
-      throw error;
-    }
-  };
-
-  const addClient = async (client: Omit<Client, "id" | "createdAt" | "updatedAt">) => {
-    try {
-      const { data, error } = await supabase
-        .from("clients")
-        .insert({
-          name: client.name,
-          email: client.email,
-          phone: client.phone,
-          address: client.address,
-          tax_id: client.taxId,
-          notes: client.notes,
-          status: client.status,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const newClient = mapDbClientToClient(data);
-        setClients([...clients, newClient]);
-        toast.success("Cliente criado com sucesso");
-        return newClient;
-      }
-
-      throw new Error("Failed to add client");
-    } catch (error) {
-      console.error("Error adding client:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar o cliente"));
-      throw error;
-    }
-  };
-
-  const updateClient = async (id: string, client: Partial<Client>) => {
-    try {
-      const { error } = await supabase
-        .from("clients")
-        .update({
-          name: client.name,
-          email: client.email,
-          phone: client.phone,
-          address: client.address,
-          tax_id: client.taxId,
-          notes: client.notes,
-          status: client.status,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setClients(clients.map((c) => (c.id === id ? { ...c, ...client } : c)));
-      toast.success("Cliente atualizado com sucesso");
-    } catch (error) {
-      console.error("Error updating client:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar o cliente"));
-      throw error;
-    }
-  };
-
-  const deleteClient = async (id: string) => {
-    try {
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "clients",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // Remove from local state
-      setClients(clients.filter((c) => c.id !== id));
-      toast.success("Cliente eliminado com sucesso");
-    } catch (error) {
-      console.error("Error deleting client:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar o cliente"));
-      throw error;
-    }
-  };
-
-  const addSupplier = async (supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) => {
-    try {
-      const { data, error } = await supabase
-        .from("suppliers")
-        .insert({
-          name: supplier.name,
-          email: supplier.email,
-          phone: supplier.phone,
-          address: supplier.address,
-          tax_id: supplier.taxId,
-          payment_terms: supplier.paymentTerms,
-          notes: supplier.notes,
-          status: supplier.status,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        const newSupplier = mapDbSupplierToSupplier(data);
-        setSuppliers([...suppliers, newSupplier]);
-        toast.success("Fornecedor criado com sucesso");
-        return newSupplier;
-      }
-
-      throw new Error("Failed to add supplier");
-    } catch (error) {
-      console.error("Error adding supplier:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar o fornecedor"));
-      throw error;
-    }
-  };
-
-  const updateSupplier = async (id: string, supplier: Partial<Supplier>) => {
-    try {
-      const { error } = await supabase
-        .from("suppliers")
-        .update({
-          name: supplier.name,
-          email: supplier.email,
-          phone: supplier.phone,
-          address: supplier.address,
-          tax_id: supplier.taxId,
-          payment_terms: supplier.paymentTerms,
-          notes: supplier.notes,
-          status: supplier.status,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setSuppliers(suppliers.map((s) => (s.id === id ? { ...s, ...supplier } : s)));
-      toast.success("Fornecedor atualizado com sucesso");
-    } catch (error) {
-      console.error("Error updating supplier:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar o fornecedor"));
-      throw error;
-    }
-  };
-
-  const deleteSupplier = async (id: string) => {
-    try {
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "suppliers",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // Remove from local state
-      setSuppliers(suppliers.filter((s) => s.id !== id));
-      toast.success("Fornecedor eliminado com sucesso");
-    } catch (error) {
-      console.error("Error deleting supplier:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar o fornecedor"));
-      throw error;
-    }
-  };
-
-  const addOrder = async (order: Omit<Order, "id" | "number">) => {
-    try {
-      const { data: orderNumberData, error: orderNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "order",
-      });
-
-      if (orderNumberError) throw orderNumberError;
-
-      const orderNumber =
-        orderNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
-
-      // ✅ Inserção atualizada com campos de entrega
-      const { data, error } = await supabase
-        .from("orders")
-        .insert({
-          number: orderNumber,
-          client_id: order.clientId,
-          client_name: order.clientName,
-          date: order.date,
-          notes: order.notes,
-          discount: order.discount,
-          converted_to_stock_exit_id: order.convertedToStockExitId,
-          converted_to_stock_exit_number: order.convertedToStockExitNumber,
-          order_type: order.orderType || "combined",
-          // 🟩 campos de entrega
-          expected_delivery_date: order.expectedDeliveryDate || null,
-          expected_delivery_time: order.expectedDeliveryTime || null,
-          delivery_location: order.deliveryLocation || null,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      if (!data) throw new Error("Failed to add order");
-
-      const orderItems = order.items.map((item) => mapOrderItemToDbOrderItem(item, data.id));
-
-      const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-
-      if (itemsError) throw itemsError;
-
-      // ✅ Inclui também os campos no retorno
-      const newOrder: Order = {
-        id: data.id,
-        number: data.number,
-        clientId: data.client_id || "",
-        clientName: data.client_name || "",
-        date: data.date,
-        notes: data.notes || "",
-        discount: Number(data.discount || 0),
-        convertedToStockExitId: data.converted_to_stock_exit_id,
-        convertedToStockExitNumber: data.converted_to_stock_exit_number,
-        expectedDeliveryDate: data.expected_delivery_date || null,
-        expectedDeliveryTime: data.expected_delivery_time || null,
-        deliveryLocation: data.delivery_location || "",
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-        items: order.items,
-        total: order.total,
-      };
-
-      setOrders([newOrder, ...orders]);
-      toast.success("Encomenda criada com sucesso");
-      return newOrder;
-    } catch (error) {
-      console.error("Error adding order:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar a encomenda"));
-      throw error;
-    }
-  };
-
-  const updateOrder = async (id: string, order: Partial<Order>) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          client_id: order.clientId,
-          client_name: order.clientName,
-          date: order.date,
-          notes: order.notes,
-          discount: order.discount,
-          converted_to_stock_exit_id: order.convertedToStockExitId,
-          converted_to_stock_exit_number: order.convertedToStockExitNumber,
-          order_type: order.orderType,
-          expected_delivery_date: order.expectedDeliveryDate || null,
-          expected_delivery_time: order.expectedDeliveryTime || null,
-          delivery_location: order.deliveryLocation || null,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      if (order.items) {
-        const { error: deleteError } = await supabase.from("order_items").delete().eq("order_id", id);
-
-        if (deleteError) throw deleteError;
-
-        const orderItems = order.items.map((item) => mapOrderItemToDbOrderItem(item, id));
-
-        const { error: itemsError } = await supabase.from("order_items").insert(orderItems);
-
-        if (itemsError) throw itemsError;
-      }
-
-      setOrders(
-        orders.map((o) => {
-          if (o.id === id) {
-            return {
-              ...o,
-              ...order,
-              items: order.items || o.items,
-            };
-          }
-          return o;
-        }),
-      );
-      toast.success("Encomenda atualizada com sucesso");
-    } catch (error) {
-      console.error("Error updating order:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a encomenda"));
-      throw error;
-    }
-  };
-
-  const deleteOrder = async (id: string) => {
-    try {
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "orders",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // Remove from local state
-      setOrders(orders.filter((o) => o.id !== id));
-      toast.success("Encomenda eliminada com sucesso");
-    } catch (error) {
-      console.error("Error deleting order:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a encomenda"));
-      throw error;
-    }
-  };
-
-  const addStockEntry = async (entry: Omit<StockEntry, "id" | "number" | "createdAt">) => {
-    try {
-      const { data: entryNumberData, error: entryNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "entry",
-      });
-
-      if (entryNumberError) throw entryNumberError;
-
-      const entryNumber =
-        entryNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
-
-      const itemsWithIds = entry.items.map((item) => {
-        if (!item.id) {
-          return {
-            ...item,
-            id: crypto.randomUUID(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return item;
-      });
-
-      const { data, error } = await supabase
-        .from("stock_entries")
-        .insert({
-          number: entryNumber,
-          supplier_id: entry.supplierId,
-          supplier_name: entry.supplierName,
-          date: entry.date,
-          invoice_number: entry.invoiceNumber,
-          notes: entry.notes,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (!data) throw new Error("Failed to add stock entry");
-
-      const entryItems = itemsWithIds.map((item) => mapStockEntryItemToDbStockEntryItem(item, data.id));
-
-      const { error: itemsError } = await supabase.from("stock_entry_items").insert(entryItems);
-
-      if (itemsError) throw itemsError;
-
-      for (const item of itemsWithIds) {
-        try {
-          console.log(`Incrementing stock for product ${item.productId} by ${item.quantity}`);
-
-          // Update product stock by using direct arithmetic instead of raw function
-          const { error: updateError } = await supabase
-            .from("products")
-            .select("current_stock")
-            .eq("id", item.productId)
-            .single()
-            .then(({ data, error }) => {
-              if (!error && data) {
-                return supabase
-                  .from("products")
-                  .update({
-                    current_stock: data.current_stock + item.quantity,
-                  })
-                  .eq("id", item.productId);
-              }
-              return { error };
-            });
-
-          if (updateError) {
-            console.error("Error updating product stock:", updateError);
-          }
-        } catch (error) {
-          console.error("Error updating product stock:", error);
-        }
-      }
-
-      await fetchProducts();
-
-      toast.success("Entrada registada com sucesso");
-
-      // A subscrição em tempo real irá atualizar a lista automaticamente
-      // Retornar dados básicos para navegação
-      return {
-        id: data.id,
-        number: data.number,
-        supplierId: data.supplier_id || "",
-        supplierName: data.supplier_name,
-        date: data.date,
-        invoiceNumber: data.invoice_number || "",
-        notes: data.notes || "",
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-        items: itemsWithIds,
-        total: entry.total,
-      };
-    } catch (error) {
-      console.error("Error adding stock entry:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar a compra"));
-      throw error;
-    }
-  };
-
-  const updateStockEntry = async (id: string, entry: Partial<StockEntry>) => {
-    try {
-      const { error } = await supabase
-        .from("stock_entries")
-        .update({
-          number: entry.number,
-          supplier_id: entry.supplierId,
-          supplier_name: entry.supplierName,
-          date: entry.date,
-          invoice_number: entry.invoiceNumber,
-          notes: entry.notes,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setStockEntries(stockEntries.map((e) => (e.id === id ? { ...e, ...entry } : e)));
-      toast.success("Compra atualizada com sucesso");
-    } catch (error) {
-      console.error("Error updating stock entry:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a compra"));
-      throw error;
-    }
-  };
-
-  const deleteStockEntry = async (id: string) => {
-    try {
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "stock_entries",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // Remove from local state
-      setStockEntries(stockEntries.filter((e) => e.id !== id));
-      toast.success("Compra eliminada com sucesso");
-    } catch (error) {
-      console.error("Error deleting stock entry:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a compra"));
-      throw error;
-    }
-  };
-
-  const addStockExit = async (exit: Omit<StockExit, "id" | "number" | "createdAt">) => {
-    try {
-      const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "exit",
-      });
-
-      if (exitNumberError) throw exitNumberError;
-
-      const exitNumber =
-        exitNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
-
-      const itemsWithIds = exit.items.map((item) => {
-        if (!item.id) {
-          return {
-            ...item,
-            id: crypto.randomUUID(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-        }
-        return item;
-      });
-
-      const { data, error } = await supabase
-        .from("stock_exits")
-        .insert({
-          number: exitNumber,
-          client_id: exit.clientId,
-          client_name: exit.clientName,
-          date: exit.date,
-          invoice_number: exit.invoiceNumber,
-          notes: exit.notes,
-          from_order_id: exit.fromOrderId,
-          from_order_number: exit.fromOrderNumber,
-          discount: exit.discount,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      if (!data) throw new Error("Failed to add stock exit");
-
-      const exitItems = itemsWithIds.map((item) => mapStockExitItemToDbStockExitItem(item, data.id));
-
-      const { error: itemsError } = await supabase.from("stock_exit_items").insert(exitItems);
-
-      if (itemsError) throw itemsError;
-
-      for (const item of itemsWithIds) {
-        try {
-          console.log(`Decrementing stock for product ${item.productId} by ${item.quantity}`);
-
-          // Update product stock by using direct arithmetic instead of raw function
-          const { error: updateError } = await supabase
-            .from("products")
-            .select("current_stock")
-            .eq("id", item.productId)
-            .single()
-            .then(({ data, error }) => {
-              if (!error && data) {
-                return supabase
-                  .from("products")
-                  .update({
-                    current_stock: Math.max(0, data.current_stock - item.quantity),
-                  })
-                  .eq("id", item.productId);
-              }
-              return { error };
-            });
-
-          if (updateError) {
-            console.error("Error updating product stock:", updateError);
-          }
-        } catch (error) {
-          console.error("Error updating product stock:", error);
-        }
-      }
-
-      if (exit.fromOrderId) {
-        const { error: orderUpdateError } = await supabase
-          .from("orders")
-          .update({
-            converted_to_stock_exit_id: data.id,
-            converted_to_stock_exit_number: exitNumber,
-          })
-          .eq("id", exit.fromOrderId);
-
-        if (orderUpdateError) {
-          console.error("Error updating order conversion status:", orderUpdateError);
-        }
-      }
-
-      const newExit: StockExit = {
-        id: data.id,
-        number: data.number,
-        clientId: data.client_id || "",
-        clientName: data.client_name,
-        date: data.date,
-        invoiceNumber: data.invoice_number || "",
-        notes: data.notes,
-        fromOrderId: data.from_order_id,
-        fromOrderNumber: data.from_order_number,
-        createdAt: data.created_at,
-        updatedAt: data.updated_at,
-        discount: Number(data.discount || 0),
-        items: itemsWithIds,
-        total: exit.total,
-      };
-
-      await fetchProducts();
-      await fetchOrders();
-      setStockExits([newExit, ...stockExits]);
-      toast.success("Venda criada com sucesso");
-      return newExit;
-    } catch (error) {
-      console.error("Error adding stock exit:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível criar a venda"));
-      throw error;
-    }
-  };
-
-  const updateStockExit = async (id: string, exit: Partial<StockExit>) => {
-    try {
-      const { error } = await supabase
-        .from("stock_exits")
-        .update({
-          number: exit.number,
-          client_id: exit.clientId,
-          client_name: exit.clientName,
-          date: exit.date,
-          invoice_number: exit.invoiceNumber,
-          notes: exit.notes,
-        })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      setStockExits(stockExits.map((e) => (e.id === id ? { ...e, ...exit } : e)));
-      toast.success("Venda atualizada com sucesso");
-    } catch (error) {
-      console.error("Error updating stock exit:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível atualizar a venda"));
-      throw error;
-    }
-  };
-
-  const deleteStockExit = async (id: string) => {
-    try {
-      // First, check if this stock exit was converted from an order
-      const stockExit = stockExits.find((e) => e.id === id);
-
-      const { data, error } = await supabase.rpc("soft_delete_record", {
-        table_name: "stock_exits",
-        record_id: id,
-      });
-
-      if (error) throw error;
-
-      // If this exit was converted from an order, restore the order to pending state
-      if (stockExit?.fromOrderId) {
-        const { error: updateOrderError } = await supabase
-          .from("orders")
-          .update({
-            converted_to_stock_exit_id: null,
-            converted_to_stock_exit_number: null,
-          })
-          .eq("id", stockExit.fromOrderId);
-
-        if (updateOrderError) {
-          console.error("Error restoring order:", updateOrderError);
-        } else {
-          // Update local state to reflect restored order
-          setOrders(
-            orders.map((o) =>
-              o.id === stockExit.fromOrderId
-                ? { ...o, convertedToStockExitId: null, convertedToStockExitNumber: null }
-                : o,
-            ),
-          );
-        }
-      }
-
-      // Remove from local state
-      setStockExits(stockExits.filter((e) => e.id !== id));
-      toast.success("Venda eliminada com sucesso");
-    } catch (error) {
-      console.error("Error deleting stock exit:", error);
-      toast.error(getUserFriendlyError(error, "Não foi possível eliminar a venda"));
-      throw error;
-    }
-  };
-
-  const updateProductStock = async (productId: string, quantity: number) => {
-    // First get current stock value
-    const { data, error: fetchError } = await supabase
-      .from("products")
-      .select("current_stock")
-      .eq("id", productId)
-      .single();
-
-    if (fetchError) {
-      console.error("Error fetching product stock:", fetchError);
-      throw fetchError;
-    }
-
-    // Then update with new calculated value
-    const newStock = (data?.current_stock || 0) + quantity;
-    const { error } = await supabase.from("products").update({ current_stock: newStock }).eq("id", productId);
-
-    if (error) {
-      console.error("Error updating product stock:", error);
-      throw error;
-    }
-  };
-
   const exportData = (type: ExportDataType) => {
     try {
       let dataToExport: any = {};
@@ -1499,7 +290,7 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           dataToExport = stockExits;
           break;
         case "expenses":
-          dataToExport = []; // se ainda não tiveres implementado despesas
+          dataToExport = [];
           break;
         case "all":
           dataToExport = {
@@ -1517,12 +308,10 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           return;
       }
 
-      // Converte em JSON formatado
       const json = JSON.stringify(dataToExport, null, 2);
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
 
-      // Cria link de download
       const link = document.createElement("a");
       link.href = url;
       const timestamp = new Date().toISOString().split("T")[0];
@@ -1536,101 +325,20 @@ export const DataProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const importData = async (type: ExportDataType, data: string) => {
-    // Implementation remains the same
-  };
-
-  const updateData = <T extends keyof DataState>(type: T, data: DataState[T]) => {
-    switch (type) {
-      case "products":
-        setProducts(data as Product[]);
-        toast.success("Produtos atualizados com sucesso");
-        break;
-      case "categories":
-        setCategories(data as Category[]);
-        toast.success("Categorias atualizadas com sucesso");
-        break;
-      case "clients":
-        setClients(data as Client[]);
-        toast.success("Clientes atualizados com sucesso");
-        break;
-      case "suppliers":
-        setSuppliers(data as Supplier[]);
-        toast.success("Fornecedores atualizados com sucesso");
-        break;
-      case "orders":
-        setOrders(data as Order[]);
-        toast.success("Encomendas atualizadas com sucesso");
-        break;
-      case "stockEntries":
-        setStockEntries(data as StockEntry[]);
-        toast.success("Entradas de stock atualizadas com sucesso");
-        break;
-      case "stockExits":
-        setStockExits(data as StockExit[]);
-        toast.success("Saídas de stock atualizadas com sucesso");
-        break;
-      default:
-        toast.error("Tipo de dados inválido");
-    }
-  };
-
-  const contextValue: DataContextType = {
-    products,
-    setProducts,
-    addProduct,
-    updateProduct,
-    deleteProduct,
-    getProduct,
-    getProductHistory,
-    categories,
-    setCategories,
-    addCategory,
-    updateCategory,
-    deleteCategory,
-    getCategory,
-    clients,
-    setClients,
-    addClient,
-    updateClient,
-    deleteClient,
-    getClient,
-    getClientHistory,
-    suppliers,
-    setSuppliers,
-    addSupplier,
-    updateSupplier,
-    deleteSupplier,
-    getSupplier,
-    getSupplierHistory,
-    orders,
-    setOrders,
-    addOrder,
-    updateOrder,
-    deleteOrder,
-    findOrder,
-    findProduct,
-    findClient,
-    convertOrderToStockExit,
-    stockEntries,
-    setStockEntries,
-    addStockEntry,
-    updateStockEntry,
-    deleteStockEntry,
-    stockExits,
-    setStockExits,
-    addStockExit,
-    updateStockExit,
-    deleteStockExit,
-    exportData,
-    importData,
-    updateData,
-    getBusinessAnalytics,
-    isLoading,
-    setIsLoading,
-  };
-
-  return <DataContext.Provider value={contextValue}>{children}</DataContext.Provider>;
+  return (
+    <DataContext.Provider
+      value={{
+        getProductHistory,
+        getClientHistory,
+        getSupplierHistory,
+        convertOrderToStockExit,
+        exportData,
+        getBusinessAnalytics,
+      }}
+    >
+      {children}
+    </DataContext.Provider>
+  );
 };
 
 export default DataProvider;
