@@ -1,0 +1,97 @@
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Product } from "@/types";
+import { mapProduct } from "./mappers";
+
+async function fetchProducts(): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .is("deleted_at", null)
+    .order("name");
+  
+  if (error) throw error;
+  return (data || []).map(mapProduct);
+}
+
+async function deleteProduct(id: string) {
+  const { error } = await supabase
+    .from("products")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
+  
+  if (error) throw error;
+  return id;
+}
+
+async function createProduct(product: Omit<Product, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase
+    .from("products")
+    .insert(product)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+async function updateProduct({ id, ...updates }: Partial<Product> & { id: string }) {
+  const { data, error } = await supabase
+    .from("products")
+    .update(updates)
+    .eq("id", id)
+    .select()
+    .single();
+  
+  if (error) throw error;
+  return data;
+}
+
+export function useProductsQuery() {
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: true,
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: deleteProduct,
+    onSuccess: () => {
+      toast.success("Produto eliminado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao eliminar produto"),
+  });
+
+  const createMutation = useMutation({
+    mutationFn: createProduct,
+    onSuccess: () => {
+      toast.success("Produto criado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao criar produto"),
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: updateProduct,
+    onSuccess: () => {
+      toast.success("Produto atualizado com sucesso");
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao atualizar produto"),
+  });
+
+  return {
+    products: query.data || [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    error: query.error,
+    deleteProduct: deleteMutation.mutate,
+    createProduct: createMutation.mutate,
+    updateProduct: updateMutation.mutate,
+  };
+}

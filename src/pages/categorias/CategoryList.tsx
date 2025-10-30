@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCategories } from '@/contexts/CategoriesContext';
-import { useProducts } from '@/contexts/ProductsContext';
+import { useCategoriesQuery } from '@/hooks/queries/useCategories';
+import { useProductsQuery } from '@/hooks/queries/useProducts';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
 import { Button } from '@/components/ui/button';
@@ -27,22 +27,14 @@ type SortDirection = 'asc' | 'desc';
 
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
-  const { categories, deleteCategory, isLoading: categoriesLoading } = useCategories();
-  const { products } = useProducts();
+  const { categories, deleteCategory, isLoading } = useCategoriesQuery();
+  const { products } = useProductsQuery();
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedCategory, setSelectedCategory] = useState<{ id: string; name: string } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Simula carregamento inicial dos dados
-    if (categories.length > 0) {
-      setIsLoading(false);
-    }
-  }, [categories]);
   
   const handleCreateCategory = () => {
     if (!validatePermission(canCreate, 'criar categorias')) return;
