@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useClients } from "@/contexts/ClientsContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -11,7 +11,9 @@ import { ArrowLeft, Save } from "lucide-react";
 const ClientEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { getClient, updateClient } = useData();
+  const { clients, updateClient } = useClients();
+  
+  const getClient = (id: string) => clients.find(c => c.id === id);
 
   const [client, setClient] = useState({
     name: "",

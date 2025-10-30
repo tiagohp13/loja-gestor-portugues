@@ -1,5 +1,11 @@
 import React from "react";
 import { useData } from "@/contexts/DataContext";
+import { useProducts } from "@/contexts/ProductsContext";
+import { useCategories } from "@/contexts/CategoriesContext";
+import { useClients } from "@/contexts/ClientsContext";
+import { useSuppliers } from "@/contexts/SuppliersContext";
+import { useOrders } from "@/contexts/OrdersContext";
+import { useStock } from "@/contexts/StockContext";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,8 +21,13 @@ import ClientTagSettings from "@/components/ui/ClientTagSettings";
 import { useClientTags } from "@/hooks/useClientTags";
 
 const Settings = () => {
-  const { products, categories, clients, suppliers, orders, stockEntries, stockExits, exportData, importData } =
-    useData();
+  const { exportData } = useData();
+  const { products } = useProducts();
+  const { categories } = useCategories();
+  const { clients } = useClients();
+  const { suppliers } = useSuppliers();
+  const { orders } = useOrders();
+  const { stockEntries, stockExits } = useStock();
   const { isAdmin, canEdit } = usePermissions();
   const { config: tagConfig, updateConfig: updateTagConfig } = useClientTags();
 
@@ -101,10 +112,14 @@ const Settings = () => {
 
       if (!okToProceed) return;
 
-      // Import efetivo
+      // Import efetivo - temporarily disabled during context refactor
+      // TODO: Re-implement importData in the appropriate context
+      /*
       if (content) {
         await importData(type, content);
       }
+      */
+      console.warn('Import functionality temporarily disabled during context migration');
 
       // Limpar o input para poderes importar o mesmo ficheiro novamente se quiseres
       e.currentTarget.value = "";

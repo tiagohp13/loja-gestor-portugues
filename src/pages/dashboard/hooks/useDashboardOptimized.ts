@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
-import { useData } from '@/contexts/DataContext';
 import { useMemo } from 'react';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useOrders } from '@/contexts/OrdersContext';
+import { useStock } from '@/contexts/StockContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useSuppliers } from '@/contexts/SuppliersContext';
+import { useCategories } from '@/contexts/CategoriesContext';
 import { fetchSupportStats } from '@/pages/suporte/hooks/api/fetchSupportStats';
 import { generateKPIs } from '@/pages/suporte/hooks/utils/kpiUtils';
 import { loadKpiTargets } from '@/services/kpiService';
@@ -209,17 +214,30 @@ const fetchAllDashboardData = async (
 };
 
 export const useDashboardOptimized = () => {
-  const { products, orders, stockExits, stockEntries, clients, suppliers, categories } = useData();
+  const { products } = useProducts();
+  const { orders } = useOrders();
+  const { stockExits, stockEntries } = useStock();
+  const { clients } = useClients();
+  const { suppliers } = useSuppliers();
+  const { categories } = useCategories();
 
   // Single query that fetches all data in parallel with React Query for caching
   const { data, isLoading, error } = useQuery({
-    queryKey: ['dashboard-all-data', products.length, orders.length, stockExits.length, stockEntries.length, clients.length],
-    queryFn: () => fetchAllDashboardData(products, stockExits, stockEntries, clients),
+    queryKey: [
+      'dashboard-all-data', 
+      products?.length ?? 0, 
+      orders?.length ?? 0, 
+      stockExits?.length ?? 0, 
+      stockEntries?.length ?? 0, 
+      clients?.length ?? 0
+    ],
+    queryFn: () => fetchAllDashboardData(products || [], stockExits || [], stockEntries || [], clients || []),
     staleTime: 10 * 60 * 1000, // 10 minutes - dashboard data doesn't need frequent updates
     gcTime: 15 * 60 * 1000, // 15 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnReconnect: false,
+    enabled: !!products && !!orders && !!stockExits && !!stockEntries && !!clients
   });
 
   // Memoize derived data

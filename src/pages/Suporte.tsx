@@ -7,7 +7,9 @@ import SupportChart from "./suporte/components/SupportChart";
 import MetricsCards from "./suporte/components/MetricsCards";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { useDashboardData } from "./dashboard/hooks/useDashboardData";
-import { useData } from "@/contexts/DataContext";
+import { useClients } from "@/contexts/ClientsContext";
+import { useSuppliers } from "@/contexts/SuppliersContext";
+import { useStock } from "@/contexts/StockContext";
 import FeaturedProducts from "./dashboard/components/FeaturedProducts";
 import DashboardStatistics from "./dashboard/components/DashboardStatistics";
 import RecentTransactions from "./dashboard/components/RecentTransactions";
@@ -41,8 +43,10 @@ const Suporte: React.FC = () => {
     monthlyData,
   } = useDashboardData();
 
-  // Get additional data from DataContext for Suporte page
-  const { suppliers, clients, stockEntries, stockExits } = useData();
+  // Get additional data from separated contexts for Suporte page
+  const { suppliers } = useSuppliers();
+  const { clients } = useClients();
+  const { stockEntries, stockExits } = useStock();
 
   // Calculate derived values locally for this page
   const totalProfit = totalSalesValue - totalPurchaseValue;

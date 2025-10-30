@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { useClients } from '@/contexts/ClientsContext';
+import { useStock } from '@/contexts/StockContext';
 import { Search, Edit, Trash2, History, Plus, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,7 +35,8 @@ import ClientInsights from './components/ClientInsights';
 
 const ClientList = () => {
   const navigate = useNavigate();
-  const { stockExits, deleteClient } = useData();
+  const { stockExits } = useStock();
+  const { deleteClient } = useClients();
   const { config: tagConfig } = useClientTags();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState('');

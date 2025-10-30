@@ -1,5 +1,7 @@
-import { useData } from '@/contexts/DataContext';
 import { useMemo, useState, useEffect, useCallback } from 'react';
+import { useProducts } from '@/contexts/ProductsContext';
+import { useOrders } from '@/contexts/OrdersContext';
+import { useStock } from '@/contexts/StockContext';
 import { 
   createMonthlyDataMap, 
   processExitsForMonthlyData,
@@ -30,7 +32,9 @@ interface FinancialMetrics {
 }
 
 export const useDashboardData = () => {
-  const { products, stockEntries, stockExits, orders } = useData();
+  const { products } = useProducts();
+  const { orders } = useOrders();
+  const { stockEntries, stockExits } = useStock();
   
   const [financialMetrics, setFinancialMetrics] = useState<FinancialMetrics>({
     totalSpentWithExpenses: 0,

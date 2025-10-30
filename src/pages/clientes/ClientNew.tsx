@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useData } from "../../contexts/DataContext";
+import { useClients } from "@/contexts/ClientsContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const ClientNew = () => {
   const navigate = useNavigate();
-  const { addClient } = useData();
+  const { addClient } = useClients();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");

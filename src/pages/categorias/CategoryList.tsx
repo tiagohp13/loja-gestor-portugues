@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { useProducts } from '@/contexts/ProductsContext';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
 import { Button } from '@/components/ui/button';

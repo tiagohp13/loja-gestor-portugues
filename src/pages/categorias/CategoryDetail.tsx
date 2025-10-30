@@ -1,7 +1,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData } from '../../contexts/DataContext';
+import { useCategories } from '@/contexts/CategoriesContext';
+import { useProducts } from '@/contexts/ProductsContext';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
 import { Edit, ChevronUp, ChevronDown } from 'lucide-react';
