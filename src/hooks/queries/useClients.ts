@@ -48,6 +48,18 @@ async function updateClient({ id, ...updates }: Partial<Client> & { id: string }
   return data;
 }
 
+async function getClientById(id: string) {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+  
+  if (error) throw error;
+  return data ? mapClient(data) : null;
+}
+
 export function useClientsQuery() {
   const queryClient = useQueryClient();
 
@@ -96,4 +108,13 @@ export function useClientsQuery() {
     createClient: createMutation.mutate,
     updateClient: updateMutation.mutate,
   };
+}
+
+export function useClientQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: ["client", id],
+    queryFn: () => getClientById(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  });
 }

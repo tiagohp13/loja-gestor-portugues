@@ -1,9 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useClients } from '../../contexts/ClientsContext';
-import { useOrders } from '../../contexts/OrdersContext';
-import { useStock } from '../../contexts/StockContext';
 import PageHeader from '@/components/ui/PageHeader';
 import { Button } from '@/components/ui/button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
@@ -21,30 +18,14 @@ import { AlertCircle } from 'lucide-react';
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, isLoading } = useClients();
-  const { orders } = useOrders();
-  const { stockExits } = useStock();
-  
-  const getClient = (id: string) => clients.find(c => c.id === id);
-  const getClientHistory = (id: string) => {
-    const clientOrders = orders.filter(o => o.clientId === id);
-    const clientExits = stockExits.filter(e => e.clientId === id);
-    return { orders: clientOrders, exits: clientExits };
-  };
+  const { client, clientOrders, clientExits, isLoading, isDeleted } = useClientDetail();
   const { canEdit } = usePermissions();
-  const { isDeleted } = useClientDetail();
-  const [clientHistory, setClientHistory] = useState<{ orders: any[], exits: any[] }>({ orders: [], exits: [] });
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLoadingTotal, setIsLoadingTotal] = useState(false);
   
   useEffect(() => {
     if (id) {
       const fetchClientData = async () => {
-        const history = getClientHistory(id);
-        if (history) {
-          setClientHistory(history);
-        }
-        
         setIsLoadingTotal(true);
         try {
           const spent = await getClientTotalSpent(id);
@@ -58,11 +39,9 @@ const ClientDetail = () => {
       
       fetchClientData();
     }
-  }, [id, getClientHistory]);
+  }, [id]);
   
   if (isLoading) return <LoadingSpinner />;
-  
-  const client = id ? getClient(id) : null;
   
   if (!client) {
     return (
@@ -114,19 +93,19 @@ const ClientDetail = () => {
         />
         
         <ClientHistoryStats 
-          ordersCount={clientHistory.orders?.length || 0}
-          exitsCount={clientHistory.exits?.length || 0}
+          ordersCount={clientOrders?.length || 0}
+          exitsCount={clientExits?.length || 0}
         />
       </div>
       
       <div className="mt-10">
         <h3 className="text-xl font-semibold mb-4">Histórico de Encomendas</h3>
-        <ClientOrdersTable orders={clientHistory.orders || []} />
+        <ClientOrdersTable orders={clientOrders || []} />
       </div>
       
       <div className="mt-10">
         <h3 className="text-xl font-semibold mb-4">Histórico de Saídas</h3>
-        <ClientExitsTable exits={clientHistory.exits || []} />
+        <ClientExitsTable exits={clientExits || []} />
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useClients } from "@/contexts/ClientsContext";
+import { useClientsQuery } from "@/hooks/queries/useClients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const ClientNew = () => {
   const navigate = useNavigate();
-  const { addClient } = useClients();
+  const { createClient } = useClientsQuery();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -21,28 +21,24 @@ const ClientNew = () => {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    try {
-      if (!name.trim()) {
-        toast.error("O nome do cliente é obrigatório");
-        return;
-      }
-
-      await addClient({
-        name,
-        email,
-        phone,
-        address,
-        taxId,
-        notes,
-        status: "active",
-      });
-
-      toast.success("Cliente adicionado com sucesso!");
-      navigate("/clientes/consultar");
-    } catch (error) {
-      console.error("Erro ao adicionar cliente:", error);
-      toast.error("Erro ao adicionar cliente");
+    if (!name.trim()) {
+      toast.error("O nome do cliente é obrigatório");
+      return;
     }
+
+    createClient({
+      name,
+      email,
+      phone,
+      address,
+      taxId,
+      notes,
+      status: "active",
+    } as any, {
+      onSuccess: () => {
+        navigate("/clientes/consultar");
+      },
+    });
   };
 
   return (

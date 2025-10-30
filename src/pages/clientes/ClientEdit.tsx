@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useClients } from "@/contexts/ClientsContext";
+import { useClientQuery, useClientsQuery } from "@/hooks/queries/useClients";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/ui/PageHeader";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const ClientEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { clients, updateClient } = useClients();
-  
-  const getClient = (id: string) => clients.find(c => c.id === id);
+  const { data: foundClient, isLoading } = useClientQuery(id);
+  const { updateClient } = useClientsQuery();
 
   const [client, setClient] = useState({
     name: "",
@@ -25,23 +25,24 @@ const ClientEdit = () => {
   });
 
   useEffect(() => {
-    if (id) {
-      const foundClient = getClient(id);
-      if (foundClient) {
-        setClient({
-          name: foundClient.name || "",
-          email: foundClient.email || "",
-          phone: foundClient.phone || "",
-          address: foundClient.address || "",
-          taxId: foundClient.taxId || "",
-          notes: foundClient.notes || "",
-        });
-      } else {
-        toast.error("Cliente não encontrado");
-        navigate("/clientes/consultar");
-      }
+    if (foundClient) {
+      setClient({
+        name: foundClient.name || "",
+        email: foundClient.email || "",
+        phone: foundClient.phone || "",
+        address: foundClient.address || "",
+        taxId: foundClient.taxId || "",
+        notes: foundClient.notes || "",
+      });
     }
-  }, [id, getClient, navigate]);
+  }, [foundClient]);
+
+  useEffect(() => {
+    if (!isLoading && !foundClient && id) {
+      toast.error("Cliente não encontrado");
+      navigate("/clientes/consultar");
+    }
+  }, [foundClient, isLoading, id, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -54,11 +55,25 @@ const ClientEdit = () => {
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (id) {
-      updateClient(id, client);
-      toast.success("Cliente atualizado com sucesso");
-      navigate(`/clientes/${id}`);
+      updateClient({ id, ...client } as any, {
+        onSuccess: () => {
+          navigate(`/clientes/${id}`);
+        },
+      });
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader
+          title="Editar Cliente"
+          description="Atualize os detalhes do cliente"
+        />
+        <TableSkeleton />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
