@@ -63,6 +63,29 @@ export function mapSupplier(data: any): Supplier {
 }
 
 export function mapOrder(data: any): Order {
+  const items = data.items?.map((item: any) => ({
+    id: item.id,
+    orderId: item.order_id,
+    productId: item.product_id,
+    productName: item.product_name,
+    quantity: item.quantity,
+    salePrice: item.sale_price,
+    discountPercent: item.discount_percent,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+  })) || [];
+
+  // Calculate total from items
+  const subtotal = items.reduce((sum, item) => {
+    const itemDiscount = item.discountPercent || 0;
+    const itemTotal = item.quantity * item.salePrice * (1 - itemDiscount / 100);
+    return sum + itemTotal;
+  }, 0);
+
+  // Apply global order discount
+  const orderDiscount = data.discount || 0;
+  const total = subtotal * (1 - orderDiscount / 100);
+
   return {
     id: data.id,
     clientId: data.client_id,
@@ -80,17 +103,8 @@ export function mapOrder(data: any): Order {
     convertedToStockExitNumber: data.converted_to_stock_exit_number,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
-    items: data.items?.map((item: any) => ({
-      id: item.id,
-      orderId: item.order_id,
-      productId: item.product_id,
-      productName: item.product_name,
-      quantity: item.quantity,
-      salePrice: item.sale_price,
-      discountPercent: item.discount_percent,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-    })) || [],
+    items,
+    total,
   };
 }
 
@@ -121,6 +135,29 @@ export function mapStockEntry(data: any): StockEntry {
 }
 
 export function mapStockExit(data: any): StockExit {
+  const items = data.items?.map((item: any) => ({
+    id: item.id,
+    exitId: item.exit_id,
+    productId: item.product_id,
+    productName: item.product_name,
+    quantity: item.quantity,
+    salePrice: item.sale_price,
+    discountPercent: item.discount_percent,
+    createdAt: item.created_at,
+    updatedAt: item.updated_at,
+  })) || [];
+
+  // Calculate total from items
+  const subtotal = items.reduce((sum, item) => {
+    const itemDiscount = item.discountPercent || 0;
+    const itemTotal = item.quantity * item.salePrice * (1 - itemDiscount / 100);
+    return sum + itemTotal;
+  }, 0);
+
+  // Apply global exit discount
+  const exitDiscount = data.discount || 0;
+  const total = subtotal * (1 - exitDiscount / 100);
+
   return {
     id: data.id,
     clientId: data.client_id,
@@ -135,16 +172,7 @@ export function mapStockExit(data: any): StockExit {
     fromOrderNumber: data.from_order_number,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
-    items: data.items?.map((item: any) => ({
-      id: item.id,
-      exitId: item.exit_id,
-      productId: item.product_id,
-      productName: item.product_name,
-      quantity: item.quantity,
-      salePrice: item.sale_price,
-      discountPercent: item.discount_percent,
-      createdAt: item.created_at,
-      updatedAt: item.updated_at,
-    })) || [],
+    items,
+    total,
   };
 }
