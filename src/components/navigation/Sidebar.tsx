@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -96,6 +96,12 @@ const AppSidebar: React.FC = () => {
       label: 'Reciclagem', 
       icon: <Trash2 className="w-5 h-5" />,
       isActive: location.pathname.includes('/reciclagem')
+    },
+    { 
+      path: '/notificacoes', 
+      label: 'Notificações', 
+      icon: <Bell className="w-5 h-5" />,
+      isActive: location.pathname.includes('/notificacoes')
     },
     { 
       path: '/configuracoes', 

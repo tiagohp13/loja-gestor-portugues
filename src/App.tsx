@@ -76,6 +76,9 @@ import Support from './pages/Suporte';
 // Recycle bin
 import Reciclagem from './pages/Reciclagem';
 
+// Notifications
+import NotificationsList from './pages/notificacoes/NotificationsList';
+
 // Error pages
 import NotFound from './pages/NotFound';
 
@@ -162,6 +165,8 @@ function App() {
                     <Route path="/configuracoes" element={<Settings />} />
                     
                     <Route path="/reciclagem" element={<Reciclagem />} />
+                    
+                    <Route path="/notificacoes" element={<NotificationsList />} />
                     
                     <Route path="/suporte" element={<Support />} />
                   </Route>

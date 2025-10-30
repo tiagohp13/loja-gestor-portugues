@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import Sidebar from '@/components/navigation/Sidebar';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import AlertsManager from '@/components/common/AlertsManager';
 
 /**
  * Main application layout with sidebar and content area
@@ -15,6 +16,7 @@ const AppLayout = () => {
 
   return (
     <SidebarProvider defaultOpen={true}>
+      <AlertsManager />
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <Sidebar />
         <main className="flex-1 overflow-auto bg-background">
