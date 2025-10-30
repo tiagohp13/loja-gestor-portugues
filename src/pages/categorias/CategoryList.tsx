@@ -175,18 +175,19 @@ const CategoryList: React.FC = () => {
                     onClick={(e) => handleCategoryClick(category.id, category.name, e)}
                   >
                     <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Package size={18} className="text-gestorApp-blue" />
-                          <span className="text-lg">{category.name}</span>
+                      <CardTitle className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <Package size={18} className="text-gestorApp-blue shrink-0" />
+                          <span className="text-lg truncate">{category.name}</span>
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 shrink-0">
                           {canEdit && (
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <Button
                                   variant="ghost"
                                   size="sm"
+                                  className="h-8 w-8 p-0"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleEditCategory(category.id);
@@ -210,6 +211,7 @@ const CategoryList: React.FC = () => {
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
+                                      className="h-8 w-8 p-0"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                       }}
