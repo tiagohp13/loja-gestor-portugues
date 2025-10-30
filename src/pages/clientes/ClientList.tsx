@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale';
 import { checkClientDependencies } from '@/utils/dependencyUtils';
 import { useSortableClients } from '@/hooks/useSortableClients';
 import TopClientsSection from '@/components/clients/TopClientsSection';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 import {
   Table,
   TableBody,
@@ -94,6 +95,18 @@ const ClientList = () => {
     if (!validatePermission(canDelete, 'eliminar clientes')) return;
     deleteClient(id);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader 
+          title="Clientes" 
+          description="Consultar e gerir todos os clientes" 
+        />
+        <TableSkeleton title="A carregar clientes..." rows={5} columns={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

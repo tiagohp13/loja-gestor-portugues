@@ -15,11 +15,14 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
 import { useData } from "@/contexts/DataContext";
+import { useSortableOrders } from "@/hooks/useSortableOrders";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const { orders, deleteOrder } = useData();
+  const { deleteOrder } = useData();
+  const { orders, isLoading } = useSortableOrders();
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; orderId: string | null }>({
@@ -105,6 +108,15 @@ const OrderList = () => {
       return a.number.localeCompare(b.number, undefined, { numeric: true });
     });
   };
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-6">
+        <PageHeader title="Consultar Encomendas" description="Consulte e gerencie as suas encomendas" />
+        <TableSkeleton title="A carregar encomendas..." rows={5} columns={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 space-y-6">

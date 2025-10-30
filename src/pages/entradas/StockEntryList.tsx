@@ -11,6 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Package, Plus, Search } from "lucide-react";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const StockEntryList = () => {
   const navigate = useNavigate();
@@ -46,8 +47,8 @@ const StockEntryList = () => {
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-6">
-        <PageHeader title="Histórico de Compras" description="A carregar dados..." />
-        <div className="bg-white rounded-lg shadow p-6 mt-6 text-center">Carregando compras de stock...</div>
+        <PageHeader title="Histórico de Compras" description="Consulte o histórico de compras de stock" />
+        <TableSkeleton title="A carregar compras..." rows={5} columns={6} />
       </div>
     );
   }

@@ -19,6 +19,7 @@ import { checkCategoryDependencies } from '@/utils/dependencyUtils';
 import EmptyState from '@/components/common/EmptyState';
 import RecordCount from '@/components/common/RecordCount';
 import CategoryProductsModal from './components/CategoryProductsModal';
+import TableSkeleton from '@/components/ui/TableSkeleton';
 
 type SortField = 'name' | 'productCount';
 type SortDirection = 'asc' | 'desc';
@@ -32,6 +33,14 @@ const CategoryList: React.FC = () => {
   const [sortField, setSortField] = useState<SortField>('name');
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
   const [selectedCategory, setSelectedCategory] = useState<{ id: string; name: string } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simula carregamento inicial dos dados
+    if (categories.length > 0) {
+      setIsLoading(false);
+    }
+  }, [categories]);
   
   const handleCreateCategory = () => {
     if (!validatePermission(canCreate, 'criar categorias')) return;
@@ -89,6 +98,18 @@ const CategoryList: React.FC = () => {
   const handleCloseModal = () => {
     setSelectedCategory(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader
+          title="Categorias"
+          description="Consultar e gerir todas as categorias"
+        />
+        <TableSkeleton title="A carregar categorias..." rows={5} columns={3} />
+      </div>
+    );
+  }
 
   return (
     <TooltipProvider>

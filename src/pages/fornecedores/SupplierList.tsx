@@ -11,12 +11,15 @@ import { validatePermission } from "@/utils/permissionUtils";
 import { checkSupplierDependencies } from "@/utils/dependencyUtils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
+import { useSortableSuppliers } from "@/hooks/useSortableSuppliers";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const SupplierList = () => {
   const navigate = useNavigate();
-  const { suppliers, deleteSupplier } = useData();
+  const { deleteSupplier } = useData();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
+  const { suppliers, isLoading } = useSortableSuppliers();
 
   const filteredSuppliers = suppliers.filter(
     (supplier) =>
@@ -39,6 +42,15 @@ const SupplierList = () => {
     if (!validatePermission(canDelete, "eliminar fornecedores")) return;
     deleteSupplier(id);
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader title="Fornecedores" description="Consultar e gerir todos os fornecedores" />
+        <TableSkeleton title="A carregar fornecedores..." rows={5} columns={5} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

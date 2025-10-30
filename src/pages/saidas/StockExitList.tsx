@@ -22,20 +22,22 @@ import {
 import { toast } from "sonner";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
+import { useSortableStockExits } from "@/hooks/useSortableStockExits";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 type SortField = "date" | "number" | "client";
 
 const StockExitList = () => {
   const navigate = useNavigate();
-  const { stockExits, deleteStockExit } = useData();
+  const { deleteStockExit } = useData();
   const { canCreate, canEdit, canDelete } = usePermissions();
+  const { stockExits, isLoading } = useSortableStockExits();
   const [localExits, setLocalExits] = useState<StockExit[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [exitToDelete, setExitToDelete] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     // Ensure all exits have the required fields
@@ -119,7 +121,6 @@ const StockExitList = () => {
   const handleDeleteExit = async () => {
     if (!exitToDelete) return;
 
-    setIsLoading(true);
     try {
       await deleteStockExit(exitToDelete);
       setLocalExits((prev) => prev.filter((exit) => exit.id !== exitToDelete));
@@ -130,7 +131,6 @@ const StockExitList = () => {
     } finally {
       setDeleteDialogOpen(false);
       setExitToDelete(null);
-      setIsLoading(false);
     }
   };
 
@@ -156,6 +156,15 @@ const StockExitList = () => {
       return "Data inválida";
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader title="Histórico de Saídas" description="Consulte o histórico de saídas de stock" />
+        <TableSkeleton title="A carregar saídas..." rows={5} columns={6} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">

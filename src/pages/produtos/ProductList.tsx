@@ -15,6 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
+import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const ProductList = () => {
   const navigate = useNavigate();
@@ -68,6 +69,18 @@ const ProductList = () => {
   };
 
   const uniqueCategories = [...new Set(categories.map((cat) => cat.name))].sort();
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6">
+        <PageHeader
+          title="Produtos"
+          description="Consultar e gerir todos os produtos"
+        />
+        <TableSkeleton title="A carregar produtos..." rows={5} columns={7} />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
