@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Category } from "@/types";
 import { mapCategory } from "./mappers";
+import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 
 async function fetchCategories(): Promise<Category[]> {
   const { data, error } = await supabase
@@ -26,9 +27,10 @@ async function deleteCategory(id: string) {
 }
 
 async function createCategory(payload: { name: string; description?: string; status?: string }) {
+  const convertedPayload = toInsert(payload);
   const { data, error } = await supabase
     .from("categories")
-    .insert(payload)
+    .insert(convertedPayload)
     .select()
     .single();
   
@@ -37,9 +39,10 @@ async function createCategory(payload: { name: string; description?: string; sta
 }
 
 async function updateCategory({ id, payload }: { id: string; payload: { name?: string; description?: string; status?: string } }) {
+  const convertedPayload = toUpdate(payload);
   const { data, error } = await supabase
     .from("categories")
-    .update(payload)
+    .update(convertedPayload)
     .eq("id", id)
     .select()
     .single();

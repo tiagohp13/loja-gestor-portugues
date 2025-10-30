@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { StockEntry } from "@/types";
 import { mapStockEntry } from "./mappers";
+import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
+import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
 
 async function fetchStockEntries(): Promise<StockEntry[]> {
   const { data: entriesData, error: entriesError } = await supabase

@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Order } from "@/types";
 import { mapOrder } from "./mappers";
+import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
+import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
 
 async function fetchOrders(): Promise<Order[]> {
   const { data: ordersData, error: ordersError } = await supabase
@@ -45,9 +47,12 @@ async function deleteOrder(id: string) {
 async function createOrder(order: any) {
   const { items, ...orderData } = order;
   
+  // Convert order data to snake_case
+  const orderPayload = toInsert(orderData);
+  
   const { data: newOrder, error } = await supabase
     .from("orders")
-    .insert(orderData)
+    .insert(orderPayload)
     .select()
     .single();
   
@@ -55,7 +60,7 @@ async function createOrder(order: any) {
   
   if (items && items.length > 0) {
     const itemsWithOrderId = items.map((item: any) => ({
-      ...item,
+      ...camelToSnake(item),
       order_id: newOrder.id,
     }));
     
@@ -70,9 +75,12 @@ async function createOrder(order: any) {
 }
 
 async function updateOrder({ id, items, ...updates }: any) {
+  // Convert updates to snake_case
+  const updatePayload = toUpdate(updates);
+  
   const { error } = await supabase
     .from("orders")
-    .update(updates)
+    .update(updatePayload)
     .eq("id", id);
   
   if (error) throw error;
@@ -89,7 +97,7 @@ async function updateOrder({ id, items, ...updates }: any) {
     // Insert new items
     if (items.length > 0) {
       const itemsWithOrderId = items.map((item: any) => ({
-        ...item,
+        ...camelToSnake(item),
         order_id: id,
       }));
       

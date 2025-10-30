@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Supplier } from "@/types";
+import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 import { mapSupplier } from "./mappers";
 
 async function fetchSuppliers(): Promise<Supplier[]> {
@@ -26,9 +27,10 @@ async function deleteSupplier(id: string) {
 }
 
 async function createSupplier(supplier: Omit<Supplier, "id" | "created_at" | "updated_at">) {
+  const payload = toInsert(supplier);
   const { data, error } = await supabase
     .from("suppliers")
-    .insert(supplier)
+    .insert(payload)
     .select()
     .single();
   
@@ -37,9 +39,10 @@ async function createSupplier(supplier: Omit<Supplier, "id" | "created_at" | "up
 }
 
 async function updateSupplier({ id, ...updates }: Partial<Supplier> & { id: string }) {
+  const payload = toUpdate(updates);
   const { data, error } = await supabase
     .from("suppliers")
-    .update(updates)
+    .update(payload)
     .eq("id", id)
     .select()
     .single();

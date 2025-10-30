@@ -3,7 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { toast } from '@/hooks/use-toast';
 import { ExitDetails, ExitItem } from './types';
-import { supabase, camelToSnake } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/supabase/client';
+import { toInsert, toUpdate } from '@/integrations/supabase/utils/mutation';
+import { camelToSnake } from '@/integrations/supabase/utils/formatUtils';
 
 interface UseSubmitProps {
   exitId?: string;
@@ -61,7 +63,7 @@ export const useSubmit = ({
       
       if (exitId) {
         // Atualização de venda existente
-        const result = await updateStockExit(exitId, {
+        const exitData = {
           clientId: exitDetails.clientId,
           clientName: exitDetails.clientName,
           date: exitDate.toISOString(),
@@ -69,7 +71,8 @@ export const useSubmit = ({
           status: "completed",
           reason: "sale",
           items: exitItems
-        });
+        };
+        const result = await updateStockExit(exitId, exitData);
 
         if (result) {
           toast({

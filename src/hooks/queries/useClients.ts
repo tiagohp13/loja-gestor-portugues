@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Client } from "@/types";
+import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 import { mapClient } from "./mappers";
 
 async function fetchClients(): Promise<Client[]> {
@@ -26,9 +27,10 @@ async function deleteClient(id: string) {
 }
 
 async function createClient(client: Omit<Client, "id" | "created_at" | "updated_at">) {
+  const payload = toInsert(client);
   const { data, error } = await supabase
     .from("clients")
-    .insert(client)
+    .insert(payload)
     .select()
     .single();
   
@@ -37,9 +39,10 @@ async function createClient(client: Omit<Client, "id" | "created_at" | "updated_
 }
 
 async function updateClient({ id, ...updates }: Partial<Client> & { id: string }) {
+  const payload = toUpdate(updates);
   const { data, error } = await supabase
     .from("clients")
-    .update(updates)
+    .update(payload)
     .eq("id", id)
     .select()
     .single();

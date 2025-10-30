@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Product } from "@/types";
 import { mapProduct } from "./mappers";
+import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 
 async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
@@ -26,9 +27,10 @@ async function deleteProduct(id: string) {
 }
 
 async function createProduct(product: Omit<Product, "id" | "created_at" | "updated_at">) {
+  const payload = toInsert(product);
   const { data, error } = await supabase
     .from("products")
-    .insert(product)
+    .insert(payload)
     .select()
     .single();
   
@@ -37,9 +39,10 @@ async function createProduct(product: Omit<Product, "id" | "created_at" | "updat
 }
 
 async function updateProduct({ id, ...updates }: Partial<Product> & { id: string }) {
+  const payload = toUpdate(updates);
   const { data, error } = await supabase
     .from("products")
-    .update(updates)
+    .update(payload)
     .eq("id", id)
     .select()
     .single();
