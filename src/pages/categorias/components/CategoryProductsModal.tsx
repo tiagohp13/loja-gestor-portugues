@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +10,7 @@ import { useCategoryQuery } from '@/hooks/queries/useCategories';
 import { useProductsByCategory } from '../hooks/useProductsByCategory';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Package, ChevronUp, ChevronDown } from 'lucide-react';
 import { formatCurrency } from '@/utils/formatting';
 import { Badge } from '@/components/ui/badge';
@@ -38,6 +40,7 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
   categoryId,
   categoryName
 }) => {
+  const navigate = useNavigate();
   const { data: category } = useCategoryQuery(categoryId);
   const { data: products = [], isLoading } = useProductsByCategory(categoryId);
   const [sortField, setSortField] = useState<SortField>('code');
@@ -94,6 +97,26 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
     }
   };
 
+  const handleProductClick = (productId: string) => {
+    onClose();
+    navigate(`/produtos/${productId}`);
+  };
+
+  // Loading skeleton component
+  const LoadingSkeleton = () => (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => (
+        <div key={i} className="flex gap-4">
+          <Skeleton className="h-12 w-24" />
+          <Skeleton className="h-12 flex-1" />
+          <Skeleton className="h-12 w-20" />
+          <Skeleton className="h-12 w-24" />
+          <Skeleton className="h-12 w-28" />
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
@@ -122,7 +145,9 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {sortedProducts.length === 0 ? (
+              {isLoading ? (
+                <LoadingSkeleton />
+              ) : sortedProducts.length === 0 ? (
                 <EmptyState 
                   title="Nenhum produto nesta categoria"
                   description="Esta categoria ainda não tem produtos associados"
@@ -166,10 +191,7 @@ const CategoryProductsModal: React.FC<CategoryProductsModalProps> = ({
                         <TableRow 
                           key={product.id}
                           className="hover:bg-muted/50 cursor-pointer"
-                          onClick={() => {
-                            onClose();
-                            window.location.href = `/produtos/${product.id}`;
-                          }}
+                          onClick={() => handleProductClick(product.id)}
                         >
                           <TableCell className="font-medium">
                             {product.code}
