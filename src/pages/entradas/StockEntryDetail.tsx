@@ -1,45 +1,73 @@
-import React from "react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { Download, Edit } from "lucide-react";
 
-interface StockEntryDetailHeaderProps {
-  entryNumber: string;
-  id: string;
-  onExportPdf: () => void;
-  isDeleted: boolean;
-}
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useStockEntryDetail } from './hooks/useStockEntryDetail';
+import StockEntryDetailHeader from './components/StockEntryDetailHeader';
+import EntryInformationCard from './components/EntryInformationCard';
+import SupplierInformationCard from './components/SupplierInformationCard';
+import PurchasedProductsTable from './components/PurchasedProductsTable';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { AlertCircle } from 'lucide-react';
 
-const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({ entryNumber, id, onExportPdf, isDeleted }) => {
-  const navigate = useNavigate();
+const StockEntryDetail = () => {
+  const { id } = useParams<{ id: string }>();
+  const { stockEntry, supplier, totalValue, contentRef, handleExportToPdf, isDeleted } = useStockEntryDetail(id);
+
+  if (!stockEntry) {
+    return <div>Carregando...</div>;
+  }
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div>
-        <h1 className="text-2xl font-bold">Compra: {entryNumber || "Sem número"}</h1>
-      </div>
+    <div className="container mx-auto px-4 py-6">
+      <StockEntryDetailHeader 
+        entryNumber={stockEntry?.number || ''}
+        id={id || ''}
+        onExportPdf={handleExportToPdf}
+        isDeleted={isDeleted}
+      />
 
-      <div className="flex flex-wrap justify-end gap-3">
-        {/* Botões principais alinhados à direita */}
-        {!isDeleted && (
-          <Button variant="default" onClick={() => navigate(`/entradas/${id}/editar`)}>
-            <Edit className="w-4 h-4 mr-2" />
-            Editar
-          </Button>
-        )}
+      {isDeleted && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Este registo foi apagado e está em modo de leitura apenas.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <Button variant="outline" onClick={onExportPdf}>
-          <Download className="w-4 h-4 mr-2" />
-          Exportar para PDF
-        </Button>
+      <div className="pdf-content" ref={contentRef}>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+          {/* Entry Information Card */}
+          <EntryInformationCard
+            entryNumber={stockEntry.number}
+            entryDate={stockEntry.date}
+            totalValue={totalValue}
+            status={stockEntry.status}
+            notes={stockEntry.notes}
+          />
 
-        {/* ✅ Botão Voltar à Lista (último e alinhado à direita) */}
-        <Button variant="secondary" onClick={() => navigate("/entradas")} className="ml-auto">
-          ← Voltar à Lista
-        </Button>
+          {/* Supplier Information Card */}
+          {supplier && (
+            <SupplierInformationCard supplier={supplier} />
+          )}
+        </div>
+
+        {/* Products Table Card */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Produtos Comprados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <PurchasedProductsTable 
+              items={stockEntry.items} 
+              totalValue={totalValue} 
+            />
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 };
 
-export default StockEntryDetailHeader;
+export default StockEntryDetail;
