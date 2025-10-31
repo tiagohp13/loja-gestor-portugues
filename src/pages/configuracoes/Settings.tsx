@@ -1,17 +1,13 @@
 import React from "react";
+import UserProfileForm from "@/components/profile/UserProfileForm";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import DashboardCustomization from "@/components/ui/DashboardCustomization";
-import UserProfileForm from "@/components/profile/UserProfileForm";
-import ClientTagSettings from "@/components/ui/ClientTagSettings";
-import { useClientTags } from "@/hooks/useClientTags";
 
 const Settings = () => {
-  const { config: tagConfig, updateConfig: updateTagConfig } = useClientTags();
-
   // Classe utilitária para fade suave nas tabs (sem ficheiros novos)
   const tabFade =
     "mt-4 space-y-4 transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100";
@@ -30,8 +26,6 @@ const Settings = () => {
         <TabsContent value="profile" className={tabFade}>
           <UserProfileForm />
         </TabsContent>
-
-        {/* SISTEMA */}
         <TabsContent value="settings" className={tabFade}>
           <Card>
             <CardHeader>
@@ -62,16 +56,6 @@ const Settings = () => {
                   Configure a aparência e a ordem dos elementos em todas as páginas do CRM
                 </p>
                 <DashboardCustomization />
-              </div>
-
-              <Separator />
-
-              <div>
-                <h4 className="text-sm font-medium mb-3">Etiquetas de Clientes</h4>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Configure as regras para classificação automática de clientes
-                </p>
-                <ClientTagSettings config={tagConfig} onConfigChange={updateTagConfig} />
               </div>
             </CardContent>
           </Card>

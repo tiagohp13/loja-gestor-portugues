@@ -82,6 +82,7 @@ import NotificationsList from './pages/notificacoes/NotificationsList';
 // Admin
 import RoleManagement from './pages/admin/RoleManagement';
 import DataManagement from './pages/admin/DataManagement';
+import ClientTagsManagement from './pages/admin/ClientTagsManagement';
 import AdminRoute from './components/layouts/AdminRoute';
 
 // Reports
@@ -191,6 +192,14 @@ function App() {
                       element={
                         <AdminRoute>
                           <DataManagement />
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin/client-tags" 
+                      element={
+                        <AdminRoute>
+                          <ClientTagsManagement />
                         </AdminRoute>
                       } 
                     />

@@ -132,6 +132,12 @@ const AppSidebar: React.FC = () => {
       label: 'Gestão de Dados',
       icon: <Database className="w-5 h-5" />,
       isActive: location.pathname.includes('/admin/data')
+    },
+    {
+      path: '/admin/client-tags',
+      label: 'Etiquetas de Clientes',
+      icon: <Tag className="w-5 h-5" />,
+      isActive: location.pathname.includes('/admin/client-tags')
     }
   ];
 
