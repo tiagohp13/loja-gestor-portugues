@@ -304,10 +304,11 @@ export type Database = {
           id: string
           migrated_at: string | null
           notes: string | null
-          number: string
+          number: string | null
           order_type: string | null
           reference_old: string | null
           status: string | null
+          total_amount: number
           updated_at: string
           user_id: string | null
         }
@@ -326,10 +327,11 @@ export type Database = {
           id?: string
           migrated_at?: string | null
           notes?: string | null
-          number: string
+          number?: string | null
           order_type?: string | null
           reference_old?: string | null
           status?: string | null
+          total_amount?: number
           updated_at?: string
           user_id?: string | null
         }
@@ -348,10 +350,11 @@ export type Database = {
           id?: string
           migrated_at?: string | null
           notes?: string | null
-          number?: string
+          number?: string | null
           order_type?: string | null
           reference_old?: string | null
           status?: string | null
+          total_amount?: number
           updated_at?: string
           user_id?: string | null
         }
