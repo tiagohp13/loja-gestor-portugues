@@ -1,9 +1,8 @@
-
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import PageHeader from '@/components/ui/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Pencil } from 'lucide-react';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import PageHeader from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Pencil } from "lucide-react";
 
 interface ProductDetailHeaderProps {
   productName: string;
@@ -12,27 +11,27 @@ interface ProductDetailHeaderProps {
   isDeleted?: boolean;
 }
 
-const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({ 
-  productName, 
+const ProductDetailHeader: React.FC<ProductDetailHeaderProps> = ({
+  productName,
   productCode,
   productId,
-  isDeleted = false
+  isDeleted = false,
 }) => {
   const navigate = useNavigate();
-  
+
   return (
-    <PageHeader 
-      title={productName} 
+    <PageHeader
+      title={productName}
       description={`Código: ${productCode}`}
       actions={
         <>
           {!isDeleted && (
             <Button onClick={() => navigate(`/produtos/editar/${productId}`)}>
               <Pencil className="h-4 w-4" />
-              Editar Produto
+              Editar
             </Button>
           )}
-          <Button variant="outline" onClick={() => navigate('/produtos/consultar')}>
+          <Button variant="outline" onClick={() => navigate("/produtos/consultar")}>
             Voltar ao Catálogo
           </Button>
         </>
