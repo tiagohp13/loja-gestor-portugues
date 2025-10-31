@@ -177,9 +177,16 @@ function App() {
                     
                     <Route path="/notificacoes" element={<NotificationsList />} />
                     
-                    <Route path="/relatorios" element={<ReportsDashboard />} />
-                    
                     <Route 
+                      path="/relatorios" 
+                      element={
+                        <AdminRoute>
+                          <ReportsDashboard />
+                        </AdminRoute>
+                      } 
+                    />
+                    
+                    <Route
                       path="/admin/roles" 
                       element={
                         <AdminRoute>
