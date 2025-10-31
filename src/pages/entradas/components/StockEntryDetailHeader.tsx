@@ -26,11 +26,11 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
 
       {/* Grupo de botões alinhados à direita */}
       <div className="flex flex-wrap justify-end gap-2">
-        {/* PDF (vermelho Adobe) */}
+        {/* PDF (vermelho Adobe autêntico) */}
         <Button
           size="sm"
           onClick={onExportPdf}
-          className="flex items-center gap-2 bg-[#FF0000] hover:bg-[#cc0000] text-white"
+          className="flex items-center gap-2 bg-[#D32F2F] hover:bg-[#B71C1C] text-white"
         >
           <FileText className="h-4 w-4" />
           PDF
