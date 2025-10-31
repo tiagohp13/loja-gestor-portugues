@@ -1,28 +1,25 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom'; 
-import { getSupplierTotalSpent } from '@/integrations/supabase/client';
-import { useSupplierDetail } from './hooks/useSupplierDetail';
-import PageHeader from '@/components/ui/PageHeader';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, ShoppingCart, Receipt, AlertCircle } from 'lucide-react';
-import { formatDateString, formatCurrency } from '@/utils/formatting';
-import StatusBadge from '@/components/common/StatusBadge';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import React, { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { getSupplierTotalSpent } from "@/integrations/supabase/client";
+import { useSupplierDetail } from "./hooks/useSupplierDetail";
+import PageHeader from "@/components/ui/PageHeader";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { CalendarClock, MapPin, Mail, Phone, FileText, CreditCard, AlertCircle, ArrowLeft, Pencil } from "lucide-react";
+import { formatDateString, formatCurrency } from "@/utils/formatting";
+import StatusBadge from "@/components/common/StatusBadge";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { supplier, supplierEntries, supplierExpenses, isLoading, isDeleted } = useSupplierDetail();
+
   const [totalSpent, setTotalSpent] = useState<number>(0);
   const [isLoadingTotal, setIsLoadingTotal] = useState(true);
   const [supplierDocuments, setSupplierDocuments] = useState<any[]>([]);
-
-  console.log('SupplierDetail render - isLoadingTotal:', isLoadingTotal);
 
   useEffect(() => {
     const fetchSupplierData = async () => {
@@ -32,7 +29,7 @@ const SupplierDetail = () => {
           const spent = await getSupplierTotalSpent(id);
           setTotalSpent(spent);
         } catch (error) {
-          console.error('Error fetching supplier total spent:', error);
+          console.error("Error fetching supplier total spent:", error);
         } finally {
           setIsLoadingTotal(false);
         }
@@ -42,23 +39,21 @@ const SupplierDetail = () => {
     fetchSupplierData();
   }, [id]);
 
-  // Separate effect for combining documents when supplier data is loaded
   useEffect(() => {
     if (!isLoading && supplierEntries && supplierExpenses) {
-          // Combine documents from stock entries and expenses
-          const allDocuments = [
-            ...supplierEntries.map(entry => ({
-              ...entry,
-              type: 'Compra',
-              value: entry.value || 0
-            })),
-            ...supplierExpenses.map(expense => ({
-              ...expense,
-              type: 'Despesa', 
-              value: expense.value || 0
-            }))
-          ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-      
+      const allDocuments = [
+        ...supplierEntries.map((entry) => ({
+          ...entry,
+          type: "Compra",
+          value: entry.value || 0,
+        })),
+        ...supplierExpenses.map((expense) => ({
+          ...expense,
+          type: "Despesa",
+          value: expense.value || 0,
+        })),
+      ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
       setSupplierDocuments(allDocuments);
     }
   }, [isLoading, supplierEntries, supplierExpenses]);
@@ -69,7 +64,12 @@ const SupplierDetail = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold">Fornecedor não encontrado</h1>
-        <Button variant="outline" className="mt-4" onClick={() => navigate('/fornecedores/consultar')}>
+        <Button
+          variant="outline"
+          className="mt-4 flex items-center gap-2"
+          onClick={() => navigate("/fornecedores/consultar")}
+        >
+          <ArrowLeft className="h-4 w-4" />
           Voltar à Lista
         </Button>
       </div>
@@ -78,17 +78,37 @@ const SupplierDetail = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title={supplier.name} 
+      <PageHeader
+        title={supplier.name}
         description="Detalhes do fornecedor"
         actions={
-          <div className="flex space-x-2">
+          <div className="flex items-center gap-2">
+            {/* PDF (vermelho Adobe) */}
+            <Button
+              size="sm"
+              onClick={() => console.log("Exportar fornecedor para PDF")}
+              className="flex items-center gap-2 bg-[#D32F2F] hover:bg-[#B71C1C] text-white"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+
+            {/* Editar */}
             {!isDeleted && (
-              <Button onClick={() => navigate(`/fornecedores/editar/${id}`)}>
-                Editar Fornecedor
+              <Button size="sm" onClick={() => navigate(`/fornecedores/editar/${id}`)}>
+                <Pencil className="h-4 w-4 mr-1" />
+                Editar
               </Button>
             )}
-            <Button variant="outline" onClick={() => navigate('/fornecedores/consultar')}>
+
+            {/* Voltar à Lista */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/fornecedores/consultar")}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
               Voltar à Lista
             </Button>
           </div>
@@ -98,18 +118,17 @@ const SupplierDetail = () => {
       {isDeleted && (
         <Alert variant="destructive" className="mt-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Este registo foi apagado e está em modo de leitura apenas.
-          </AlertDescription>
+          <AlertDescription>Este registo foi apagado e está em modo de leitura apenas.</AlertDescription>
         </Alert>
       )}
 
+      {/* Informação principal */}
       <div className="grid md:grid-cols-1 gap-6 mt-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex justify-between items-center">
               <span>Informações do Fornecedor</span>
-              <StatusBadge status={supplier.status || 'active'} />
+              <StatusBadge status={supplier.status || "active"} />
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -196,7 +215,7 @@ const SupplierDetail = () => {
         </Card>
       </div>
 
-      {/* Documents Section */}
+      {/* Documentos */}
       <div className="mt-6">
         <Card>
           <CardHeader>
@@ -217,11 +236,11 @@ const SupplierDetail = () => {
                 </TableHeader>
                 <TableBody>
                   {supplierDocuments.map((doc) => (
-                    <TableRow 
+                    <TableRow
                       key={`${doc.type}-${doc.id}`}
                       className="cursor-pointer hover:bg-gray-50"
                       onClick={() => {
-                        if (doc.type === 'Compra') {
+                        if (doc.type === "Compra") {
                           navigate(`/entradas/${doc.id}`);
                         } else {
                           navigate(`/despesas/${doc.id}`);
@@ -230,32 +249,26 @@ const SupplierDetail = () => {
                     >
                       <TableCell className="text-primary hover:underline">{doc.number}</TableCell>
                       <TableCell>
-                        <span className={`px-2 py-1 rounded-full text-xs ${
-                          doc.type === 'Compra' 
-                            ? 'bg-blue-100 text-blue-800' 
-                            : 'bg-orange-100 text-orange-800'
-                        }`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            doc.type === "Compra" ? "bg-blue-100 text-blue-800" : "bg-orange-100 text-orange-800"
+                          }`}
+                        >
                           {doc.type}
                         </span>
                       </TableCell>
                       <TableCell>{formatDateString(doc.date)}</TableCell>
+                      <TableCell>{formatCurrency(doc.value || 0)}</TableCell>
                       <TableCell>
-                        {formatCurrency(doc.value || 0)}
+                        <StatusBadge status={doc.status || "active"} />
                       </TableCell>
-                      <TableCell>
-                        <StatusBadge status={doc.status || 'active'} />
-                      </TableCell>
-                      <TableCell className="max-w-xs truncate">
-                        {doc.notes || doc.invoice_number || '-'}
-                      </TableCell>
+                      <TableCell className="max-w-xs truncate">{doc.notes || doc.invoice_number || "-"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
             ) : (
-              <p className="text-gray-500 text-center py-8">
-                Nenhum documento encontrado para este fornecedor.
-              </p>
+              <p className="text-gray-500 text-center py-8">Nenhum documento encontrado para este fornecedor.</p>
             )}
           </CardContent>
         </Card>
