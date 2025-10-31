@@ -192,9 +192,7 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
       // ✅ Product Analysis (versão corrigida e filtrada)
       const productSalesMap: Record<string, { revenue: number; quantity: number }> = {};
 
-      exits
-        ?.filter((exit) => exit.status === "active" && exit.date >= from && exit.date <= to)
-        .forEach((exit) => {
+      exits?.forEach((exit) => {
           exit.stock_exit_items
             ?.filter((item) => item.product_name && item.quantity > 0 && item.sale_price > 0)
             .forEach((item) => {
