@@ -8,12 +8,25 @@ export function useProductsByCategory(categoryId?: string) {
     queryKey: ["productsByCategory", categoryId],
     enabled: !!categoryId,
     queryFn: async () => {
+      // First fetch the category to get its name
+      const { data: categoryData, error: categoryError } = await supabase
+        .from("categories")
+        .select("name")
+        .eq("id", categoryId)
+        .is("deleted_at", null)
+        .single();
+      
+      if (categoryError) throw categoryError;
+      if (!categoryData) return [];
+      
+      // Then query products using the category name
       const { data, error } = await supabase
         .from("products")
         .select("*")
-        .eq("category", categoryId)
+        .eq("category", categoryData.name)
         .is("deleted_at", null)
         .order("name", { ascending: true });
+      
       if (error) throw error;
       return (data || []).map(mapProduct);
     },
