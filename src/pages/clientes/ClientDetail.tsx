@@ -12,7 +12,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import { useClientDetail } from "./hooks/useClientDetail";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, FileText, Pencil, ArrowLeft } from "lucide-react";
 
 const ClientDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -46,7 +46,12 @@ const ClientDetail = () => {
     return (
       <div className="container mx-auto px-4 py-6">
         <h1 className="text-2xl font-bold">Cliente não encontrado</h1>
-        <Button variant="outline" className="mt-4" onClick={() => navigate("/clientes/consultar")}>
+        <Button
+          variant="outline"
+          className="mt-4 flex items-center gap-2"
+          onClick={() => navigate("/clientes/consultar")}
+        >
+          <ArrowLeft className="h-4 w-4" />
           Voltar à Lista
         </Button>
       </div>
@@ -59,18 +64,38 @@ const ClientDetail = () => {
         title={client.name}
         description="Detalhes do cliente"
         actions={
-          <div className="flex space-x-2">
+          <div className="flex items-center gap-2">
+            {/* PDF (vermelho Adobe) */}
+            <Button
+              size="sm"
+              onClick={() => console.log("Exportar cliente para PDF")}
+              className="flex items-center gap-2 bg-[#D32F2F] hover:bg-[#B71C1C] text-white"
+            >
+              <FileText className="h-4 w-4" />
+              PDF
+            </Button>
+
+            {/* Editar */}
             {canEdit && !isDeleted && (
               <Button
+                size="sm"
                 onClick={() => {
                   if (!validatePermission(canEdit, "editar clientes")) return;
                   navigate(`/clientes/editar/${id}`);
                 }}
               >
+                <Pencil className="h-4 w-4 mr-1" />
                 Editar
               </Button>
             )}
-            <Button variant="outline" onClick={() => navigate("/clientes/consultar")}>
+
+            {/* Voltar à Lista */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/clientes/consultar")}
+              className="flex items-center gap-2"
+            >
               <ArrowLeft className="h-4 w-4" />
               Voltar à Lista
             </Button>
@@ -87,7 +112,6 @@ const ClientDetail = () => {
 
       <div className="grid md:grid-cols-3 gap-6 mt-6">
         <ClientInfoCard client={client} totalSpent={totalSpent} isLoadingTotal={isLoadingTotal} />
-
         <ClientHistoryStats ordersCount={clientOrders?.length || 0} exitsCount={clientExits?.length || 0} />
       </div>
 
