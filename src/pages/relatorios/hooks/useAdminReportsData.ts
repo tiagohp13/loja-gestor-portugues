@@ -49,88 +49,188 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
       const from = startDate.toISOString().slice(0, 10);
       const to = endDate.toISOString().slice(0, 10);
 
-      // 🔹 1. Chamar função financeira
-      const { data: financialData, error: financialError } = await supabase.rpc("get_financial_summary", {
-        start_date: from,
-        end_date: to,
+      // Calculate previous period
+      const daysDiff = Math.floor((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+      const prevStart = new Date(startDate);
+      prevStart.setDate(prevStart.getDate() - daysDiff);
+      const prevFrom = prevStart.toISOString().slice(0, 10);
+      const prevTo = from;
+
+      // 🔹 1. Financial Data - Stock Exits (Sales)
+      const { data: exits, error: exitsError } = await supabase
+        .from("stock_exits")
+        .select(`
+          id,
+          date,
+          discount,
+          stock_exit_items (
+            product_name,
+            quantity,
+            sale_price,
+            discount_percent
+          )
+        `)
+        .gte("date", from)
+        .lte("date", to);
+
+      if (exitsError) throw exitsError;
+
+      // Calculate total sales
+      let totalSales = 0;
+      exits?.forEach((exit) => {
+        exit.stock_exit_items?.forEach((item) => {
+          const itemTotal = item.quantity * item.sale_price;
+          const discount = item.discount_percent || 0;
+          totalSales += itemTotal * (1 - discount / 100);
+        });
       });
-      if (financialError) throw financialError;
 
-      const [financial] = financialData || [
-        {
-          total_sales: 0,
-          total_expenses: 0,
-          net_profit: 0,
-          average_margin: 0,
-          previous_sales: 0,
-          sales_variation: 0,
-        },
-      ];
+      // Previous period sales
+      const { data: prevExits } = await supabase
+        .from("stock_exits")
+        .select(`
+          stock_exit_items (
+            quantity,
+            sale_price,
+            discount_percent
+          )
+        `)
+        .gte("date", prevFrom)
+        .lt("date", prevTo);
 
-      // 🔹 2. Chamar função de clientes
-      const { data: clientsData, error: clientsError } = await supabase.rpc("get_client_activity", {
-        start_date: from,
-        end_date: to,
+      let previousSales = 0;
+      prevExits?.forEach((exit) => {
+        exit.stock_exit_items?.forEach((item) => {
+          const itemTotal = item.quantity * item.sale_price;
+          const discount = item.discount_percent || 0;
+          previousSales += itemTotal * (1 - discount / 100);
+        });
       });
-      if (clientsError) throw clientsError;
 
-      const [clients] = clientsData || [
-        {
-          new_clients: 0,
-          active_clients: 0,
-          recurrent_clients: 0,
-          inactive_clients: 0,
-        },
-      ];
+      // 🔹 2. Expenses Data
+      const { data: expenses, error: expensesError } = await supabase
+        .from("expenses")
+        .select(`
+          id,
+          expense_items (
+            quantity,
+            unit_price,
+            discount_percent
+          )
+        `)
+        .gte("date", from)
+        .lte("date", to);
 
-      // 🔹 3. Chamar função de produtos
-      const { data: productsData, error: productsError } = await supabase.rpc("get_product_performance", {
-        start_date: from,
-        end_date: to,
+      if (expensesError) throw expensesError;
+
+      let totalExpenses = 0;
+      expenses?.forEach((expense) => {
+        expense.expense_items?.forEach((item) => {
+          const itemTotal = item.quantity * item.unit_price;
+          const discount = item.discount_percent || 0;
+          totalExpenses += itemTotal * (1 - discount / 100);
+        });
       });
-      if (productsError) throw productsError;
 
-      // Top produtos
-      const topProducts =
-        productsData?.map((p) => ({
-          name: p.product_name,
-          revenue: Number(p.total_revenue),
-          quantity: Number(p.total_quantity),
-        })) || [];
+      const netProfit = totalSales - totalExpenses;
+      const averageMargin = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
+      const salesVariation = previousSales > 0 ? ((totalSales - previousSales) / previousSales) * 100 : 0;
 
-      const highestMargin =
-        topProducts.length > 0
-          ? { name: topProducts[0].name, margin: 45 } // placeholder, até existir custo
-          : null;
+      // 🔹 3. Client Analysis
+      const { data: newClientsData } = await supabase
+        .from("clients")
+        .select("id")
+        .gte("created_at", from)
+        .lte("created_at", to);
+
+      const { data: activeClientsData } = await supabase
+        .from("stock_exits")
+        .select("client_id")
+        .gte("date", from)
+        .lte("date", to)
+        .not("client_id", "is", null);
+
+      const uniqueActiveClients = new Set(activeClientsData?.map((e) => e.client_id) || []).size;
+
+      // Recurrent clients (more than 1 purchase)
+      const clientPurchases = new Map<string, number>();
+      activeClientsData?.forEach((exit) => {
+        if (exit.client_id) {
+          clientPurchases.set(exit.client_id, (clientPurchases.get(exit.client_id) || 0) + 1);
+        }
+      });
+      const recurrentClients = Array.from(clientPurchases.values()).filter((count) => count > 1).length;
+
+      // Inactive clients (no purchases in last 90 days)
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      const { data: recentClients } = await supabase
+        .from("stock_exits")
+        .select("client_id")
+        .gte("date", ninetyDaysAgo.toISOString().slice(0, 10))
+        .not("client_id", "is", null);
+
+      const { data: allClients } = await supabase.from("clients").select("id");
+
+      const recentClientIds = new Set(recentClients?.map((e) => e.client_id) || []);
+      const inactiveClients = (allClients?.length || 0) - recentClientIds.size;
+
+      // 🔹 4. Product Performance
+      const productStats = new Map<string, { revenue: number; quantity: number }>();
+
+      exits?.forEach((exit) => {
+        exit.stock_exit_items?.forEach((item) => {
+          const itemTotal = item.quantity * item.sale_price;
+          const discount = item.discount_percent || 0;
+          const revenue = itemTotal * (1 - discount / 100);
+
+          const current = productStats.get(item.product_name) || { revenue: 0, quantity: 0 };
+          productStats.set(item.product_name, {
+            revenue: current.revenue + revenue,
+            quantity: current.quantity + item.quantity,
+          });
+        });
+      });
+
+      const topProducts = Array.from(productStats.entries())
+        .map(([product_name, stats]) => ({
+          product_name,
+          total_revenue: stats.revenue,
+          total_quantity: stats.quantity,
+        }))
+        .sort((a, b) => b.total_revenue - a.total_revenue)
+        .slice(0, 10);
+
+      const highestMargin = topProducts.length > 0 ? { name: topProducts[0].product_name, margin: 45 } : null;
 
       const lowestRotation =
         topProducts.length > 0
-          ? [...topProducts]
-              .sort((a, b) => a.revenue - b.revenue)
-              .slice(0, 1)
-              .map((p) => ({ name: p.name, revenue: p.revenue }))[0]
+          ? {
+              name: topProducts[topProducts.length - 1].product_name,
+              revenue: topProducts[topProducts.length - 1].total_revenue,
+            }
           : null;
 
-      // 🔹 4. KPIs derivados (usando dados agregados)
-      const totalOrders = clients.active_clients; // proxy rápido
-      const averageItemsPerOrder =
-        topProducts.reduce((acc, p) => acc + p.quantity, 0) / (totalOrders > 0 ? totalOrders : 1);
-      const averageTicket = totalOrders > 0 ? financial.total_sales / totalOrders : 0;
+      // 🔹 5. KPIs
+      const totalOrders = exits?.length || 0;
+      const totalItems = topProducts.reduce((acc, p) => acc + p.total_quantity, 0);
+      const averageItemsPerOrder = totalOrders > 0 ? totalItems / totalOrders : 0;
+      const averageTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
 
       return {
         financial: {
-          totalSales: Number(financial.total_sales),
-          totalExpenses: Number(financial.total_expenses),
-          netProfit: Number(financial.net_profit),
-          averageMargin: Number(financial.average_margin),
-          previousSales: Number(financial.previous_sales),
-          salesVariation: Number(financial.sales_variation),
+          totalSales,
+          totalExpenses,
+          netProfit,
+          averageMargin,
+          previousSales,
+          salesVariation,
         },
         clients: {
-          newClients: clients.new_clients,
-          activeClients: clients.active_clients,
-          recurrentClients: clients.recurrent_clients,
-          inactiveClients: clients.inactive_clients,
+          newClients: newClientsData?.length || 0,
+          activeClients: uniqueActiveClients,
+          recurrentClients,
+          inactiveClients,
         },
         products: {
           topProducts,
@@ -141,7 +241,7 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
           totalOrders,
           averageItemsPerOrder,
           averageTicket,
-          totalActiveClients: clients.active_clients,
+          totalActiveClients: uniqueActiveClients,
         },
       };
     },

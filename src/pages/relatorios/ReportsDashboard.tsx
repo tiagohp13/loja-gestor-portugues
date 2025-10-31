@@ -89,7 +89,7 @@ export default function ReportsDashboard() {
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     if (data.products.topProducts.length > 0) {
-      doc.text(`Produto Mais Vendido: ${data.products.topProducts[0].name} (${formatCurrency(data.products.topProducts[0].revenue)})`, 25, yPos);
+      doc.text(`Produto Mais Vendido: ${data.products.topProducts[0].product_name} (${formatCurrency(data.products.topProducts[0].total_revenue)})`, 25, yPos);
       yPos += 6;
     }
     if (data.products.highestMargin) {
@@ -320,8 +320,8 @@ export default function ReportsDashboard() {
             {products.topProducts.length > 0 && (
               <div className="p-4 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground mb-1">🏆 Produto Mais Vendido</p>
-                <p className="text-lg font-bold text-foreground">{products.topProducts[0].name}</p>
-                <p className="text-sm text-primary font-semibold">{formatCurrency(products.topProducts[0].revenue)}</p>
+                <p className="text-lg font-bold text-foreground">{products.topProducts[0].product_name}</p>
+                <p className="text-sm text-primary font-semibold">{formatCurrency(products.topProducts[0].total_revenue)}</p>
               </div>
             )}
             {products.highestMargin && (
@@ -349,11 +349,11 @@ export default function ReportsDashboard() {
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-primary">{index + 1}</span>
                       <div>
-                        <p className="font-medium text-foreground">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">{product.quantity} unidades vendidas</p>
+                        <p className="font-medium text-foreground">{product.product_name}</p>
+                        <p className="text-sm text-muted-foreground">{product.total_quantity} unidades vendidas</p>
                       </div>
                     </div>
-                    <span className="font-semibold text-primary">{formatCurrency(product.revenue)}</span>
+                    <span className="font-semibold text-primary">{formatCurrency(product.total_revenue)}</span>
                   </div>
                 ))}
               </div>
@@ -369,13 +369,13 @@ export default function ReportsDashboard() {
                   {products.topProducts.length > 0 && (
                     <>
                       Os produtos com maior impacto no volume de vendas foram{" "}
-                      <span className="font-semibold">{products.topProducts[0]?.name}</span>
+                      <span className="font-semibold">{products.topProducts[0]?.product_name}</span>
                       {products.topProducts[1] && (
-                        <> e <span className="font-semibold">{products.topProducts[1]?.name}</span></>
+                        <> e <span className="font-semibold">{products.topProducts[1]?.product_name}</span></>
                       )}, representando juntos{" "}
                       {products.topProducts.length >= 2 
-                        ? ((products.topProducts[0].revenue + products.topProducts[1].revenue) / financial.totalSales * 100).toFixed(0)
-                        : (products.topProducts[0].revenue / financial.totalSales * 100).toFixed(0)
+                        ? ((products.topProducts[0].total_revenue + products.topProducts[1].total_revenue) / financial.totalSales * 100).toFixed(0)
+                        : (products.topProducts[0].total_revenue / financial.totalSales * 100).toFixed(0)
                       }% do total de vendas.
                     </>
                   )}
