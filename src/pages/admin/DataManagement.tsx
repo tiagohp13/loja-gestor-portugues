@@ -1,4 +1,5 @@
 import React from "react";
+import { Navigate } from "react-router-dom";
 import { useProductsQuery } from "@/hooks/queries/useProducts";
 import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 import { useClientsQuery } from "@/hooks/queries/useClients";
@@ -24,6 +25,11 @@ const DataManagement = () => {
   const { stockEntries } = useStockEntriesQuery();
   const { stockExits } = useStockExitsQuery();
   const { isAdmin } = usePermissions();
+
+  // Additional security check - redirect if not admin
+  if (!isAdmin) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: ExportDataType) => {
     const file = e.target.files?.[0];
@@ -121,24 +127,6 @@ const DataManagement = () => {
 
     reader.readAsText(file);
   };
-
-  if (!isAdmin) {
-    return (
-      <div className="container mx-auto px-4 py-6">
-        <PageHeader 
-          title="Gestão de Dados" 
-          description="Acesso restrito a administradores"
-        />
-        <Card className="mt-6">
-          <CardContent className="flex items-center justify-center p-6">
-            <div className="text-center text-muted-foreground">
-              Apenas administradores podem aceder a esta secção
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-6">
