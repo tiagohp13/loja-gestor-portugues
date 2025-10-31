@@ -50,6 +50,46 @@ async function createOrder(order: any) {
     delete orderData.total;
   }
 
+  // Generate order number automatically if not provided
+  if (!orderData.number) {
+    const year = new Date().getFullYear();
+    
+    // Check if counter exists for this year
+    const { data: counterData, error: counterError } = await supabase
+      .from("counters")
+      .select("current_count")
+      .eq("id", "order")
+      .eq("year", year)
+      .maybeSingle();
+
+    let currentCount = 1;
+
+    if (counterError) throw counterError;
+
+    if (counterData) {
+      // Increment existing counter
+      currentCount = counterData.current_count + 1;
+      const { error: updateError } = await supabase
+        .from("counters")
+        .update({ current_count: currentCount })
+        .eq("id", "order")
+        .eq("year", year);
+
+      if (updateError) throw updateError;
+    } else {
+      // Create new counter for this year
+      const { error: insertError } = await supabase
+        .from("counters")
+        .insert({ id: "order", year, current_count: 1 });
+
+      if (insertError) throw insertError;
+    }
+
+    // Generate formatted number
+    const padded = String(currentCount).padStart(3, "0");
+    orderData.number = `ENC-${year}/${padded}`;
+  }
+
   // Convert order data to snake_case
   const orderPayload = await toInsert(orderData);
 
