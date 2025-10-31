@@ -28,55 +28,46 @@ async function fetchOrders(): Promise<Order[]> {
         ...order,
         items: itemsData || [],
       };
-    })
+    }),
   );
 
   return orders.map(mapOrder);
 }
 
 async function deleteOrder(id: string) {
-  const { error } = await supabase
-    .from("orders")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-  
+  const { error } = await supabase.from("orders").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+
   if (error) throw error;
   return id;
 }
 
 async function createOrder(order: any) {
   const { items, ...orderData } = order;
-  
+
   // Convert total to total_amount if present
   if ("total" in orderData) {
     orderData.total_amount = orderData.total;
     delete orderData.total;
   }
-  
+
   // Convert order data to snake_case
-  const orderPayload = toInsert(orderData);
-  
-  const { data: newOrder, error } = await supabase
-    .from("orders")
-    .insert(orderPayload)
-    .select()
-    .single();
-  
+  const orderPayload = await toInsert(orderData);
+
+  const { data: newOrder, error } = await supabase.from("orders").insert(orderPayload).select().single();
+
   if (error) throw error;
-  
+
   if (items && items.length > 0) {
     const itemsWithOrderId = items.map((item: any) => ({
       ...camelToSnake(item),
       order_id: newOrder.id,
     }));
-    
-    const { error: itemsError } = await supabase
-      .from("order_items")
-      .insert(itemsWithOrderId);
-    
+
+    const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
+
     if (itemsError) throw itemsError;
   }
-  
+
   return newOrder;
 }
 
@@ -86,41 +77,33 @@ async function updateOrder({ id, items, ...updates }: any) {
     updates.total_amount = updates.total;
     delete updates.total;
   }
-  
+
   // Convert updates to snake_case
-  const updatePayload = toUpdate(updates);
-  
-  const { error } = await supabase
-    .from("orders")
-    .update(updatePayload)
-    .eq("id", id);
-  
+  const updatePayload = await toUpdate(updates);
+
+  const { error } = await supabase.from("orders").update(updatePayload).eq("id", id);
+
   if (error) throw error;
-  
+
   if (items !== undefined) {
     // Delete existing items
-    const { error: deleteError } = await supabase
-      .from("order_items")
-      .delete()
-      .eq("order_id", id);
-    
+    const { error: deleteError } = await supabase.from("order_items").delete().eq("order_id", id);
+
     if (deleteError) throw deleteError;
-    
+
     // Insert new items
     if (items.length > 0) {
       const itemsWithOrderId = items.map((item: any) => ({
         ...camelToSnake(item),
         order_id: id,
       }));
-      
-      const { error: insertError } = await supabase
-        .from("order_items")
-        .insert(itemsWithOrderId);
-      
+
+      const { error: insertError } = await supabase.from("order_items").insert(itemsWithOrderId);
+
       if (insertError) throw insertError;
     }
   }
-  
+
   return id;
 }
 
@@ -131,17 +114,17 @@ async function getOrderById(id: string) {
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
-  
+
   if (orderError) throw orderError;
   if (!orderData) return null;
-  
+
   const { data: itemsData, error: itemsError } = await supabase
     .from("order_items")
     .select("*")
     .eq("order_id", orderData.id);
-  
+
   if (itemsError) throw itemsError;
-  
+
   return mapOrder({
     ...orderData,
     items: itemsData || [],
