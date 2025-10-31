@@ -97,7 +97,7 @@ export default function ReportsDashboard() {
       yPos += 6;
     }
     if (data.products.lowestRotation) {
-      doc.text(`Menor Rotatividade: ${data.products.lowestRotation.name} (${formatCurrency(data.products.lowestRotation.revenue)})`, 25, yPos);
+      doc.text(`Menor Rotatividade: ${data.products.lowestRotation.name} (${formatCurrency(data.products.lowestRotation.total_revenue)})`, 25, yPos);
       yPos += 12;
     }
 
@@ -335,7 +335,7 @@ export default function ReportsDashboard() {
               <div className="p-4 rounded-lg bg-muted/50">
                 <p className="text-sm text-muted-foreground mb-1">🐢 Menor Rotatividade</p>
                 <p className="text-lg font-bold text-foreground">{products.lowestRotation.name}</p>
-                <p className="text-sm text-orange-600 font-semibold">{formatCurrency(products.lowestRotation.revenue)}</p>
+                <p className="text-sm text-orange-600 font-semibold">{formatCurrency(products.lowestRotation.total_revenue)}</p>
               </div>
             )}
           </div>
