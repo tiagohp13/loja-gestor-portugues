@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { subMonths } from "date-fns";
 
 interface AdminReportsParams {
   startDate: Date;
@@ -50,14 +50,14 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
       const from = startDate.toISOString();
       const to = endDate.toISOString();
 
-      // Calculate previous period for comparison
+      // 🔹 Previous period for comparison
       const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
       const previousStart = new Date(startDate);
       previousStart.setDate(previousStart.getDate() - periodDays);
       const previousEnd = new Date(endDate);
       previousEnd.setDate(previousEnd.getDate() - periodDays);
 
-      // Fetch stock exits (sales) for current period
+      // 🔹 Sales (stock_exits)
       const { data: exits, error: exitsError } = await supabase
         .from("stock_exits")
         .select(
@@ -66,11 +66,13 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
           date,
           client_id,
           discount,
+          status,
           stock_exit_items (
+            product_id,
+            product_name,
             quantity,
             sale_price,
-            discount_percent,
-            product_name
+            discount_percent
           )
         `,
         )
@@ -80,7 +82,7 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
 
       if (exitsError) throw exitsError;
 
-      // Fetch stock exits for previous period
+      // 🔹 Previous period sales
       const { data: previousExits } = await supabase
         .from("stock_exits")
         .select(
@@ -97,7 +99,7 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
         .lte("date", previousEnd.toISOString())
         .eq("status", "active");
 
-      // Fetch expenses
+      // 🔹 Expenses
       const { data: expenses, error: expensesError } = await supabase
         .from("expenses")
         .select(
@@ -116,7 +118,7 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
 
       if (expensesError) throw expensesError;
 
-      // Calculate total sales
+      // 🔹 Financial calculations
       const totalSales =
         exits?.reduce((sum, exit) => {
           const itemsTotal =
@@ -127,7 +129,6 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
           return sum + itemsTotal * (1 - (exit.discount || 0) / 100);
         }, 0) || 0;
 
-      // Calculate previous period sales
       const previousSales =
         previousExits?.reduce((sum, exit) => {
           const itemsTotal =
@@ -138,7 +139,6 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
           return sum + itemsTotal;
         }, 0) || 0;
 
-      // Calculate total expenses
       const totalExpenses =
         expenses?.reduce((sum, expense) => {
           const itemsTotal =
@@ -153,17 +153,15 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
       const averageMargin = totalSales > 0 ? (netProfit / totalSales) * 100 : 0;
       const salesVariation = previousSales > 0 ? ((totalSales - previousSales) / previousSales) * 100 : 0;
 
-      // Client Analysis
+      // 🔹 Clients
       const { data: allClients } = await supabase.from("clients").select("id, created_at").eq("status", "active");
 
       const newClients =
         allClients?.filter((c) => new Date(c.created_at) >= startDate && new Date(c.created_at) <= endDate).length || 0;
 
-      // Count unique clients from exits
       const uniqueClientIds = new Set(exits?.map((e) => e.client_id).filter(Boolean));
       const activeClients = uniqueClientIds.size;
 
-      // Recurrent clients (more than 1 purchase in period)
       const clientPurchaseCounts =
         exits?.reduce(
           (acc, exit) => {
@@ -177,7 +175,6 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
 
       const recurrentClients = Object.values(clientPurchaseCounts).filter((count) => count > 1).length;
 
-      // Inactive clients - clients with last purchase > 90 days ago
       const threeMonthsAgo = subMonths(new Date(), 3);
       const { data: recentExits } = await supabase
         .from("stock_exits")
@@ -189,42 +186,57 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
       const totalClients = allClients?.length || 0;
       const inactiveClients = totalClients - recentClientIds.size;
 
-      // ✅ Product Analysis (versão corrigida e filtrada)
-      const productSalesMap: Record<string, { revenue: number; quantity: number }> = {};
+      // 🔹 Product Analysis (agrupado por product_id)
+      type ProdAgg = { revenue: number; quantity: number; name: string };
+      const productAgg: Record<string, ProdAgg> = {};
 
-      exits?.forEach((exit) => {
+      exits
+        ?.filter(
+          (exit) =>
+            exit.date && new Date(exit.date) >= startDate && new Date(exit.date) <= endDate && exit.status === "active",
+        )
+        .forEach((exit) => {
           exit.stock_exit_items
-            ?.filter((item) => item.product_name && item.quantity > 0 && item.sale_price > 0)
+            ?.filter((item) => item && item.product_id && item.product_name && item.quantity > 0 && item.sale_price > 0)
             .forEach((item) => {
-              // Normalizar nome (trim e capitalização)
-              const name = item.product_name.trim();
+              const pid = String(item.product_id);
               const itemRevenue = item.quantity * item.sale_price * (1 - (item.discount_percent || 0) / 100);
 
-              if (!productSalesMap[name]) {
-                productSalesMap[name] = { revenue: 0, quantity: 0 };
+              if (!productAgg[pid]) {
+                productAgg[pid] = {
+                  revenue: 0,
+                  quantity: 0,
+                  name: item.product_name.trim(),
+                };
               }
 
-              productSalesMap[name].revenue += itemRevenue;
-              productSalesMap[name].quantity += item.quantity;
+              productAgg[pid].revenue += itemRevenue;
+              productAgg[pid].quantity += item.quantity;
+
+              const candidate = item.product_name.trim();
+              if (candidate.length > productAgg[pid].name.length) {
+                productAgg[pid].name = candidate;
+              }
             });
         });
 
-      const topProducts = Object.entries(productSalesMap)
-        .map(([name, data]) => ({ name, ...data }))
+      const topProducts = Object.entries(productAgg)
+        .map(([_, data]) => ({
+          name: data.name,
+          revenue: data.revenue,
+          quantity: data.quantity,
+        }))
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5);
 
-      const highestMargin =
-        topProducts.length > 0
-          ? { name: topProducts[0].name, margin: 45 } // Simplificado
-          : null;
+      const highestMargin = topProducts.length > 0 ? { name: topProducts[0].name, margin: 45 } : null;
 
       const lowestRotation =
-        Object.entries(productSalesMap)
-          .map(([name, data]) => ({ name, revenue: data.revenue }))
-          .sort((a, b) => a.revenue - b.revenue)[0] || null;
+        topProducts.length > 0
+          ? topProducts.map(({ name, revenue }) => ({ name, revenue })).sort((a, b) => a.revenue - b.revenue)[0]
+          : null;
 
-      // KPI Indicators
+      // 🔹 KPIs
       const totalOrders = exits?.length || 0;
       const totalItems =
         exits?.reduce((sum, exit) => {
@@ -234,6 +246,7 @@ export function useAdminReportsData({ startDate, endDate }: AdminReportsParams) 
       const averageItemsPerOrder = totalOrders > 0 ? totalItems / totalOrders : 0;
       const averageTicket = totalOrders > 0 ? totalSales / totalOrders : 0;
 
+      // 🔹 Final return
       return {
         financial: {
           totalSales,
