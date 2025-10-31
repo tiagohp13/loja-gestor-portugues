@@ -21,27 +21,31 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
 
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      {/* Título da página */}
+      {/* Título */}
       <PageHeader title={`Compra: ${entryNumber}`} description="Detalhes da compra" />
 
-      {/* Grupo de botões alinhado à direita */}
+      {/* Grupo de botões alinhados à direita */}
       <div className="flex flex-wrap justify-end gap-2">
-        {/* Editar */}
+        {/* PDF (vermelho Adobe) */}
+        <Button
+          size="sm"
+          onClick={onExportPdf}
+          className="flex items-center gap-2 bg-[#FF0000] hover:bg-[#cc0000] text-white"
+        >
+          <FileText className="h-4 w-4" />
+          PDF
+        </Button>
+
+        {/* Editar (mantém cor padrão) */}
         {!isDeleted && (
           <Button size="sm" onClick={() => navigate(`/entradas/editar/${id}`)}>
             Editar
           </Button>
         )}
 
-        {/* Exportar PDF */}
-        <Button variant="outline" size="sm" onClick={onExportPdf} className="flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          Exportar para PDF
-        </Button>
-
-        {/* ✅ Voltar à Lista (último e mais à direita) */}
+        {/* Voltar à Lista (branco/outline) */}
         <Button
-          variant="secondary"
+          variant="outline"
           size="sm"
           onClick={() => navigate("/entradas/historico")}
           className="flex items-center gap-2"
