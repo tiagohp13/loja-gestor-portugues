@@ -55,7 +55,7 @@ const PendingOrders: React.FC<PendingOrdersProps> = ({ pendingOrders, navigateTo
         if (dateA !== dateB) return dateB - dateA;
       }
 
-      return a.number.localeCompare(b.number, undefined, { numeric: true });
+      return (a.number || '').localeCompare(b.number || '', undefined, { numeric: true });
     });
   }, [pendingOrders]);
 
