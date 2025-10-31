@@ -6,7 +6,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield, BarChart2
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield, BarChart2, Database
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -126,6 +126,12 @@ const AppSidebar: React.FC = () => {
       label: 'Gestão de Papéis',
       icon: <Shield className="w-5 h-5" />,
       isActive: location.pathname.includes('/admin/roles')
+    },
+    {
+      path: '/admin/data',
+      label: 'Gestão de Dados',
+      icon: <Database className="w-5 h-5" />,
+      isActive: location.pathname.includes('/admin/data')
     }
   ];
 

@@ -81,6 +81,7 @@ import NotificationsList from './pages/notificacoes/NotificationsList';
 
 // Admin
 import RoleManagement from './pages/admin/RoleManagement';
+import DataManagement from './pages/admin/DataManagement';
 
 // Reports
 import ReportsDashboard from './pages/relatorios/ReportsDashboard';
@@ -177,6 +178,7 @@ function App() {
                     <Route path="/relatorios" element={<ReportsDashboard />} />
                     
                     <Route path="/admin/roles" element={<RoleManagement />} />
+                    <Route path="/admin/data" element={<DataManagement />} />
                     
                     <Route path="/suporte" element={<Support />} />
                   </Route>
