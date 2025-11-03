@@ -6,7 +6,6 @@ import { createClient } from "@supabase/supabase-js";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable"; // ✅ importação correta e compatível
 
 // ⚙️ Configuração do cliente Supabase (usa as tuas variáveis .env)
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL!, import.meta.env.VITE_SUPABASE_ANON_KEY!);
@@ -24,7 +23,7 @@ const StockBaixoPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🔍 Buscar produtos e filtrar localmente (corrige o erro do .lt)
+  // 🔍 Buscar produtos e filtrar localmente (sem erro .lt)
   useEffect(() => {
     const fetchProdutos = async () => {
       setLoading(true);
@@ -46,7 +45,7 @@ const StockBaixoPage: React.FC = () => {
     fetchProdutos();
   }, []);
 
-  // 📄 Exportar para PDF com cabeçalho e tabela formatada
+  // 📄 Exportar PDF (compatível sem jspdf-autotable)
   const exportarPDF = () => {
     if (produtos.length === 0) {
       toast.info("Não há produtos com stock baixo para exportar.");
@@ -61,16 +60,32 @@ const StockBaixoPage: React.FC = () => {
     doc.setFontSize(10);
     doc.text(`Gerado em: ${new Date().toLocaleString("pt-PT")}`, 40, 58);
 
-    // Tabela com jsPDF-AutoTable
-    autoTable(doc, {
-      startY: 75,
-      head: [["ID", "Produto", "Stock Atual", "Stock Mínimo", "Fornecedor"]],
-      body: produtos.map((p) => [p.id, p.nome, p.stock, p.stock_minimo, p.fornecedor || "—"]),
-      styles: { fontSize: 10, halign: "center" },
-      headStyles: { fillColor: [0, 102, 204], textColor: 255 },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
+    // Cabeçalhos da tabela
+    const startY = 80;
+    const lineHeight = 20;
+    const colX = [40, 100, 280, 400, 500];
+
+    doc.setFontSize(11);
+    doc.setFont("helvetica", "bold");
+    doc.text("ID", colX[0], startY);
+    doc.text("Produto", colX[1], startY);
+    doc.text("Stock Atual", colX[2], startY);
+    doc.text("Stock Mínimo", colX[3], startY);
+    doc.text("Fornecedor", colX[4], startY);
+
+    // Conteúdo
+    doc.setFont("helvetica", "normal");
+    let y = startY + 15;
+    produtos.forEach((p) => {
+      doc.text(String(p.id), colX[0], y);
+      doc.text(p.nome, colX[1], y);
+      doc.text(String(p.stock), colX[2], y);
+      doc.text(String(p.stock_minimo), colX[3], y);
+      doc.text(p.fornecedor || "—", colX[4], y);
+      y += lineHeight;
     });
 
+    // Guardar ficheiro
     doc.save("relatorio-stock-baixo.pdf");
     toast.success("PDF exportado com sucesso!");
   };
