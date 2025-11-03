@@ -7,15 +7,15 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 
-// ⚙️ Configuração do cliente Supabase (usa as tuas variáveis .env)
+// ⚙️ Configura o cliente Supabase (usa as tuas variáveis .env)
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL!, import.meta.env.VITE_SUPABASE_ANON_KEY!);
 
 interface Produto {
   id: number;
-  nome: string;
+  name: string; // no Supabase é "name"
   stock: number;
-  stock_minimo: number;
-  fornecedor?: string;
+  stock_minimo: number; // confirma o nome exato no Supabase (pode ser "min_stock")
+  supplier?: string; // pode ser null
 }
 
 const StockBaixoPage: React.FC = () => {
@@ -23,29 +23,32 @@ const StockBaixoPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🔍 Buscar produtos e filtrar localmente (sem erro .lt)
+  // 🔍 Buscar produtos e filtrar localmente
   useEffect(() => {
     const fetchProdutos = async () => {
       setLoading(true);
+
       const { data, error } = await supabase
-        .from("produtos")
-        .select("id, nome, stock, stock_minimo, fornecedor")
-        .order("nome", { ascending: true });
+        .from("products") // ✅ nome certo da tabela
+        .select("id, name, stock, stock_minimo, supplier")
+        .order("name", { ascending: true });
 
       if (error) {
         console.error("Erro ao carregar produtos:", error);
         toast.error("Erro ao carregar produtos com stock baixo");
       } else {
+        // Filtro local para stock abaixo do mínimo
         const filtrados = (data || []).filter((p) => p.stock < p.stock_minimo);
         setProdutos(filtrados);
       }
+
       setLoading(false);
     };
 
     fetchProdutos();
   }, []);
 
-  // 📄 Exportar PDF (compatível sem jspdf-autotable)
+  // 📄 Exportar para PDF (sem plugins externos)
   const exportarPDF = () => {
     if (produtos.length === 0) {
       toast.info("Não há produtos com stock baixo para exportar.");
@@ -78,10 +81,10 @@ const StockBaixoPage: React.FC = () => {
     let y = startY + 15;
     produtos.forEach((p) => {
       doc.text(String(p.id), colX[0], y);
-      doc.text(p.nome, colX[1], y);
+      doc.text(p.name, colX[1], y);
       doc.text(String(p.stock), colX[2], y);
       doc.text(String(p.stock_minimo), colX[3], y);
-      doc.text(p.fornecedor || "—", colX[4], y);
+      doc.text(p.supplier || "—", colX[4], y);
       y += lineHeight;
     });
 
@@ -124,10 +127,10 @@ const StockBaixoPage: React.FC = () => {
                       className={p.stock === 0 ? "bg-red-50 text-red-700" : "bg-yellow-50 text-yellow-700"}
                     >
                       <TableCell>{p.id}</TableCell>
-                      <TableCell className="font-medium">{p.nome}</TableCell>
+                      <TableCell className="font-medium">{p.name}</TableCell>
                       <TableCell>{p.stock}</TableCell>
                       <TableCell>{p.stock_minimo}</TableCell>
-                      <TableCell>{p.fornecedor || "—"}</TableCell>
+                      <TableCell>{p.supplier || "—"}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
