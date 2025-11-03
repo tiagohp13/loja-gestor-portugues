@@ -24,7 +24,7 @@ interface StockEntryTableProps {
   canDelete?: boolean;
 }
 
-const StockEntryTable: React.FC<StockEntryTableProps> = ({
+const StockEntryTable = React.memo<StockEntryTableProps>(({
   entries,
   sortField,
   sortOrder,
@@ -77,6 +77,8 @@ const StockEntryTable: React.FC<StockEntryTableProps> = ({
       </table>
     </div>
   );
-};
+});
+
+StockEntryTable.displayName = 'StockEntryTable';
 
 export default StockEntryTable;

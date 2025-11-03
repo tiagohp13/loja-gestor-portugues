@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUserFriendlyError } from "@/utils/errorUtils";
@@ -91,11 +91,11 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
     };
   }, []);
 
-  const findOrder = (id: string): Order | undefined => {
+  const findOrder = useCallback((id: string): Order | undefined => {
     return orders.find((order) => order.id === id);
-  };
+  }, [orders]);
 
-  const addOrder = async (order: Omit<Order, "id" | "number">) => {
+  const addOrder = useCallback(async (order: Omit<Order, "id" | "number">) => {
     try {
       const { data: orderNumberData, error: orderNumberError } = await supabase.rpc("get_next_counter", {
         counter_id: "order",
@@ -164,9 +164,9 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       toast.error(getUserFriendlyError(error, "Não foi possível criar a encomenda"));
       throw error;
     }
-  };
+  }, [orders]);
 
-  const updateOrder = async (id: string, order: Partial<Order>) => {
+  const updateOrder = useCallback(async (id: string, order: Partial<Order>) => {
     try {
       const { error } = await supabase
         .from("orders")
@@ -217,9 +217,9 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar a encomenda"));
       throw error;
     }
-  };
+  }, [orders]);
 
-  const deleteOrder = async (id: string) => {
+  const deleteOrder = useCallback(async (id: string) => {
     try {
       const { error } = await supabase.rpc("soft_delete_record", {
         table_name: "orders",
@@ -235,13 +235,13 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar a encomenda"));
       throw error;
     }
-  };
+  }, [orders]);
 
-  const refreshOrders = async () => {
+  const refreshOrders = useCallback(async () => {
     await fetchOrders();
-  };
+  }, []);
 
-  const convertOrderToStockExit = async (orderId: string, invoiceNumber?: string): Promise<StockExit | undefined> => {
+  const convertOrderToStockExit = useCallback(async (orderId: string, invoiceNumber?: string): Promise<StockExit | undefined> => {
     const order = orders.find((o) => o.id === orderId);
     if (!order) {
       toast.error("Encomenda não encontrada");
@@ -376,22 +376,22 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
       toast.error(getUserFriendlyError(error, "Não foi possível converter a encomenda"));
       throw error;
     }
-  };
+  }, [orders]);
+
+  const contextValue = useMemo(() => ({
+    orders,
+    setOrders,
+    addOrder,
+    updateOrder,
+    deleteOrder,
+    findOrder,
+    convertOrderToStockExit,
+    isLoading,
+    refreshOrders,
+  }), [orders, addOrder, updateOrder, deleteOrder, findOrder, convertOrderToStockExit, isLoading, refreshOrders]);
 
   return (
-    <OrdersContext.Provider
-      value={{
-        orders,
-        setOrders,
-        addOrder,
-        updateOrder,
-        deleteOrder,
-        findOrder,
-        convertOrderToStockExit,
-        isLoading,
-        refreshOrders,
-      }}
-    >
+    <OrdersContext.Provider value={contextValue}>
       {children}
     </OrdersContext.Provider>
   );

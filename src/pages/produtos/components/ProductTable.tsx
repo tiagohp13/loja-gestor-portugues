@@ -26,7 +26,7 @@ interface ProductTableProps {
   canDelete: boolean;
 }
 
-const ProductTable = ({
+const ProductTable = React.memo(({
   filteredProducts,
   sortField,
   sortDirection,
@@ -122,6 +122,8 @@ const ProductTable = ({
       </Table>
     </div>
   );
-};
+});
+
+ProductTable.displayName = 'ProductTable';
 
 export default ProductTable;

@@ -8,7 +8,7 @@ interface DashboardSummaryCardProps {
   cardData: DashboardCardData;
 }
 
-const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData }) => {
+const DashboardSummaryCard = React.memo<DashboardSummaryCardProps>(({ cardData }) => {
   const navigate = useNavigate();
   const { title, value, icon, navigateTo, iconColor, iconBackground } = cardData;
 
@@ -39,6 +39,8 @@ const DashboardSummaryCard: React.FC<DashboardSummaryCardProps> = ({ cardData })
       </CardContent>
     </Card>
   );
-};
+});
+
+DashboardSummaryCard.displayName = 'DashboardSummaryCard';
 
 export default DashboardSummaryCard;

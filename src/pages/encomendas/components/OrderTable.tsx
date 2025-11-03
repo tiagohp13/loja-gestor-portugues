@@ -27,7 +27,7 @@ interface OrderTableProps {
   onSortChange?: (field: string) => void;
 }
 
-const OrderTable: React.FC<OrderTableProps> = ({
+const OrderTable = React.memo<OrderTableProps>(({
   orders,
   onView,
   onEdit,
@@ -194,6 +194,8 @@ const OrderTable: React.FC<OrderTableProps> = ({
       </table>
     </div>
   );
-};
+});
+
+OrderTable.displayName = 'OrderTable';
 
 export default OrderTable;

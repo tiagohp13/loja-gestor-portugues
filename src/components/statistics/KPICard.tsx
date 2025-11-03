@@ -12,7 +12,7 @@ interface KPICardProps {
   onClick?: () => void;
 }
 
-const KPICard = ({ kpi, onClick }: KPICardProps) => {
+const KPICard = React.memo(({ kpi, onClick }: KPICardProps) => {
   const getTrendIcon = () => {
     if (kpi.isInverseKPI) {
       return kpi.value <= kpi.target ? (
@@ -138,6 +138,8 @@ const KPICard = ({ kpi, onClick }: KPICardProps) => {
       </Card>
     </TooltipProvider>
   );
-};
+});
+
+KPICard.displayName = 'KPICard';
 
 export default KPICard;

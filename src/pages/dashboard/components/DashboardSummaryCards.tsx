@@ -13,7 +13,7 @@ interface DashboardSummaryCardsProps {
   totalStockValue: number;
 }
 
-const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
+const DashboardSummaryCards = React.memo<DashboardSummaryCardsProps>(({
   products,
   clients,
   suppliers,
@@ -61,6 +61,8 @@ const DashboardSummaryCards: React.FC<DashboardSummaryCardsProps> = ({
       ))}
     </div>
   );
-};
+});
+
+DashboardSummaryCards.displayName = 'DashboardSummaryCards';
 
 export default DashboardSummaryCards;

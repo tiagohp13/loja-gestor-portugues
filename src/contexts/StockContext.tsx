@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUserFriendlyError } from "@/utils/errorUtils";
@@ -128,7 +128,7 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     };
   }, []);
 
-  const addStockEntry = async (entry: Omit<StockEntry, "id" | "number" | "createdAt">) => {
+  const addStockEntry = useCallback(async (entry: Omit<StockEntry, "id" | "number" | "createdAt">) => {
     try {
       const { data: entryNumberData, error: entryNumberError } = await supabase.rpc("get_next_counter", {
         counter_id: "entry",
@@ -224,9 +224,9 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast.error(getUserFriendlyError(error, "Não foi possível criar a compra"));
       throw error;
     }
-  };
+  }, []);
 
-  const updateStockEntry = async (id: string, entry: Partial<StockEntry>) => {
+  const updateStockEntry = useCallback(async (id: string, entry: Partial<StockEntry>) => {
     try {
       const { error } = await supabase
         .from("stock_entries")
@@ -249,9 +249,9 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar a compra"));
       throw error;
     }
-  };
+  }, [stockEntries]);
 
-  const deleteStockEntry = async (id: string) => {
+  const deleteStockEntry = useCallback(async (id: string) => {
     try {
       const { error } = await supabase.rpc("soft_delete_record", {
         table_name: "stock_entries",
@@ -267,9 +267,9 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar a compra"));
       throw error;
     }
-  };
+  }, [stockEntries]);
 
-  const addStockExit = async (exit: Omit<StockExit, "id" | "number" | "createdAt">) => {
+  const addStockExit = useCallback(async (exit: Omit<StockExit, "id" | "number" | "createdAt">) => {
     try {
       const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter", {
         counter_id: "exit",
@@ -388,9 +388,9 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast.error(getUserFriendlyError(error, "Não foi possível criar a venda"));
       throw error;
     }
-  };
+  }, []);
 
-  const updateStockExit = async (id: string, exit: Partial<StockExit>) => {
+  const updateStockExit = useCallback(async (id: string, exit: Partial<StockExit>) => {
     try {
       const { error } = await supabase
         .from("stock_exits")
@@ -413,9 +413,9 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar a venda"));
       throw error;
     }
-  };
+  }, [stockExits]);
 
-  const deleteStockExit = async (id: string) => {
+  const deleteStockExit = useCallback(async (id: string) => {
     try {
       const stockExit = stockExits.find((e) => e.id === id);
 
@@ -448,29 +448,29 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar a venda"));
       throw error;
     }
-  };
+  }, [stockExits]);
 
-  const refreshStock = async () => {
+  const refreshStock = useCallback(async () => {
     await Promise.all([fetchStockEntries(), fetchStockExits()]);
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    stockEntries,
+    stockExits,
+    setStockEntries,
+    setStockExits,
+    addStockEntry,
+    updateStockEntry,
+    deleteStockEntry,
+    addStockExit,
+    updateStockExit,
+    deleteStockExit,
+    isLoading,
+    refreshStock,
+  }), [stockEntries, stockExits, addStockEntry, updateStockEntry, deleteStockEntry, addStockExit, updateStockExit, deleteStockExit, isLoading, refreshStock]);
 
   return (
-    <StockContext.Provider
-      value={{
-        stockEntries,
-        stockExits,
-        setStockEntries,
-        setStockExits,
-        addStockEntry,
-        updateStockEntry,
-        deleteStockEntry,
-        addStockExit,
-        updateStockExit,
-        deleteStockExit,
-        isLoading,
-        refreshStock,
-      }}
-    >
+    <StockContext.Provider value={contextValue}>
       {children}
     </StockContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUserFriendlyError } from "@/utils/errorUtils";
@@ -69,15 +69,15 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, []);
 
-  const getProduct = (id: string): Product | undefined => {
+  const getProduct = useCallback((id: string): Product | undefined => {
     return products.find((product) => product.id === id);
-  };
+  }, [products]);
 
-  const findProduct = (id: string): Product | undefined => {
+  const findProduct = useCallback((id: string): Product | undefined => {
     return products.find((product) => product.id === id);
-  };
+  }, [products]);
 
-  const addProduct = async (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
+  const addProduct = useCallback(async (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
     try {
       const { data, error } = await supabase
         .from("products")
@@ -111,9 +111,9 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast.error(getUserFriendlyError(error, "Não foi possível criar o produto"));
       throw error;
     }
-  };
+  }, [products]);
 
-  const updateProduct = async (id: string, product: Partial<Product>) => {
+  const updateProduct = useCallback(async (id: string, product: Partial<Product>) => {
     try {
       const updateData: any = {};
 
@@ -139,9 +139,9 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar o produto"));
       throw error;
     }
-  };
+  }, [products]);
 
-  const deleteProduct = async (id: string) => {
+  const deleteProduct = useCallback(async (id: string) => {
     try {
       const { error } = await supabase.rpc("soft_delete_record", {
         table_name: "products",
@@ -157,26 +157,26 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar o produto"));
       throw error;
     }
-  };
+  }, [products]);
 
-  const refreshProducts = async () => {
+  const refreshProducts = useCallback(async () => {
     await fetchProducts();
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    products,
+    setProducts,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    getProduct,
+    findProduct,
+    isLoading,
+    refreshProducts,
+  }), [products, addProduct, updateProduct, deleteProduct, getProduct, findProduct, isLoading, refreshProducts]);
 
   return (
-    <ProductsContext.Provider
-      value={{
-        products,
-        setProducts,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        getProduct,
-        findProduct,
-        isLoading,
-        refreshProducts,
-      }}
-    >
+    <ProductsContext.Provider value={contextValue}>
       {children}
     </ProductsContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { getUserFriendlyError } from "@/utils/errorUtils";
@@ -69,15 +69,15 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
     };
   }, []);
 
-  const getClient = (id: string): Client | undefined => {
+  const getClient = useCallback((id: string): Client | undefined => {
     return clients.find((client) => client.id === id);
-  };
+  }, [clients]);
 
-  const findClient = (id: string): Client | undefined => {
+  const findClient = useCallback((id: string): Client | undefined => {
     return clients.find((client) => client.id === id);
-  };
+  }, [clients]);
 
-  const addClient = async (client: Omit<Client, "id" | "createdAt" | "updatedAt">) => {
+  const addClient = useCallback(async (client: Omit<Client, "id" | "createdAt" | "updatedAt">) => {
     try {
       const { data, error } = await supabase
         .from("clients")
@@ -108,9 +108,9 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
       toast.error(getUserFriendlyError(error, "Não foi possível criar o cliente"));
       throw error;
     }
-  };
+  }, [clients]);
 
-  const updateClient = async (id: string, client: Partial<Client>) => {
+  const updateClient = useCallback(async (id: string, client: Partial<Client>) => {
     try {
       const { error } = await supabase
         .from("clients")
@@ -134,9 +134,9 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar o cliente"));
       throw error;
     }
-  };
+  }, [clients]);
 
-  const deleteClient = async (id: string) => {
+  const deleteClient = useCallback(async (id: string) => {
     try {
       const { error } = await supabase.rpc("soft_delete_record", {
         table_name: "clients",
@@ -152,26 +152,26 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar o cliente"));
       throw error;
     }
-  };
+  }, [clients]);
 
-  const refreshClients = async () => {
+  const refreshClients = useCallback(async () => {
     await fetchClients();
-  };
+  }, []);
+
+  const contextValue = useMemo(() => ({
+    clients,
+    setClients,
+    addClient,
+    updateClient,
+    deleteClient,
+    getClient,
+    findClient,
+    isLoading,
+    refreshClients,
+  }), [clients, addClient, updateClient, deleteClient, getClient, findClient, isLoading, refreshClients]);
 
   return (
-    <ClientsContext.Provider
-      value={{
-        clients,
-        setClients,
-        addClient,
-        updateClient,
-        deleteClient,
-        getClient,
-        findClient,
-        isLoading,
-        refreshClients,
-      }}
-    >
+    <ClientsContext.Provider value={contextValue}>
       {children}
     </ClientsContext.Provider>
   );

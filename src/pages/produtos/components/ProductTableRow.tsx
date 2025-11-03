@@ -17,7 +17,7 @@ interface ProductTableRowProps {
   canDelete: boolean;
 }
 
-const ProductTableRow = ({
+const ProductTableRow = React.memo(({
   product,
   onViewProduct,
   onViewHistory,
@@ -100,6 +100,8 @@ const ProductTableRow = ({
       </TableCell>
     </TableRow>
   );
-};
+});
+
+ProductTableRow.displayName = 'ProductTableRow';
 
 export default ProductTableRow;
