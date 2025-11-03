@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
@@ -6,7 +5,8 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield, BarChart2, Database
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, 
+  Shield, BarChart2, Database
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -138,6 +138,12 @@ const AppSidebar: React.FC = () => {
       label: 'Relatórios',
       icon: <BarChart2 className="w-5 h-5" />,
       isActive: location.pathname.includes('/relatorios')
+    },
+    {
+      path: '/admin/stock-baixo',
+      label: 'Stock Baixo',
+      icon: <Package className="w-5 h-5" />,
+      isActive: location.pathname.includes('/admin/stock-baixo')
     }
   ];
 
