@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,6 +23,7 @@ interface GroupedRecords {
   [key: string]: DeletedRecord[];
 }
 const Reciclagem = () => {
+  const queryClient = useQueryClient();
   const [deletedRecords, setDeletedRecords] = useState<DeletedRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRestoring, setIsRestoring] = useState<string | null>(null);
@@ -110,6 +112,21 @@ const Reciclagem = () => {
         return;
       }
       toast.success(`${tableTypeLabels[record.table_type]?.label || 'Registo'} restaurado com sucesso`);
+      
+      // Invalidate all relevant queries to ensure UI updates immediately
+      // Invalidate specific table query
+      await queryClient.invalidateQueries({ queryKey: [getQueryKeyForTable(record.table_type)] });
+      
+      // Invalidate dashboard if it's orders, stock_exits, or stock_entries
+      if (['orders', 'stock_exits', 'stock_entries'].includes(record.table_type)) {
+        await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
+      }
+      
+      // Invalidate products query if related
+      if (['products', 'categories', 'stock_entries', 'stock_exits', 'orders'].includes(record.table_type)) {
+        await queryClient.invalidateQueries({ queryKey: ["products"] });
+      }
+      
       await fetchDeletedRecords(); // Refresh the list
     } catch (error) {
       console.error('Error restoring record:', error);
@@ -170,6 +187,21 @@ const Reciclagem = () => {
   };
   const handleCloseRecordModal = () => {
     setSelectedRecord(null);
+  };
+  
+  // Helper function to get the correct query key for each table type
+  const getQueryKeyForTable = (tableType: string): string => {
+    const queryKeyMap: { [key: string]: string } = {
+      products: 'products',
+      categories: 'categories',
+      clients: 'clients',
+      suppliers: 'suppliers',
+      orders: 'orders',
+      stock_entries: 'stock-entries',
+      stock_exits: 'stock-exits',
+      expenses: 'expenses'
+    };
+    return queryKeyMap[tableType] || tableType;
   };
   if (isLoading) {
     return <div className="p-6">
