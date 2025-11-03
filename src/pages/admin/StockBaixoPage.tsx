@@ -6,9 +6,9 @@ import { createClient } from "@supabase/supabase-js";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable"; // ✅ importação correta e compatível
 
-// ⚙️ Configura o cliente Supabase (ou importa do teu módulo se já tiveres um pronto)
+// ⚙️ Configuração do cliente Supabase (usa as tuas variáveis .env)
 const supabase = createClient(import.meta.env.VITE_SUPABASE_URL!, import.meta.env.VITE_SUPABASE_ANON_KEY!);
 
 interface Produto {
@@ -24,7 +24,7 @@ const StockBaixoPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  // 🔍 Buscar produtos e filtrar localmente
+  // 🔍 Buscar produtos e filtrar localmente (corrige o erro do .lt)
   useEffect(() => {
     const fetchProdutos = async () => {
       setLoading(true);
@@ -46,30 +46,29 @@ const StockBaixoPage: React.FC = () => {
     fetchProdutos();
   }, []);
 
-  // 📄 Exportar para PDF
+  // 📄 Exportar para PDF com cabeçalho e tabela formatada
   const exportarPDF = () => {
     if (produtos.length === 0) {
       toast.info("Não há produtos com stock baixo para exportar.");
       return;
     }
 
-    const doc = new jsPDF();
+    const doc = new jsPDF({ orientation: "portrait", unit: "pt", format: "a4" });
 
     // Cabeçalho
-    doc.setFontSize(16);
-    doc.text("Relatório de Stock Baixo", 14, 20);
+    doc.setFontSize(18);
+    doc.text("Relatório de Stock Baixo", 40, 40);
     doc.setFontSize(10);
-    doc.text(`Gerado em: ${new Date().toLocaleDateString()}`, 14, 28);
+    doc.text(`Gerado em: ${new Date().toLocaleString("pt-PT")}`, 40, 58);
 
-    // Tabela
-    const rows = produtos.map((p) => [p.id, p.nome, p.stock, p.stock_minimo, p.fornecedor || "—"]);
-
-    (doc as any).autoTable({
+    // Tabela com jsPDF-AutoTable
+    autoTable(doc, {
+      startY: 75,
       head: [["ID", "Produto", "Stock Atual", "Stock Mínimo", "Fornecedor"]],
-      body: rows,
-      startY: 35,
-      styles: { fontSize: 10 },
-      headStyles: { fillColor: [0, 102, 204] },
+      body: produtos.map((p) => [p.id, p.nome, p.stock, p.stock_minimo, p.fornecedor || "—"]),
+      styles: { fontSize: 10, halign: "center" },
+      headStyles: { fillColor: [0, 102, 204], textColor: 255 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
     });
 
     doc.save("relatorio-stock-baixo.pdf");
@@ -105,7 +104,10 @@ const StockBaixoPage: React.FC = () => {
                 </TableHeader>
                 <TableBody>
                   {produtos.map((p) => (
-                    <TableRow key={p.id} className={p.stock === 0 ? "bg-red-50" : "bg-yellow-50"}>
+                    <TableRow
+                      key={p.id}
+                      className={p.stock === 0 ? "bg-red-50 text-red-700" : "bg-yellow-50 text-yellow-700"}
+                    >
                       <TableCell>{p.id}</TableCell>
                       <TableCell className="font-medium">{p.nome}</TableCell>
                       <TableCell>{p.stock}</TableCell>
