@@ -147,7 +147,7 @@ export const fetchAllDashboardData = async () => {
     monthlyExpenses
   ] = await Promise.all([
     supabase.from('products').select('*').eq('status', 'active').order('name'),
-    supabase.from('orders').select('*, items:order_items(*)').eq('status', 'active').order('created_at', { ascending: false }),
+    supabase.from('orders').select('*, items:order_items(*)').is('deleted_at', null).order('created_at', { ascending: false }),
     supabase.from('stock_exits').select('*, items:stock_exit_items(*)').eq('status', 'active').order('date', { ascending: false }),
     supabase.from('stock_entries').select('*, items:stock_entry_items(*)').eq('status', 'active').order('date', { ascending: false }),
     supabase.from('clients').select('*').eq('status', 'active').order('name'),
@@ -235,7 +235,7 @@ export const fetchAllDashboardData = async () => {
 
   // Find orders with insufficient stock
   const insufficientStockItems = orders.reduce((acc: any[], order) => {
-    if (order.convertedToStockExitId || order.status === "deleted") return acc;
+    if (order.convertedToStockExitId) return acc;
     order.items?.forEach((item: any) => {
       const product = products.find((p) => p.id === item.productId);
       if (product && product.currentStock < item.quantity) {
@@ -245,8 +245,8 @@ export const fetchAllDashboardData = async () => {
     return acc;
   }, []);
 
-  // Filter pending orders
-  const pendingOrders = orders.filter((order) => !order.convertedToStockExitId && order.status !== "deleted");
+  // Filter pending orders (already filtered by deleted_at in query)
+  const pendingOrders = orders.filter((order) => !order.convertedToStockExitId);
 
   return {
     products,

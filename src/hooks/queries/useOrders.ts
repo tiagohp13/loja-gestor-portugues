@@ -187,6 +187,7 @@ export function useOrdersQuery() {
       toast.success("Encomenda eliminada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar encomenda"),
   });
