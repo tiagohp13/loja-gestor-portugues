@@ -110,7 +110,7 @@ const ProductList = () => {
         }
       />
 
-      <RecordCount title="Total de produtos" count={allProducts.length} icon={Package} />
+      <RecordCount title="Total de produtos" count={totalCount} icon={Package} />
 
       <div className="bg-card rounded-lg shadow p-6 mt-6">
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
@@ -169,38 +169,11 @@ const ProductList = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <SortableTableHeader
-                  column="code"
-                  label="Código"
-                  sortDirection={getSortIcon("code")}
-                  onSort={handleSort}
-                />
-                <SortableTableHeader
-                  column="name"
-                  label="Produto"
-                  sortDirection={getSortIcon("name")}
-                  onSort={handleSort}
-                />
-                <SortableTableHeader
-                  column="category"
-                  label="Categoria"
-                  sortDirection={getSortIcon("category")}
-                  onSort={handleSort}
-                />
-                <SortableTableHeader
-                  column="currentStock"
-                  label="Stock"
-                  sortDirection={getSortIcon("currentStock")}
-                  onSort={handleSort}
-                />
-                <SortableTableHeader
-                  column="salePrice"
-                  label="Preço Sugerido"
-                  sortDirection={getSortIcon("salePrice")}
-                  onSort={handleSort}
-                />
-
-                {/* ✅ Cabeçalho “Ações” alinhado mais ao centro */}
+                <TableCell>Código</TableCell>
+                <TableCell>Produto</TableCell>
+                <TableCell>Categoria</TableCell>
+                <TableCell>Stock</TableCell>
+                <TableCell>Preço Sugerido</TableCell>
                 <TableCell className="text-center pr-4 w-[220px]">Ações</TableCell>
               </TableRow>
             </TableHeader>
