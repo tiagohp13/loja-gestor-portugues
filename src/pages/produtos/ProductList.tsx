@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/ui/PageHeader";
 import RecordCount from "@/components/common/RecordCount";
-import SortableTableHeader from "@/components/ui/SortableTableHeader";
-import { useSortableProducts } from "@/hooks/useSortableProducts";
 import ProductTableRow from "./components/ProductTableRow";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,15 +13,23 @@ import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
-import { useProductsQuery } from "@/hooks/queries/useProducts";
+import { usePaginatedProducts } from "@/hooks/queries/usePaginatedProducts";
 import { useCategoriesQuery } from "@/hooks/queries/useCategories";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const ProductList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [currentPage, setCurrentPage] = useState(0);
   const { categories } = useCategoriesQuery();
-  const { deleteProduct } = useProductsQuery();
-  const { products: allProducts, isLoading, handleSort, getSortIcon } = useSortableProducts();
+  const { products: allProducts, totalCount, totalPages, isLoading, deleteProduct } = usePaginatedProducts(currentPage);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL_CATEGORIES");
   const { canCreate, canEdit, canDelete } = usePermissions();
@@ -229,6 +235,39 @@ const ProductList = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center mt-6">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                    className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <PaginationItem key={i}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(i)}
+                      isActive={currentPage === i}
+                      className="cursor-pointer"
+                    >
+                      {i + 1}
+                    </PaginationLink>
+                  </PaginationItem>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                    className={currentPage === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </div>
     </div>
   );

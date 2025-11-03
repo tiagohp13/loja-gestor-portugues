@@ -13,15 +13,22 @@ import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
-import { useSortableOrders } from "@/hooks/useSortableOrders";
 import TableSkeleton from "@/components/ui/TableSkeleton";
-import { useOrdersQuery } from "@/hooks/queries/useOrders";
+import { usePaginatedOrders } from "@/hooks/queries/usePaginatedOrders";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 const OrderList = () => {
   const navigate = useNavigate();
   const { canCreate, canEdit, canDelete } = usePermissions();
-  const { deleteOrder } = useOrdersQuery();
-  const { orders, isLoading } = useSortableOrders();
+  const [currentPage, setCurrentPage] = useState(0);
+  const { orders, totalCount, totalPages, isLoading, deleteOrder } = usePaginatedOrders(currentPage);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; orderId: string | null }>({
@@ -312,6 +319,39 @@ const OrderList = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => setCurrentPage(Math.max(0, currentPage - 1))}
+                  className={currentPage === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+              {Array.from({ length: totalPages }, (_, i) => (
+                <PaginationItem key={i}>
+                  <PaginationLink
+                    onClick={() => setCurrentPage(i)}
+                    isActive={currentPage === i}
+                    className="cursor-pointer"
+                  >
+                    {i + 1}
+                  </PaginationLink>
+                </PaginationItem>
+              ))}
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => setCurrentPage(Math.min(totalPages - 1, currentPage + 1))}
+                  className={currentPage === totalPages - 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 };
