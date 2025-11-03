@@ -109,12 +109,19 @@ const AdminUserManagement: React.FC = () => {
       return;
     }
     try {
-      // Delete from user_profiles first
+      // Soft delete: mark user profile as deleted instead of removing permanently
       const {
         error: profileError
-      } = await supabase.from('user_profiles').delete().eq('user_id', userId);
+      } = await supabase
+        .from('user_profiles')
+        .update({ 
+          access_level: 'viewer', // Downgrade permissions
+          name: '[Utilizador Removido]'
+        })
+        .eq('user_id', userId);
+        
       if (profileError) {
-        console.error('Error deleting user profile:', profileError);
+        console.error('Error updating user profile:', profileError);
         throw profileError;
       }
 
