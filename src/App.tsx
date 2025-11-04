@@ -88,6 +88,10 @@ import AdminRoute from './components/layouts/AdminRoute';
 // Reports
 import ReportsDashboard from './pages/relatorios/ReportsDashboard';
 
+// Requisições
+import RequisicoesList from './pages/requisicoes/RequisicoesList';
+import StockBaixoPage from './pages/admin/StockBaixoPage';
+
 // Error pages
 import NotFound from './pages/NotFound';
 
@@ -151,6 +155,8 @@ function App() {
                     <Route path="/fornecedores/:id" element={<SupplierDetail />} />
                     <Route path="/fornecedores/editar/:id" element={<SupplierEdit />} />
                     
+                    <Route path="/requisicoes" element={<RequisicoesList />} />
+                    
                     <Route path="/encomendas/consultar" element={<OrderList />} />
                     <Route path="/encomendas/nova" element={<OrderNew />} />
                     <Route path="/encomendas/:id" element={<OrderDetail />} />
@@ -186,8 +192,17 @@ function App() {
                       } 
                     />
                     
+                    <Route 
+                      path="/admin/stock-baixo" 
+                      element={
+                        <AdminRoute>
+                          <StockBaixoPage />
+                        </AdminRoute>
+                      } 
+                    />
+                    
                     <Route
-                      path="/admin/roles" 
+                      path="/admin/roles"
                       element={
                         <AdminRoute>
                           <RoleManagement />

@@ -64,9 +64,15 @@ const AppSidebar: React.FC = () => {
       isActive: location.pathname.includes('/fornecedores')
     },
     { 
+      path: '/requisicoes', 
+      label: 'Requisições', 
+      icon: <ClipboardList className="w-5 h-5" />,
+      isActive: location.pathname.includes('/requisicoes')
+    },
+    { 
       path: '/encomendas/consultar', 
       label: 'Encomendas', 
-      icon: <ClipboardList className="w-5 h-5" />,
+      icon: <ShoppingCart className="w-5 h-5" />,
       isActive: location.pathname.includes('/encomendas')
     },
     { 
@@ -115,6 +121,12 @@ const AppSidebar: React.FC = () => {
 
   // Items apenas para administradores
   const adminItems = [
+    {
+      path: '/admin/stock-baixo',
+      label: 'Stock Baixo',
+      icon: <Package className="w-5 h-5" />,
+      isActive: location.pathname.includes('/admin/stock-baixo')
+    },
     {
       path: '/admin/roles',
       label: 'Gestão de Papéis',

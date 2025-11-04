@@ -469,6 +469,110 @@ export type Database = {
         }
         Relationships: []
       }
+      requisicao_itens: {
+        Row: {
+          created_at: string
+          id: string
+          origem: string
+          produto_id: string | null
+          produto_nome: string
+          quantidade: number
+          requisicao_id: string
+          stock_atual: number
+          stock_minimo: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          origem?: string
+          produto_id?: string | null
+          produto_nome: string
+          quantidade?: number
+          requisicao_id: string
+          stock_atual?: number
+          stock_minimo?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          origem?: string
+          produto_id?: string | null
+          produto_nome?: string
+          quantidade?: number
+          requisicao_id?: string
+          stock_atual?: number
+          stock_minimo?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicao_itens_produto_id_fkey"
+            columns: ["produto_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisicao_itens_requisicao_id_fkey"
+            columns: ["requisicao_id"]
+            isOneToOne: false
+            referencedRelation: "requisicoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      requisicoes: {
+        Row: {
+          created_at: string
+          data: string
+          deleted_at: string | null
+          estado: string
+          fornecedor_id: string | null
+          fornecedor_nome: string
+          id: string
+          numero: string
+          observacoes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data?: string
+          deleted_at?: string | null
+          estado?: string
+          fornecedor_id?: string | null
+          fornecedor_nome: string
+          id?: string
+          numero: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          deleted_at?: string | null
+          estado?: string
+          fornecedor_id?: string | null
+          fornecedor_nome?: string
+          id?: string
+          numero?: string
+          observacoes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "requisicoes_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_entries: {
         Row: {
           created_at: string
@@ -883,10 +987,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_old_deleted_records: { Args: never; Returns: number }
-      duplicate_order: {
-        Args: { order_id_to_duplicate: string }
-        Returns: string
-      }
+      duplicate_order: { Args: { order_id: string }; Returns: string }
       generate_padded_sequence:
         | {
             Args: { items: Json; prefix?: string }
@@ -902,20 +1003,42 @@ export type Database = {
               new_number: string
             }[]
           }
-      get_deleted_records: {
-        Args: never
+      get_client_activity: {
+        Args: { end_date: string; start_date: string }
         Returns: {
-          additional_info: Json
-          deleted_at: string
-          id: string
-          name: string
-          table_type: string
+          active_clients: number
+          inactive_clients: number
+          new_clients: number
+          recurrent_clients: number
         }[]
       }
-      get_next_counter: { Args: { counter_id: string }; Returns: string }
+      get_deleted_records:
+        | { Args: { table_name: string }; Returns: Record<string, unknown>[] }
+        | {
+            Args: never
+            Returns: {
+              additional_info: Json
+              deleted_at: string
+              id: string
+              name: string
+              table_type: string
+            }[]
+          }
+      get_financial_summary: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          average_margin: number
+          net_profit: number
+          previous_sales: number
+          sales_variation: number
+          total_expenses: number
+          total_sales: number
+        }[]
+      }
+      get_next_counter: { Args: { counter_type: string }; Returns: number }
       get_next_counter_by_year: {
-        Args: { counter_id: string; target_year: number }
-        Returns: string
+        Args: { counter_type: string; p_year: number }
+        Returns: number
       }
       get_order_items: {
         Args: { p_order_id: string }
@@ -942,6 +1065,14 @@ export type Database = {
           order_number: string
           status: string
           updated_at: string
+        }[]
+      }
+      get_product_performance: {
+        Args: { end_date: string; start_date: string }
+        Returns: {
+          product_name: string
+          total_quantity: number
+          total_revenue: number
         }[]
       }
       get_stock_entries: {
@@ -1052,15 +1183,15 @@ export type Database = {
       }
       permanent_delete_record: {
         Args: { record_id: string; table_name: string }
-        Returns: boolean
+        Returns: undefined
       }
       restore_record: {
         Args: { record_id: string; table_name: string }
-        Returns: boolean
+        Returns: undefined
       }
       soft_delete_record: {
         Args: { record_id: string; table_name: string }
-        Returns: boolean
+        Returns: undefined
       }
       table_exists:
         | {
