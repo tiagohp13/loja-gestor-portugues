@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ClipboardList, FileDown, X, CheckCircle, Pencil, Trash2 } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao } from "@/types/requisicao";
@@ -22,10 +22,11 @@ const estadoBadge = {
 export default function RequisicoesList() {
   const { requisicoes, isLoading, updateEstado, deleteRequisicao } = useRequisicoesQuery();
   const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editableItems, setEditableItems] = useState<any[]>([]);
 
   const handleExportPdf = async () => {
     if (!selectedRequisicao) return;
-
     const container = document.createElement("div");
     container.className = "pdf-content p-8";
     container.innerHTML = `
@@ -33,70 +34,28 @@ export default function RequisicoesList() {
         <div class="text-center mb-8">
           <h1 class="text-2xl font-bold">Requisição ${selectedRequisicao.numero}</h1>
         </div>
-        
-        <div class="grid grid-cols-2 gap-4 mb-6">
-          <div>
-            <p class="text-sm text-gray-600">Fornecedor</p>
-            <p class="font-semibold">${selectedRequisicao.fornecedorNome}</p>
-          </div>
-          <div>
-            <p class="text-sm text-gray-600">Data</p>
-            <p class="font-semibold">${format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
-          </div>
-        </div>
-
-        <table class="w-full border-collapse">
-          <thead>
-            <tr class="border-b-2">
-              <th class="text-left py-2">Produto</th>
-              <th class="text-right py-2">Quantidade</th>
-              <th class="text-right py-2">Stock Atual</th>
-              <th class="text-right py-2">Stock Mínimo</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${
-              selectedRequisicao.items
-                ?.map(
-                  (item) => `
-              <tr class="border-b">
-                <td class="py-2">${item.produtoNome}</td>
-                <td class="text-right py-2">${item.quantidade}</td>
-                <td class="text-right py-2">${item.stockAtual}</td>
-                <td class="text-right py-2">${item.stockMinimo}</td>
-              </tr>
-            `,
-                )
-                .join("") || ""
-            }
-          </tbody>
-        </table>
-
-        ${
-          selectedRequisicao.observacoes
-            ? `
-          <div class="mt-6">
-            <p class="text-sm text-gray-600">Observações</p>
-            <p class="mt-1">${selectedRequisicao.observacoes}</p>
-          </div>
-        `
-            : ""
-        }
       </div>
     `;
-
     document.body.appendChild(container);
-
     try {
-      await exportToPdf({
-        filename: `requisicao-${selectedRequisicao.numero}`,
-        contentSelector: ".pdf-content",
-      });
+      await exportToPdf({ filename: `requisicao-${selectedRequisicao.numero}`, contentSelector: ".pdf-content" });
       toast.success("PDF exportado com sucesso");
-    } catch (error) {
+    } catch {
       toast.error("Erro ao exportar PDF");
     } finally {
       document.body.removeChild(container);
+    }
+  };
+
+  const handleEdit = (req: Requisicao) => {
+    setSelectedRequisicao(req);
+    setEditableItems(req.items ? [...req.items] : []);
+    setIsEditing(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tens a certeza que queres eliminar esta requisição?")) {
+      deleteRequisicao(id);
     }
   };
 
@@ -120,14 +79,35 @@ export default function RequisicoesList() {
     );
   };
 
-  const handleEdit = (req: Requisicao) => {
-    setSelectedRequisicao(req);
+  const handleItemChange = (index: number, field: string, value: any) => {
+    const updated = [...editableItems];
+    updated[index] = { ...updated[index], [field]: value };
+    setEditableItems(updated);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Tens a certeza que queres eliminar esta requisição?")) {
-      deleteRequisicao(id);
-    }
+  const handleAddItem = () => {
+    setEditableItems([
+      ...editableItems,
+      {
+        id: Math.random().toString(36).substring(2),
+        produtoNome: "",
+        quantidade: 1,
+        stockAtual: 0,
+        stockMinimo: 0,
+        origem: "manual",
+      },
+    ]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const updated = [...editableItems];
+    updated.splice(index, 1);
+    setEditableItems(updated);
+  };
+
+  const handleSaveChanges = async () => {
+    toast.success("Alterações guardadas (simulação) — aqui vais integrar com Supabase UPDATE.");
+    setIsEditing(false);
   };
 
   if (isLoading) {
@@ -162,7 +142,10 @@ export default function RequisicoesList() {
                   <TableRow
                     key={req.id}
                     className="cursor-pointer hover:bg-accent"
-                    onClick={() => setSelectedRequisicao(req)}
+                    onClick={() => {
+                      setSelectedRequisicao(req);
+                      setIsEditing(false);
+                    }}
                   >
                     <TableCell className="font-medium">{req.numero}</TableCell>
                     <TableCell>{req.fornecedorNome}</TableCell>
@@ -172,11 +155,9 @@ export default function RequisicoesList() {
                         {estadoBadge[req.estado].label}
                       </Badge>
                     </TableCell>
-
-                    {/* 🔹 NOVA COLUNA DE AÇÕES */}
                     <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(req)} title="Ver Detalhes">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(req)} title="Editar">
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
                         <Button variant="ghost" size="icon" onClick={() => handleDelete(req.id)} title="Eliminar">
@@ -192,11 +173,15 @@ export default function RequisicoesList() {
         </CardContent>
       </Card>
 
-      {/* Dialog de detalhe */}
+      {/* Dialog de detalhe/edição */}
       <Dialog open={!!selectedRequisicao} onOpenChange={() => setSelectedRequisicao(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Requisição {selectedRequisicao?.numero}</DialogTitle>
+            <DialogTitle>
+              {isEditing
+                ? `Editar Requisição ${selectedRequisicao?.numero}`
+                : `Requisição ${selectedRequisicao?.numero}`}
+            </DialogTitle>
           </DialogHeader>
 
           {selectedRequisicao && (
@@ -210,15 +195,6 @@ export default function RequisicoesList() {
                   <p className="text-sm text-muted-foreground">Data</p>
                   <p className="font-semibold">{format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Estado</p>
-                  <Badge
-                    variant={estadoBadge[selectedRequisicao.estado].variant}
-                    className={estadoBadge[selectedRequisicao.estado].className}
-                  >
-                    {estadoBadge[selectedRequisicao.estado].label}
-                  </Badge>
-                </div>
               </div>
 
               <div>
@@ -230,50 +206,86 @@ export default function RequisicoesList() {
                       <TableHead className="text-right">Quantidade</TableHead>
                       <TableHead className="text-right">Stock Atual</TableHead>
                       <TableHead className="text-right">Stock Mínimo</TableHead>
-                      <TableHead>Origem</TableHead>
+                      {isEditing && <TableHead>Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {selectedRequisicao.items?.map((item) => (
+                    {(isEditing ? editableItems : selectedRequisicao.items)?.map((item, index) => (
                       <TableRow key={item.id}>
-                        <TableCell>{item.produtoNome}</TableCell>
-                        <TableCell className="text-right">{item.quantidade}</TableCell>
+                        <TableCell>
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={item.produtoNome}
+                              onChange={(e) => handleItemChange(index, "produtoNome", e.target.value)}
+                              className="w-full border rounded px-2 py-1"
+                            />
+                          ) : (
+                            item.produtoNome
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {isEditing ? (
+                            <input
+                              type="number"
+                              value={item.quantidade}
+                              onChange={(e) => handleItemChange(index, "quantidade", Number(e.target.value))}
+                              className="w-20 border rounded px-2 py-1 text-right"
+                            />
+                          ) : (
+                            item.quantidade
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">{item.stockAtual}</TableCell>
                         <TableCell className="text-right">{item.stockMinimo}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{item.origem === "stock_baixo" ? "Stock Baixo" : "Manual"}</Badge>
-                        </TableCell>
+                        {isEditing && (
+                          <TableCell>
+                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} title="Remover">
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
+                {isEditing && (
+                  <Button variant="outline" size="sm" onClick={handleAddItem} className="mt-2">
+                    <Plus className="h-4 w-4 mr-2" /> Adicionar Produto
+                  </Button>
+                )}
               </div>
-
-              {selectedRequisicao.observacoes && (
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Observações</p>
-                  <p className="text-sm">{selectedRequisicao.observacoes}</p>
-                </div>
-              )}
             </div>
           )}
 
           <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={handleExportPdf}>
-              <FileDown className="h-4 w-4 mr-2" />
-              Exportar PDF
-            </Button>
-
-            {selectedRequisicao?.estado === "encomendado" && (
+            {isEditing ? (
               <>
-                <Button variant="destructive" onClick={handleCancelar}>
-                  <X className="h-4 w-4 mr-2" />
+                <Button variant="outline" onClick={() => setIsEditing(false)}>
                   Cancelar
                 </Button>
-                <Button onClick={handleConcluir}>
-                  <CheckCircle className="h-4 w-4 mr-2" />
-                  Concluir
+                <Button onClick={handleSaveChanges}>
+                  <CheckCircle className="h-4 w-4 mr-2" /> Guardar Alterações
                 </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={handleExportPdf}>
+                  <FileDown className="h-4 w-4 mr-2" />
+                  Exportar PDF
+                </Button>
+                {selectedRequisicao?.estado === "encomendado" && (
+                  <>
+                    <Button variant="destructive" onClick={handleCancelar}>
+                      <X className="h-4 w-4 mr-2" />
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleConcluir}>
+                      <CheckCircle className="h-4 w-4 mr-2" />
+                      Concluir
+                    </Button>
+                  </>
+                )}
               </>
             )}
           </DialogFooter>
