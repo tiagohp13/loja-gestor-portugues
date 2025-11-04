@@ -24,6 +24,7 @@ export default function StockBaixoPage() {
   const navigate = useNavigate();
 
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set());
+  const [productQuantities, setProductQuantities] = useState<Map<string, number>>(new Map());
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [fornecedorId, setFornecedorId] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -45,20 +46,41 @@ export default function StockBaixoPage() {
 
   const handleToggleProduct = (productId: string) => {
     const newSelected = new Set(selectedProducts);
+    const newQuantities = new Map(productQuantities);
+    
     if (newSelected.has(productId)) {
       newSelected.delete(productId);
+      newQuantities.delete(productId);
       const newManual = new Set(manualProducts);
       newManual.delete(productId);
       setManualProducts(newManual);
     } else {
       newSelected.add(productId);
+      const product = products.find(p => p.id === productId);
+      if (product) {
+        // Set default quantity to needed amount (minStock - currentStock)
+        newQuantities.set(productId, Math.max(1, product.minStock - product.currentStock));
+      }
     }
     setSelectedProducts(newSelected);
+    setProductQuantities(newQuantities);
+  };
+
+  const handleQuantityChange = (productId: string, quantity: number) => {
+    const newQuantities = new Map(productQuantities);
+    newQuantities.set(productId, Math.max(1, quantity));
+    setProductQuantities(newQuantities);
   };
 
   const handleAddManualProduct = (productId: string) => {
     setSelectedProducts(new Set([...selectedProducts, productId]));
     setManualProducts(new Set([...manualProducts, productId]));
+    const product = products.find(p => p.id === productId);
+    if (product) {
+      const newQuantities = new Map(productQuantities);
+      newQuantities.set(productId, Math.max(1, product.minStock - product.currentStock));
+      setProductQuantities(newQuantities);
+    }
     setSearchTerm("");
   };
 
@@ -86,7 +108,7 @@ export default function StockBaixoPage() {
       return {
         produtoId: product.id,
         produtoNome: product.name,
-        quantidade: Math.max(1, product.minStock - product.currentStock),
+        quantidade: productQuantities.get(productId) || 1,
         stockAtual: product.currentStock,
         stockMinimo: product.minStock,
         origem: manualProducts.has(productId) ? 'manual' as const : 'stock_baixo' as const
@@ -100,8 +122,10 @@ export default function StockBaixoPage() {
       items
     }, {
       onSuccess: () => {
+        toast.success("Requisição criada com sucesso");
         setIsDialogOpen(false);
         setSelectedProducts(new Set());
+        setProductQuantities(new Map());
         setManualProducts(new Set());
         setFornecedorId("");
         setObservacoes("");
@@ -202,17 +226,24 @@ export default function StockBaixoPage() {
 
             <div className="space-y-2">
               <Label>Produtos Selecionados ({selectedProducts.size})</Label>
-              <div className="border rounded-md p-3 space-y-2 max-h-48 overflow-y-auto">
+              <div className="border rounded-md divide-y max-h-80 overflow-y-auto">
                 {Array.from(selectedProducts).map(productId => {
                   const product = products.find(p => p.id === productId);
                   if (!product) return null;
+                  const quantity = productQuantities.get(productId) || 1;
                   return (
-                    <div key={productId} className="flex justify-between items-center text-sm">
-                      <span>{product.name}</span>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline" className="text-xs">
-                          {manualProducts.has(productId) ? "Manual" : "Stock Baixo"}
-                        </Badge>
+                    <div key={productId} className="p-3 space-y-2">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="font-medium text-sm">{product.name}</div>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                            <span>Stock Atual: <strong>{product.currentStock}</strong></span>
+                            <span>Stock Mínimo: <strong>{product.minStock}</strong></span>
+                            <Badge variant="outline" className="text-xs">
+                              {manualProducts.has(productId) ? "Manual" : "Stock Baixo"}
+                            </Badge>
+                          </div>
+                        </div>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -221,9 +252,27 @@ export default function StockBaixoPage() {
                           Remover
                         </Button>
                       </div>
+                      <div className="flex items-center gap-2">
+                        <Label htmlFor={`qty-${productId}`} className="text-xs whitespace-nowrap">
+                          Quantidade a encomendar:
+                        </Label>
+                        <Input
+                          id={`qty-${productId}`}
+                          type="number"
+                          min="1"
+                          value={quantity}
+                          onChange={(e) => handleQuantityChange(productId, parseInt(e.target.value) || 1)}
+                          className="w-24 h-8"
+                        />
+                      </div>
                     </div>
                   );
                 })}
+                {selectedProducts.size === 0 && (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    Nenhum produto selecionado
+                  </div>
+                )}
               </div>
             </div>
 
