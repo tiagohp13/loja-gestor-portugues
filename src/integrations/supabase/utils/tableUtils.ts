@@ -22,12 +22,15 @@ export const insertIntoTable = async (table: TableName, data: any) => {
     // For documents that need sequential numbering, get a number from the counters table
     if (table === 'orders' || table === 'stock_entries' || table === 'stock_exits') {
       // Get the counter ID based on the table name
-      const counterId = table === 'orders' ? 'order' : 
-                        table === 'stock_entries' ? 'entry' : 'exit';
+      const counterType = table === 'orders' ? 'orders' : 
+                        table === 'stock_entries' ? 'stock_entries' : 
+                        table === 'stock_exits' ? 'stock_exits' : 'expenses';
+      
+      const currentYear = new Date().getFullYear();
       
       // Call the database function to get the next formatted number
       const { data: counterData, error: counterError } = await supabase
-        .rpc('get_next_counter', { counter_id: counterId });
+        .rpc('get_next_counter_by_year', { counter_type: counterType, p_year: currentYear });
         
       if (counterError) {
         console.error(`Error getting next counter for ${table}:`, counterError);

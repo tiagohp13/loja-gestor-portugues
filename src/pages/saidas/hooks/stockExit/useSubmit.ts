@@ -88,8 +88,8 @@ export const useSubmit = ({
         // Obter número de saída baseado no ano da data da venda, não no ano atual
         const { data: numberData, error: numberError } = await supabase
           .rpc('get_next_counter_by_year', { 
-            counter_id: 'exit',
-            target_year: exitYear
+            counter_type: 'stock_exits',
+            p_year: exitYear
           });
           
         if (numberError) {

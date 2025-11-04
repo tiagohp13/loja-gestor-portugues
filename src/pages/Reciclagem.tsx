@@ -85,7 +85,7 @@ const Reciclagem = () => {
         toast.error('Erro ao carregar registos apagados');
         return;
       }
-      setDeletedRecords(data || []);
+      setDeletedRecords((data as DeletedRecord[]) || []);
     } catch (error) {
       console.error('Error fetching deleted records:', error);
       toast.error('Erro ao carregar registos apagados');

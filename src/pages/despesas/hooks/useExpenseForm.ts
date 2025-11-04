@@ -133,12 +133,13 @@ export const useExpenseForm = () => {
       setIsLoading(true);
 
       // Get next expense number
+      const currentYear = new Date().getFullYear();
       const { data: numberData, error: numberError } = await supabase
-        .rpc('get_next_counter', { counter_id: 'DESP' });
+        .rpc('get_next_counter_by_year', { counter_type: 'expenses', p_year: currentYear });
 
       if (numberError) throw numberError;
 
-      const expenseNumber = numberData || `DES-${new Date().getFullYear()}/${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`;
+      const expenseNumber = `DESP-${currentYear}/${String(numberData || 1).padStart(3, '0')}`;
 
       // Create expense
       const { data: expenseData, error: expenseError } = await supabase

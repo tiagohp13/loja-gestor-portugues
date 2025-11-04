@@ -195,8 +195,9 @@ export const useEntrySubmit = (
   const createNewEntry = async (supplier: any) => {
     // Generate a new entry number (this would typically come from a sequence or counter)
     // We'll use the get_next_counter database function
+    const currentYear = new Date().getFullYear();
     const { data: counterData, error: counterError } = await supabase
-      .rpc('get_next_counter', { counter_id: 'stock_entry' });
+      .rpc('get_next_counter_by_year', { counter_type: 'stock_entries', p_year: currentYear });
       
     if (counterError) {
       console.error("Error generating entry number:", counterError);

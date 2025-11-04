@@ -97,17 +97,15 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   const addOrder = useCallback(async (order: Omit<Order, "id" | "number">) => {
     try {
-      const { data: orderNumberData, error: orderNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "order",
+      const currentYear = new Date().getFullYear();
+      const { data: orderNumberData, error: orderNumberError } = await supabase.rpc("get_next_counter_by_year", {
+        counter_type: "orders",
+        p_year: currentYear
       });
 
       if (orderNumberError) throw orderNumberError;
 
-      const orderNumber =
-        orderNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
+      const orderNumber = `ENC-${currentYear}/${String(orderNumberData || 1).padStart(3, "0")}`;
 
       const { data, error } = await supabase
         .from("orders")
@@ -250,17 +248,15 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
     try {
       // Get next stock exit number
-      const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "exit",
+      const currentYear = new Date().getFullYear();
+      const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter_by_year", {
+        counter_type: "stock_exits",
+        p_year: currentYear
       });
 
       if (exitNumberError) throw exitNumberError;
 
-      const exitNumber =
-        exitNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
+      const exitNumber = `SAI-${currentYear}/${String(exitNumberData || 1).padStart(3, "0")}`;
 
       // Create stock exit
       const { data: exitData, error: exitError } = await supabase

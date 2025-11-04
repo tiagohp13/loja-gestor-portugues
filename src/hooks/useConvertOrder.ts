@@ -29,16 +29,19 @@ export const useConvertOrder = () => {
       if (itemsError) throw itemsError;
 
       // Get next exit number
+      const currentYear = new Date().getFullYear();
       const { data: numberData, error: numberError } = await supabase
-        .rpc("get_next_counter", { counter_id: "exit" });
+        .rpc("get_next_counter_by_year", { counter_type: "stock_exits", p_year: currentYear });
 
       if (numberError) throw numberError;
+
+      const exitNumber = `SAI-${currentYear}/${String(numberData || 1).padStart(3, "0")}`;
 
       // Create stock exit
       const { data: stockExit, error: exitError } = await supabase
         .from("stock_exits")
         .insert([{
-          number: numberData,
+          number: exitNumber,
           client_id: order.client_id,
           client_name: order.client_name || "",
           date: order.date,

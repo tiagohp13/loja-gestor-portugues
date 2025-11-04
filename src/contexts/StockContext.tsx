@@ -130,17 +130,15 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addStockEntry = useCallback(async (entry: Omit<StockEntry, "id" | "number" | "createdAt">) => {
     try {
-      const { data: entryNumberData, error: entryNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "entry",
+      const currentYear = new Date().getFullYear();
+      const { data: entryNumberData, error: entryNumberError } = await supabase.rpc("get_next_counter_by_year", {
+        counter_type: "stock_entries",
+        p_year: currentYear
       });
 
       if (entryNumberError) throw entryNumberError;
 
-      const entryNumber =
-        entryNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
+      const entryNumber = `ENT-${currentYear}/${String(entryNumberData || 1).padStart(3, "0")}`;
 
       const itemsWithIds = entry.items.map((item) => {
         if (!item.id) {
@@ -271,17 +269,15 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const addStockExit = useCallback(async (exit: Omit<StockExit, "id" | "number" | "createdAt">) => {
     try {
-      const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter", {
-        counter_id: "exit",
+      const currentYear = new Date().getFullYear();
+      const { data: exitNumberData, error: exitNumberError } = await supabase.rpc("get_next_counter_by_year", {
+        counter_type: "stock_exits",
+        p_year: currentYear
       });
 
       if (exitNumberError) throw exitNumberError;
 
-      const exitNumber =
-        exitNumberData ||
-        `${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)
-          .toString()
-          .padStart(3, "0")}`;
+      const exitNumber = `SAI-${currentYear}/${String(exitNumberData || 1).padStart(3, "0")}`;
 
       const itemsWithIds = exit.items.map((item) => {
         if (!item.id) {
