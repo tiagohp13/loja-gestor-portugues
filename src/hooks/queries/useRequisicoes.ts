@@ -3,7 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Requisicao, CreateRequisicaoInput } from "@/types/requisicao";
 
-// Fetch all requisições with items
+// -------------------------------
+// 🔹 Fetch all requisições with items
+// -------------------------------
 async function fetchRequisicoes(): Promise<Requisicao[]> {
   const { data: requisicoes, error } = await supabase
     .from("requisicoes")
@@ -29,12 +31,12 @@ async function fetchRequisicoes(): Promise<Requisicao[]> {
         fornecedorId: req.fornecedor_id,
         fornecedorNome: req.fornecedor_nome,
         data: new Date(req.data),
-        estado: req.estado as 'encomendado' | 'cancelado' | 'concluido',
+        estado: req.estado as "encomendado" | "cancelado" | "concluido",
         observacoes: req.observacoes,
         userId: req.user_id,
         createdAt: new Date(req.created_at),
         updatedAt: new Date(req.updated_at),
-        items: (items || []).map(item => ({
+        items: (items || []).map((item) => ({
           id: item.id,
           requisicaoId: item.requisicao_id,
           produtoId: item.produto_id,
@@ -42,31 +44,33 @@ async function fetchRequisicoes(): Promise<Requisicao[]> {
           quantidade: item.quantidade,
           stockAtual: item.stock_atual,
           stockMinimo: item.stock_minimo,
-          origem: item.origem as 'stock_baixo' | 'manual',
+          origem: item.origem as "stock_baixo" | "manual",
           createdAt: new Date(item.created_at),
           updatedAt: new Date(item.updated_at),
-        }))
+        })),
       };
-    })
+    }),
   );
 
   return requisicoesWithItems;
 }
 
-// Create requisição with automatic number generation
+// -------------------------------
+// 🔹 Create requisição with automatic number generation
+// -------------------------------
 async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisicao> {
   const currentYear = new Date().getFullYear();
-  
-  // Get next number from counter
-  const { data: counterData, error: counterError } = await supabase.rpc(
-    'get_next_counter_by_year',
-    { counter_type: 'requisicoes', p_year: currentYear }
-  );
+
+  // ✅ Corrigido: parâmetros compatíveis com função do Supabase
+  const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+    p_counter_type: "requisicoes",
+    p_year_input: currentYear,
+  });
 
   if (counterError) throw counterError;
 
-  const nextNumber = counterData;
-  const numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, '0')}`;
+  const nextNumber = parseInt(counterData, 10);
+  const numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
 
   // Create requisição
   const { data: requisicao, error: reqError } = await supabase
@@ -76,7 +80,7 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
       fornecedor_id: input.fornecedorId,
       fornecedor_nome: input.fornecedorNome,
       observacoes: input.observacoes || null,
-      estado: 'encomendado'
+      estado: "encomendado",
     })
     .select()
     .single();
@@ -84,19 +88,17 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
   if (reqError) throw reqError;
 
   // Create items
-  const { error: itemsError } = await supabase
-    .from("requisicao_itens")
-    .insert(
-      input.items.map(item => ({
-        requisicao_id: requisicao.id,
-        produto_id: item.produtoId,
-        produto_nome: item.produtoNome,
-        quantidade: item.quantidade,
-        stock_atual: item.stockAtual,
-        stock_minimo: item.stockMinimo,
-        origem: item.origem
-      }))
-    );
+  const { error: itemsError } = await supabase.from("requisicao_itens").insert(
+    input.items.map((item) => ({
+      requisicao_id: requisicao.id,
+      produto_id: item.produtoId,
+      produto_nome: item.produtoNome,
+      quantidade: item.quantidade,
+      stock_atual: item.stockAtual,
+      stock_minimo: item.stockMinimo,
+      origem: item.origem,
+    })),
+  );
 
   if (itemsError) throw itemsError;
 
@@ -106,13 +108,13 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
     fornecedorId: requisicao.fornecedor_id,
     fornecedorNome: requisicao.fornecedor_nome,
     data: new Date(requisicao.data),
-    estado: requisicao.estado as 'encomendado' | 'cancelado' | 'concluido',
+    estado: requisicao.estado as "encomendado" | "cancelado" | "concluido",
     observacoes: requisicao.observacoes,
     userId: requisicao.user_id,
     createdAt: new Date(requisicao.created_at),
     updatedAt: new Date(requisicao.updated_at),
-    items: input.items.map(item => ({
-      id: '',
+    items: input.items.map((item) => ({
+      id: "",
       requisicaoId: requisicao.id,
       produtoId: item.produtoId,
       produtoNome: item.produtoNome,
@@ -122,12 +124,14 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
       origem: item.origem,
       createdAt: new Date(),
       updatedAt: new Date(),
-    }))
+    })),
   };
 }
 
-// Update requisição state and create stock entry when completing
-async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cancelado' | 'concluido'): Promise<void> {
+// -------------------------------
+// 🔹 Update requisição state and create stock entry when completing
+// -------------------------------
+async function updateRequisicaoEstado(id: string, estado: "encomendado" | "cancelado" | "concluido"): Promise<void> {
   const { error } = await supabase
     .from("requisicoes")
     .update({ estado, updated_at: new Date().toISOString() })
@@ -136,8 +140,7 @@ async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cance
   if (error) throw error;
 
   // If completing requisição, create stock entry automatically
-  if (estado === 'concluido') {
-    // Fetch requisição with items
+  if (estado === "concluido") {
     const { data: req, error: reqError } = await supabase
       .from("requisicoes")
       .select("*, requisicao_itens(*)")
@@ -146,17 +149,18 @@ async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cance
 
     if (reqError) throw reqError;
 
-    // Get next number for stock entry
     const currentYear = new Date().getFullYear();
-    const { data: counterData, error: counterError } = await supabase.rpc(
-      'get_next_counter_by_year',
-      { counter_type: 'stock_entries', p_year: currentYear }
-    );
+
+    // ✅ Corrigido: parâmetros compatíveis com função do Supabase
+    const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+      p_counter_type: "stock_entries",
+      p_year_input: currentYear,
+    });
 
     if (counterError) throw counterError;
 
-    const nextNumber = counterData;
-    const numero = `ENT-${currentYear}/${String(nextNumber).padStart(3, '0')}`;
+    const nextNumber = parseInt(counterData, 10);
+    const numero = `ENT-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
 
     // Create stock entry
     const { data: entry, error: entryError } = await supabase
@@ -166,7 +170,7 @@ async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cance
         supplier_id: req.fornecedor_id,
         supplier_name: req.fornecedor_nome,
         notes: `Entrada automática da requisição ${req.numero}`,
-        date: new Date().toISOString()
+        date: new Date().toISOString(),
       })
       .select()
       .single();
@@ -175,16 +179,13 @@ async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cance
 
     // Create stock entry items and update product stock
     for (const item of req.requisicao_itens) {
-      // Create stock entry item
-      await supabase
-        .from("stock_entry_items")
-        .insert({
-          entry_id: entry.id,
-          product_id: item.produto_id,
-          product_name: item.produto_nome,
-          quantity: item.quantidade,
-          purchase_price: 0 // Price can be updated later
-        });
+      await supabase.from("stock_entry_items").insert({
+        entry_id: entry.id,
+        product_id: item.produto_id,
+        product_name: item.produto_nome,
+        quantity: item.quantidade,
+        purchase_price: 0, // Price can be updated later
+      });
 
       // Update product stock
       if (item.produto_id) {
@@ -197,7 +198,9 @@ async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cance
         if (product) {
           await supabase
             .from("products")
-            .update({ current_stock: product.current_stock + item.quantidade })
+            .update({
+              current_stock: product.current_stock + item.quantidade,
+            })
             .eq("id", item.produto_id);
         }
       }
@@ -205,16 +208,18 @@ async function updateRequisicaoEstado(id: string, estado: 'encomendado' | 'cance
   }
 }
 
-// Delete requisição
+// -------------------------------
+// 🔹 Delete requisição (soft delete)
+// -------------------------------
 async function deleteRequisicao(id: string): Promise<void> {
-  const { error } = await supabase
-    .from("requisicoes")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
+  const { error } = await supabase.from("requisicoes").update({ deleted_at: new Date().toISOString() }).eq("id", id);
 
   if (error) throw error;
 }
 
+// -------------------------------
+// 🔹 Hook principal
+// -------------------------------
 export function useRequisicoesQuery() {
   const queryClient = useQueryClient();
 
@@ -235,7 +240,7 @@ export function useRequisicoesQuery() {
   });
 
   const updateEstadoMutation = useMutation({
-    mutationFn: ({ id, estado }: { id: string; estado: 'encomendado' | 'cancelado' | 'concluido' }) =>
+    mutationFn: ({ id, estado }: { id: string; estado: "encomendado" | "cancelado" | "concluido" }) =>
       updateRequisicaoEstado(id, estado),
     onSuccess: () => {
       toast.success("Estado atualizado com sucesso");
