@@ -69,8 +69,9 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
 
   if (counterError) throw counterError;
 
-  const nextNumber = parseInt(counterData, 10);
-  const numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
+// Garantir que o contador é válido e nunca dá NaN
+const nextNumber = parseInt(counterData ?? "1", 10) || 1;
+const numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
 
   // Create requisição
   const { data: requisicao, error: reqError } = await supabase
