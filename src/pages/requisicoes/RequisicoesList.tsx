@@ -6,7 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { ClipboardList, FileDown, X, CheckCircle } from "lucide-react";
+import { ClipboardList, FileDown, X, CheckCircle, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao } from "@/types/requisicao";
@@ -16,19 +16,18 @@ import { toast } from "sonner";
 const estadoBadge = {
   encomendado: { variant: "default" as const, label: "🟡 Encomendado", className: "" },
   cancelado: { variant: "destructive" as const, label: "🔴 Cancelado", className: "" },
-  concluido: { variant: "default" as const, label: "🟢 Concluído", className: "bg-green-600" }
+  concluido: { variant: "default" as const, label: "🟢 Concluído", className: "bg-green-600" },
 };
 
 export default function RequisicoesList() {
-  const { requisicoes, isLoading, updateEstado } = useRequisicoesQuery();
+  const { requisicoes, isLoading, updateEstado, deleteRequisicao } = useRequisicoesQuery();
   const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
 
   const handleExportPdf = async () => {
     if (!selectedRequisicao) return;
 
-    // Create temporary container for PDF export
-    const container = document.createElement('div');
-    container.className = 'pdf-content p-8';
+    const container = document.createElement("div");
+    container.className = "pdf-content p-8";
     container.innerHTML = `
       <div class="space-y-6">
         <div class="text-center mb-8">
@@ -56,23 +55,33 @@ export default function RequisicoesList() {
             </tr>
           </thead>
           <tbody>
-            ${selectedRequisicao.items?.map(item => `
+            ${
+              selectedRequisicao.items
+                ?.map(
+                  (item) => `
               <tr class="border-b">
                 <td class="py-2">${item.produtoNome}</td>
                 <td class="text-right py-2">${item.quantidade}</td>
                 <td class="text-right py-2">${item.stockAtual}</td>
                 <td class="text-right py-2">${item.stockMinimo}</td>
               </tr>
-            `).join('') || ''}
+            `,
+                )
+                .join("") || ""
+            }
           </tbody>
         </table>
 
-        ${selectedRequisicao.observacoes ? `
+        ${
+          selectedRequisicao.observacoes
+            ? `
           <div class="mt-6">
             <p class="text-sm text-gray-600">Observações</p>
             <p class="mt-1">${selectedRequisicao.observacoes}</p>
           </div>
-        ` : ''}
+        `
+            : ""
+        }
       </div>
     `;
 
@@ -81,7 +90,7 @@ export default function RequisicoesList() {
     try {
       await exportToPdf({
         filename: `requisicao-${selectedRequisicao.numero}`,
-        contentSelector: '.pdf-content'
+        contentSelector: ".pdf-content",
       });
       toast.success("PDF exportado com sucesso");
     } catch (error) {
@@ -93,16 +102,32 @@ export default function RequisicoesList() {
 
   const handleCancelar = () => {
     if (!selectedRequisicao) return;
-    updateEstado({ id: selectedRequisicao.id, estado: 'cancelado' }, {
-      onSuccess: () => setSelectedRequisicao(null)
-    });
+    updateEstado(
+      { id: selectedRequisicao.id, estado: "cancelado" },
+      {
+        onSuccess: () => setSelectedRequisicao(null),
+      },
+    );
   };
 
   const handleConcluir = () => {
     if (!selectedRequisicao) return;
-    updateEstado({ id: selectedRequisicao.id, estado: 'concluido' }, {
-      onSuccess: () => setSelectedRequisicao(null)
-    });
+    updateEstado(
+      { id: selectedRequisicao.id, estado: "concluido" },
+      {
+        onSuccess: () => setSelectedRequisicao(null),
+      },
+    );
+  };
+
+  const handleEdit = (req: Requisicao) => {
+    setSelectedRequisicao(req);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (confirm("Tens a certeza que queres eliminar esta requisição?")) {
+      deleteRequisicao(id);
+    }
   };
 
   if (isLoading) {
@@ -111,10 +136,7 @@ export default function RequisicoesList() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageHeader
-        title="Requisições"
-        description="Gerir requisições de stock"
-      />
+      <PageHeader title="Requisições" description="Gerir requisições de stock" />
 
       <Card>
         <CardContent className="pt-6">
@@ -125,12 +147,13 @@ export default function RequisicoesList() {
                 <TableHead>Fornecedor</TableHead>
                 <TableHead>Data</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {requisicoes.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     Nenhuma requisição criada
                   </TableCell>
                 </TableRow>
@@ -145,12 +168,21 @@ export default function RequisicoesList() {
                     <TableCell>{req.fornecedorNome}</TableCell>
                     <TableCell>{format(req.data, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
                     <TableCell>
-                      <Badge
-                        variant={estadoBadge[req.estado].variant}
-                        className={estadoBadge[req.estado].className}
-                      >
+                      <Badge variant={estadoBadge[req.estado].variant} className={estadoBadge[req.estado].className}>
                         {estadoBadge[req.estado].label}
                       </Badge>
+                    </TableCell>
+
+                    {/* 🔹 NOVA COLUNA DE AÇÕES */}
+                    <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
+                      <div className="flex justify-end gap-2">
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(req)} title="Ver Detalhes">
+                          <Pencil className="h-4 w-4 text-blue-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(req.id)} title="Eliminar">
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -176,9 +208,7 @@ export default function RequisicoesList() {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Data</p>
-                  <p className="font-semibold">
-                    {format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}
-                  </p>
+                  <p className="font-semibold">{format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">Estado</p>
@@ -211,9 +241,7 @@ export default function RequisicoesList() {
                         <TableCell className="text-right">{item.stockAtual}</TableCell>
                         <TableCell className="text-right">{item.stockMinimo}</TableCell>
                         <TableCell>
-                          <Badge variant="outline">
-                            {item.origem === 'stock_baixo' ? 'Stock Baixo' : 'Manual'}
-                          </Badge>
+                          <Badge variant="outline">{item.origem === "stock_baixo" ? "Stock Baixo" : "Manual"}</Badge>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -231,26 +259,18 @@ export default function RequisicoesList() {
           )}
 
           <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={handleExportPdf}
-            >
+            <Button variant="outline" onClick={handleExportPdf}>
               <FileDown className="h-4 w-4 mr-2" />
               Exportar PDF
             </Button>
-            
-            {selectedRequisicao?.estado === 'encomendado' && (
+
+            {selectedRequisicao?.estado === "encomendado" && (
               <>
-                <Button
-                  variant="destructive"
-                  onClick={handleCancelar}
-                >
+                <Button variant="destructive" onClick={handleCancelar}>
                   <X className="h-4 w-4 mr-2" />
                   Cancelar
                 </Button>
-                <Button
-                  onClick={handleConcluir}
-                >
+                <Button onClick={handleConcluir}>
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Concluir
                 </Button>
