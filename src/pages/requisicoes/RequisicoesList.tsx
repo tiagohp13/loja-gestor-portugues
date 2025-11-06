@@ -1,17 +1,24 @@
 import { useState } from "react";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
+import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
+import { useProductsQuery } from "@/hooks/queries/useProducts";
 import PageHeader from "@/components/ui/PageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileDown, X, CheckCircle, Pencil, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Requisicao } from "@/types/requisicao";
+import { Requisicao, RequisicaoItem } from "@/types/requisicao";
 import { exportToPdf } from "@/utils/pdfExport";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const estadoBadge = {
   encomendado: { variant: "default" as const, label: "🟡 Encomendado", className: "" },
@@ -21,9 +28,16 @@ const estadoBadge = {
 
 export default function RequisicoesList() {
   const { requisicoes, isLoading, updateEstado, deleteRequisicao } = useRequisicoesQuery();
+  const { suppliers } = useSuppliersQuery();
+  const { products } = useProductsQuery();
+  
   const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editableItems, setEditableItems] = useState<any[]>([]);
+  const [editableItems, setEditableItems] = useState<RequisicaoItem[]>([]);
+  const [editableFornecedorId, setEditableFornecedorId] = useState<string | null>(null);
+  const [editableFornecedorNome, setEditableFornecedorNome] = useState<string>("");
+  const [editableObservacoes, setEditableObservacoes] = useState<string>("");
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
 
   const handleExportPdf = async () => {
     if (!selectedRequisicao) return;
@@ -50,6 +64,9 @@ export default function RequisicoesList() {
   const handleEdit = (req: Requisicao) => {
     setSelectedRequisicao(req);
     setEditableItems(req.items ? [...req.items] : []);
+    setEditableFornecedorId(req.fornecedorId);
+    setEditableFornecedorNome(req.fornecedorNome);
+    setEditableObservacoes(req.observacoes || "");
     setIsEditing(true);
   };
 
@@ -85,18 +102,37 @@ export default function RequisicoesList() {
     setEditableItems(updated);
   };
 
-  const handleAddItem = () => {
-    setEditableItems([
-      ...editableItems,
-      {
-        id: Math.random().toString(36).substring(2),
-        produtoNome: "",
-        quantidade: 1,
-        stockAtual: 0,
-        stockMinimo: 0,
-        origem: "manual",
-      },
-    ]);
+  const handleAddProduct = () => {
+    if (!selectedProductId) {
+      toast.error("Seleciona um produto primeiro");
+      return;
+    }
+    
+    const product = products.find((p) => p.id === selectedProductId);
+    if (!product) return;
+    
+    // Check if product already exists
+    if (editableItems.some((item) => item.produtoId === product.id)) {
+      toast.error("Este produto já foi adicionado");
+      return;
+    }
+    
+    const newItem: RequisicaoItem = {
+      id: crypto.randomUUID(),
+      requisicaoId: selectedRequisicao?.id || "",
+      produtoId: product.id,
+      produtoNome: product.name,
+      quantidade: Math.max(1, product.minStock - product.currentStock),
+      stockAtual: product.currentStock,
+      stockMinimo: product.minStock,
+      origem: "manual",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    
+    setEditableItems([...editableItems, newItem]);
+    setSelectedProductId("");
+    toast.success("Produto adicionado");
   };
 
   const handleRemoveItem = (index: number) => {
@@ -106,8 +142,56 @@ export default function RequisicoesList() {
   };
 
   const handleSaveChanges = async () => {
-    toast.success("Alterações guardadas (simulação) — aqui vais integrar com Supabase UPDATE.");
-    setIsEditing(false);
+    if (!selectedRequisicao) return;
+    
+    try {
+      // Update requisicao main data
+      const { error: reqError } = await supabase
+        .from("requisicoes")
+        .update({
+          fornecedor_id: editableFornecedorId,
+          fornecedor_nome: editableFornecedorNome,
+          observacoes: editableObservacoes || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedRequisicao.id);
+
+      if (reqError) throw reqError;
+
+      // Delete all existing items
+      const { error: deleteError } = await supabase
+        .from("requisicao_itens")
+        .delete()
+        .eq("requisicao_id", selectedRequisicao.id);
+
+      if (deleteError) throw deleteError;
+
+      // Insert updated items
+      const itemsToInsert = editableItems.map((item) => ({
+        requisicao_id: selectedRequisicao.id,
+        produto_id: item.produtoId,
+        produto_nome: item.produtoNome,
+        quantidade: item.quantidade,
+        stock_atual: item.stockAtual,
+        stock_minimo: item.stockMinimo,
+        origem: item.origem,
+      }));
+
+      const { error: insertError } = await supabase
+        .from("requisicao_itens")
+        .insert(itemsToInsert);
+
+      if (insertError) throw insertError;
+
+      toast.success("Requisição atualizada com sucesso");
+      setIsEditing(false);
+      setSelectedRequisicao(null);
+      
+      // Invalidate query to refresh data
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao atualizar requisição");
+    }
   };
 
   if (isLoading) {
@@ -188,17 +272,79 @@ export default function RequisicoesList() {
             <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-muted-foreground">Fornecedor</p>
-                  <p className="font-semibold">{selectedRequisicao.fornecedorNome}</p>
+                  <Label>Fornecedor</Label>
+                  {isEditing ? (
+                    <Select
+                      value={editableFornecedorId || ""}
+                      onValueChange={(value) => {
+                        setEditableFornecedorId(value);
+                        const supplier = suppliers.find((s) => s.id === value);
+                        if (supplier) setEditableFornecedorNome(supplier.name);
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecionar fornecedor" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <p className="font-semibold">{selectedRequisicao.fornecedorNome}</p>
+                  )}
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Data</p>
+                  <Label>Data</Label>
                   <p className="font-semibold">{format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
                 </div>
               </div>
 
+              {isEditing && (
+                <div>
+                  <Label>Observações</Label>
+                  <Textarea
+                    value={editableObservacoes}
+                    onChange={(e) => setEditableObservacoes(e.target.value)}
+                    placeholder="Observações adicionais..."
+                    rows={3}
+                  />
+                </div>
+              )}
+
+              {!isEditing && selectedRequisicao.observacoes && (
+                <div>
+                  <Label>Observações</Label>
+                  <p className="text-sm">{selectedRequisicao.observacoes}</p>
+                </div>
+              )}
+
               <div>
                 <h3 className="font-semibold mb-2">Produtos</h3>
+                
+                {isEditing && (
+                  <div className="flex gap-2 mb-4">
+                    <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Selecionar produto para adicionar" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>
+                            {product.name} (Stock: {product.currentStock}, Mín: {product.minStock})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button onClick={handleAddProduct} disabled={!selectedProductId}>
+                      <Plus className="h-4 w-4 mr-2" /> Adicionar
+                    </Button>
+                  </div>
+                )}
+                
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -206,54 +352,47 @@ export default function RequisicoesList() {
                       <TableHead className="text-right">Quantidade</TableHead>
                       <TableHead className="text-right">Stock Atual</TableHead>
                       <TableHead className="text-right">Stock Mínimo</TableHead>
-                      {isEditing && <TableHead>Ações</TableHead>}
+                      {isEditing && <TableHead className="text-right">Ações</TableHead>}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(isEditing ? editableItems : selectedRequisicao.items)?.map((item, index) => (
-                      <TableRow key={item.id}>
-                        <TableCell>
-                          {isEditing ? (
-                            <input
-                              type="text"
-                              value={item.produtoNome}
-                              onChange={(e) => handleItemChange(index, "produtoNome", e.target.value)}
-                              className="w-full border rounded px-2 py-1"
-                            />
-                          ) : (
-                            item.produtoNome
-                          )}
+                    {editableItems.length === 0 && isEditing ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                          Nenhum produto adicionado
                         </TableCell>
-                        <TableCell className="text-right">
-                          {isEditing ? (
-                            <input
-                              type="number"
-                              value={item.quantidade}
-                              onChange={(e) => handleItemChange(index, "quantidade", Number(e.target.value))}
-                              className="w-20 border rounded px-2 py-1 text-right"
-                            />
-                          ) : (
-                            item.quantidade
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">{item.stockAtual}</TableCell>
-                        <TableCell className="text-right">{item.stockMinimo}</TableCell>
-                        {isEditing && (
-                          <TableCell>
-                            <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} title="Remover">
-                              <Trash2 className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </TableCell>
-                        )}
                       </TableRow>
-                    ))}
+                    ) : (
+                      (isEditing ? editableItems : selectedRequisicao.items)?.map((item, index) => (
+                        <TableRow key={item.id}>
+                          <TableCell>{item.produtoNome}</TableCell>
+                          <TableCell className="text-right">
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                min="1"
+                                value={item.quantidade}
+                                onChange={(e) => handleItemChange(index, "quantidade", Number(e.target.value))}
+                                className="w-20 text-right"
+                              />
+                            ) : (
+                              item.quantidade
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">{item.stockAtual}</TableCell>
+                          <TableCell className="text-right">{item.stockMinimo}</TableCell>
+                          {isEditing && (
+                            <TableCell className="text-right">
+                              <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} title="Remover">
+                                <Trash2 className="h-4 w-4 text-red-500" />
+                              </Button>
+                            </TableCell>
+                          )}
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
-                {isEditing && (
-                  <Button variant="outline" size="sm" onClick={handleAddItem} className="mt-2">
-                    <Plus className="h-4 w-4 mr-2" /> Adicionar Produto
-                  </Button>
-                )}
               </div>
             </div>
           )}
