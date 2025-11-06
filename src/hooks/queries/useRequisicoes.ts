@@ -69,9 +69,30 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
 
   if (counterError) throw counterError;
 
-// Garantir que o contador é válido e nunca dá NaN
-const nextNumber = parseInt(counterData ?? "1", 10) || 1;
-const numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
+  // Garantir que o contador é válido e nunca dá NaN
+  let nextNumber = parseInt(counterData ?? "1", 10) || 1;
+  let numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
+
+  // Verificar se o número já existe e incrementar até encontrar um disponível
+  let exists = true;
+  while (exists) {
+    const { data: existingReq, error: checkError } = await supabase
+      .from("requisicoes")
+      .select("id")
+      .eq("numero", numero)
+      .maybeSingle();
+
+    if (checkError) throw checkError;
+
+    if (existingReq) {
+      // Número já existe, incrementar
+      nextNumber++;
+      numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
+    } else {
+      // Número disponível
+      exists = false;
+    }
+  }
 
   // Create requisição
   const { data: requisicao, error: reqError } = await supabase
