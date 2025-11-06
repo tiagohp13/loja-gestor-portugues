@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, X, CheckCircle, Pencil, Trash2, Plus } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao, RequisicaoItem } from "@/types/requisicao";
@@ -62,6 +62,10 @@ export default function RequisicoesList() {
   };
 
   const handleEdit = (req: Requisicao) => {
+    if (req.estado === "cancelado" || req.estado === "concluido") {
+      toast.warning("Não é possível editar uma requisição cancelada ou concluída.");
+      return;
+    }
     setSelectedRequisicao(req);
     setEditableItems(req.items ? [...req.items] : []);
     setEditableFornecedorId(req.fornecedorId);
@@ -70,10 +74,26 @@ export default function RequisicoesList() {
     setIsEditing(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Tens a certeza que queres eliminar esta requisição?")) {
-      deleteRequisicao(id);
+  const handleDelete = async (req: Requisicao) => {
+    if (req.estado === "cancelado" || req.estado === "concluido") {
+      toast.warning("Não é possível eliminar uma requisição cancelada ou concluída.");
+      return;
     }
+    if (confirm("Tens a certeza que queres eliminar esta requisição?")) {
+      deleteRequisicao(req.id);
+    }
+  };
+
+  const handleRestaurar = (req: Requisicao) => {
+    updateEstado(
+      { id: req.id, estado: "encomendado" },
+      {
+        onSuccess: () => {
+          toast.success("Requisição restaurada com sucesso");
+          setSelectedRequisicao(null);
+        },
+      }
+    );
   };
 
   const handleCancelar = () => {
@@ -241,12 +261,36 @@ export default function RequisicoesList() {
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => handleEdit(req)} title="Editar">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(req)}
+                          disabled={req.estado === "cancelado" || req.estado === "concluido"}
+                          className={req.estado === "cancelado" || req.estado === "concluido" ? "opacity-50 cursor-not-allowed" : ""}
+                          title={req.estado === "cancelado" || req.estado === "concluido" ? "Bloqueado" : "Editar"}
+                        >
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(req.id)} title="Eliminar">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(req)}
+                          disabled={req.estado === "cancelado" || req.estado === "concluido"}
+                          className={req.estado === "cancelado" || req.estado === "concluido" ? "opacity-50 cursor-not-allowed" : ""}
+                          title={req.estado === "cancelado" || req.estado === "concluido" ? "Bloqueado" : "Eliminar"}
+                        >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
+                        {req.estado === "cancelado" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRestaurar(req)}
+                            title="Restaurar"
+                          >
+                            <RotateCcw className="h-4 w-4 text-green-500" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -424,6 +468,12 @@ export default function RequisicoesList() {
                       Concluir
                     </Button>
                   </>
+                )}
+                {selectedRequisicao?.estado === "cancelado" && (
+                  <Button onClick={() => handleRestaurar(selectedRequisicao)}>
+                    <RotateCcw className="h-4 w-4 mr-2" />
+                    Restaurar
+                  </Button>
                 )}
               </>
             )}
