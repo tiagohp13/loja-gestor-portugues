@@ -6,6 +6,7 @@ import { mapOrder } from "./mappers";
 import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
 
+// 🔹 Obter todas as encomendas
 async function fetchOrders(): Promise<Order[]> {
   const { data: ordersData, error: ordersError } = await supabase
     .from("orders")
@@ -34,6 +35,7 @@ async function fetchOrders(): Promise<Order[]> {
   return orders.map(mapOrder);
 }
 
+// 🔹 Eliminar encomenda (soft-delete)
 async function deleteOrder(id: string) {
   const { error } = await supabase.from("orders").update({ deleted_at: new Date().toISOString() }).eq("id", id);
 
@@ -41,62 +43,39 @@ async function deleteOrder(id: string) {
   return id;
 }
 
+// 🔹 Criar nova encomenda (com RPC segura para contador)
 async function createOrder(order: any) {
   const { items, ...orderData } = order;
 
-  // Convert total to total_amount if present
+  // Converter total → total_amount se existir
   if ("total" in orderData) {
     orderData.total_amount = orderData.total;
     delete orderData.total;
   }
 
-  // Generate order number automatically if not provided
+  // Gerar número automaticamente via função RPC
   if (!orderData.number) {
     const year = new Date().getFullYear();
-    
-    // Check if counter exists for this year
-    const { data: counterData, error: counterError } = await supabase
-      .from("counters")
-      .select("current_count")
-      .eq("id", "order")
-      .eq("year", year)
-      .maybeSingle();
 
-    let currentCount = 1;
+    const { data: nextCounter, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+      p_counter_type: "order", // contador específico de encomendas
+      p_year_input: year,
+    });
 
     if (counterError) throw counterError;
 
-    if (counterData) {
-      // Increment existing counter
-      currentCount = counterData.current_count + 1;
-      const { error: updateError } = await supabase
-        .from("counters")
-        .update({ current_count: currentCount })
-        .eq("id", "order")
-        .eq("year", year);
-
-      if (updateError) throw updateError;
-    } else {
-      // Create new counter for this year
-      const { error: insertError } = await supabase
-        .from("counters")
-        .insert({ id: "order", year, current_count: 1 });
-
-      if (insertError) throw insertError;
-    }
-
-    // Generate formatted number
-    const padded = String(currentCount).padStart(3, "0");
+    const padded = String(nextCounter).padStart(3, "0");
     orderData.number = `ENC-${year}/${padded}`;
   }
 
-  // Convert order data to snake_case
+  // Converter dados para snake_case
   const orderPayload = await toInsert(orderData);
 
   const { data: newOrder, error } = await supabase.from("orders").insert(orderPayload).select().single();
 
   if (error) throw error;
 
+  // Inserir itens
   if (items && items.length > 0) {
     const itemsWithOrderId = items.map((item: any) => ({
       ...camelToSnake(item),
@@ -111,14 +90,13 @@ async function createOrder(order: any) {
   return newOrder;
 }
 
+// 🔹 Atualizar encomenda existente
 async function updateOrder({ id, items, ...updates }: any) {
-  // Convert total to total_amount if present
   if ("total" in updates) {
     updates.total_amount = updates.total;
     delete updates.total;
   }
 
-  // Convert updates to snake_case
   const updatePayload = await toUpdate(updates);
 
   const { error } = await supabase.from("orders").update(updatePayload).eq("id", id);
@@ -126,12 +104,10 @@ async function updateOrder({ id, items, ...updates }: any) {
   if (error) throw error;
 
   if (items !== undefined) {
-    // Delete existing items
     const { error: deleteError } = await supabase.from("order_items").delete().eq("order_id", id);
 
     if (deleteError) throw deleteError;
 
-    // Insert new items
     if (items.length > 0) {
       const itemsWithOrderId = items.map((item: any) => ({
         ...camelToSnake(item),
@@ -147,6 +123,7 @@ async function updateOrder({ id, items, ...updates }: any) {
   return id;
 }
 
+// 🔹 Obter encomenda por ID
 async function getOrderById(id: string) {
   const { data: orderData, error: orderError } = await supabase
     .from("orders")
@@ -171,14 +148,15 @@ async function getOrderById(id: string) {
   });
 }
 
+// 🔹 Hooks React Query
 export function useOrdersQuery() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["orders"],
     queryFn: fetchOrders,
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 2,
+    gcTime: 1000 * 60 * 5,
   });
 
   const deleteMutation = useMutation({
