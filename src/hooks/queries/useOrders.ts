@@ -162,6 +162,7 @@ export function useOrdersQuery() {
     onSuccess: async () => {
       toast.success("Encomenda eliminada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.refetchQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
@@ -173,6 +174,7 @@ export function useOrdersQuery() {
     onSuccess: async () => {
       toast.success("Encomenda criada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.refetchQueries({ queryKey: ["orders"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar encomenda"),
   });
@@ -182,6 +184,7 @@ export function useOrdersQuery() {
     onSuccess: async () => {
       toast.success("Encomenda atualizada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.refetchQueries({ queryKey: ["orders"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar encomenda"),
   });
