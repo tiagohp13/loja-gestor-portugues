@@ -10,55 +10,38 @@ async function fetchProducts(): Promise<Product[]> {
     .from("products")
     .select("*")
     .is("deleted_at", null)
-    .order("name");
-  
+    .order("reference", { ascending: true });
+
   if (error) throw error;
   return (data || []).map(mapProduct);
 }
 
 async function deleteProduct(id: string) {
-  const { error } = await supabase
-    .from("products")
-    .update({ deleted_at: new Date().toISOString() })
-    .eq("id", id);
-  
+  const { error } = await supabase.from("products").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+
   if (error) throw error;
   return id;
 }
 
 async function createProduct(product: Omit<Product, "id" | "created_at" | "updated_at">) {
   const payload = toInsert(product);
-  const { data, error } = await supabase
-    .from("products")
-    .insert(payload)
-    .select()
-    .single();
-  
+  const { data, error } = await supabase.from("products").insert(payload).select().single();
+
   if (error) throw error;
   return data;
 }
 
 async function updateProduct({ id, ...updates }: Partial<Product> & { id: string }) {
   const payload = toUpdate(updates);
-  const { data, error } = await supabase
-    .from("products")
-    .update(payload)
-    .eq("id", id)
-    .select()
-    .single();
-  
+  const { data, error } = await supabase.from("products").update(payload).eq("id", id).select().single();
+
   if (error) throw error;
   return data;
 }
 
 async function getProductById(id: string) {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("id", id)
-    .is("deleted_at", null)
-    .single();
-  
+  const { data, error } = await supabase.from("products").select("*").eq("id", id).is("deleted_at", null).single();
+
   if (error) throw error;
   return data ? mapProduct(data) : null;
 }
