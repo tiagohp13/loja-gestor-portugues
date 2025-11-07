@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import Sidebar from '@/components/navigation/Sidebar';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import AlertsManager from '@/components/common/AlertsManager';
+import { runAutomatedNotificationChecks } from '@/utils/notificationsService';
 
 /**
  * Main application layout with sidebar and content area
@@ -13,6 +14,19 @@ import AlertsManager from '@/components/common/AlertsManager';
 const AppLayout = () => {
   // Automatically scroll to top on route changes
   useScrollToTop();
+
+  // Run automated notification checks on mount and periodically
+  useEffect(() => {
+    // Initial check
+    runAutomatedNotificationChecks();
+
+    // Check every 30 minutes
+    const interval = setInterval(() => {
+      runAutomatedNotificationChecks();
+    }, 30 * 60 * 1000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <SidebarProvider defaultOpen={true}>

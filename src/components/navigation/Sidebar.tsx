@@ -18,6 +18,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
 import GlobalSearch from './GlobalSearch';
+import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 /**
  * Main navigation sidebar component 
@@ -195,6 +196,7 @@ const AppSidebar: React.FC = () => {
           />
           <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
         </div>
+        <NotificationDropdown />
       </SidebarHeader>
       
       <SidebarContent>

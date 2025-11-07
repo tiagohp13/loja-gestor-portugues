@@ -100,18 +100,27 @@ export type Database = {
       }
       counters: {
         Row: {
+          counter_type: string
           current_count: number
           id: string
+          last_number: number
+          updated_at: string | null
           year: number
         }
         Insert: {
-          current_count?: number
-          id: string
-          year: number
-        }
-        Update: {
+          counter_type?: string
           current_count?: number
           id?: string
+          last_number?: number
+          updated_at?: string | null
+          year?: number
+        }
+        Update: {
+          counter_type?: string
+          current_count?: number
+          id?: string
+          last_number?: number
+          updated_at?: string | null
           year?: number
         }
         Relationships: []
@@ -233,6 +242,51 @@ export type Database = {
           kpi_name?: string
           target_value?: number
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          archived: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          link: string | null
+          message: string
+          priority: string
+          read: boolean
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link?: string | null
+          message: string
+          priority?: string
+          read?: boolean
+          title: string
+          type: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          archived?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          link?: string | null
+          message?: string
+          priority?: string
+          read?: boolean
+          title?: string
+          type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []
@@ -976,6 +1030,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      archive_expired_notifications: { Args: never; Returns: undefined }
       can_delete_data: { Args: { user_id?: string }; Returns: boolean }
       can_write_data: { Args: { user_id?: string }; Returns: boolean }
       check_rate_limit: {
