@@ -54,39 +54,15 @@ async function createOrder(order: any) {
   if (!orderData.number) {
     const year = new Date().getFullYear();
     
-    // Check if counter exists for this year
-    const { data: counterData, error: counterError } = await supabase
-      .from("counters")
-      .select("current_count")
-      .eq("id", "order")
-      .eq("year", year)
-      .maybeSingle();
+    const { data, error } = await supabase.rpc("get_next_counter_by_year", {
+      counter_type: "order",
+      p_year: year,
+    });
 
-    let currentCount = 1;
+    if (error) throw error;
 
-    if (counterError) throw counterError;
-
-    if (counterData) {
-      // Increment existing counter
-      currentCount = counterData.current_count + 1;
-      const { error: updateError } = await supabase
-        .from("counters")
-        .update({ current_count: currentCount })
-        .eq("id", "order")
-        .eq("year", year);
-
-      if (updateError) throw updateError;
-    } else {
-      // Create new counter for this year
-      const { error: insertError } = await supabase
-        .from("counters")
-        .insert({ id: "order", year, current_count: 1 });
-
-      if (insertError) throw insertError;
-    }
-
-    // Generate formatted number
-    const padded = String(currentCount).padStart(3, "0");
+    const nextCounter = data || 1;
+    const padded = String(nextCounter).padStart(3, "0");
     orderData.number = `ENC-${year}/${padded}`;
   }
 
