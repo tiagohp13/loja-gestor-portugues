@@ -10,10 +10,20 @@ async function fetchProducts(): Promise<Product[]> {
     .from("products")
     .select("*")
     .is("deleted_at", null)
-    .order("reference", { ascending: true });
+    .order("code", { ascending: true });
 
   if (error) throw error;
-  return (data || []).map(mapProduct);
+  
+  // Apply natural sort for numeric codes (1, 2, 10, 20 instead of 1, 10, 2, 20)
+  const products = (data || []).map(mapProduct);
+  return products.sort((a, b) => {
+    const aNum = parseInt(a.code);
+    const bNum = parseInt(b.code);
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return aNum - bNum;
+    }
+    return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+  });
 }
 
 async function deleteProduct(id: string) {

@@ -17,12 +17,23 @@ async function fetchPaginatedProducts(page: number = 0): Promise<{ products: Pro
     .from("products")
     .select("*")
     .is("deleted_at", null)
-    .order("name")
+    .order("code", { ascending: true })
     .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
   
   if (error) throw error;
+  
+  // Apply natural sort for numeric codes within the page
+  const products = (data || []).map(mapProduct).sort((a, b) => {
+    const aNum = parseInt(a.code);
+    const bNum = parseInt(b.code);
+    if (!isNaN(aNum) && !isNaN(bNum)) {
+      return aNum - bNum;
+    }
+    return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+  });
+  
   return {
-    products: (data || []).map(mapProduct),
+    products,
     totalCount: count || 0,
   };
 }

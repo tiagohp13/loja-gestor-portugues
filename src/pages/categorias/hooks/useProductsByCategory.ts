@@ -25,10 +25,20 @@ export function useProductsByCategory(categoryId?: string) {
         .select("*")
         .eq("category", categoryData.name)
         .is("deleted_at", null)
-        .order("name", { ascending: true });
+        .order("code", { ascending: true });
       
       if (error) throw error;
-      return (data || []).map(mapProduct);
+      
+      // Apply natural sort for numeric codes
+      const products = (data || []).map(mapProduct);
+      return products.sort((a, b) => {
+        const aNum = parseInt(a.code);
+        const bNum = parseInt(b.code);
+        if (!isNaN(aNum) && !isNaN(bNum)) {
+          return aNum - bNum;
+        }
+        return a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' });
+      });
     },
     staleTime: 5 * 60 * 1000,
   });
