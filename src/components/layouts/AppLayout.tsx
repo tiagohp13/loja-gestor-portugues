@@ -6,6 +6,7 @@ import Sidebar from '@/components/navigation/Sidebar';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import AlertsManager from '@/components/common/AlertsManager';
 import { runAutomatedNotificationChecks } from '@/utils/notificationsService';
+import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Main application layout with sidebar and content area
@@ -17,12 +18,20 @@ const AppLayout = () => {
 
   // Run automated notification checks on mount and periodically
   useEffect(() => {
+    const checkNotifications = async () => {
+      // Only run checks if user is authenticated
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await runAutomatedNotificationChecks();
+      }
+    };
+
     // Initial check
-    runAutomatedNotificationChecks();
+    checkNotifications();
 
     // Check every 30 minutes
     const interval = setInterval(() => {
-      runAutomatedNotificationChecks();
+      checkNotifications();
     }, 30 * 60 * 1000);
 
     return () => clearInterval(interval);

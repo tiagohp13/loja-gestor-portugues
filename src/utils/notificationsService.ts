@@ -34,12 +34,14 @@ export const createNotification = async (params: CreateNotificationParams) => {
 
 /**
  * Check for low stock products and create notifications
+ * Only creates notification if one doesn't already exist for this product
  */
 export const checkLowStockNotifications = async () => {
   const { data: products, error } = await supabase
     .from("products")
     .select("id, name, code, current_stock, min_stock")
-    .is("deleted_at", null);
+    .is("deleted_at", null)
+    .eq("status", "active");
 
   if (error) {
     console.error("Error checking low stock:", error);
@@ -51,14 +53,39 @@ export const checkLowStockNotifications = async () => {
     (p) => p.current_stock < p.min_stock
   );
 
-  // Create notifications for low stock products
+  if (lowStockProducts.length === 0) {
+    return;
+  }
+
+  // Get existing active stock notifications from last 24 hours
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: existingNotifications } = await supabase
+    .from("notifications")
+    .select("link")
+    .eq("type", "stock")
+    .eq("archived", false)
+    .gte("created_at", oneDayAgo);
+
+  // Create a set of existing notification links for quick lookup
+  const existingLinks = new Set(
+    (existingNotifications || []).map((n) => n.link)
+  );
+
+  // Create notifications only for products without recent notifications
   for (const product of lowStockProducts) {
+    const link = `/produtos/consultar/${product.id}`;
+    
+    // Skip if notification already exists
+    if (existingLinks.has(link)) {
+      continue;
+    }
+
     await createNotification({
       title: "Stock Baixo",
       message: `${product.name} (${product.code}) está com stock baixo: ${product.current_stock} unidades (mínimo: ${product.min_stock})`,
       type: "stock",
       priority: "high",
-      link: `/produtos/consultar/${product.id}`,
+      link,
       expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
     });
   }
@@ -66,6 +93,7 @@ export const checkLowStockNotifications = async () => {
 
 /**
  * Check for overdue orders and create notifications
+ * Only creates notification if one doesn't already exist for this order
  */
 export const checkOverdueOrdersNotifications = async () => {
   const today = new Date();
@@ -83,14 +111,39 @@ export const checkOverdueOrdersNotifications = async () => {
     return;
   }
 
-  // Create notifications for overdue orders
-  for (const order of orders || []) {
+  if (!orders || orders.length === 0) {
+    return;
+  }
+
+  // Get existing active order notifications from last 24 hours
+  const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: existingNotifications } = await supabase
+    .from("notifications")
+    .select("link")
+    .eq("type", "order")
+    .eq("archived", false)
+    .gte("created_at", oneDayAgo);
+
+  // Create a set of existing notification links for quick lookup
+  const existingLinks = new Set(
+    (existingNotifications || []).map((n) => n.link)
+  );
+
+  // Create notifications only for orders without recent notifications
+  for (const order of orders) {
+    const link = `/encomendas/consultar/${order.id}`;
+    
+    // Skip if notification already exists
+    if (existingLinks.has(link)) {
+      continue;
+    }
+
     await createNotification({
       title: "Encomenda Atrasada",
       message: `Encomenda ${order.number} de ${order.client_name} está atrasada`,
       type: "order",
       priority: "high",
-      link: `/encomendas/consultar/${order.id}`,
+      link,
       expires_at: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days
     });
   }

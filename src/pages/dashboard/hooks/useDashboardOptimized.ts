@@ -133,145 +133,212 @@ const calculateKpiDeltas = (stockExits: StockExit[], stockEntries: StockEntry[])
 
 // Fetch ALL dashboard data in parallel from Supabase directly
 export const fetchAllDashboardData = async () => {
-  // Fetch all data from Supabase in parallel - single round trip
-  const [
-    productsRes,
-    ordersRes,
-    stockExitsRes,
-    stockEntriesRes,
-    clientsRes,
-    suppliersRes,
-    categoriesRes,
-    supportStats,
-    savedTargets,
-    monthlyExpenses
-  ] = await Promise.all([
-    supabase.from('products').select('*').eq('status', 'active').order('name'),
-    supabase.from('orders').select('*, items:order_items(*)').is('deleted_at', null).order('created_at', { ascending: false }),
-    supabase.from('stock_exits').select('*, items:stock_exit_items(*)').eq('status', 'active').order('date', { ascending: false }),
-    supabase.from('stock_entries').select('*, items:stock_entry_items(*)').eq('status', 'active').order('date', { ascending: false }),
-    supabase.from('clients').select('*').eq('status', 'active').order('name'),
-    supabase.from('suppliers').select('*').eq('status', 'active').order('name'),
-    supabase.from('categories').select('*').eq('status', 'active').order('name'),
-    fetchSupportStats(),
-    loadKpiTargets(),
-    getMonthlyExpensesData()
-  ]);
+  try {
+    // Fetch all data from Supabase in parallel - single round trip
+    const [
+      productsRes,
+      ordersRes,
+      stockExitsRes,
+      stockEntriesRes,
+      clientsRes,
+      suppliersRes,
+      categoriesRes,
+      supportStats,
+      savedTargets,
+      monthlyExpenses
+    ] = await Promise.all([
+      supabase.from('products').select('*').eq('status', 'active').order('name'),
+      supabase.from('orders').select('*, items:order_items(*)').is('deleted_at', null).order('created_at', { ascending: false }),
+      supabase.from('stock_exits').select('*, items:stock_exit_items(*)').eq('status', 'active').order('date', { ascending: false }),
+      supabase.from('stock_entries').select('*, items:stock_entry_items(*)').eq('status', 'active').order('date', { ascending: false }),
+      supabase.from('clients').select('*').eq('status', 'active').order('name'),
+      supabase.from('suppliers').select('*').eq('status', 'active').order('name'),
+      supabase.from('categories').select('*').eq('status', 'active').order('name'),
+      fetchSupportStats(),
+      loadKpiTargets(),
+      getMonthlyExpensesData()
+    ]);
 
-  // Check for errors
-  if (productsRes.error) throw productsRes.error;
-  if (ordersRes.error) throw ordersRes.error;
-  if (stockExitsRes.error) throw stockExitsRes.error;
-  if (stockEntriesRes.error) throw stockEntriesRes.error;
-  if (clientsRes.error) throw clientsRes.error;
-  if (suppliersRes.error) throw suppliersRes.error;
-  if (categoriesRes.error) throw categoriesRes.error;
-
-  // Map Supabase data to camelCase types
-  const products: Product[] = (productsRes.data || []).map(mapProduct);
-  const orders: Order[] = (ordersRes.data || []).map(mapOrder);
-  const stockExits: StockExit[] = (stockExitsRes.data || []).map(mapStockExit);
-  const stockEntries: StockEntry[] = (stockEntriesRes.data || []).map(mapStockEntry);
-  const clients = (clientsRes.data || []).map(mapClient);
-  const suppliers = (suppliersRes.data || []).map(mapSupplier);
-  const categories = (categoriesRes.data || []).map(mapCategory);
-
-  // Calculate financial metrics in parallel
-  const [
-    totalSpent,
-    totalProfit,
-    profitMargin,
-    roiVal,
-    roiPerc
-  ] = await Promise.all([
-    calculateTotalSpent(stockEntries),
-    calculateTotalProfitWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
-    calculateProfitMarginPercentWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
-    calculateRoiValueWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
-    calculateRoiPercentWithExpenses(calculateTotalSalesValue(stockExits), stockEntries)
-  ]);
-
-  // Update stats with fetched data
-  supportStats.clientsCount = clients.length;
-  supportStats.productsCount = products.length;
-  supportStats.suppliersCount = suppliers.length;
-  supportStats.categoriesCount = categories.length;
-
-  // Generate KPIs
-  const calculatedKpis = generateKPIs(supportStats);
-  const kpis = Object.keys(savedTargets).length > 0
-    ? calculatedKpis.map(kpi => ({
-        ...kpi,
-        target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
-        belowTarget: kpi.isInverseKPI 
-          ? kpi.value > (savedTargets[kpi.name] ?? kpi.target)
-          : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
-      }))
-    : calculatedKpis;
-
-  // Calculate deltas
-  const kpiDeltas = calculateKpiDeltas(stockExits, stockEntries);
-
-  // Build monthly data
-  const dataMap = createMonthlyDataMap();
-  processExitsForMonthlyData(stockExits, dataMap);
-  processEntriesForMonthlyData(stockEntries, dataMap);
-  
-  Object.entries(monthlyExpenses).forEach(([monthKey, expenseValue]) => {
-    const [year, month] = monthKey.split('-');
-    const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-    const monthName = monthDate.toLocaleDateString('pt-PT', { 
-      month: 'short', 
-      year: 'numeric' 
-    });
-    
-    if (dataMap.has(monthName)) {
-      dataMap.get(monthName)!.compras += expenseValue;
+    // Check for errors and log them but don't throw to prevent complete failure
+    if (productsRes.error) {
+      console.error("Error fetching products:", productsRes.error);
     }
-  });
-  
-  const monthlyData = Array.from(dataMap.values());
-  const lowStockProducts = identifyLowStockProducts(products);
+    if (ordersRes.error) {
+      console.error("Error fetching orders:", ordersRes.error);
+    }
+    if (stockExitsRes.error) {
+      console.error("Error fetching stock exits:", stockExitsRes.error);
+    }
+    if (stockEntriesRes.error) {
+      console.error("Error fetching stock entries:", stockEntriesRes.error);
+    }
+    if (clientsRes.error) {
+      console.error("Error fetching clients:", clientsRes.error);
+    }
+    if (suppliersRes.error) {
+      console.error("Error fetching suppliers:", suppliersRes.error);
+    }
+    if (categoriesRes.error) {
+      console.error("Error fetching categories:", categoriesRes.error);
+    }
 
-  // Find orders with insufficient stock
-  const insufficientStockItems = orders.reduce((acc: any[], order) => {
-    if (order.convertedToStockExitId) return acc;
-    order.items?.forEach((item: any) => {
-      const product = products.find((p) => p.id === item.productId);
-      if (product && product.currentStock < item.quantity) {
-        acc.push({ product, order, item, shortfall: item.quantity - product.currentStock });
+    // Map Supabase data to camelCase types with safe fallbacks
+    const products: Product[] = (productsRes.data || []).map(mapProduct);
+    const orders: Order[] = (ordersRes.data || []).map(mapOrder);
+    const stockExits: StockExit[] = (stockExitsRes.data || []).map(mapStockExit);
+    const stockEntries: StockEntry[] = (stockEntriesRes.data || []).map(mapStockEntry);
+    const clients = (clientsRes.data || []).map(mapClient);
+    const suppliers = (suppliersRes.data || []).map(mapSupplier);
+    const categories = (categoriesRes.data || []).map(mapCategory);
+
+    // Calculate financial metrics in parallel
+    const [
+      totalSpent,
+      totalProfit,
+      profitMargin,
+      roiVal,
+      roiPerc
+    ] = await Promise.all([
+      calculateTotalSpent(stockEntries),
+      calculateTotalProfitWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
+      calculateProfitMarginPercentWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
+      calculateRoiValueWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
+      calculateRoiPercentWithExpenses(calculateTotalSalesValue(stockExits), stockEntries)
+    ]);
+
+    // Update stats with fetched data
+    supportStats.clientsCount = clients.length;
+    supportStats.productsCount = products.length;
+    supportStats.suppliersCount = suppliers.length;
+    supportStats.categoriesCount = categories.length;
+
+    // Generate KPIs
+    const calculatedKpis = generateKPIs(supportStats);
+    const kpis = Object.keys(savedTargets).length > 0
+      ? calculatedKpis.map(kpi => ({
+          ...kpi,
+          target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
+          belowTarget: kpi.isInverseKPI 
+            ? kpi.value > (savedTargets[kpi.name] ?? kpi.target)
+            : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
+        }))
+      : calculatedKpis;
+
+    // Calculate deltas
+    const kpiDeltas = calculateKpiDeltas(stockExits, stockEntries);
+
+    // Build monthly data
+    const dataMap = createMonthlyDataMap();
+    processExitsForMonthlyData(stockExits, dataMap);
+    processEntriesForMonthlyData(stockEntries, dataMap);
+    
+    Object.entries(monthlyExpenses).forEach(([monthKey, expenseValue]) => {
+      const [year, month] = monthKey.split('-');
+      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
+      const monthName = monthDate.toLocaleDateString('pt-PT', { 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      
+      if (dataMap.has(monthName)) {
+        dataMap.get(monthName)!.compras += expenseValue;
       }
     });
-    return acc;
-  }, []);
+    
+    const monthlyData = Array.from(dataMap.values());
+    const lowStockProducts = identifyLowStockProducts(products);
 
-  // Filter pending orders (already filtered by deleted_at in query)
-  const pendingOrders = orders.filter((order) => !order.convertedToStockExitId);
+    // Find orders with insufficient stock
+    const insufficientStockItems = orders.reduce((acc: any[], order) => {
+      if (order.convertedToStockExitId) return acc;
+      order.items?.forEach((item: any) => {
+        const product = products.find((p) => p.id === item.productId);
+        if (product && product.currentStock < item.quantity) {
+          acc.push({ product, order, item, shortfall: item.quantity - product.currentStock });
+        }
+      });
+      return acc;
+    }, []);
 
-  return {
-    products,
-    orders,
-    stockExits,
-    stockEntries,
-    clients,
-    suppliers,
-    categories,
-    supportStats,
-    kpis,
-    kpiDeltas,
-    monthlyData,
-    lowStockProducts,
-    insufficientStockItems,
-    pendingOrders,
-    totalSalesValue: calculateTotalSalesValue(stockExits),
-    totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
-    totalStockValue: calculateTotalStockValue(products),
-    totalSpentWithExpenses: totalSpent,
-    totalProfitWithExpenses: totalProfit,
-    profitMarginPercentWithExpenses: profitMargin,
-    roiValueWithExpenses: roiVal,
-    roiPercentWithExpenses: roiPerc
-  };
+    // Filter pending orders (already filtered by deleted_at in query)
+    const pendingOrders = orders.filter((order) => !order.convertedToStockExitId);
+
+    return {
+      products,
+      orders,
+      stockExits,
+      stockEntries,
+      clients,
+      suppliers,
+      categories,
+      supportStats,
+      kpis,
+      kpiDeltas,
+      monthlyData,
+      lowStockProducts,
+      insufficientStockItems,
+      pendingOrders,
+      totalSalesValue: calculateTotalSalesValue(stockExits),
+      totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
+      totalStockValue: calculateTotalStockValue(products),
+      totalSpentWithExpenses: totalSpent,
+      totalProfitWithExpenses: totalProfit,
+      profitMarginPercentWithExpenses: profitMargin,
+      roiValueWithExpenses: roiVal,
+      roiPercentWithExpenses: roiPerc
+    };
+  } catch (error) {
+    console.error("Critical error in fetchAllDashboardData:", error);
+    // Return empty data structure instead of throwing
+    return {
+      products: [],
+      orders: [],
+      stockExits: [],
+      stockEntries: [],
+      clients: [],
+      suppliers: [],
+      categories: [],
+      supportStats: {
+        totalSales: 0,
+        totalSpent: 0,
+        profit: 0,
+        profitMargin: 0,
+        topProducts: [],
+        topClients: [],
+        topSuppliers: [],
+        lowStockProducts: [],
+        pendingOrders: 0,
+        completedOrders: 0,
+        clientsCount: 0,
+        productsCount: 0,
+        suppliersCount: 0,
+        categoriesCount: 0,
+        monthlySales: [],
+        monthlyData: [],
+        monthlyOrders: [],
+        numberOfExpenses: 0
+      },
+      kpis: [],
+      kpiDeltas: {
+        sales: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 },
+        spent: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 },
+        profit: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 },
+        margin: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 }
+      },
+      monthlyData: [],
+      lowStockProducts: [],
+      insufficientStockItems: [],
+      pendingOrders: [],
+      totalSalesValue: 0,
+      totalPurchaseValue: 0,
+      totalStockValue: 0,
+      totalSpentWithExpenses: 0,
+      totalProfitWithExpenses: 0,
+      profitMarginPercentWithExpenses: 0,
+      roiValueWithExpenses: 0,
+      roiPercentWithExpenses: 0
+    };
+  }
 };
 
 export const useDashboardOptimized = () => {
