@@ -14,6 +14,7 @@ export interface Notification {
   type: NotificationType;
   priority: NotificationPriority;
   link?: string;
+  related_id?: string;
   read: boolean;
   archived: boolean;
   expires_at?: string;
@@ -185,7 +186,15 @@ export const useNotifications = (filters?: NotificationFilters) => {
     mutationFn: async (notification: Omit<Notification, "id" | "user_id" | "created_at" | "updated_at" | "read" | "archived">) => {
       const { error } = await supabase
         .from("notifications")
-        .insert([notification]);
+        .insert([{
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          priority: notification.priority,
+          link: notification.link,
+          related_id: notification.related_id,
+          expires_at: notification.expires_at,
+        }]);
       if (error) throw error;
     },
     onSuccess: () => {
