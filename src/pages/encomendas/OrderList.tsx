@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart } from "lucide-react";
+import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
 import PageHeader from "@/components/ui/PageHeader";
@@ -15,6 +15,7 @@ import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { usePaginatedOrders } from "@/hooks/queries/usePaginatedOrders";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Pagination,
   PaginationContent,
@@ -77,6 +78,21 @@ const OrderList = () => {
       toast.error("Erro ao eliminar encomenda");
     } finally {
       setDeleteDialog({ open: false, orderId: null });
+    }
+  };
+
+  const handleRestoreOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'active' })
+        .eq("id", orderId);
+
+      if (error) throw error;
+      toast.success("Encomenda restaurada com sucesso");
+    } catch (error) {
+      console.error("Error restoring order:", error);
+      toast.error("Erro ao restaurar encomenda");
     }
   };
 
@@ -272,11 +288,11 @@ const OrderList = () => {
                               if (!validatePermission(canEdit, "editar encomendas")) return;
                               navigate(`/encomendas/editar/${order.id}`);
                             }}
-                            disabled={!canEdit || order.convertedToStockExitId !== null}
+                            disabled={!canEdit || order.convertedToStockExitId !== null || order.status === 'cancelled'}
                             className="h-8 w-8 p-0"
                             title={
-                              order.convertedToStockExitId
-                                ? "Não é possível editar encomendas convertidas"
+                              order.convertedToStockExitId || order.status === 'cancelled'
+                                ? "Não é possível editar encomendas convertidas ou canceladas"
                                 : "Editar encomenda"
                             }
                           >
@@ -288,8 +304,8 @@ const OrderList = () => {
                             onClick={async (e) => {
                               e.stopPropagation();
                               if (!validatePermission(canDelete, "eliminar encomendas")) return;
-                              if (order.convertedToStockExitId) {
-                                toast.error("Não pode eliminar encomendas já convertidas em saída");
+                              if (order.convertedToStockExitId || order.status === 'cancelled') {
+                                toast.error("Não pode eliminar encomendas já convertidas ou canceladas");
                                 return;
                               }
                               const deps = await checkOrderDependencies(order.id);
@@ -299,16 +315,30 @@ const OrderList = () => {
                               }
                               setDeleteDialog({ open: true, orderId: order.id });
                             }}
-                            disabled={!canDelete || order.convertedToStockExitId !== null}
+                            disabled={!canDelete || order.convertedToStockExitId !== null || order.status === 'cancelled'}
                             className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950"
                             title={
-                              order.convertedToStockExitId
-                                ? "Não é possível eliminar encomendas convertidas"
+                              order.convertedToStockExitId || order.status === 'cancelled'
+                                ? "Não é possível eliminar encomendas convertidas ou canceladas"
                                 : "Eliminar encomenda"
                             }
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
+                          {order.status === 'cancelled' && !order.convertedToStockExitId && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRestoreOrder(order.id);
+                              }}
+                              className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
+                              title="Restaurar encomenda"
+                            >
+                              <RotateCcw className="h-4 w-4" />
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>

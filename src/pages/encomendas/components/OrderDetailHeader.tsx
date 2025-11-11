@@ -135,7 +135,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               PDF
             </Button>
             
-            {isPending && !isDeleted && (
+            {isPending && !isDeleted && order.status !== 'cancelled' && (
               <Button
                 onClick={handleConvertDialog}
                 className="text-white bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
@@ -145,7 +145,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               </Button>
             )}
             
-            {isPending && !isDeleted && (
+            {isPending && !isDeleted && order.status !== 'cancelled' && (
               <Button
                 variant="secondary"
                 onClick={handleEditOrder}
