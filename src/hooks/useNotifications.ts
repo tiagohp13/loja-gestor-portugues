@@ -61,7 +61,26 @@ export const useNotifications = (filters?: NotificationFilters) => {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data as Notification[];
+      
+      // Filter out duplicate notifications: Keep only the most recent for each unique (type + related_id) combination
+      const uniqueNotifications = new Map<string, Notification>();
+      (data as Notification[]).forEach((notif) => {
+        // Only deduplicate notifications with related_id (ignore legacy ones without it)
+        if (notif.related_id) {
+          const key = `${notif.type}_${notif.related_id}`;
+          const existing = uniqueNotifications.get(key);
+          // Keep the most recent one (already sorted by created_at DESC)
+          if (!existing) {
+            uniqueNotifications.set(key, notif);
+          }
+        } else {
+          // Legacy notification without related_id - include it for now
+          // (will be cleaned up by archive process)
+          uniqueNotifications.set(`legacy_${notif.id}`, notif);
+        }
+      });
+      
+      return Array.from(uniqueNotifications.values());
     },
     staleTime: 30000, // 30 seconds
   });

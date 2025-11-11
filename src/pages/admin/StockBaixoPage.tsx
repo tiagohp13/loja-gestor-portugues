@@ -31,9 +31,13 @@ export default function StockBaixoPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [manualProducts, setManualProducts] = useState<Set<string>>(new Set());
 
-  // Filter products with low stock
+  // Filter products with low stock (using only real stock, not reserved)
+  // Products stay in this list until purchase is completed (stock is increased)
   const lowStockProducts = useMemo(() => {
-    return products.filter(p => p.currentStock < p.minStock);
+    return products.filter(p => 
+      p.currentStock < p.minStock && 
+      p.status === 'active'
+    );
   }, [products]);
 
   // Products for manual selection (not already in low stock selection)
@@ -122,7 +126,10 @@ export default function StockBaixoPage() {
       items
     }, {
       onSuccess: () => {
-        toast.success("Requisição criada com sucesso");
+        toast.success(
+          "Requisição criada. Os produtos continuarão na lista de stock baixo até a compra ser concluída.",
+          { duration: 5000 }
+        );
         setIsDialogOpen(false);
         setSelectedProducts(new Set());
         setProductQuantities(new Map());
@@ -130,6 +137,9 @@ export default function StockBaixoPage() {
         setFornecedorId("");
         setObservacoes("");
         navigate("/requisicoes");
+      },
+      onError: () => {
+        toast.error("Erro ao criar requisição");
       }
     });
   };

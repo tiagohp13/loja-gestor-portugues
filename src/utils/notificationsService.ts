@@ -337,19 +337,41 @@ export const checkOverdueOrdersNotifications = async () => {
  * Run all automated notification checks
  * This includes creating new notifications and archiving resolved ones
  */
+/**
+ * Archive legacy notifications without related_id
+ */
+export const archiveLegacyNotifications = async () => {
+  console.log("[Notifications] Archiving legacy notifications without related_id...");
+  
+  const { error } = await supabase
+    .from("notifications")
+    .update({ archived: true, updated_at: new Date().toISOString() })
+    .is("related_id", null)
+    .eq("archived", false);
+
+  if (error) {
+    console.error("[Notifications] Error archiving legacy notifications:", error);
+  } else {
+    console.log("[Notifications] ✅ Legacy notifications archived");
+  }
+};
+
 export const runAutomatedNotificationChecks = async () => {
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   console.log("🔔 [Notifications] Starting automated checks...");
   console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
   
   try {
-    // First, archive resolved notifications
+    // First, clean up legacy notifications
+    await archiveLegacyNotifications();
+    
+    // Then, archive resolved notifications
     await Promise.all([
       archiveResolvedLowStockNotifications(),
       archiveResolvedOrderNotifications(),
     ]);
 
-    // Then check for new issues
+    // Finally, check for new issues
     await Promise.all([
       checkLowStockNotifications(),
       checkOverdueOrdersNotifications(),
