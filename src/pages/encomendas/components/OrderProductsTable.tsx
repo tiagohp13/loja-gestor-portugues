@@ -13,7 +13,7 @@ interface OrderProductsTableProps {
   calculateTotal: () => number;
 }
 
-const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
+const OrderProductsTable: React.FC<OrderProductsTableProps> = React.memo(({
   orderItems,
   handleRemoveProduct,
   handleUpdateItem,
@@ -40,7 +40,7 @@ const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
             </tr>
           ) : (
             orderItems.map((item, index) => (
-              <tr key={index}>
+              <tr key={item.productId || `order-item-${index}`}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">
                   {item.productName}
                 </td>
@@ -92,6 +92,6 @@ const OrderProductsTable: React.FC<OrderProductsTableProps> = ({
       </table>
     </div>
   );
-};
+});
 
 export default OrderProductsTable;

@@ -35,7 +35,7 @@ export function ProductPriceHistory({ productId }: ProductPriceHistoryProps) {
       setLoading(true);
       const { data, error } = await supabase
         .from('product_price_history')
-        .select('*')
+        .select('id, product_id, old_purchase_price, new_purchase_price, old_sale_price, new_sale_price, change_reason, change_date, user_id, created_at')
         .eq('product_id', productId)
         .order('change_date', { ascending: false });
 

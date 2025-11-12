@@ -34,7 +34,7 @@ export const useClientDetail = () => {
         try {
           const { data, error } = await supabase
             .from('clients')
-            .select('*')
+            .select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at')
             .eq('id', id)
             .single();
 

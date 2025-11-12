@@ -15,31 +15,10 @@ export const useSortableStockEntries = () => {
   const fetchStockEntries = async () => {
     setIsLoading(true);
     try {
-      let query = supabase
-        .from('stock_entries')
-        .select('*')
-        .neq('status', 'deleted');
-
-      // Apply sorting
-      const order = getSupabaseOrder();
-      if (order) {
-        // Map frontend column names to database column names
-        const columnMap: Record<string, string> = {
-          'number': 'number',
-          'supplierName': 'supplier_name',
-          'date': 'date',
-          'invoiceNumber': 'invoice_number',
-          'created_at': 'created_at'
-        };
-        
-        const dbColumn = columnMap[order.column] || order.column;
-        query = query.order(dbColumn, { ascending: order.ascending });
-      } else {
-        // Default sorting
-        query = query.order('date', { ascending: false });
-      }
-
-      const { data, error } = await query;
+    const { data, error } = await supabase
+      .from('stock_entries')
+      .select('id, number, supplier_id, supplier_name, date, invoice_number, notes, status, user_id, created_at, updated_at, deleted_at')
+      .neq('status', 'deleted');
 
       if (error) throw error;
 
@@ -49,7 +28,7 @@ export const useSortableStockEntries = () => {
             // Fetch entry items
             const { data: items, error: itemsError } = await supabase
               .from('stock_entry_items')
-              .select('*')
+              .select('id, entry_id, product_id, product_name, quantity, purchase_price, discount_percent, created_at, updated_at')
               .eq('entry_id', dbEntry.id);
 
             if (itemsError) {

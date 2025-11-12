@@ -12,7 +12,7 @@ interface ProductsTableProps {
   totalValue: number;
 }
 
-const ProductsTable: React.FC<ProductsTableProps> = ({
+const ProductsTable: React.FC<ProductsTableProps> = React.memo(({
   items,
   removeItem,
   updateItem,
@@ -44,7 +44,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         <tbody className="bg-card divide-y divide-border">
           {items.map((item, index) => (
             <EditableProductRow
-              key={index}
+              key={item.productId || `exit-item-${index}`}
               item={item}
               index={index}
               removeItem={removeItem}
@@ -64,6 +64,6 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
       </table>
     </div>
   );
-};
+});
 
 export default ProductsTable;

@@ -27,7 +27,7 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
     for (const kpi of kpis) {
       const { data: existingTargets, error: fetchError } = await supabase
         .from('kpi_targets')
-        .select('*')
+        .select('id, kpi_name, target_value, user_id, created_at, updated_at')
         .eq('user_id', userId)
         .eq('kpi_name', kpi.name)
         .maybeSingle();

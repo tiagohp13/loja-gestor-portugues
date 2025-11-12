@@ -17,7 +17,7 @@ interface ExpenseItemsTableProps {
   ) => void;
 }
 
-const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({ items, onAddItem, onRemoveItem, onUpdateItem }) => {
+const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = React.memo(({ items, onAddItem, onRemoveItem, onUpdateItem }) => {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-PT", {
       style: "currency",
@@ -118,6 +118,6 @@ const ExpenseItemsTable: React.FC<ExpenseItemsTableProps> = ({ items, onAddItem,
       </CardContent>
     </Card>
   );
-};
+});
 
 export default ExpenseItemsTable;

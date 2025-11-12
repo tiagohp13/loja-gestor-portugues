@@ -55,7 +55,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('*')
+        .select('id, user_id, name, email, phone, avatar_url, theme, language, access_level, created_at, updated_at')
         .eq('user_id', user.id)
         .single();
 

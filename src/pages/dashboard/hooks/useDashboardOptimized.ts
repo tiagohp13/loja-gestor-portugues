@@ -147,13 +147,13 @@ export const fetchAllDashboardData = async () => {
       savedTargets,
       monthlyExpenses
     ] = await Promise.all([
-      supabase.from('products').select('*').eq('status', 'active').order('name'),
-      supabase.from('orders').select('*, items:order_items(*)').is('deleted_at', null).order('created_at', { ascending: false }),
-      supabase.from('stock_exits').select('*, items:stock_exit_items(*)').eq('status', 'active').order('date', { ascending: false }),
-      supabase.from('stock_entries').select('*, items:stock_entry_items(*)').eq('status', 'active').order('date', { ascending: false }),
-      supabase.from('clients').select('*').eq('status', 'active').order('name'),
-      supabase.from('suppliers').select('*').eq('status', 'active').order('name'),
-      supabase.from('categories').select('*').eq('status', 'active').order('name'),
+      supabase.from('products').select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
+      supabase.from('orders').select('id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at, items:order_items(id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').is('deleted_at', null).order('created_at', { ascending: false }),
+      supabase.from('stock_exits').select('id, number, client_id, client_name, date, invoice_number, notes, from_order_id, from_order_number, discount, status, user_id, created_at, updated_at, deleted_at, items:stock_exit_items(id, exit_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').eq('status', 'active').order('date', { ascending: false }),
+      supabase.from('stock_entries').select('id, number, supplier_id, supplier_name, date, invoice_number, notes, status, user_id, created_at, updated_at, deleted_at, items:stock_entry_items(id, entry_id, product_id, product_name, quantity, purchase_price, discount_percent, created_at, updated_at)').eq('status', 'active').order('date', { ascending: false }),
+      supabase.from('clients').select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
+      supabase.from('suppliers').select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
+      supabase.from('categories').select('id, name, description, status, product_count, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
       fetchSupportStats(),
       loadKpiTargets(),
       getMonthlyExpensesData()

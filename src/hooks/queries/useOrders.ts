@@ -9,7 +9,7 @@ import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
 async function fetchOrders(): Promise<Order[]> {
   const { data: ordersData, error: ordersError } = await supabase
     .from("orders")
-    .select("*")
+    .select("id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("date", { ascending: false });
 
@@ -19,7 +19,7 @@ async function fetchOrders(): Promise<Order[]> {
     (ordersData || []).map(async (order) => {
       const { data: itemsData, error: itemsError } = await supabase
         .from("order_items")
-        .select("*")
+        .select("id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at")
         .eq("order_id", order.id);
 
       if (itemsError) throw itemsError;
@@ -126,7 +126,7 @@ async function updateOrder({ id, items, ...updates }: any) {
 async function getOrderById(id: string) {
   const { data: orderData, error: orderError } = await supabase
     .from("orders")
-    .select("*")
+    .select("id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at")
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -136,7 +136,7 @@ async function getOrderById(id: string) {
 
   const { data: itemsData, error: itemsError } = await supabase
     .from("order_items")
-    .select("*")
+    .select("id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at")
     .eq("order_id", orderData.id);
 
   if (itemsError) throw itemsError;

@@ -17,7 +17,7 @@ export const useTopClients = () => {
     try {
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
-        .select('*')
+        .select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at')
         .is('deleted_at', null)
         .order('name', { ascending: true });
 

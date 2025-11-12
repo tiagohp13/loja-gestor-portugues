@@ -10,7 +10,7 @@ interface StockEntryProductsTableProps {
   removeItem: (index: number) => void;
 }
 
-const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = ({
+const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = React.memo(({
   items,
   totalValue,
   removeItem
@@ -36,7 +36,7 @@ const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = ({
             </tr>
           ) : (
             items.map((item, index) => (
-              <tr key={index}>
+              <tr key={item.productId || `entry-item-${index}`}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-foreground">{item.productName}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">{item.quantity}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{item.purchasePrice.toFixed(2)} €</td>
@@ -68,6 +68,6 @@ const StockEntryProductsTable: React.FC<StockEntryProductsTableProps> = ({
       </table>
     </div>
   );
-};
+});
 
 export default StockEntryProductsTable;

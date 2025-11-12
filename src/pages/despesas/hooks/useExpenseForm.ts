@@ -33,7 +33,7 @@ export const useExpenseForm = () => {
     try {
       const { data, error } = await supabase
         .from('suppliers')
-        .select('*')
+        .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at')
         .order('name');
 
       if (error) throw error;

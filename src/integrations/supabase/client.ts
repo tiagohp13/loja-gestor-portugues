@@ -69,7 +69,7 @@ export const countPendingOrders = async () => {
 export const getLowStockProducts = async () => {
   const { data, error } = await supabase
     .from('products')
-    .select('*')
+    .select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at')
     .lt('current_stock', 5);
 
   if (error) {

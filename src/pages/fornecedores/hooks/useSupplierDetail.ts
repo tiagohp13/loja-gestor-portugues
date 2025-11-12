@@ -27,11 +27,11 @@ export const useSupplierDetail = () => {
       // If not found in loaded suppliers, try to fetch from database (including deleted)
       if (!foundSupplier) {
         try {
-          const { data, error } = await supabase
-            .from('suppliers')
-            .select('*')
-            .eq('id', id)
-            .single();
+        const { data, error } = await supabase
+          .from('suppliers')
+          .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at')
+          .eq('id', id)
+          .single();
 
           if (error) throw error;
 
@@ -56,7 +56,7 @@ export const useSupplierDetail = () => {
       // Fetch stock entries for this supplier
       const { data: entriesData } = await supabase
         .from('stock_entries')
-        .select('*')
+        .select('id, number, supplier_id, supplier_name, date, invoice_number, notes, status, user_id, created_at, updated_at, deleted_at')
         .eq('supplier_id', id)
         .or('status.is.null,status.neq.deleted')
         .order('date', { ascending: false });
@@ -87,7 +87,7 @@ export const useSupplierDetail = () => {
       // Fetch expenses for this supplier
       const { data: expensesData } = await supabase
         .from('expenses')
-        .select('*')
+        .select('id, number, supplier_id, supplier_name, date, notes, discount, status, user_id, created_at, updated_at, deleted_at')
         .eq('supplier_id', id)
         .or('status.is.null,status.neq.deleted')
         .order('date', { ascending: false });

@@ -31,7 +31,7 @@ const AdminUserManagement: React.FC = () => {
       const {
         data,
         error
-      } = await supabase.from('user_profiles').select('*').order('created_at', {
+      } = await supabase.from('user_profiles').select('id, user_id, name, email, phone, avatar_url, theme, language, access_level, created_at, updated_at').order('created_at', {
         ascending: true // Oldest first for non-admins
       });
       if (error) throw error;

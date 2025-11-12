@@ -28,7 +28,7 @@ interface ExpenseItem {
 async function fetchExpenses(): Promise<Expense[]> {
   const { data: expensesData, error: expensesError } = await supabase
     .from("expenses")
-    .select("*")
+    .select("id, number, supplier_id, supplier_name, date, notes, discount, status, user_id, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("date", { ascending: false });
 
@@ -38,7 +38,7 @@ async function fetchExpenses(): Promise<Expense[]> {
     (expensesData || []).map(async (expense) => {
       const { data: itemsData, error: itemsError } = await supabase
         .from("expense_items")
-        .select("*")
+        .select("id, expense_id, product_name, quantity, unit_price, discount_percent, created_at, updated_at")
         .eq("expense_id", expense.id);
 
       if (itemsError) throw itemsError;

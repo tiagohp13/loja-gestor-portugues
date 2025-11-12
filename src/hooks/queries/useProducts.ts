@@ -8,7 +8,7 @@ import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("*")
+    .select("id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("code", { ascending: true });
 
@@ -50,7 +50,7 @@ async function updateProduct({ id, ...updates }: Partial<Product> & { id: string
 }
 
 async function getProductById(id: string) {
-  const { data, error } = await supabase.from("products").select("*").eq("id", id).is("deleted_at", null).single();
+  const { data, error } = await supabase.from("products").select("id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at").eq("id", id).is("deleted_at", null).single();
 
   if (error) throw error;
   return data ? mapProduct(data) : null;

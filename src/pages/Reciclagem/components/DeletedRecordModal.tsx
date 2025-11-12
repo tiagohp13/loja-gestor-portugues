@@ -45,7 +45,7 @@ const DeletedRecordModal: React.FC<DeletedRecordModalProps> = ({
         case 'products':
           const { data: product } = await supabase
             .from('products')
-            .select('*')
+            .select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at')
             .eq('id', recordId)
             .single();
           data = product;
@@ -54,7 +54,7 @@ const DeletedRecordModal: React.FC<DeletedRecordModalProps> = ({
         case 'clients':
           const { data: client } = await supabase
             .from('clients')
-            .select('*')
+            .select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at')
             .eq('id', recordId)
             .single();
           data = client;
@@ -63,7 +63,7 @@ const DeletedRecordModal: React.FC<DeletedRecordModalProps> = ({
         case 'suppliers':
           const { data: supplier } = await supabase
             .from('suppliers')
-            .select('*')
+            .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at')
             .eq('id', recordId)
             .single();
           data = supplier;

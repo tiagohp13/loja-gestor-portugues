@@ -8,7 +8,7 @@ import { mapClient } from "./mappers";
 async function fetchClients(): Promise<Client[]> {
   const { data, error } = await supabase
     .from("clients")
-    .select("*")
+    .select("id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("name");
   
@@ -54,7 +54,7 @@ async function updateClient({ id, ...updates }: Partial<Client> & { id: string }
 async function getClientById(id: string) {
   const { data, error } = await supabase
     .from("clients")
-    .select("*")
+    .select("id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at")
     .eq("id", id)
     .is("deleted_at", null)
     .single();

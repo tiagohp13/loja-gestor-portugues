@@ -8,7 +8,7 @@ import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 async function fetchCategories(): Promise<Category[]> {
   const { data, error } = await supabase
     .from("categories")
-    .select("*")
+    .select("id, name, description, status, product_count, user_id, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("name");
   
@@ -54,7 +54,7 @@ async function updateCategory({ id, payload }: { id: string; payload: { name?: s
 async function getCategoryById(id: string) {
   const { data, error } = await supabase
     .from("categories")
-    .select("*")
+    .select("id, name, description, status, product_count, user_id, created_at, updated_at, deleted_at")
     .eq("id", id)
     .is("deleted_at", null)
     .single();

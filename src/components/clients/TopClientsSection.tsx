@@ -11,7 +11,7 @@ import { cn } from '@/lib/utils';
 interface TopClientsSectionProps {
   onViewAllClick: () => void;
 }
-const TopClientsSection: React.FC<TopClientsSectionProps> = ({
+const TopClientsSection: React.FC<TopClientsSectionProps> = React.memo(({
   onViewAllClick
 }) => {
   const navigate = useNavigate();
@@ -138,5 +138,5 @@ const TopClientsSection: React.FC<TopClientsSectionProps> = ({
         </div>
       </CardContent>
     </Card>;
-};
+});
 export default TopClientsSection;
