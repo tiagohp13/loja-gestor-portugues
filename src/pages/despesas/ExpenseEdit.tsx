@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,7 @@ import LoadingSpinner from "@/components/ui/LoadingSpinner";
 const ExpenseEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [expense, setExpense] = useState<Expense | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -190,6 +192,9 @@ const ExpenseEdit = () => {
       }));
       const { error: itemsError } = await supabase.from("expense_items").insert(itemsToInsert);
       if (itemsError) throw itemsError;
+
+      // Invalidate queries to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ["expenses"] });
 
       toast.success("Despesa atualizada com sucesso");
       navigate(`/despesas/${id}`);

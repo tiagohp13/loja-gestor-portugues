@@ -267,6 +267,9 @@ export function useRequisicoesQuery() {
     onSuccess: () => {
       toast.success("Estado atualizado com sucesso");
       queryClient.invalidateQueries({ queryKey: ["requisicoes"] });
+      // Also invalidate stock entries and products when completing a requisition (creates stock entry)
+      queryClient.invalidateQueries({ queryKey: ["stock-entries"] });
+      queryClient.invalidateQueries({ queryKey: ["products"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar estado"),
   });

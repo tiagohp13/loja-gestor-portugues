@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,7 @@ interface StockExitFormData {
 const StockExitEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<StockExitFormData>({
@@ -176,6 +178,9 @@ const StockExitEdit = () => {
       const { error: itemsError } = await supabase.from("stock_exit_items").insert(itemsToInsert);
 
       if (itemsError) throw itemsError;
+
+      // Invalidate queries to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
 
       toast.success("Saída de stock atualizada com sucesso");
       navigate("/saidas/historico");

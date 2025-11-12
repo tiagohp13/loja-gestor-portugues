@@ -1,6 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { StockEntryFormState } from './types';
 import { supabase, withUserData } from '@/integrations/supabase/client';
 import { toast } from '@/components/ui/use-toast';
@@ -13,6 +14,7 @@ export const useEntrySubmit = (
   stockEntries: StockEntry[]
 ) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isNewEntry = !id;
 
@@ -82,6 +84,9 @@ export const useEntrySubmit = (
       } else {
         await createNewEntry(supplier);
       }
+      
+      // Invalidate queries to refresh the list
+      await queryClient.invalidateQueries({ queryKey: ["stock-entries"] });
       
       toast({
         title: "Sucesso",
