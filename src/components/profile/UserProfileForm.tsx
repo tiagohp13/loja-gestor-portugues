@@ -158,7 +158,6 @@ const UserProfileForm: React.FC = () => {
       if (profile.id) {
         profileData.id = profile.id;
       }
-      console.log('Updating profile with data:', profileData);
       const {
         data,
         error
@@ -174,7 +173,6 @@ const UserProfileForm: React.FC = () => {
         });
         throw error;
       }
-      console.log('Profile updated successfully:', data);
       toast.success('Perfil atualizado com sucesso');
     } catch (error) {
       console.error('Error updating profile:', error);

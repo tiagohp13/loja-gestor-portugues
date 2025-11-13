@@ -132,8 +132,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
         profileData.id = profile.id;
       }
 
-      console.log('Updating profile with data:', profileData);
-
       const { data, error } = await supabase
         .from('user_profiles')
         .upsert(profileData, {
@@ -151,7 +149,6 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
         throw error;
       }
 
-      console.log('Profile updated successfully:', data);
       toast.success('Perfil atualizado com sucesso');
       onOpenChange(false);
     } catch (error) {

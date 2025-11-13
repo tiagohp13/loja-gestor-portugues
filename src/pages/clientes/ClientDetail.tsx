@@ -68,7 +68,6 @@ const ClientDetail = () => {
             {/* PDF (vermelho Adobe) */}
             <Button
               size="sm"
-              onClick={() => console.log("Exportar cliente para PDF")}
               className="flex items-center gap-2 bg-[#D32F2F] hover:bg-[#B71C1C] text-white"
             >
               <FileText className="h-4 w-4" />

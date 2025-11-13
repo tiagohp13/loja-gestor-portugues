@@ -97,8 +97,6 @@ export const useNotifications = (filters?: NotificationFilters) => {
           table: "notifications",
         },
         (payload) => {
-          console.log("Notification change received:", payload);
-          
           // Invalidate and refetch
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
           
@@ -115,7 +113,6 @@ export const useNotifications = (filters?: NotificationFilters) => {
         }
       )
       .subscribe((status) => {
-        console.log("Realtime status:", status);
         setRealtimeConnected(status === "SUBSCRIBED");
       });
 

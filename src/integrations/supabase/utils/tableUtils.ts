@@ -60,14 +60,7 @@ export const insertIntoTable = async (table: TableName, data: any) => {
     
     // Add user_id to data for RLS compatibility
     const securedData = await withUserData(data);
-    
-    // Log what we're trying to insert
-    console.log(`Inserting into ${table}:`, securedData);
-    
     const snakeCaseData = camelToSnake(securedData);
-    
-    // Log the snake case data being sent to Supabase
-    console.log(`Snake case data for ${table}:`, snakeCaseData);
     
     const { data: result, error } = await supabase
       .from(table)
@@ -78,9 +71,6 @@ export const insertIntoTable = async (table: TableName, data: any) => {
       console.error(`Error inserting into ${table}:`, error);
       throw new Error(`Error inserting into ${table}: ${error.message}`);
     }
-    
-    // Log the result
-    console.log(`Insert result for ${table}:`, result);
     
     return snakeToCamel(result);
   } catch (err) {

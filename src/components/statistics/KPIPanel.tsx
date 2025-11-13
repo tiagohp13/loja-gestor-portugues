@@ -59,9 +59,7 @@ const KPIPanel = ({
             target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
             belowTarget: kpi.isInverseKPI ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
           })));
-          console.log('KPIs atualizados com metas da BD:', savedTargets);
         } else {
-          console.log('Nenhuma meta personalizada encontrada, usando valores padrão');
           setKpisState(initialKpis);
         }
       } catch (error) {

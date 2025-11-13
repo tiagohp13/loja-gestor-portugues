@@ -17,9 +17,6 @@ interface OrderInformationCardProps {
 const OrderInformationCard: React.FC<OrderInformationCardProps> = ({ order, relatedStockExit }) => {
   const navigate = useNavigate();
   
-  // Debug log to check if notes are present
-  console.log('Order data in OrderInformationCard:', { id: order.id, notes: order.notes });
-  
   const handleViewStockExit = () => {
     if (relatedStockExit) {
       navigate(`/saidas/${relatedStockExit.id}`);

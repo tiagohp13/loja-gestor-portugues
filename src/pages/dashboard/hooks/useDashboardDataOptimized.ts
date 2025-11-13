@@ -45,7 +45,6 @@ export const useDashboardDataOptimized = () => {
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'expenses' }, 
         () => {
-          console.log('Expenses changed - triggering recalculation');
           setExpensesVersion(v => v + 1);
         }
       )

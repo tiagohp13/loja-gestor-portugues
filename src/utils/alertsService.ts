@@ -34,7 +34,6 @@ function saveNotification(notification: Omit<Notification, "id" | "date">) {
  */
 export async function checkAlerts() {
   try {
-    console.log('Running automated notification checks (database-based)...');
     await runAutomatedNotificationChecks();
   } catch (err: any) {
     console.error("Erro ao verificar alertas:", err);

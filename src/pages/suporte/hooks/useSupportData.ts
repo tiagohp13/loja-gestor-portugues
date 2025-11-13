@@ -135,7 +135,6 @@ export const useSupportData = (): SupportDataReturn => {
     const debouncedReload = () => {
       clearTimeout(reloadTimeout);
       reloadTimeout = setTimeout(() => {
-        console.log('Data changed, reloading KPI data...');
         loadData();
       }, 1000); // Debounce de 1 segundo
     };

@@ -20,9 +20,6 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
       throw new Error('Usuário não autenticado');
     }
 
-    console.log('Salvando KPIs para o usuário:', userId);
-    console.log('KPIs a serem salvos:', kpis.map(k => ({ nome: k.name, meta: k.target })));
-
     // Para cada KPI, inserimos ou atualizamos sua meta
     for (const kpi of kpis) {
       const { data: existingTargets, error: fetchError } = await supabase
@@ -39,7 +36,6 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
 
       if (existingTargets) {
         // Atualizar meta existente
-        console.log(`Atualizando meta existente para ${kpi.name}:`, existingTargets.id, kpi.target);
         const { error } = await supabase
           .from('kpi_targets')
           .update({
@@ -54,7 +50,6 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
         }
       } else {
         // Inserir nova meta
-        console.log(`Inserindo nova meta para ${kpi.name}:`, kpi.target);
         const { error } = await supabase
           .from('kpi_targets')
           .insert({
@@ -69,8 +64,6 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
         }
       }
     }
-    
-    console.log('Todas as metas foram salvas com sucesso');
   } catch (error) {
     console.error('Erro ao salvar metas dos KPIs:', error);
     throw error;
@@ -90,8 +83,6 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
       return targets;
     }
 
-    console.log('Carregando KPIs para o usuário:', userId);
-
     const { data, error } = await supabase
       .from('kpi_targets')
       .select('kpi_name, target_value')
@@ -104,12 +95,9 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
 
     // Transformar os dados em um objeto de metas
     if (data && data.length > 0) {
-      console.log('Metas carregadas da base de dados:', data);
       data.forEach(target => {
         targets[target.kpi_name] = target.target_value;
       });
-    } else {
-      console.log('Nenhuma meta encontrada para o usuário');
     }
   } catch (error) {
     console.error('Erro ao carregar metas dos KPIs:', error);

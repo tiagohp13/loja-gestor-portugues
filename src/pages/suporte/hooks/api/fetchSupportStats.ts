@@ -17,7 +17,6 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
   // Verificar se temos dados em cache válidos
   const now = Date.now();
   if (cache.supportStats && (now - cache.lastFetch < CACHE_DURATION)) {
-    console.log('Using cached support stats');
     return cache.supportStats;
   }
 

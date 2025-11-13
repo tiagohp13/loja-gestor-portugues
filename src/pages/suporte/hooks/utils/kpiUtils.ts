@@ -12,19 +12,6 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Usar o número real de vendas (saídas de stock ativas)
   const salesCount = stats.completedOrders; // Número dinâmico de vendas
   
-  // Debug para verificar os valores usados no cálculo
-  console.log('Debug KPI values:', { 
-    clientsCount, 
-    salesCount,
-    totalSales: stats.totalSales,
-    totalSpent: stats.totalSpent,
-    profit: stats.profit,
-    totalEntries,
-    numberOfExpenses: stats.numberOfExpenses,
-    // Taxa de conversão - verificar usando os valores corretos
-    calculatedTaxaConversao: (salesCount / clientsCount) * 100
-  });
-  
   // Cálculos dos KPIs
   const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
   const profitMargin = stats.profitMargin;
