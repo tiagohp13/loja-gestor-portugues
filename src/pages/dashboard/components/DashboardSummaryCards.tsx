@@ -56,8 +56,8 @@ const DashboardSummaryCards = React.memo<DashboardSummaryCardsProps>(({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-      {cards.map((card, index) => (
-        <DashboardSummaryCard key={index} cardData={card} />
+      {cards.map((card) => (
+        <DashboardSummaryCard key={card.title} cardData={card} />
       ))}
     </div>
   );

@@ -81,7 +81,7 @@ const DashboardMetrics = memo(({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metricsData.map((metric, index) => (
           <Card 
-            key={index} 
+            key={metric.title}
             className="animate-fade-in cursor-pointer hover:shadow-lg hover:border-gray-300 transition-all" 
             style={{ animationDelay: `${index * 0.1}s` }}
             onClick={() => handleCardClick(metric)}

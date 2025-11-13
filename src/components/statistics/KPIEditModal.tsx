@@ -82,7 +82,7 @@ const KPIEditModal: React.FC<KPIEditModalProps> = ({ isOpen, onClose, kpis, onSa
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-4 py-4">
             {kpis.map((kpi, index) => (
-              <div key={index} className="grid grid-cols-1 gap-2">
+              <div key={kpi.name} className="grid grid-cols-1 gap-2">
                 <Label htmlFor={`kpi-${index}`} className="font-medium">
                   {kpi.name}
                   <span className="text-xs text-muted-foreground block">

@@ -152,11 +152,11 @@ if (top5Percentage > 0) {
   return (
     <div className="space-y-3 mb-6 fade-in">
       <h3 className="text-lg font-semibold mb-2">📊 Análise e Recomendações</h3>
-      {insights.map((insight, index) => {
+      {insights.map((insight) => {
         const Icon = insight.icon;
         return (
           <Alert
-            key={index}
+            key={insight.title}
             variant="default"
             className={`flex items-start justify-between ${getAlertStyle(insight.type)} fade-in`}
           >

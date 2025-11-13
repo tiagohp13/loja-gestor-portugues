@@ -175,8 +175,8 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               Não foi possível converter a encomenda.
               Os seguintes produtos não têm stock suficiente:
               <ul className="list-disc pl-5 mt-2">
-                {insufficientStockProducts.map((product, index) => (
-                  <li key={index} className="text-sm">{product}</li>
+                {insufficientStockProducts.map((product) => (
+                  <li key={product} className="text-sm">{product}</li>
                 ))}
               </ul>
               Por favor, verifique o stock antes de tentar novamente.

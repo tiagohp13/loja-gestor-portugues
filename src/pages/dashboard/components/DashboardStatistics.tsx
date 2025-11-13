@@ -112,9 +112,9 @@ const DashboardStatistics: React.FC<DashboardStatisticsProps> = ({
       </CardHeader>
       <CardContent>
         <dl className="space-y-4">
-          {statisticsData.map((stat, index) => (
+          {statisticsData.map((stat) => (
             <div 
-              key={index}
+              key={stat.label}
               className={`flex justify-between items-center py-2 ${stat.noBorder ? '' : 'border-b'}`}
             >
               <dt className="text-muted-foreground font-medium text-left">{stat.label}</dt>

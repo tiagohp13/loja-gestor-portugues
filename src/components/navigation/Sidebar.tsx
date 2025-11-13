@@ -211,8 +211,8 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item, index) => (
-                <SidebarMenuItem key={index}>
+              {navigationItems.map((item) => (
+                <SidebarMenuItem key={item.path}>
                   <SidebarMenuButton 
                     onClick={() => handleNavigation(item.path)}
                     isActive={item.isActive}
@@ -233,8 +233,8 @@ const AppSidebar: React.FC = () => {
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item, index) => (
-                  <SidebarMenuItem key={index}>
+                {adminItems.map((item) => (
+                  <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton 
                       onClick={() => handleNavigation(item.path)}
                       isActive={item.isActive}

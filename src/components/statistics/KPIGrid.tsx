@@ -47,9 +47,9 @@ const KPIGrid: React.FC<KPIGridProps> = ({ kpis, onSaveKpis }) => {
     <>
       {/* Grelha de KPIs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 items-stretch content-start">
-        {kpis.map((kpi, index) => (
+        {kpis.map((kpi) => (
           <Card
-            key={index}
+            key={kpi.name}
             className={`flex flex-col justify-between h-full cursor-pointer hover:shadow-lg transition-shadow border ${
               kpi.belowTarget ? "border-red-400" : "border-green-400"
             }`}

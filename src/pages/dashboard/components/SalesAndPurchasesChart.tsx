@@ -54,7 +54,7 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
             const variation = previousValue > 0 ? ((currentValue - previousValue) / previousValue) * 100 : 0;
             
             return (
-              <div key={index} className="mb-2 last:mb-0">
+              <div key={item.dataKey} className="mb-2 last:mb-0">
                 <p className="text-sm font-medium" style={{ color: item.color }}>
                   {`${item.name}: ${formatCurrency(item.value)}`}
                 </p>
@@ -87,8 +87,8 @@ const SalesAndPurchasesChart: React.FC<SalesAndPurchasesChartProps> = ({ chartDa
     const { payload } = props;
     return (
       <div className="flex justify-center mt-4 space-x-6">
-        {payload.map((entry: any, index: number) => (
-          <div key={index} className="flex items-center">
+        {payload.map((entry: any) => (
+          <div key={entry.dataKey} className="flex items-center">
             <div 
               className="w-3 h-3 mr-2 rounded-sm"
               style={{ backgroundColor: entry.color }}

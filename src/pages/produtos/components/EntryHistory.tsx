@@ -37,9 +37,9 @@ const EntryHistory: React.FC<EntryHistoryProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {entriesForProduct.map((entry, index) => (
+              {entriesForProduct.map((entry) => (
                 <TableRow 
-                  key={index}
+                  key={entry.id || entry.number}
                   className="cursor-pointer hover:bg-accent"
                   onClick={() => entry.id && navigate(`/entradas/${entry.id}`)}
                 >

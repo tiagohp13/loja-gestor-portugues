@@ -356,7 +356,7 @@ const OrderEdit = () => {
               </TableHeader>
               <TableBody>
                 {formData.items.map((item, index) => (
-                  <TableRow key={index}>
+                  <TableRow key={`${item.productId}-${index}`}>
                     <TableCell>{item.productName}</TableCell>
                     <TableCell>
                       <Input

@@ -308,7 +308,7 @@ const ExpenseEdit = () => {
               <CardContent>
                 <div className="space-y-4">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
+                    <div key={`${item.productName}-${index}`} className="grid grid-cols-12 gap-4 items-end p-4 border rounded-lg">
                       <div className="col-span-4">
                         <Label>Nome do Produto</Label>
                         <Input

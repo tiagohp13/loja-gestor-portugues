@@ -308,7 +308,7 @@ const StockExitEdit = () => {
                   {formData.items.map((item, index) => {
                     const subtotal = item.quantity * item.salePrice * (1 - (item.discountPercent || 0) / 100);
                     return (
-                      <TableRow key={index}>
+                      <TableRow key={`${item.productId}-${index}`}>
                         <TableCell>
                           <select
                             value={item.productId || ""}

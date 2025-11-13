@@ -47,8 +47,8 @@ const ExitHistory: React.FC<ExitHistoryProps> = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {exitsForProduct.map((exit, index) => (
-                <TableRow key={index}>
+              {exitsForProduct.map((exit) => (
+                <TableRow key={exit.exitId || exit.number}>
                   <TableCell>{formatDateString(exit.date)}</TableCell>
                   <TableCell 
                     className="text-primary hover:underline cursor-pointer"

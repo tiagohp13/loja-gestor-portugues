@@ -345,7 +345,7 @@ export default function ReportsDashboard() {
               <h4 className="text-sm font-semibold mb-3 text-foreground">Top 5 Produtos por Receita</h4>
               <div className="space-y-2">
                 {products.topProducts.map((product, index) => (
-                  <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+                  <div key={product.product_name} className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
                     <div className="flex items-center gap-3">
                       <span className="text-lg font-bold text-primary">{index + 1}</span>
                       <div>
