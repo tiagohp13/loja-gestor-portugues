@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,6 +30,7 @@ import {
 
 const OrderList = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [currentPage, setCurrentPage] = useState(0);
   const { orders, totalCount, totalPages, isLoading, deleteOrder } = usePaginatedOrders(currentPage);
@@ -102,6 +104,9 @@ const OrderList = () => {
 
       if (error) throw error;
       toast.success("Encomenda restaurada com sucesso");
+
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
     } catch (error) {
       console.error("Error restoring order:", error);
       toast.error("Erro ao restaurar encomenda");
@@ -117,6 +122,9 @@ const OrderList = () => {
 
       if (error) throw error;
       toast.success("Encomenda cancelada com sucesso");
+
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error("Erro ao cancelar encomenda");
@@ -445,3 +453,4 @@ const OrderList = () => {
 };
 
 export default OrderList;
+
