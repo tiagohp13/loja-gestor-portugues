@@ -6,10 +6,15 @@ import { mapOrder } from "./mappers";
 import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
 
+/* ---------------------------------------------------------
+   FETCH ORDERS
+--------------------------------------------------------- */
 async function fetchOrders(): Promise<Order[]> {
   const { data: ordersData, error: ordersError } = await supabase
     .from("orders")
-    .select("id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at")
+    .select(
+      "id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at"
+    )
     .is("deleted_at", null)
     .order("date", { ascending: false });
 
@@ -19,7 +24,9 @@ async function fetchOrders(): Promise<Order[]> {
     (ordersData || []).map(async (order) => {
       const { data: itemsData, error: itemsError } = await supabase
         .from("order_items")
-        .select("id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at")
+        .select(
+          "id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at"
+        )
         .eq("order_id", order.id);
 
       if (itemsError) throw itemsError;
@@ -28,32 +35,40 @@ async function fetchOrders(): Promise<Order[]> {
         ...order,
         items: itemsData || [],
       };
-    }),
+    })
   );
 
   return orders.map(mapOrder);
 }
 
+/* ---------------------------------------------------------
+   DELETE ORDER
+--------------------------------------------------------- */
 async function deleteOrder(id: string) {
-  const { error } = await supabase.from("orders").update({ deleted_at: new Date().toISOString() }).eq("id", id);
+  const { error } = await supabase
+    .from("orders")
+    .update({ deleted_at: new Date().toISOString() })
+    .eq("id", id);
 
   if (error) throw error;
   return id;
 }
 
+/* ---------------------------------------------------------
+   CREATE ORDER
+--------------------------------------------------------- */
 async function createOrder(order: any) {
   const { items, ...orderData } = order;
 
-  // Convert total to total_amount if present
   if ("total" in orderData) {
     orderData.total_amount = orderData.total;
     delete orderData.total;
   }
 
-  // Generate order number automatically if not provided
+  // Generate number automatically
   if (!orderData.number) {
     const year = new Date().getFullYear();
-    
+
     const { data, error } = await supabase.rpc("get_next_counter_by_year", {
       counter_type: "order",
       p_year: year,
@@ -66,10 +81,13 @@ async function createOrder(order: any) {
     orderData.number = `ENC-${year}/${padded}`;
   }
 
-  // Convert order data to snake_case
   const orderPayload = await toInsert(orderData);
 
-  const { data: newOrder, error } = await supabase.from("orders").insert(orderPayload).select().single();
+  const { data: newOrder, error } = await supabase
+    .from("orders")
+    .insert(orderPayload)
+    .select()
+    .single();
 
   if (error) throw error;
 
@@ -79,7 +97,9 @@ async function createOrder(order: any) {
       order_id: newOrder.id,
     }));
 
-    const { error: itemsError } = await supabase.from("order_items").insert(itemsWithOrderId);
+    const { error: itemsError } = await supabase
+      .from("order_items")
+      .insert(itemsWithOrderId);
 
     if (itemsError) throw itemsError;
   }
@@ -87,34 +107,41 @@ async function createOrder(order: any) {
   return newOrder;
 }
 
+/* ---------------------------------------------------------
+   UPDATE ORDER
+--------------------------------------------------------- */
 async function updateOrder({ id, items, ...updates }: any) {
-  // Convert total to total_amount if present
   if ("total" in updates) {
     updates.total_amount = updates.total;
     delete updates.total;
   }
 
-  // Convert updates to snake_case
   const updatePayload = await toUpdate(updates);
 
-  const { error } = await supabase.from("orders").update(updatePayload).eq("id", id);
+  const { error } = await supabase
+    .from("orders")
+    .update(updatePayload)
+    .eq("id", id);
 
   if (error) throw error;
 
   if (items !== undefined) {
-    // Delete existing items
-    const { error: deleteError } = await supabase.from("order_items").delete().eq("order_id", id);
+    const { error: deleteError } = await supabase
+      .from("order_items")
+      .delete()
+      .eq("order_id", id);
 
     if (deleteError) throw deleteError;
 
-    // Insert new items
     if (items.length > 0) {
       const itemsWithOrderId = items.map((item: any) => ({
         ...camelToSnake(item),
         order_id: id,
       }));
 
-      const { error: insertError } = await supabase.from("order_items").insert(itemsWithOrderId);
+      const { error: insertError } = await supabase
+        .from("order_items")
+        .insert(itemsWithOrderId);
 
       if (insertError) throw insertError;
     }
@@ -123,10 +150,15 @@ async function updateOrder({ id, items, ...updates }: any) {
   return id;
 }
 
+/* ---------------------------------------------------------
+   GET ORDER BY ID
+--------------------------------------------------------- */
 async function getOrderById(id: string) {
   const { data: orderData, error: orderError } = await supabase
     .from("orders")
-    .select("id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at")
+    .select(
+      "id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at"
+    )
     .eq("id", id)
     .is("deleted_at", null)
     .maybeSingle();
@@ -136,7 +168,9 @@ async function getOrderById(id: string) {
 
   const { data: itemsData, error: itemsError } = await supabase
     .from("order_items")
-    .select("id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at")
+    .select(
+      "id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at"
+    )
     .eq("order_id", orderData.id);
 
   if (itemsError) throw itemsError;
@@ -147,46 +181,52 @@ async function getOrderById(id: string) {
   });
 }
 
+/* ---------------------------------------------------------
+   HOOK: LIST ALL ORDERS
+--------------------------------------------------------- */
 export function useOrdersQuery() {
   const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ["orders"],
     queryFn: fetchOrders,
-    staleTime: 1000 * 60 * 2, // 2 minutes
-    gcTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 0, // 🔥 refresca automaticamente SEM delay
+    gcTime: 1000 * 60 * 5,
   });
 
+  /* DELETE */
   const deleteMutation = useMutation({
     mutationFn: deleteOrder,
     onSuccess: async () => {
       toast.success("Encomenda eliminada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      await queryClient.refetchQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao eliminar encomenda"),
+    onError: (err: any) =>
+      toast.error(err.message || "Erro ao eliminar encomenda"),
   });
 
+  /* CREATE */
   const createMutation = useMutation({
     mutationFn: createOrder,
     onSuccess: async () => {
       toast.success("Encomenda criada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      await queryClient.refetchQueries({ queryKey: ["orders"] });
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao criar encomenda"),
+    onError: (err: any) =>
+      toast.error(err.message || "Erro ao criar encomenda"),
   });
 
+  /* UPDATE */
   const updateMutation = useMutation({
     mutationFn: updateOrder,
     onSuccess: async () => {
       toast.success("Encomenda atualizada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      await queryClient.refetchQueries({ queryKey: ["orders"] });
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao atualizar encomenda"),
+    onError: (err: any) =>
+      toast.error(err.message || "Erro ao atualizar encomenda"),
   });
 
   return {
@@ -200,6 +240,9 @@ export function useOrdersQuery() {
   };
 }
 
+/* ---------------------------------------------------------
+   HOOK: SINGLE ORDER
+--------------------------------------------------------- */
 export function useOrderQuery(id: string | undefined) {
   return useQuery({
     queryKey: ["order", id],
