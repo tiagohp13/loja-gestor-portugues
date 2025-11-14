@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, Save, ArrowLeft } from "lucide-react";
+import { Plus, Trash2, Save, ArrowLeft, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { Client, OrderItem, Product } from "@/types";
 import PageHeader from "@/components/ui/PageHeader";
@@ -19,6 +19,7 @@ import { DeliveryInformation } from "./components/DeliveryInformation";
 import { format, parseISO, startOfDay } from "date-fns";
 import ProductSelector from "./components/ProductSelector";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface OrderFormData {
   clientId: string;
@@ -235,6 +236,9 @@ const OrderEdit = () => {
     );
   }
 
+  const isCancelled = order.status === 'cancelled';
+  const isConverted = Boolean(order.convertedToStockExitId);
+
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
@@ -244,15 +248,29 @@ const OrderEdit = () => {
           <div className="flex space-x-3">
             <Button variant="outline" onClick={() => navigate(`/encomendas/${id}`)}>
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Cancelar
+              {isCancelled || isConverted ? 'Voltar' : 'Cancelar'}
             </Button>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-              <Save className="w-4 h-4 mr-2" />
-              {isSubmitting ? "A guardar..." : "Guardar Alterações"}
-            </Button>
+            {!isCancelled && !isConverted && (
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
+                <Save className="w-4 h-4 mr-2" />
+                {isSubmitting ? "A guardar..." : "Guardar Alterações"}
+              </Button>
+            )}
           </div>
         }
       />
+
+      {(isCancelled || isConverted) && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {isCancelled 
+              ? 'Esta encomenda foi cancelada e não pode ser editada.'
+              : 'Esta encomenda já foi convertida em venda e não pode ser editada.'
+            }
+          </AlertDescription>
+        </Alert>
+      )}
 
       <form onSubmit={handleSubmit} className="mt-6 space-y-6">
         <Card>
@@ -273,6 +291,7 @@ const OrderEdit = () => {
                       clientName: client?.name || "",
                     }));
                   }}
+                  disabled={isCancelled || isConverted}
                 >
                   <SelectTrigger>
                     <span>{formData.clientName || "Selecione um cliente"}</span>
@@ -293,6 +312,7 @@ const OrderEdit = () => {
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData((prev) => ({ ...prev, date: e.target.value }))}
+                  disabled={isCancelled || isConverted}
                 />
               </div>
             </div>
@@ -319,6 +339,7 @@ const OrderEdit = () => {
                 value={formData.notes}
                 onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                 rows={3}
+                disabled={isCancelled || isConverted}
               />
             </div>
           </CardContent>

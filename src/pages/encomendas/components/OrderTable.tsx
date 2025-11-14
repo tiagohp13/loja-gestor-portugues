@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, ShoppingCart, ArrowUp, ArrowDown } from "lucide-react";
+import { Edit, Trash2, ShoppingCart, ArrowUp, ArrowDown, X, RotateCcw } from "lucide-react";
 import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
 import { checkOrderDependencies } from '@/utils/dependencyUtils';
 import StatusBadge from "@/components/common/StatusBadge";
@@ -21,6 +21,8 @@ interface OrderTableProps {
   onView: (id: string) => void;
   onEdit: (e: React.MouseEvent, id: string) => void;
   onDelete: (id: string) => void;
+  onCancel?: (id: string) => void;
+  onRestore?: (id: string) => void;
   calculateOrderTotal: (order: Order) => number;
   sortField?: string;
   sortOrder?: 'asc' | 'desc';
@@ -32,6 +34,8 @@ const OrderTable = React.memo<OrderTableProps>(({
   onView,
   onEdit,
   onDelete,
+  onCancel,
+  onRestore,
   calculateOrderTotal,
   sortField = 'date',
   sortOrder = 'desc',
@@ -105,7 +109,11 @@ const OrderTable = React.memo<OrderTableProps>(({
                 {formatCurrency(calculateOrderTotal(order))}
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-sm text-gestorApp-gray-dark">
-                {order.convertedToStockExitId ? (
+                {order.status === 'cancelled' ? (
+                  <StatusBadge variant="error" icon={X}>
+                    Cancelada
+                  </StatusBadge>
+                ) : order.convertedToStockExitId ? (
                   <StatusBadge variant="success" icon={ShoppingCart}>
                     Convertida em Saída
                   </StatusBadge>
@@ -138,16 +146,16 @@ const OrderTable = React.memo<OrderTableProps>(({
                             variant="outline" 
                             size="sm" 
                             onClick={(e) => onEdit(e, order.id)}
-                            disabled={order.convertedToStockExitId !== null}
-                            className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                            disabled={order.convertedToStockExitId !== null || order.status === 'cancelled'}
+                            className={order.convertedToStockExitId !== null || order.status === 'cancelled' ? "opacity-50 cursor-not-allowed" : ""}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                         </span>
                       </TooltipTrigger>
-                      {order.convertedToStockExitId !== null && (
+                      {(order.convertedToStockExitId !== null || order.status === 'cancelled') && (
                         <TooltipContent>
-                          <p>Não pode editar encomendas já convertidas em venda.</p>
+                          <p>Não pode editar encomendas já convertidas ou canceladas.</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
@@ -169,23 +177,69 @@ const OrderTable = React.memo<OrderTableProps>(({
                                 onClick={(e) => {
                                   e.stopPropagation();
                                 }}
-                                disabled={order.convertedToStockExitId !== null}
-                                className={order.convertedToStockExitId !== null ? "opacity-50 cursor-not-allowed" : ""}
+                                disabled={order.convertedToStockExitId !== null || order.status === 'cancelled'}
+                                className={order.convertedToStockExitId !== null || order.status === 'cancelled' ? "opacity-50 cursor-not-allowed" : ""}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             }
-                            disabled={order.convertedToStockExitId !== null}
+                            disabled={order.convertedToStockExitId !== null || order.status === 'cancelled'}
                           />
                         </span>
                       </TooltipTrigger>
-                      {order.convertedToStockExitId !== null && (
+                      {(order.convertedToStockExitId !== null || order.status === 'cancelled') && (
                         <TooltipContent>
-                          <p>Não pode eliminar encomendas já convertidas em venda.</p>
+                          <p>Não pode eliminar encomendas já convertidas ou canceladas.</p>
                         </TooltipContent>
                       )}
                     </Tooltip>
                   </TooltipProvider>
+                  
+                  {order.status === 'cancelled' && onRestore && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onRestore(order.id);
+                            }}
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Restaurar encomenda</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                  
+                  {!order.convertedToStockExitId && order.status !== 'cancelled' && onCancel && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onCancel(order.id);
+                            }}
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Cancelar encomenda</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
                 </div>
               </td>
             </tr>
