@@ -256,7 +256,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
       if (exitNumberError) throw exitNumberError;
 
-      const exitNumber = `SAI-${currentYear}/${String(exitNumberData || 1).padStart(3, "0")}`;
+      const exitNumber = `VEN-${currentYear}/${String(exitNumberData || 1).padStart(3, "0")}`;
 
       // Create stock exit
       const { data: exitData, error: exitError } = await supabase
