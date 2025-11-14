@@ -257,6 +257,7 @@ export function useRequisicoesQuery() {
     onSuccess: () => {
       toast.success("Requisição criada com sucesso");
       queryClient.invalidateQueries({ queryKey: ["requisicoes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar requisição"),
   });
@@ -270,6 +271,7 @@ export function useRequisicoesQuery() {
       // Also invalidate stock entries and products when completing a requisition (creates stock entry)
       queryClient.invalidateQueries({ queryKey: ["stock-entries"] });
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar estado"),
   });
@@ -279,6 +281,7 @@ export function useRequisicoesQuery() {
     onSuccess: () => {
       toast.success("Requisição eliminada com sucesso");
       queryClient.invalidateQueries({ queryKey: ["requisicoes"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar requisição"),
   });

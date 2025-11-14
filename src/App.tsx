@@ -85,9 +85,6 @@ import DataManagement from './pages/admin/DataManagement';
 import ClientTagsManagement from './pages/admin/ClientTagsManagement';
 import AdminRoute from './components/layouts/AdminRoute';
 
-// Reports
-import ReportsDashboard from './pages/relatorios/ReportsDashboard';
-
 // Requisições
 import RequisicoesList from './pages/requisicoes/RequisicoesList';
 import StockBaixoPage from './pages/admin/StockBaixoPage';
@@ -183,16 +180,7 @@ function App() {
                     
                     <Route path="/notificacoes" element={<NotificationsList />} />
                     
-                    <Route 
-                      path="/relatorios" 
-                      element={
-                        <AdminRoute>
-                          <ReportsDashboard />
-                        </AdminRoute>
-                      } 
-                    />
-                    
-                    <Route 
+                    <Route
                       path="/admin/stock-baixo" 
                       element={
                         <AdminRoute>

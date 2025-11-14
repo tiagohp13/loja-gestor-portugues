@@ -346,9 +346,9 @@ export const useDashboardOptimized = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-optimized'],
     queryFn: fetchAllDashboardData,
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     refetchOnMount: false,
     refetchOnReconnect: false
   });
