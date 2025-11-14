@@ -367,7 +367,7 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         clientId: data.client_id || "",
         clientName: data.client_name,
         date: data.date,
-        invoiceNumber: data.invoice_number || "",
+        invoiceNumber: data.invoice_number,
         notes: data.notes,
         fromOrderId: data.from_order_id,
         fromOrderNumber: data.from_order_number,
@@ -423,14 +423,14 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       if (error) throw error;
 
       // Restore order if needed
-      if (stockExit?.fromOrderId) {
+      if (stockExit?.fromOrderId || stockExit?.from_order_id) {
         const { error: updateOrderError } = await supabase
           .from("orders")
           .update({
             converted_to_stock_exit_id: null,
             converted_to_stock_exit_number: null,
           })
-          .eq("id", stockExit.fromOrderId);
+          .eq("id", stockExit.fromOrderId || stockExit.from_order_id);
 
         if (updateOrderError) {
           console.error("Error restoring order:", updateOrderError);
