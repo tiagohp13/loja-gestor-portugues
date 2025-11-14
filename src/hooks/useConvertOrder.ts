@@ -30,12 +30,18 @@ export const useConvertOrder = () => {
 
       // Get next exit number
       const currentYear = new Date().getFullYear();
-      const { data: numberData, error: numberError } = await supabase
-        .rpc("get_next_counter_by_year", { counter_type: "stock_exits", p_year: currentYear });
+      const { data: numberData, error: numberError } = await supabase.rpc(
+        "get_next_counter_by_year",
+        {
+          counter_type: "stock_exits", // parâmetro correto conforme tabela counters
+          year: currentYear            // parâmetro correto da função
+        }
+      );
 
       if (numberError) throw numberError;
 
-      const exitNumber = `VEN-${currentYear}/${String(numberData || 1).padStart(3, "0")}`;
+      // Formatar número VEN
+      const exitNumber = `VEN-${currentYear}/${String(numberData).padStart(3, "0")}`;
 
       // Create stock exit
       const { data: stockExit, error: exitError } = await supabase
