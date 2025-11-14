@@ -35,7 +35,7 @@ export const useConvertOrder = () => {
 
       if (numberError) throw numberError;
 
-      const exitNumber = `SAI-${currentYear}/${String(numberData || 1).padStart(3, "0")}`;
+      const exitNumber = `VEN-${currentYear}/${String(numberData || 1).padStart(3, "0")}`;
 
       // Create stock exit
       const { data: stockExit, error: exitError } = await supabase
