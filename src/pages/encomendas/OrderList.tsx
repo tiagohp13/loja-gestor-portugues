@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart, RotateCcw } from "lucide-react";
+import { Search, Plus, Edit, Trash2, CheckCircle, ShoppingCart, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Order } from "@/types";
 import PageHeader from "@/components/ui/PageHeader";
@@ -16,6 +16,8 @@ import { checkOrderDependencies } from "@/utils/dependencyUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { usePaginatedOrders } from "@/hooks/queries/usePaginatedOrders";
 import { supabase } from "@/integrations/supabase/client";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import {
   Pagination,
   PaginationContent,
@@ -32,18 +34,25 @@ const OrderList = () => {
   const { orders, totalCount, totalPages, isLoading, deleteOrder } = usePaginatedOrders(currentPage);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showCancelled, setShowCancelled] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; orderId: string | null }>({
     open: false,
     orderId: null,
   });
 
   useEffect(() => {
-    setFilteredOrders(sortOrders(orders));
-  }, [orders]);
+    const filtered = showCancelled 
+      ? orders 
+      : orders.filter(order => order.status !== 'cancelled');
+    setFilteredOrders(sortOrders(filtered));
+  }, [orders, showCancelled]);
 
   useEffect(() => {
     if (searchTerm) {
-      const filtered = orders.filter(
+      const baseOrders = showCancelled 
+        ? orders 
+        : orders.filter(order => order.status !== 'cancelled');
+      const filtered = baseOrders.filter(
         (order) =>
           order.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -51,9 +60,12 @@ const OrderList = () => {
       );
       setFilteredOrders(sortOrders(filtered));
     } else {
-      setFilteredOrders(sortOrders(orders));
+      const baseOrders = showCancelled 
+        ? orders 
+        : orders.filter(order => order.status !== 'cancelled');
+      setFilteredOrders(sortOrders(baseOrders));
     }
-  }, [searchTerm, orders]);
+  }, [searchTerm, orders, showCancelled]);
 
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
@@ -93,6 +105,21 @@ const OrderList = () => {
     } catch (error) {
       console.error("Error restoring order:", error);
       toast.error("Erro ao restaurar encomenda");
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'cancelled' })
+        .eq("id", orderId);
+
+      if (error) throw error;
+      toast.success("Encomenda cancelada com sucesso");
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error("Erro ao cancelar encomenda");
     }
   };
 
@@ -154,14 +181,26 @@ const OrderList = () => {
       </Card>
 
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray w-4 h-4" />
-          <Input
-            placeholder="Pesquisar por cliente ou número da encomenda..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+        <div className="flex flex-col sm:flex-row gap-4 flex-1">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gestorApp-gray w-4 h-4" />
+            <Input
+              placeholder="Pesquisar por cliente ou número da encomenda..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-cancelled"
+              checked={showCancelled}
+              onCheckedChange={setShowCancelled}
+            />
+            <Label htmlFor="show-cancelled" className="text-sm cursor-pointer">
+              Mostrar canceladas
+            </Label>
+          </div>
         </div>
         {canCreate && (
           <Button
@@ -246,7 +285,12 @@ const OrderList = () => {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        {order.convertedToStockExitId ? (
+                        {order.status === 'cancelled' ? (
+                          <Badge className="bg-red-100 text-red-700 hover:bg-red-100 dark:bg-red-900 dark:text-red-300">
+                            <X className="w-3 h-3 mr-1" />
+                            Cancelada
+                          </Badge>
+                        ) : order.convertedToStockExitId ? (
                           <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900 dark:text-green-300">
                             <CheckCircle className="w-3 h-3 mr-1" />
                             Convertida em Saída
@@ -326,19 +370,33 @@ const OrderList = () => {
                             <Trash2 className="h-4 w-4" />
                           </Button>
                           {order.status === 'cancelled' && !order.convertedToStockExitId && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRestoreOrder(order.id);
-                              }}
-                              className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
-                              title="Restaurar encomenda"
-                            >
-                              <RotateCcw className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleRestoreOrder(order.id);
+                            }}
+                            className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-400 dark:hover:bg-green-950"
+                            title="Restaurar encomenda"
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {!order.convertedToStockExitId && order.status !== 'cancelled' && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelOrder(order.id);
+                            }}
+                            className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950"
+                            title="Cancelar encomenda"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
                         </div>
                       </td>
                     </tr>

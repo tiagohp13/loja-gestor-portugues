@@ -3,10 +3,11 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
-import { FileText, ShoppingCart, Pencil } from 'lucide-react';
+import { FileText, ShoppingCart, Pencil, X, RotateCcw } from 'lucide-react';
 import { Order, StockExit, Product } from '@/types';
 import { exportToPdf } from '@/utils/pdfExport';
 import { DuplicateOrderButton } from './DuplicateOrderButton';
+import { supabase } from '@/integrations/supabase/client';
 import {
   Dialog,
   DialogContent,
@@ -81,6 +82,54 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
     }
   };
 
+  const handleCancelOrder = async () => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'cancelled' })
+        .eq("id", order.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: 'Encomenda cancelada com sucesso'
+      });
+      navigate('/encomendas/consultar');
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast({
+        title: "Erro",
+        description: 'Erro ao cancelar encomenda',
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleRestoreOrder = async () => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'active' })
+        .eq("id", order.id);
+
+      if (error) throw error;
+      
+      toast({
+        title: "Sucesso",
+        description: 'Encomenda restaurada com sucesso'
+      });
+      navigate('/encomendas/consultar');
+    } catch (error) {
+      console.error("Error restoring order:", error);
+      toast({
+        title: "Erro",
+        description: 'Erro ao restaurar encomenda',
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleConvertToStockExit = async () => {
     if (!order) {
       toast({
@@ -136,23 +185,43 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
             </Button>
             
             {isPending && !isDeleted && order.status !== 'cancelled' && (
-              <Button
-                onClick={handleConvertDialog}
-                className="text-white bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
-              >
-                <ShoppingCart className="h-4 w-4" />
-                Converter
-              </Button>
+              <>
+                <Button
+                  onClick={handleConvertDialog}
+                  className="text-white bg-blue-500 hover:bg-blue-600 flex items-center gap-2"
+                >
+                  <ShoppingCart className="h-4 w-4" />
+                  Converter
+                </Button>
+                
+                <Button
+                  variant="secondary"
+                  onClick={handleEditOrder}
+                  className="flex items-center gap-2"
+                >
+                  <Pencil className="h-4 w-4" />
+                  Editar
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleCancelOrder}
+                  className="flex items-center gap-2 text-orange-600 hover:text-orange-700 border-orange-300 hover:bg-orange-50"
+                >
+                  <X className="h-4 w-4" />
+                  Cancelar
+                </Button>
+              </>
             )}
             
-            {isPending && !isDeleted && order.status !== 'cancelled' && (
+            {order.status === 'cancelled' && !isDeleted && (
               <Button
-                variant="secondary"
-                onClick={handleEditOrder}
-                className="flex items-center gap-2"
+                variant="outline"
+                onClick={handleRestoreOrder}
+                className="flex items-center gap-2 text-green-600 hover:text-green-700 border-green-300 hover:bg-green-50"
               >
-                <Pencil className="h-4 w-4" />
-                Editar
+                <RotateCcw className="h-4 w-4" />
+                Restaurar
               </Button>
             )}
             
