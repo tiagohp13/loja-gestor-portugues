@@ -1,12 +1,9 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import Sidebar from '@/components/navigation/Sidebar';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
-import AlertsManager from '@/components/common/AlertsManager';
-import { runAutomatedNotificationChecks } from '@/utils/notificationsService';
-import { supabase } from '@/integrations/supabase/client';
 
 /**
  * Main application layout with sidebar and content area
@@ -16,30 +13,8 @@ const AppLayout = () => {
   // Automatically scroll to top on route changes
   useScrollToTop();
 
-  // Run automated notification checks on mount and periodically
-  useEffect(() => {
-    const checkNotifications = async () => {
-      // Only run checks if user is authenticated
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        await runAutomatedNotificationChecks();
-      }
-    };
-
-    // Initial check
-    checkNotifications();
-
-    // Check every 30 minutes
-    const interval = setInterval(() => {
-      checkNotifications();
-    }, 30 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
   return (
     <SidebarProvider defaultOpen={true}>
-      <AlertsManager />
       <div className="flex h-screen w-full overflow-hidden bg-background">
         <Sidebar />
         <main className="flex-1 overflow-auto bg-background">

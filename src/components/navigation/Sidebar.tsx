@@ -6,7 +6,7 @@ import { useUserProfile } from '@/hooks/useUserProfile';
 import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Bell, Shield, BarChart2, Database
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Shield, BarChart2, Database
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -18,7 +18,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
 import GlobalSearch from './GlobalSearch';
-import { NotificationDropdown } from '@/components/notifications/NotificationDropdown';
 
 /**
  * Main navigation sidebar component 
@@ -107,12 +106,6 @@ const AppSidebar: React.FC = () => {
       isActive: location.pathname.includes('/reciclagem')
     },
     { 
-      path: '/notificacoes', 
-      label: 'Notificações', 
-      icon: <Bell className="w-5 h-5" />,
-      isActive: location.pathname.includes('/notificacoes')
-    },
-    { 
       path: '/configuracoes', 
       label: 'Configurações', 
       icon: <Settings className="w-5 h-5" />,
@@ -187,7 +180,7 @@ const AppSidebar: React.FC = () => {
 
   return (
     <Sidebar variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="p-4 flex items-center justify-between border-b">
+      <SidebarHeader className="p-4 flex items-center border-b">
         <div className="flex items-center space-x-2">
           <img 
             src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
@@ -196,7 +189,6 @@ const AppSidebar: React.FC = () => {
           />
           <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
         </div>
-        <NotificationDropdown />
       </SidebarHeader>
       
       <SidebarContent>
