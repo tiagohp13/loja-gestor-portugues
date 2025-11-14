@@ -71,6 +71,7 @@ export function usePaginatedStockExits(page: number = 0) {
       await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar saída"),
   });

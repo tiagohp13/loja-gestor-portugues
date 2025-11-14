@@ -176,6 +176,7 @@ export function usePaginatedExpenses(page: number = 0) {
       toast.success("Despesa eliminada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["expenses-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar despesa"),
   });
@@ -186,6 +187,7 @@ export function usePaginatedExpenses(page: number = 0) {
       toast.success("Despesa criada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["expenses-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar despesa"),
   });
@@ -196,6 +198,7 @@ export function usePaginatedExpenses(page: number = 0) {
       toast.success("Despesa atualizada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["expenses-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["expenses"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar despesa"),
   });

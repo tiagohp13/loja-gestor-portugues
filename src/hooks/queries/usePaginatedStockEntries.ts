@@ -70,6 +70,7 @@ export function usePaginatedStockEntries(page: number = 0) {
       await queryClient.invalidateQueries({ queryKey: ["stock-entries-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["stock-entries"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar entrada"),
   });
