@@ -138,12 +138,6 @@ const AppSidebar: React.FC = () => {
       label: 'Etiquetas de Clientes',
       icon: <Tag className="w-5 h-5" />,
       isActive: location.pathname.includes('/admin/client-tags')
-    },
-    {
-      path: '/relatorios',
-      label: 'Relatórios',
-      icon: <BarChart2 className="w-5 h-5" />,
-      isActive: location.pathname.includes('/relatorios')
     }
   ];
 

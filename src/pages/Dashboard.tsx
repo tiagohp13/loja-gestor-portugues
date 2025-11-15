@@ -32,7 +32,7 @@ const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [periodFilter, setPeriodFilter] = useState<'today' | 'week' | 'month' | 'year'>('month');
   
-  // Single optimized hook with all data fetched in parallel
+  // Single optimized hook with all data fetched in parallel - now with period filter
   const {
     isLoading,
     products,
@@ -44,7 +44,7 @@ const DashboardPage: React.FC = () => {
     supportStats,
     insufficientStockItems,
     pendingOrders: filteredPendingOrders
-  } = useDashboardOptimized();
+  } = useDashboardOptimized(periodFilter);
 
   const [dashboardConfig] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem("dashboard-layout-config");
