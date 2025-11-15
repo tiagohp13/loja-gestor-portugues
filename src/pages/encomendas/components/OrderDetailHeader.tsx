@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import PageHeader from '@/components/ui/PageHeader';
 import { FileText, ShoppingCart, Pencil, X, RotateCcw } from 'lucide-react';
@@ -31,6 +32,7 @@ interface OrderDetailHeaderProps {
 
 const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedStockExit, orderId, orderNumber, isDeleted = false }) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { products } = useProducts();
   const { convertOrderToStockExit } = useOrders();
   const isPending = !order.convertedToStockExitId;
@@ -95,6 +97,11 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
         title: "Sucesso",
         description: 'Encomenda cancelada com sucesso'
       });
+      
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
+      
       navigate('/encomendas/consultar');
     } catch (error) {
       console.error("Error cancelling order:", error);
@@ -119,6 +126,11 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
         title: "Sucesso",
         description: 'Encomenda restaurada com sucesso'
       });
+      
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
+      
       navigate('/encomendas/consultar');
     } catch (error) {
       console.error("Error restoring order:", error);
