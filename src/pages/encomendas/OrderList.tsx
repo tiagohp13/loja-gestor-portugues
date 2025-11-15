@@ -107,6 +107,7 @@ const OrderList = () => {
 
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     } catch (error) {
       console.error("Error restoring order:", error);
       toast.error("Erro ao restaurar encomenda");
@@ -125,6 +126,7 @@ const OrderList = () => {
 
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     } catch (error) {
       console.error("Error cancelling order:", error);
       toast.error("Erro ao cancelar encomenda");

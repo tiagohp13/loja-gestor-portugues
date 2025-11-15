@@ -13,7 +13,7 @@ async function fetchOrders(): Promise<Order[]> {
   const { data: ordersData, error: ordersError } = await supabase
     .from("orders")
     .select(
-      "id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted[...]"
+      "id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, created_at, updated_at"
     )
     .is("deleted_at", null)
     .order("date", { ascending: false });
@@ -157,7 +157,7 @@ async function getOrderById(id: string) {
   const { data: orderData, error: orderError } = await supabase
     .from("orders")
     .select(
-      "id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converte[...]"
+      "id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, created_at, updated_at"
     )
     .eq("id", id)
     .is("deleted_at", null)
@@ -215,6 +215,7 @@ export function useOrdersQuery() {
       toast.success("Encomenda criada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) =>
       toast.error(err.message || "Erro ao criar encomenda"),
@@ -227,6 +228,7 @@ export function useOrdersQuery() {
       toast.success("Encomenda atualizada com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["orders"] });
       await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
     },
     onError: (err: any) =>
       toast.error(err.message || "Erro ao atualizar encomenda"),

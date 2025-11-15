@@ -33,8 +33,8 @@ export const useConvertOrder = () => {
       const { data: numberData, error: numberError } = await supabase.rpc(
         "get_next_counter_by_year",
         {
-          counter_type: "stock_exits", // parâmetro correto conforme tabela counters
-          year: currentYear            // parâmetro correto da função
+          counter_type: "stock_exits",
+          p_year: currentYear
         }
       );
 
@@ -108,9 +108,11 @@ export const useConvertOrder = () => {
       }
 
       // Invalidate queries
-      queryClient.invalidateQueries({ queryKey: ["orders"] });
-      queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
-      queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["stock-exits"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
 
       toast.success("Encomenda convertida em saída com sucesso");
       return stockExit;
