@@ -42,6 +42,7 @@ const KPIPanel = ({
 
   // Update KPIs state when props change (for real-time updates)
   useEffect(() => {
+    console.log('[KPIPanel] Recebi novos KPIs:', initialKpis);
     setKpisState(initialKpis);
     setIsLoading(false);
   }, [initialKpis]);
@@ -54,7 +55,7 @@ const KPIPanel = ({
         const savedTargets = await loadKpiTargets();
         if (Object.keys(savedTargets).length > 0) {
           // Atualizar as metas dos KPIs com os valores salvos
-          setKpisState(prev => prev.map(kpi => ({
+          setKpisState(initialKpis.map(kpi => ({
             ...kpi,
             target: savedTargets[kpi.name] !== undefined ? savedTargets[kpi.name] : kpi.target,
             belowTarget: kpi.isInverseKPI ? kpi.value > (savedTargets[kpi.name] ?? kpi.target) : kpi.value < (savedTargets[kpi.name] ?? kpi.target)
@@ -78,7 +79,7 @@ const KPIPanel = ({
     if (initialKpis.length > 0) {
       fetchTargets();
     }
-  }, [initialKpis.length]);
+  }, [initialKpis]);
 
   // Update KPIs when targets are saved
   const handleSaveTargets = (updatedKpis: KPI[]) => {

@@ -155,6 +155,11 @@ const DashboardPage: React.FC = () => {
         })}
       </div>
 
+      {/* Debug: Período atual */}
+      <p className="text-sm text-muted-foreground mb-4">
+        Período atual: {periodFilter}
+      </p>
+
       <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
         {/* Quick Actions, Summary Cards, Sales/Purchases Chart */}
         {componentMap["quick-actions"]}

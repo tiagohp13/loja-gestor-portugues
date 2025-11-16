@@ -166,6 +166,7 @@ const getDateRange = (period: 'today' | 'week' | 'month' | 'year') => {
 export const fetchAllDashboardData = async (period: 'today' | 'week' | 'month' | 'year' = 'month') => {
   try {
     const { startDate, endDate } = getDateRange(period);
+    console.log('[Dashboard] a buscar dados para:', startDate, endDate);
     
     // Fetch all data from Supabase in parallel - single round trip
     const [
@@ -378,6 +379,8 @@ export const fetchAllDashboardData = async (period: 'today' | 'week' | 'month' |
 };
 
 export const useDashboardOptimized = (period: 'today' | 'week' | 'month' | 'year' = 'month') => {
+  console.log('[Dashboard] período recebido:', period);
+  
   // Single query that fetches ALL data in parallel from Supabase
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-optimized', period],
