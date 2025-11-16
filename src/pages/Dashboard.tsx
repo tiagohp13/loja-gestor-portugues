@@ -7,10 +7,6 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import ChartSkeleton from "@/components/ui/ChartSkeleton";
 import SummaryCardSkeleton from "@/components/ui/SummaryCardSkeleton";
 import { WidgetConfig } from "@/components/ui/DashboardCustomization/types";
-import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, BarChart3, Clock, Infinity } from "lucide-react";
-
-type DashboardPeriod = 'today' | 'week' | 'month' | 'year' | 'all';
 
 // Lazy load heavy components for better performance
 const SalesAndPurchasesChart = lazy(() => import("./dashboard/components/SalesAndPurchasesChart"));
@@ -32,9 +28,8 @@ const defaultDashboardConfig: WidgetConfig[] = [
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [periodFilter, setPeriodFilter] = useState<DashboardPeriod>('month');
   
-  // Single optimized hook with all data fetched in parallel - now with period filter
+  // Single optimized hook with all data fetched in parallel
   const {
     isLoading,
     products,
@@ -46,7 +41,7 @@ const DashboardPage: React.FC = () => {
     supportStats,
     insufficientStockItems,
     pendingOrders: filteredPendingOrders
-  } = useDashboardOptimized(periodFilter);
+  } = useDashboardOptimized();
 
   const [dashboardConfig] = useState<WidgetConfig[]>(() => {
     const saved = localStorage.getItem("dashboard-layout-config");
@@ -127,37 +122,9 @@ const DashboardPage: React.FC = () => {
     ],
   );
 
-  const periodOptions: Array<{ value: DashboardPeriod; label: string; icon: React.ComponentType<any> }> = [
-    { value: 'today', label: 'Hoje', icon: Clock },
-    { value: 'week', label: 'Semana', icon: Calendar },
-    { value: 'month', label: 'Mês', icon: TrendingUp },
-    { value: 'year', label: 'Ano', icon: BarChart3 },
-    { value: 'all', label: 'Sempre', icon: Infinity },
-  ];
-
   return (
     <div className="container mx-auto px-4 py-6 bg-background min-h-screen animate-fade-in">
       <PageHeader title="Dashboard" description="Vista geral do seu negócio" />
-
-      {/* Period Filter */}
-      <div className="flex gap-2 flex-wrap mb-6">
-        {periodOptions.map((option) => {
-          const Icon = option.icon;
-          return (
-            <Button
-              key={option.value}
-              variant={periodFilter === option.value ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPeriodFilter(option.value)}
-              className="gap-2"
-            >
-              <Icon className="w-4 h-4" />
-              {option.label}
-            </Button>
-          );
-        })}
-      </div>
-
 
       <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
         {/* Quick Actions, Summary Cards, Sales/Purchases Chart */}

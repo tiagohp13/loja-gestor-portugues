@@ -33,8 +33,6 @@ import {
 } from '@/hooks/queries/mappers';
 import type { StockExit, StockEntry, Product, Order } from '@/types';
 
-export type DashboardPeriod = 'today' | 'week' | 'month' | 'year' | 'all';
-
 interface KpiDelta {
   pct30d: number;
   pctMoM: number;
@@ -133,61 +131,9 @@ const calculateKpiDeltas = (stockExits: StockExit[], stockEntries: StockEntry[])
   };
 };
 
-// Calculate date range based on period filter
-// Returns null for 'all' to indicate no date filtering
-const getDateRange = (period: DashboardPeriod): { startDate: string; endDate: string } | null => {
-  if (period === 'all') {
-    return null; // No date filter
-  }
-  
-  const now = new Date();
-  let startDate: Date;
-  
-  switch (period) {
-    case 'today':
-      startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      break;
-    case 'week':
-      // Last 7 days
-      startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-      break;
-    case 'month':
-      // Current month
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case 'year':
-      // Current year
-      startDate = new Date(now.getFullYear(), 0, 1);
-      break;
-    default:
-      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-  }
-  
-  return {
-    startDate: startDate.toISOString(),
-    endDate: now.toISOString()
-  };
-};
-
 // Fetch ALL dashboard data in parallel from Supabase directly
-export const fetchAllDashboardData = async (period: DashboardPeriod = 'month') => {
+export const fetchAllDashboardData = async () => {
   try {
-    const dateRange = getDateRange(period);
-    const startDate = dateRange?.startDate;
-    const endDate = dateRange?.endDate;
-    
-    // Build base queries
-    let ordersQuery = supabase.from('orders').select('id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at, items:order_items(id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').is('deleted_at', null).neq('status', 'cancelled');
-    let stockExitsQuery = supabase.from('stock_exits').select('id, number, client_id, client_name, date, invoice_number, notes, from_order_id, from_order_number, discount, status, user_id, created_at, updated_at, deleted_at, items:stock_exit_items(id, exit_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').eq('status', 'active');
-    let stockEntriesQuery = supabase.from('stock_entries').select('id, number, supplier_id, supplier_name, date, invoice_number, notes, status, user_id, created_at, updated_at, deleted_at, items:stock_entry_items(id, entry_id, product_id, product_name, quantity, purchase_price, discount_percent, created_at, updated_at)').eq('status', 'active');
-    
-    // Apply date filters only if not 'all' period
-    if (startDate && endDate) {
-      ordersQuery = ordersQuery.gte('date', startDate).lte('date', endDate);
-      stockExitsQuery = stockExitsQuery.gte('date', startDate).lte('date', endDate);
-      stockEntriesQuery = stockEntriesQuery.gte('date', startDate).lte('date', endDate);
-    }
-    
     // Fetch all data from Supabase in parallel - single round trip
     const [
       productsRes,
@@ -202,9 +148,9 @@ export const fetchAllDashboardData = async (period: DashboardPeriod = 'month') =
       monthlyExpenses
     ] = await Promise.all([
       supabase.from('products').select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
-      ordersQuery.order('created_at', { ascending: false }),
-      stockExitsQuery.order('date', { ascending: false }),
-      stockEntriesQuery.order('date', { ascending: false }),
+      supabase.from('orders').select('id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at, items:order_items(id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').is('deleted_at', null).neq('status', 'cancelled').order('created_at', { ascending: false }),
+      supabase.from('stock_exits').select('id, number, client_id, client_name, date, invoice_number, notes, from_order_id, from_order_number, discount, status, user_id, created_at, updated_at, deleted_at, items:stock_exit_items(id, exit_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').eq('status', 'active').order('date', { ascending: false }),
+      supabase.from('stock_entries').select('id, number, supplier_id, supplier_name, date, invoice_number, notes, status, user_id, created_at, updated_at, deleted_at, items:stock_entry_items(id, entry_id, product_id, product_name, quantity, purchase_price, discount_percent, created_at, updated_at)').eq('status', 'active').order('date', { ascending: false }),
       supabase.from('clients').select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
       supabase.from('suppliers').select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
       supabase.from('categories').select('id, name, description, status, product_count, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
@@ -398,11 +344,11 @@ export const fetchAllDashboardData = async (period: DashboardPeriod = 'month') =
   }
 };
 
-export const useDashboardOptimized = (period: DashboardPeriod = 'month') => {
+export const useDashboardOptimized = () => {
   // Single query that fetches ALL data in parallel from Supabase
   const { data, isLoading, error } = useQuery({
-    queryKey: ['dashboard-optimized', period],
-    queryFn: () => fetchAllDashboardData(period),
+    queryKey: ['dashboard-optimized'],
+    queryFn: () => fetchAllDashboardData(),
     staleTime: 1000 * 60, // 1 minute
     gcTime: 1000 * 60 * 15, // 15 minutes
     refetchOnWindowFocus: true,
