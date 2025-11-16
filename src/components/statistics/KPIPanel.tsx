@@ -42,7 +42,6 @@ const KPIPanel = ({
 
   // Update KPIs state when props change (for real-time updates)
   useEffect(() => {
-    console.log('[KPIPanel] Recebi novos KPIs:', initialKpis);
     setKpisState(initialKpis);
     setIsLoading(false);
   }, [initialKpis]);

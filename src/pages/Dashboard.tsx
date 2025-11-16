@@ -8,7 +8,9 @@ import ChartSkeleton from "@/components/ui/ChartSkeleton";
 import SummaryCardSkeleton from "@/components/ui/SummaryCardSkeleton";
 import { WidgetConfig } from "@/components/ui/DashboardCustomization/types";
 import { Button } from "@/components/ui/button";
-import { Calendar, TrendingUp, BarChart3, Clock } from "lucide-react";
+import { Calendar, TrendingUp, BarChart3, Clock, Infinity } from "lucide-react";
+
+type DashboardPeriod = 'today' | 'week' | 'month' | 'year' | 'all';
 
 // Lazy load heavy components for better performance
 const SalesAndPurchasesChart = lazy(() => import("./dashboard/components/SalesAndPurchasesChart"));
@@ -30,7 +32,7 @@ const defaultDashboardConfig: WidgetConfig[] = [
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const [periodFilter, setPeriodFilter] = useState<'today' | 'week' | 'month' | 'year'>('month');
+  const [periodFilter, setPeriodFilter] = useState<DashboardPeriod>('month');
   
   // Single optimized hook with all data fetched in parallel - now with period filter
   const {
@@ -125,12 +127,13 @@ const DashboardPage: React.FC = () => {
     ],
   );
 
-  const periodOptions = [
+  const periodOptions: Array<{ value: DashboardPeriod; label: string; icon: React.ComponentType<any> }> = [
     { value: 'today', label: 'Hoje', icon: Clock },
     { value: 'week', label: 'Semana', icon: Calendar },
     { value: 'month', label: 'Mês', icon: TrendingUp },
     { value: 'year', label: 'Ano', icon: BarChart3 },
-  ] as const;
+    { value: 'all', label: 'Sempre', icon: Infinity },
+  ];
 
   return (
     <div className="container mx-auto px-4 py-6 bg-background min-h-screen animate-fade-in">
@@ -155,10 +158,6 @@ const DashboardPage: React.FC = () => {
         })}
       </div>
 
-      {/* Debug: Período atual */}
-      <p className="text-sm text-muted-foreground mb-4">
-        Período atual: {periodFilter}
-      </p>
 
       <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
         {/* Quick Actions, Summary Cards, Sales/Purchases Chart */}
