@@ -111,7 +111,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast.error(getUserFriendlyError(error, "Não foi possível criar o produto"));
       throw error;
     }
-  }, [products]);
+  }, []);
 
   const updateProduct = useCallback(async (id: string, product: Partial<Product>) => {
     try {
@@ -139,7 +139,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar o produto"));
       throw error;
     }
-  }, [products]);
+  }, []);
 
   const deleteProduct = useCallback(async (id: string) => {
     try {
@@ -157,7 +157,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar o produto"));
       throw error;
     }
-  }, [products]);
+  }, []);
 
   const refreshProducts = useCallback(async () => {
     await fetchProducts();
