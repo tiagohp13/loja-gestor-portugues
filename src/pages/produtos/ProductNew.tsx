@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useProductsQuery } from "@/hooks/queries/useProducts";
+import { useProducts } from "@/contexts/ProductsContext";
 import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +12,7 @@ import { Save, ArrowLeft } from "lucide-react";
 
 const ProductNew = () => {
   const navigate = useNavigate();
-  const { createProduct } = useProductsQuery();
+  const { addProduct } = useProducts();
   const { categories } = useCategoriesQuery();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
@@ -40,7 +40,7 @@ const ProductNew = () => {
     setIsSubmitting(true);
 
     try {
-      createProduct({
+      await addProduct({
         name,
         code,
         description,
@@ -51,11 +51,8 @@ const ProductNew = () => {
         minStock,
         image,
         status: "active",
-      } as any, {
-        onSuccess: () => {
-          navigate("/produtos/consultar");
-        },
       });
+      navigate("/produtos/consultar");
     } catch (error) {
       console.error("Error adding product:", error);
     } finally {
