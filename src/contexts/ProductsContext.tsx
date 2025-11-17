@@ -56,12 +56,12 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     fetchProducts();
 
-    // Realtime subscription
+    // Realtime subscription - only listen to UPDATE and DELETE
+    // INSERT is handled manually in addProduct for immediate UI update
     const channel = supabase
-      .channel("public:products")
-      .on("postgres_changes", { event: "*", schema: "public", table: "products" }, () => {
-        fetchProducts();
-      })
+      .channel("products-changes")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "products" }, fetchProducts)
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "products" }, fetchProducts)
       .subscribe();
 
     return () => {
