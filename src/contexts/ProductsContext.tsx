@@ -100,7 +100,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (data) {
         const newProduct = mapDbProductToProduct(data);
-        setProducts([...products, newProduct]);
+        setProducts(prev => [...prev, newProduct]);
         toast.success("Produto criado com sucesso");
         return newProduct;
       }
@@ -132,7 +132,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (error) throw error;
 
-      setProducts(products.map((p) => (p.id === id ? { ...p, ...product } : p)));
+      setProducts(prev => prev.map((p) => (p.id === id ? { ...p, ...product } : p)));
       toast.success("Produto atualizado com sucesso");
     } catch (error) {
       console.error("Error updating product:", error);
@@ -150,7 +150,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (error) throw error;
 
-      setProducts(products.filter((p) => p.id !== id));
+      setProducts(prev => prev.filter((p) => p.id !== id));
       toast.success("Produto eliminado com sucesso");
     } catch (error) {
       console.error("Error soft deleting product:", error);
