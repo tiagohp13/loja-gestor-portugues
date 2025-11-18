@@ -71,6 +71,7 @@ export function useProductsQuery() {
     onSuccess: async () => {
       toast.success("Produto eliminado com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar produto"),
@@ -81,6 +82,7 @@ export function useProductsQuery() {
     onSuccess: async () => {
       toast.success("Produto criado com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar produto"),
@@ -91,6 +93,7 @@ export function useProductsQuery() {
     onSuccess: async () => {
       toast.success("Produto atualizado com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar produto"),
