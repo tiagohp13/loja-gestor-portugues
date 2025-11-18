@@ -174,10 +174,10 @@ async function updateRequisicaoEstado(id: string, estado: "encomendado" | "cance
     const currentYear = new Date().getFullYear();
 
     // ✅ Corrigido: parâmetros compatíveis com função do Supabase
-    const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year" as any, {
-      p_counter_type: "stock_entries",
-      p_year_input: currentYear as any,
-    });
+    const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+  counter_type: "stock_entries",
+  p_year: currentYear,
+});
 
     if (counterError) throw counterError;
 
