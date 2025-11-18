@@ -81,6 +81,7 @@ export function usePaginatedProducts(page: number = 0) {
     queryFn: () => fetchPaginatedProducts(page),
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 5,
+    refetchOnMount: true,
   });
 
   const deleteMutation = useMutation({
