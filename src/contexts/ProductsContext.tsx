@@ -56,8 +56,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     fetchProducts();
 
-    // Realtime subscription - only listen to UPDATE and DELETE
-    // INSERT is handled manually in addProduct for immediate UI update
+    // Realtime SUB only for update/delete
     const channel = supabase
       .channel("products-changes")
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "products" }, fetchProducts)
@@ -69,15 +68,18 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
     };
   }, []);
 
-  const getProduct = useCallback((id: string): Product | undefined => {
-    return products.find((product) => product.id === id);
+  const getProduct = useCallback((id: string) => {
+    return products.find((p) => p.id === id);
   }, [products]);
 
-  const findProduct = useCallback((id: string): Product | undefined => {
-    return products.find((product) => product.id === id);
+  const findProduct = useCallback((id: string) => {
+    return products.find((p) => p.id === id);
   }, [products]);
 
-  const addProduct = useCallback(async (product: Omit<Product, "id" | "createdAt" | "updatedAt">) => {
+  // ---------------------
+  // CREATE PRODUCT
+  // ---------------------
+  const addProduct = useCallback(async (product) => {
     try {
       const { data, error } = await supabase
         .from("products")
@@ -98,14 +100,15 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (error) throw error;
 
-      if (data) {
-        const newProduct = mapDbProductToProduct(data);
-        setProducts(prev => [...prev, newProduct]);
-        toast.success("Produto criado com sucesso");
-        return newProduct;
-      }
+      const newProduct = mapDbProductToProduct(data);
+      setProducts(prev => [...prev, newProduct]);
 
-      throw new Error("Failed to add product");
+      // 🔥 Atualizar lista para garantir consistência com paginação
+      await fetchProducts();
+
+      toast.success("Produto criado com sucesso");
+      return newProduct;
+
     } catch (error) {
       console.error("Error adding product:", error);
       toast.error(getUserFriendlyError(error, "Não foi possível criar o produto"));
@@ -113,6 +116,9 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
+  // ---------------------
+  // UPDATE PRODUCT
+  // ---------------------
   const updateProduct = useCallback(async (id: string, product: Partial<Product>) => {
     try {
       const updateData: any = {};
@@ -132,8 +138,13 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       if (error) throw error;
 
+      // Atualiza local
       setProducts(prev => prev.map((p) => (p.id === id ? { ...p, ...product } : p)));
       toast.success("Produto atualizado com sucesso");
+
+      // 🔥 Linha essencial:
+      await fetchProducts();
+
     } catch (error) {
       console.error("Error updating product:", error);
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar o produto"));
@@ -141,6 +152,9 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
   }, []);
 
+  // ---------------------
+  // DELETE PRODUCT
+  // ---------------------
   const deleteProduct = useCallback(async (id: string) => {
     try {
       const { error } = await supabase.rpc("soft_delete_record", {
@@ -152,6 +166,10 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       setProducts(prev => prev.filter((p) => p.id !== id));
       toast.success("Produto eliminado com sucesso");
+
+      // 🔥 Garantir atualização em listas paginadas
+      await fetchProducts();
+
     } catch (error) {
       console.error("Error soft deleting product:", error);
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar o produto"));
