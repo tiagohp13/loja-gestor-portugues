@@ -84,21 +84,21 @@ export function usePaginatedProducts(page: number = 0) {
     queryFn: () => fetchPaginatedProducts(page),
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 5,
-    refetchOnMount: true,
+    refetchOnMount: "always",
   });
 
   // TODO (Copilot): Após criar, editar ou apagar um produto, 
   // adiciona sempre:
   // await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
   // a seguir aos invalidates já existentes.
-  // Isto garante que a lista paginada de produtos atualiza imediatamente.
+  // Isto garante que a lista paginada de produtos actualiza imediatamente.
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
     onSuccess: async () => {
       toast.success("Produto eliminado com sucesso");
-      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar produto"),
   });
@@ -107,14 +107,14 @@ export function usePaginatedProducts(page: number = 0) {
   // adiciona sempre:
   // await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
   // a seguir aos invalidates já existentes.
-  // Isto garante que a lista paginada de produtos atualiza imediatamente.
+  // Isto garante que a lista paginada de produtos actualiza imediatamente.
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: async () => {
       toast.success("Produto criado com sucesso");
-      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
     },
     onError: (err: any) => toast.error(err.message || "Erro ao criar produto"),
   });
@@ -123,16 +123,16 @@ export function usePaginatedProducts(page: number = 0) {
   // adiciona sempre:
   // await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
   // a seguir aos invalidates já existentes.
-  // Isto garante que a lista paginada de produtos atualiza imediatamente.
+  // Isto garante que a lista paginada de produtos actualiza imediatamente.
   const updateMutation = useMutation({
     mutationFn: updateProduct,
     onSuccess: async () => {
-      toast.success("Produto atualizado com sucesso");
-      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
+      toast.success("Produto actualizado com sucesso");
       await queryClient.invalidateQueries({ queryKey: ["products"] });
       await queryClient.invalidateQueries({ queryKey: ["categories"] });
+      await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
     },
-    onError: (err: any) => toast.error(err.message || "Erro ao atualizar produto"),
+    onError: (err: any) => toast.error(err.message || "Erro ao actualizar produto"),
   });
 
   return {
