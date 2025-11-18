@@ -76,6 +76,9 @@ async function updateProduct({ id, ...updates }: Partial<Product> & { id: string
 export function usePaginatedProducts(page: number = 0) {
   const queryClient = useQueryClient();
 
+  // TODO (Copilot): Adicionar refetchOnMount: "always" neste useQuery,
+  // porque o QueryClient global tem refetchOnMount desativado.
+  // Sem isto, a lista de produtos não atualiza ao voltar da página.
   const query = useQuery({
     queryKey: ["products-paginated", page],
     queryFn: () => fetchPaginatedProducts(page),
@@ -84,6 +87,11 @@ export function usePaginatedProducts(page: number = 0) {
     refetchOnMount: true,
   });
 
+  // TODO (Copilot): Após criar, editar ou apagar um produto, 
+  // adiciona sempre:
+  // await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
+  // a seguir aos invalidates já existentes.
+  // Isto garante que a lista paginada de produtos atualiza imediatamente.
   const deleteMutation = useMutation({
     mutationFn: deleteProduct,
     onSuccess: async () => {
@@ -95,6 +103,11 @@ export function usePaginatedProducts(page: number = 0) {
     onError: (err: any) => toast.error(err.message || "Erro ao eliminar produto"),
   });
 
+  // TODO (Copilot): Após criar, editar ou apagar um produto, 
+  // adiciona sempre:
+  // await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
+  // a seguir aos invalidates já existentes.
+  // Isto garante que a lista paginada de produtos atualiza imediatamente.
   const createMutation = useMutation({
     mutationFn: createProduct,
     onSuccess: async () => {
@@ -106,6 +119,11 @@ export function usePaginatedProducts(page: number = 0) {
     onError: (err: any) => toast.error(err.message || "Erro ao criar produto"),
   });
 
+  // TODO (Copilot): Após criar, editar ou apagar um produto, 
+  // adiciona sempre:
+  // await queryClient.invalidateQueries({ queryKey: ["products-paginated"] });
+  // a seguir aos invalidates já existentes.
+  // Isto garante que a lista paginada de produtos atualiza imediatamente.
   const updateMutation = useMutation({
     mutationFn: updateProduct,
     onSuccess: async () => {
