@@ -62,10 +62,10 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
   const currentYear = new Date().getFullYear();
 
   // ✅ Corrigido: parâmetros compatíveis com função do Supabase
-  const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year" as any, {
-    p_counter_type: "requisicoes",
-    p_year_input: currentYear as any,
-  });
+ const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+  counter_type: "requisicoes",
+  p_year: currentYear,
+});
 
   if (counterError) throw counterError;
 
