@@ -55,12 +55,11 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
   useEffect(() => {
     fetchSuppliers();
 
-    // Realtime subscription
+    // Realtime — igual ao módulo de produtos
     const channel = supabase
-      .channel("public:suppliers")
-      .on("postgres_changes", { event: "*", schema: "public", table: "suppliers" }, () => {
-        fetchSuppliers();
-      })
+      .channel("suppliers-changes")
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "suppliers" }, fetchSuppliers)
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "suppliers" }, fetchSuppliers)
       .subscribe();
 
     return () => {
@@ -72,6 +71,9 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
     return suppliers.find((supplier) => supplier.id === id);
   };
 
+  // ---------------------
+  // CREATE SUPPLIER
+  // ---------------------
   const addSupplier = async (supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) => {
     try {
       const { data, error } = await supabase
@@ -91,14 +93,17 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       if (error) throw error;
 
-      if (data) {
-        const newSupplier = mapDbSupplierToSupplier(data);
-        setSuppliers([...suppliers, newSupplier]);
-        toast.success("Fornecedor criado com sucesso");
-        return newSupplier;
-      }
+      const newSupplier = mapDbSupplierToSupplier(data);
 
-      throw new Error("Failed to add supplier");
+      // Atualiza localmente
+      setSuppliers(prev => [...prev, newSupplier]);
+
+      // 🔥 Atualiza a lista paginada e a geral
+      await fetchSuppliers();
+
+      toast.success("Fornecedor criado com sucesso");
+      return newSupplier;
+
     } catch (error) {
       console.error("Error adding supplier:", error);
       toast.error(getUserFriendlyError(error, "Não foi possível criar o fornecedor"));
@@ -106,6 +111,9 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
+  // ---------------------
+  // UPDATE SUPPLIER
+  // ---------------------
   const updateSupplier = async (id: string, supplier: Partial<Supplier>) => {
     try {
       const { error } = await supabase
@@ -124,8 +132,16 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       if (error) throw error;
 
-      setSuppliers(suppliers.map((s) => (s.id === id ? { ...s, ...supplier } : s)));
+      // Atualiza local
+      setSuppliers(prev =>
+        prev.map(s => (s.id === id ? { ...s, ...supplier } : s))
+      );
+
       toast.success("Fornecedor atualizado com sucesso");
+
+      // 🔥 Essencial para sincronizar com paginação
+      await fetchSuppliers();
+
     } catch (error) {
       console.error("Error updating supplier:", error);
       toast.error(getUserFriendlyError(error, "Não foi possível atualizar o fornecedor"));
@@ -133,6 +149,9 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
     }
   };
 
+  // ---------------------
+  // DELETE SUPPLIER
+  // ---------------------
   const deleteSupplier = async (id: string) => {
     try {
       const { error } = await supabase.rpc("soft_delete_record", {
@@ -142,8 +161,13 @@ export const SuppliersProvider: React.FC<{ children: ReactNode }> = ({ children 
 
       if (error) throw error;
 
-      setSuppliers(suppliers.filter((s) => s.id !== id));
+      setSuppliers(prev => prev.filter(s => s.id !== id));
+
       toast.success("Fornecedor eliminado com sucesso");
+
+      // 🔥 Mantém a lista paginada correta
+      await fetchSuppliers();
+
     } catch (error) {
       console.error("Error deleting supplier:", error);
       toast.error(getUserFriendlyError(error, "Não foi possível eliminar o fornecedor"));
