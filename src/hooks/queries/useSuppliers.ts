@@ -117,5 +117,6 @@ export function useSupplierQuery(id: string | undefined) {
     queryFn: () => getSupplierById(id!),
     enabled: !!id,
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 }

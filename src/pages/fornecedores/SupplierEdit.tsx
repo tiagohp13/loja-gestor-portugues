@@ -16,6 +16,7 @@ const SupplierEdit = () => {
   const { updateSupplier } = usePaginatedSuppliers();
   const { data: foundSupplier, isLoading } = useSupplierQuery(id);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const [supplier, setSupplier] = useState({
     name: "",
@@ -28,7 +29,7 @@ const SupplierEdit = () => {
   });
 
   useEffect(() => {
-    if (foundSupplier) {
+    if (foundSupplier && !isInitialized) {
       setSupplier({
         name: foundSupplier.name || "",
         email: foundSupplier.email || "",
@@ -38,11 +39,12 @@ const SupplierEdit = () => {
         notes: foundSupplier.notes || "",
         paymentTerms: foundSupplier.paymentTerms || "",
       });
-    } else if (!isLoading && id) {
+      setIsInitialized(true);
+    } else if (!isLoading && !foundSupplier && id) {
       toast.error("Fornecedor não encontrado");
       navigate("/fornecedores/consultar");
     }
-  }, [foundSupplier, isLoading, id, navigate]);
+  }, [foundSupplier, isLoading, id, navigate, isInitialized]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

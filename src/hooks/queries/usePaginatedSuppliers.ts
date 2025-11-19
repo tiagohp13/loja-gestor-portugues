@@ -70,7 +70,7 @@ export function usePaginatedSuppliers(page: number = 0) {
     queryFn: () => fetchPaginatedSuppliers(page),
     staleTime: 1000 * 60 * 2,
     gcTime: 1000 * 60 * 5,
-    refetchOnMount: true,
+    refetchOnMount: "always",
   });
 
   const deleteMutation = useMutation({
