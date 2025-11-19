@@ -37,7 +37,7 @@ async function deleteSupplier(id: string) {
   return id;
 }
 
-async function createSupplier(supplier: Omit<Supplier, "id" | "created_at" | "updated_at">) {
+async function createSupplier(supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) {
   const payload = toInsert(supplier);
   const { data, error } = await supabase
     .from("suppliers")

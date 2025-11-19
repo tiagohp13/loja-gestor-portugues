@@ -5,7 +5,6 @@ import { ThemeProvider } from './contexts/ThemeContext';
 import { ProductsProvider } from './contexts/ProductsContext';
 import { CategoriesProvider } from './contexts/CategoriesContext';
 import { ClientsProvider } from './contexts/ClientsContext';
-import { SuppliersProvider } from './contexts/SuppliersContext';
 import { OrdersProvider } from './contexts/OrdersContext';
 import { StockProvider } from './contexts/StockContext';
 import { Toaster } from 'sonner';
@@ -120,10 +119,9 @@ function App() {
           <CategoriesProvider>
             <ProductsProvider>
               <ClientsProvider>
-                <SuppliersProvider>
-                  <OrdersProvider>
-                    <StockProvider>
-                      <Suspense fallback={<LoadingSpinner />}>
+                <OrdersProvider>
+                  <StockProvider>
+                    <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 
@@ -224,9 +222,8 @@ function App() {
             </Suspense>
         </StockProvider>
       </OrdersProvider>
-    </SuppliersProvider>
-  </ClientsProvider>
-</ProductsProvider>
+    </ClientsProvider>
+  </ProductsProvider>
 </CategoriesProvider>
 </AuthProvider>
 </ThemeProvider>

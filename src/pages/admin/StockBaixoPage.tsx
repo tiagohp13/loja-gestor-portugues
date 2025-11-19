@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useProducts } from "@/contexts/ProductsContext";
-import { useSuppliers } from "@/contexts/SuppliersContext";
+import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
 import { useNavigate } from "react-router-dom";
 import PageHeader from "@/components/ui/PageHeader";
@@ -19,7 +19,7 @@ import { toast } from "sonner";
 
 export default function StockBaixoPage() {
   const { products } = useProducts();
-  const { suppliers } = useSuppliers();
+  const { suppliers } = useSuppliersQuery();
   const { createRequisicao } = useRequisicoesQuery();
   const navigate = useNavigate();
 

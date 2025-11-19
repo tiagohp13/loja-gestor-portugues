@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSuppliers } from "../../contexts/SuppliersContext";
+import { usePaginatedSuppliers } from "@/hooks/queries/usePaginatedSuppliers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,7 +10,7 @@ import { toast } from "sonner";
 
 const SupplierNew = () => {
   const navigate = useNavigate();
-  const { addSupplier } = useSuppliers();
+  const { createSupplier } = usePaginatedSuppliers();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -18,17 +18,19 @@ const SupplierNew = () => {
   const [taxId, setTaxId] = useState("");
   const [notes, setNotes] = useState("");
   const [paymentTerms, setPaymentTerms] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
 
-    try {
-      if (!name.trim()) {
-        toast.error("O nome do fornecedor é obrigatório");
-        return;
-      }
+    if (!name.trim()) {
+      toast.error("O nome do fornecedor é obrigatório");
+      return;
+    }
 
-      await addSupplier({
+    setIsSubmitting(true);
+    try {
+      createSupplier({
         name,
         email,
         phone,
@@ -37,13 +39,20 @@ const SupplierNew = () => {
         notes,
         paymentTerms,
         status: "active",
+      }, {
+        onSuccess: () => {
+          navigate("/fornecedores/consultar");
+        },
+        onError: (error: any) => {
+          console.error("Erro ao adicionar fornecedor:", error);
+          toast.error("Erro ao adicionar fornecedor");
+          setIsSubmitting(false);
+        }
       });
-
-      toast.success("Fornecedor adicionado com sucesso!");
-      navigate("/fornecedores/consultar");
     } catch (error) {
       console.error("Erro ao adicionar fornecedor:", error);
       toast.error("Erro ao adicionar fornecedor");
+      setIsSubmitting(false);
     }
   };
 
@@ -54,13 +63,13 @@ const SupplierNew = () => {
         description="Adicione um novo fornecedor ao sistema"
         actions={
           <div className="flex space-x-3">
-            <Button variant="outline" onClick={() => navigate("/fornecedores/consultar")}>
+            <Button variant="outline" onClick={() => navigate("/fornecedores/consultar")} disabled={isSubmitting}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Cancelar
             </Button>
-            <Button onClick={handleSubmit}>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
-              Guardar Fornecedor
+              {isSubmitting ? "A guardar..." : "Guardar Fornecedor"}
             </Button>
           </div>
         }

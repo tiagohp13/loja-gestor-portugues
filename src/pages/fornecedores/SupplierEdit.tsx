@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSuppliers } from "../../contexts/SuppliersContext";
+import { usePaginatedSuppliers } from "@/hooks/queries/usePaginatedSuppliers";
+import { useSupplierQuery } from "@/hooks/queries/useSuppliers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageHeader from "@/components/ui/PageHeader";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
 
 const SupplierEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { suppliers, updateSupplier } = useSuppliers();
-  const getSupplier = (id: string) => suppliers.find(s => s.id === id);
+  const { updateSupplier } = usePaginatedSuppliers();
+  const { data: foundSupplier, isLoading } = useSupplierQuery(id);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [supplier, setSupplier] = useState({
     name: "",
@@ -21,26 +24,25 @@ const SupplierEdit = () => {
     address: "",
     taxId: "",
     notes: "",
+    paymentTerms: "",
   });
 
   useEffect(() => {
-    if (id) {
-      const foundSupplier = getSupplier(id);
-      if (foundSupplier) {
-        setSupplier({
-          name: foundSupplier.name || "",
-          email: foundSupplier.email || "",
-          phone: foundSupplier.phone || "",
-          address: foundSupplier.address || "",
-          taxId: foundSupplier.taxId || "",
-          notes: foundSupplier.notes || "",
-        });
-      } else {
-        toast.error("Fornecedor não encontrado");
-        navigate("/fornecedores/consultar");
-      }
+    if (foundSupplier) {
+      setSupplier({
+        name: foundSupplier.name || "",
+        email: foundSupplier.email || "",
+        phone: foundSupplier.phone || "",
+        address: foundSupplier.address || "",
+        taxId: foundSupplier.taxId || "",
+        notes: foundSupplier.notes || "",
+        paymentTerms: foundSupplier.paymentTerms || "",
+      });
+    } else if (!isLoading && id) {
+      toast.error("Fornecedor não encontrado");
+      navigate("/fornecedores/consultar");
     }
-  }, [id, getSupplier, navigate]);
+  }, [foundSupplier, isLoading, id, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -52,12 +54,24 @@ const SupplierEdit = () => {
 
   const handleSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (id) {
-      updateSupplier(id, supplier);
-      toast.success("Fornecedor atualizado com sucesso");
-      navigate(`/fornecedores/${id}`);
-    }
+    if (!id) return;
+
+    setIsSubmitting(true);
+    updateSupplier({ id, ...supplier }, {
+      onSuccess: () => {
+        navigate(`/fornecedores/${id}`);
+      },
+      onError: (error: any) => {
+        console.error("Erro ao atualizar fornecedor:", error);
+        toast.error("Erro ao atualizar fornecedor");
+        setIsSubmitting(false);
+      }
+    });
   };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -66,13 +80,13 @@ const SupplierEdit = () => {
         description="Atualize os detalhes do fornecedor"
         actions={
           <div className="flex space-x-3">
-            <Button variant="outline" onClick={() => navigate(`/fornecedores/${id}`)}>
+            <Button variant="outline" onClick={() => navigate(`/fornecedores/${id}`)} disabled={isSubmitting}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Cancelar
             </Button>
-            <Button onClick={handleSubmit}>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
               <Save className="w-4 h-4 mr-2" />
-              Guardar Alterações
+              {isSubmitting ? "A guardar..." : "Guardar Alterações"}
             </Button>
           </div>
         }

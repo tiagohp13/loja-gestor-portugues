@@ -7,7 +7,7 @@ import { SupportStats } from '../types/supportTypes';
 import { loadKpiTargets } from '@/services/kpiService';
 import { supabase } from '@/integrations/supabase/client';
 import { useClients } from '@/contexts/ClientsContext';
-import { useSuppliers } from '@/contexts/SuppliersContext';
+import { useSuppliersQuery } from '@/hooks/queries/useSuppliers';
 import { useCategories } from '@/contexts/CategoriesContext';
 import { useProducts } from '@/contexts/ProductsContext';
 
@@ -21,7 +21,7 @@ export interface SupportDataReturn {
 
 export const useSupportData = (): SupportDataReturn => {
   const { clients } = useClients();
-  const { suppliers } = useSuppliers();
+  const { suppliers } = useSuppliersQuery();
   const { categories } = useCategories();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(true);
