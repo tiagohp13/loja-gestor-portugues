@@ -70,7 +70,7 @@ async function createRequisicao(input: CreateRequisicaoInput): Promise<Requisica
   if (counterError) throw counterError;
 
   // Garantir que o contador é válido e nunca dá NaN
-  let nextNumber = parseInt(counterData ?? "1", 10) || 1;
+  let nextNumber = typeof counterData === 'number' ? counterData : (parseInt(String(counterData ?? "1"), 10) || 1);
   let numero = `REQ-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
 
   // Verificar se o número já existe e incrementar até encontrar um disponível
@@ -181,7 +181,7 @@ async function updateRequisicaoEstado(id: string, estado: "encomendado" | "cance
 
     if (counterError) throw counterError;
 
-    const nextNumber = parseInt(counterData, 10);
+    const nextNumber = typeof counterData === 'number' ? counterData : (parseInt(String(counterData ?? "1"), 10) || 1);
     const numero = `ENT-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
 
     // Create stock entry
