@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Product } from "@/types";
 import { mapProduct } from "./mappers";
 import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
+import { checkProductDependencies } from "@/utils/dependencyUtils";
 
 async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase
@@ -27,6 +28,13 @@ async function fetchProducts(): Promise<Product[]> {
 }
 
 async function deleteProduct(id: string) {
+  // Verificar dependências antes de eliminar
+  const dependencyCheck = await checkProductDependencies(id);
+  
+  if (!dependencyCheck.canDelete) {
+    throw new Error(dependencyCheck.message || "Este produto não pode ser eliminado porque tem movimentos associados.");
+  }
+
   const { error } = await supabase.from("products").update({ deleted_at: new Date().toISOString() }).eq("id", id);
 
   if (error) throw error;
