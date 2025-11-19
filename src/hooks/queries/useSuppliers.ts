@@ -71,6 +71,7 @@ export function useSuppliersQuery() {
     queryFn: fetchSuppliers,
     staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnMount: "always",
   });
 
   const deleteMutation = useMutation({
