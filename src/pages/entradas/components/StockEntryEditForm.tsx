@@ -4,7 +4,7 @@ import StockEntryEditDetails from "./StockEntryEditDetails";
 import StockEntryEditProductTable from "./StockEntryEditProductTable";
 import { useStockEntryEdit } from "../hooks/useStockEntryEdit";
 import { useProducts } from "@/contexts/ProductsContext";
-import { useSuppliers } from "@/contexts/SuppliersContext";
+import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 
@@ -14,7 +14,7 @@ interface StockEntryEditFormProps {
 
 const StockEntryEditForm: React.FC<StockEntryEditFormProps> = ({ id }) => {
   const { products } = useProducts();
-  const { suppliers } = useSuppliers();
+  const { suppliers } = useSuppliersQuery();
   const { canCreate, canEdit } = usePermissions();
   const {
     entry,

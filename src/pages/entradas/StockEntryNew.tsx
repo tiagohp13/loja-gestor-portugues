@@ -8,12 +8,12 @@ import SupplierSelector from "./components/SupplierSelector";
 import StockEntryDatePicker from "./components/StockEntryDatePicker";
 import StockEntryProductForm from "./components/StockEntryProductForm";
 import StockEntryProductsTable from "./components/StockEntryProductsTable";
-import { useSuppliers } from "@/contexts/SuppliersContext";
+import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const StockEntryNew = () => {
   const navigate = useNavigate();
-  const { suppliers } = useSuppliers();
+  const { suppliers } = useSuppliersQuery();
   const {
     entryDetails,
     items,

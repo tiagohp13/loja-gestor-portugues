@@ -26,7 +26,7 @@ async function deleteSupplier(id: string) {
   return id;
 }
 
-async function createSupplier(supplier: Omit<Supplier, "id" | "created_at" | "updated_at">) {
+async function createSupplier(supplier: Omit<Supplier, "id" | "createdAt" | "updatedAt">) {
   const payload = toInsert(supplier);
   const { data, error } = await supabase
     .from("suppliers")
@@ -49,6 +49,18 @@ async function updateSupplier({ id, ...updates }: Partial<Supplier> & { id: stri
   
   if (error) throw error;
   return data;
+}
+
+async function getSupplierById(id: string): Promise<Supplier | null> {
+  const { data, error } = await supabase
+    .from("suppliers")
+    .select("*")
+    .eq("id", id)
+    .is("deleted_at", null)
+    .single();
+  
+  if (error) throw error;
+  return data ? mapSupplier(data) : null;
 }
 
 export function useSuppliersQuery() {
@@ -97,4 +109,13 @@ export function useSuppliersQuery() {
     createSupplier: createMutation.mutate,
     updateSupplier: updateMutation.mutate,
   };
+}
+
+export function useSupplierQuery(id: string | undefined) {
+  return useQuery({
+    queryKey: ["supplier", id],
+    queryFn: () => getSupplierById(id!),
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5,
+  });
 }

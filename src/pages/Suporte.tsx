@@ -8,7 +8,7 @@ import MetricsCards from "./suporte/components/MetricsCards";
 import { useScrollToTop } from "@/hooks/useScrollToTop";
 import { useDashboardData } from "./dashboard/hooks/useDashboardData";
 import { useClients } from "@/contexts/ClientsContext";
-import { useSuppliers } from "@/contexts/SuppliersContext";
+import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useStock } from "@/contexts/StockContext";
 import FeaturedProducts from "./dashboard/components/FeaturedProducts";
 import DashboardStatistics from "./dashboard/components/DashboardStatistics";
@@ -44,7 +44,7 @@ const Suporte: React.FC = () => {
   } = useDashboardData();
 
   // Get additional data from separated contexts for Suporte page
-  const { suppliers } = useSuppliers();
+  const { suppliers } = useSuppliersQuery();
   const { clients } = useClients();
   const { stockEntries, stockExits } = useStock();
 
