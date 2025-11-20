@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
@@ -20,6 +20,53 @@ import { Requisicao, RequisicaoItem } from "@/types/requisicao";
 import { exportToPdf } from "@/utils/pdfExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+
+// Component to display stock entry link
+function StockEntryLink({ stockEntryId }: { stockEntryId: string }) {
+  const [stockEntryNumber, setStockEntryNumber] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    async function fetchStockEntryNumber() {
+      const { data } = await supabase
+        .from('stock_entries')
+        .select('number')
+        .eq('id', stockEntryId)
+        .single();
+      
+      if (data) {
+        setStockEntryNumber(data.number);
+      }
+    }
+    fetchStockEntryNumber();
+  }, [stockEntryId]);
+
+  return (
+    <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+      <div className="flex items-center justify-between">
+        <div>
+          <Label className="text-green-700 dark:text-green-300">Compra Criada</Label>
+          <p className="text-sm text-muted-foreground mt-1">
+            Esta requisição foi convertida em compra
+          </p>
+          {stockEntryNumber && (
+            <p className="text-sm font-semibold mt-2 text-green-700 dark:text-green-300">
+              {stockEntryNumber}
+            </p>
+          )}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/entradas/${stockEntryId}`)}
+        >
+          <ExternalLink className="h-4 w-4 mr-2" />
+          Ver Compra
+        </Button>
+      </div>
+    </div>
+  );
+}
 
 const estadoBadge = {
   encomendado: { variant: "default" as const, label: "🟡 Encomendado", className: "" },
@@ -464,35 +511,7 @@ export default function RequisicoesList() {
               )}
 
               {!isEditing && selectedRequisicao.estado === "concluido" && selectedRequisicao.stockEntryId && (
-                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <Label className="text-green-700 dark:text-green-300">Compra Criada</Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Esta requisição foi convertida em compra
-                      </p>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        const { data } = await supabase
-                          .from('stock_entries')
-                          .select('number')
-                          .eq('id', selectedRequisicao.stockEntryId)
-                          .single();
-                        
-                        if (data) {
-                          toast.success(`A redirecionar para compra ${data.number}`);
-                          window.location.href = `/entradas/${selectedRequisicao.stockEntryId}`;
-                        }
-                      }}
-                    >
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Ver Compra
-                    </Button>
-                  </div>
-                </div>
+                <StockEntryLink stockEntryId={selectedRequisicao.stockEntryId} />
               )}
 
               <div>
@@ -539,7 +558,21 @@ export default function RequisicoesList() {
                     ) : (
                       (isEditing ? editableItems : selectedRequisicao.items)?.map((item, index) => (
                         <TableRow key={item.id}>
-                          <TableCell>{item.produtoNome}</TableCell>
+                          <TableCell>
+                            {!isEditing && item.produtoId ? (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/produtos/${item.produtoId}`);
+                                }}
+                                className="text-primary hover:underline text-left"
+                              >
+                                {item.produtoNome}
+                              </button>
+                            ) : (
+                              item.produtoNome
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             {isEditing ? (
                               <Input
