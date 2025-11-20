@@ -34,6 +34,8 @@ export const useExpenseForm = () => {
       const { data, error } = await supabase
         .from('suppliers')
         .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at')
+        .is('deleted_at', null)
+        .eq('status', 'active')
         .order('name');
 
       if (error) throw error;
@@ -55,7 +57,7 @@ export const useExpenseForm = () => {
         setSuppliers(formattedSuppliers);
       }
     } catch (error) {
-      console.error('Error fetching suppliers:', error);
+      // Error handled by toast
       toast.error('Erro ao carregar fornecedores');
     }
   };
