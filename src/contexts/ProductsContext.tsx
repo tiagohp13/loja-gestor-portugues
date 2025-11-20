@@ -35,7 +35,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("*")
+        .select("id, code, name, category, purchase_price, sale_price, current_stock, min_stock, status, image, deleted_at, created_at, updated_at")
         .is("deleted_at", null)
         .order("name");
 
@@ -56,15 +56,24 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     fetchProducts();
 
-    // Realtime SUB only for update/delete
+    // Realtime SUB for all product changes including INSERT
     const channel = supabase
       .channel("products-changes")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "products" }, fetchProducts)
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "products" }, fetchProducts)
       .on("postgres_changes", { event: "DELETE", schema: "public", table: "products" }, fetchProducts)
+      .subscribe();
+    
+    // Listen to stock changes from entries and exits to update product stock in real-time
+    const stockChannel = supabase
+      .channel("stock-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock_entry_items" }, fetchProducts)
+      .on("postgres_changes", { event: "*", schema: "public", table: "stock_exit_items" }, fetchProducts)
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(stockChannel);
     };
   }, []);
 

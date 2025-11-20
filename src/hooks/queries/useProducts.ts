@@ -70,8 +70,10 @@ export function useProductsQuery() {
   const query = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    staleTime: 1000 * 30, // 30 seconds - more frequent refresh for stock levels
     gcTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: 5000, // Refetch every 5 seconds for real-time stock updates
+    refetchIntervalInBackground: false, // Only refetch when tab is active
   });
 
   const deleteMutation = useMutation({
