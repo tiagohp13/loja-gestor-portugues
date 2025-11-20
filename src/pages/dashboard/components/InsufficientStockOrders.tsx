@@ -3,10 +3,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { AlertTriangle, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 import { Product, Order, OrderItem } from '@/types';
 import { format } from 'date-fns';
 import { pt } from 'date-fns/locale';
+import { useOrders } from '@/contexts/OrdersContext';
 
 type InsufficientStockItem = {
   product: Product;
@@ -34,6 +36,17 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
 }) => {
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { refreshOrders } = useOrders();
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await refreshOrders();
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500);
+    }
+  };
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -73,10 +86,19 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
   if (insufficientItems.length === 0) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="text-lg font-semibold">
             Encomendas com Stock Insuficiente
           </CardTitle>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="h-8 w-8 p-0"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+          </Button>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-4">
@@ -89,10 +111,19 @@ const InsufficientStockOrders: React.FC<InsufficientStockOrdersProps> = ({
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-lg font-semibold">
           Encomendas com Stock Insuficiente
         </CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleRefresh}
+          disabled={isRefreshing}
+          className="h-8 w-8 p-0"
+        >
+          <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="overflow-x-auto">
