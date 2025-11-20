@@ -69,7 +69,7 @@ const LowStockProducts: React.FC<LowStockProductsProps> = ({
             ))}
           </div>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
+          <div className="text-center py-4 text-muted-foreground">
             Não existem produtos com stock baixo.
           </div>
         )}
