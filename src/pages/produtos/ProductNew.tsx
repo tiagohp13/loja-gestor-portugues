@@ -202,7 +202,7 @@ const ProductNew = () => {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-3 gap-4">
             <div className="space-y-2">
               <label htmlFor="currentStock" className="text-sm font-medium text-gestorApp-gray-dark">
                 Stock Atual
@@ -220,7 +220,7 @@ const ProductNew = () => {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center space-x-2 mb-3">
+              <div className="flex items-center space-x-2 h-[42px]">
                 <Checkbox 
                   id="hasMinStock"
                   checked={hasMinStock}
@@ -230,12 +230,14 @@ const ProductNew = () => {
                   htmlFor="hasMinStock" 
                   className="text-sm font-medium cursor-pointer"
                 >
-                  Este produto tem stock mínimo
+                  Stock mínimo
                 </Label>
               </div>
-              
+            </div>
+
+            <div className="space-y-2">
               <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                Stock Mínimo
+                Valor Mínimo
               </label>
               <Input
                 id="minStock"
@@ -250,7 +252,7 @@ const ProductNew = () => {
               />
               {hasMinStock && (
                 <p className="text-xs text-muted-foreground">
-                  Receberá alertas quando o stock atingir este valor
+                  Alerta quando atingir este valor
                 </p>
               )}
             </div>
