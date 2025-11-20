@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useProductsQuery } from "@/hooks/queries/useProducts";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
-import { useNextDocumentNumber } from "@/hooks/useNextDocumentNumber";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import PageHeader from "@/components/ui/PageHeader";
@@ -30,7 +29,6 @@ const RequisicaoNew = () => {
   const { suppliers } = useSuppliersQuery();
   const { products } = useProductsQuery();
   const { createRequisicao } = useRequisicoesQuery();
-  const { data: nextNumber } = useNextDocumentNumber("requisicoes");
 
   const [fornecedorId, setFornecedorId] = React.useState("");
   const [observacoes, setObservacoes] = React.useState("");
@@ -123,8 +121,8 @@ const RequisicaoNew = () => {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <PageHeader 
-        title={nextNumber ? `Nova Requisição (${nextNumber})` : "Nova Requisição"}
+      <PageHeader
+        title="Nova Requisição"
         description="Criar uma nova requisição de compra"
       />
 
