@@ -235,20 +235,24 @@ const ExpenseEdit = () => {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={() => navigate(`/despesas/${id}`)}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold">Editar Despesa {expense.number}</h1>
-            <p className="text-muted-foreground">Atualize os dados da despesa</p>
+      <PageHeader
+        title={`Editar Despesa ${expense.number}`}
+        description="Atualize os dados da despesa"
+        actions={
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={() => navigate(`/despesas/${id}`)}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Voltar
+            </Button>
+            <Button type="submit" form="expense-edit-form" disabled={isSaving}>
+              <Save className="w-4 h-4 mr-2" />
+              {isSaving ? "A guardar..." : "Guardar Alterações"}
+            </Button>
           </div>
-        </div>
-      </div>
+        }
+      />
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form id="expense-edit-form" onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
@@ -377,14 +381,6 @@ const ExpenseEdit = () => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="pt-6">
-                <Button type="submit" className="w-full" disabled={isSaving}>
-                  <Save className="w-4 h-4 mr-2" />
-                  {isSaving ? "A guardar..." : "Guardar Alterações"}
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </div>
       </form>
