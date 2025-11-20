@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, Package } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao, RequisicaoItem } from "@/types/requisicao";
@@ -94,6 +94,90 @@ export default function RequisicoesList() {
         },
       }
     );
+  };
+
+  const handleCriarCompra = async () => {
+    if (!selectedRequisicao) return;
+    
+    try {
+      const currentYear = new Date().getFullYear();
+      const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+        counter_type: "COMP",
+        p_year: currentYear
+      });
+
+      if (counterError) throw counterError;
+
+      const compraNumber = `COMP-${currentYear}/${String(counterData || 1).padStart(3, "0")}`;
+
+      // Criar compra
+      const { data: compra, error: compraError } = await supabase
+        .from("stock_entries")
+        .insert({
+          number: compraNumber,
+          supplier_id: selectedRequisicao.fornecedorId,
+          supplier_name: selectedRequisicao.fornecedorNome,
+          date: new Date().toISOString(),
+          notes: `Criado a partir da requisição ${selectedRequisicao.numero}${selectedRequisicao.observacoes ? '\n\n' + selectedRequisicao.observacoes : ''}`,
+        })
+        .select()
+        .single();
+
+      if (compraError) throw compraError;
+
+      // Criar itens da compra e atualizar stock
+      const items = selectedRequisicao.items || [];
+      for (const item of items) {
+        // Inserir item
+        const { error: itemError } = await supabase
+          .from("stock_entry_items")
+          .insert({
+            entry_id: compra.id,
+            product_id: item.produtoId,
+            product_name: item.produtoNome,
+            quantity: item.quantidade,
+            purchase_price: item.preco || 0,
+          });
+
+        if (itemError) throw itemError;
+
+        // Atualizar stock do produto
+        if (item.produtoId) {
+          const { data: produto, error: produtoError } = await supabase
+            .from("products")
+            .select("current_stock")
+            .eq("id", item.produtoId)
+            .single();
+
+          if (!produtoError && produto) {
+            await supabase
+              .from("products")
+              .update({
+                current_stock: produto.current_stock + item.quantidade,
+              })
+              .eq("id", item.produtoId);
+          }
+        }
+      }
+
+      // Atualizar requisição para concluído e ligar à compra
+      const { error: updateError } = await supabase
+        .from("requisicoes")
+        .update({
+          estado: "concluido",
+          stock_entry_id: compra.id,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", selectedRequisicao.id);
+
+      if (updateError) throw updateError;
+
+      toast.success(`Compra ${compraNumber} criada com sucesso!`);
+      setSelectedRequisicao(null);
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error.message || "Erro ao criar compra");
+    }
   };
 
   const handleCancelar = () => {
@@ -222,7 +306,16 @@ export default function RequisicoesList() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      <PageHeader title="Requisições" description="Gerir requisições de stock" />
+      <PageHeader 
+        title="Requisições" 
+        description="Gerir requisições de stock"
+        actions={
+          <Button onClick={() => window.location.href = '/admin/stock-baixo'}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Requisição
+          </Button>
+        }
+      />
 
       <Card>
         <CardContent className="pt-6">
@@ -368,6 +461,29 @@ export default function RequisicoesList() {
                 </div>
               )}
 
+              {!isEditing && selectedRequisicao.estado === "concluido" && selectedRequisicao.stockEntryId && (
+                <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+                  <Label className="text-green-700 dark:text-green-300">Compra Associada</Label>
+                  <Button
+                    variant="link"
+                    className="p-0 h-auto font-semibold text-green-600 hover:text-green-700"
+                    onClick={async () => {
+                      const { data } = await supabase
+                        .from('stock_entries')
+                        .select('number')
+                        .eq('id', selectedRequisicao.stockEntryId)
+                        .single();
+                      
+                      if (data) {
+                        window.location.href = `/entradas/${selectedRequisicao.stockEntryId}`;
+                      }
+                    }}
+                  >
+                    Ver Compra →
+                  </Button>
+                </div>
+              )}
+
               <div>
                 <h3 className="font-semibold mb-2">Produtos</h3>
                 
@@ -476,6 +592,10 @@ export default function RequisicoesList() {
                 </Button>
                 {selectedRequisicao?.estado === "encomendado" && (
                   <>
+                    <Button variant="default" onClick={handleCriarCompra} className="bg-green-600 hover:bg-green-700">
+                      <Package className="h-4 w-4 mr-2" />
+                      Criar Compra
+                    </Button>
                     <Button variant="destructive" onClick={handleCancelar}>
                       <X className="h-4 w-4 mr-2" />
                       Cancelar

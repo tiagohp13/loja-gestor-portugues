@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useProducts } from "@/contexts/ProductsContext";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
@@ -18,6 +18,7 @@ import { AlertTriangle, Package, Search } from "lucide-react";
 import { toast } from "sonner";
 import ProductInfoModal from "./components/ProductInfoModal";
 import { Product } from "@/types";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function StockBaixoPage() {
   const { products } = useProducts();
@@ -46,6 +47,39 @@ export default function StockBaixoPage() {
       p.status === 'active'
     );
   }, [products]);
+
+  // Check which products have pending requisições
+  const [productsInRequisicao, setProductsInRequisicao] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    const fetchPendingRequisicoes = async () => {
+      const { data, error } = await supabase
+        .from('requisicoes')
+        .select('id')
+        .eq('estado', 'encomendado')
+        .is('deleted_at', null);
+
+      if (error || !data) return;
+
+      const requisicaoIds = data.map(r => r.id);
+      if (requisicaoIds.length === 0) {
+        setProductsInRequisicao(new Set());
+        return;
+      }
+
+      const { data: items } = await supabase
+        .from('requisicao_itens')
+        .select('produto_id')
+        .in('requisicao_id', requisicaoIds);
+
+      if (items) {
+        const productIds = new Set(items.map(i => i.produto_id).filter(Boolean));
+        setProductsInRequisicao(productIds as Set<string>);
+      }
+    };
+
+    fetchPendingRequisicoes();
+  }, []);
 
   // Products for manual selection (not already in low stock selection)
   const availableProducts = useMemo(() => {
@@ -240,7 +274,14 @@ export default function StockBaixoPage() {
                       {product.minStock}
                     </TableCell>
                     <TableCell onClick={() => handleProductClick(product)}>
-                      <Badge variant="destructive">Stock Baixo</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="destructive">Stock Baixo</Badge>
+                        {productsInRequisicao.has(product.id) && (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            Em Requisição
+                          </Badge>
+                        )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
