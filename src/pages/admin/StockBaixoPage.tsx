@@ -37,8 +37,10 @@ export default function StockBaixoPage() {
 
   // Filter products with low stock (using only real stock, not reserved)
   // Products stay in this list until purchase is completed (stock is increased)
+  // Only show products that have minimum stock defined (minStock > 0)
   const lowStockProducts = useMemo(() => {
     return products.filter(p => 
+      p.minStock > 0 &&
       p.currentStock <= p.minStock && 
       p.status === 'active'
     );
