@@ -594,6 +594,7 @@ export type Database = {
           id: string
           numero: string
           observacoes: string | null
+          stock_entry_id: string | null
           updated_at: string
           user_id: string
         }
@@ -607,6 +608,7 @@ export type Database = {
           id?: string
           numero: string
           observacoes?: string | null
+          stock_entry_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -620,6 +622,7 @@ export type Database = {
           id?: string
           numero?: string
           observacoes?: string | null
+          stock_entry_id?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -629,6 +632,13 @@ export type Database = {
             columns: ["fornecedor_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "requisicoes_stock_entry_id_fkey"
+            columns: ["stock_entry_id"]
+            isOneToOne: false
+            referencedRelation: "stock_entries"
             referencedColumns: ["id"]
           },
         ]
