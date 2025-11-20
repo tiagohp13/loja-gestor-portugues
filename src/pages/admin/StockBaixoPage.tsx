@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, Package, Search } from "lucide-react";
 import { toast } from "sonner";
+import ProductInfoModal from "./components/ProductInfoModal";
+import { Product } from "@/types";
 
 export default function StockBaixoPage() {
   const { products } = useProducts();
@@ -30,6 +32,8 @@ export default function StockBaixoPage() {
   const [observacoes, setObservacoes] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [manualProducts, setManualProducts] = useState<Set<string>>(new Set());
+  const [selectedProductForInfo, setSelectedProductForInfo] = useState<Product | null>(null);
+  const [isProductInfoOpen, setIsProductInfoOpen] = useState(false);
 
   // Filter products with low stock (using only real stock, not reserved)
   // Products stay in this list until purchase is completed (stock is increased)
@@ -86,6 +90,11 @@ export default function StockBaixoPage() {
       setProductQuantities(newQuantities);
     }
     setSearchTerm("");
+  };
+
+  const handleProductClick = (product: Product) => {
+    setSelectedProductForInfo(product);
+    setIsProductInfoOpen(true);
   };
 
   const handleOpenDialog = () => {
@@ -188,18 +197,29 @@ export default function StockBaixoPage() {
                 </TableRow>
               ) : (
                 lowStockProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
+                  <TableRow 
+                    key={product.id}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                       <Checkbox
                         checked={selectedProducts.has(product.id)}
                         onCheckedChange={() => handleToggleProduct(product.id)}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.category || "—"}</TableCell>
-                    <TableCell className="text-right">{product.currentStock}</TableCell>
-                    <TableCell className="text-right">{product.minStock}</TableCell>
-                    <TableCell>
+                    <TableCell className="font-medium" onClick={() => handleProductClick(product)}>
+                      {product.name}
+                    </TableCell>
+                    <TableCell onClick={() => handleProductClick(product)}>
+                      {product.category || "—"}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={() => handleProductClick(product)}>
+                      {product.currentStock}
+                    </TableCell>
+                    <TableCell className="text-right" onClick={() => handleProductClick(product)}>
+                      {product.minStock}
+                    </TableCell>
+                    <TableCell onClick={() => handleProductClick(product)}>
                       <Badge variant="destructive">Stock Baixo</Badge>
                     </TableCell>
                   </TableRow>
@@ -338,6 +358,13 @@ export default function StockBaixoPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de informações do produto */}
+      <ProductInfoModal
+        product={selectedProductForInfo}
+        open={isProductInfoOpen}
+        onOpenChange={setIsProductInfoOpen}
+      />
     </div>
   );
 }
