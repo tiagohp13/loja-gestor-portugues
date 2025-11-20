@@ -219,8 +219,8 @@ const ProductNew = () => {
               />
             </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 mb-3">
                 <Checkbox 
                   id="hasMinStock"
                   checked={hasMinStock}
@@ -234,27 +234,25 @@ const ProductNew = () => {
                 </Label>
               </div>
               
-              <div className="space-y-2">
-                <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                  Stock Mínimo
-                </label>
-                <Input
-                  id="minStock"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={minStock}
-                  onChange={(e) => setMinStock(Number(e.target.value))}
-                  placeholder="0"
-                  disabled={!hasMinStock}
-                  className={!hasMinStock ? 'opacity-50 cursor-not-allowed' : ''}
-                />
-                {hasMinStock && (
-                  <p className="text-xs text-muted-foreground">
-                    Receberá alertas quando o stock atingir este valor
-                  </p>
-                )}
-              </div>
+              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                Stock Mínimo
+              </label>
+              <Input
+                id="minStock"
+                type="number"
+                min="0"
+                step="1"
+                value={minStock}
+                onChange={(e) => setMinStock(Number(e.target.value))}
+                placeholder="0"
+                disabled={!hasMinStock}
+                className={!hasMinStock ? 'opacity-50 cursor-not-allowed' : ''}
+              />
+              {hasMinStock && (
+                <p className="text-xs text-muted-foreground">
+                  Receberá alertas quando o stock atingir este valor
+                </p>
+              )}
             </div>
           </div>
         </form>
