@@ -11,7 +11,6 @@ import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useProductsQuery } from "@/hooks/queries/useProducts";
 import { toast } from "sonner";
-import { useNextDocumentNumber } from "@/hooks/useNextDocumentNumber";
 
 interface NovaRequisicaoDialogProps {
   open: boolean;
@@ -31,7 +30,6 @@ export function NovaRequisicaoDialog({ open, onOpenChange }: NovaRequisicaoDialo
   const { createRequisicao } = useRequisicoesQuery();
   const { suppliers } = useSuppliersQuery();
   const { products } = useProductsQuery();
-  const { data: nextNumber } = useNextDocumentNumber("requisicoes");
 
   const [fornecedorId, setFornecedorId] = useState("");
   const [observacoes, setObservacoes] = useState("");
@@ -120,9 +118,7 @@ export function NovaRequisicaoDialog({ open, onOpenChange }: NovaRequisicaoDialo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>
-            Nova Requisição {nextNumber && <span className="text-muted-foreground">({nextNumber})</span>}
-          </DialogTitle>
+          <DialogTitle>Nova Requisição</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
