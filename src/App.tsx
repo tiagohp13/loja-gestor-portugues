@@ -14,6 +14,7 @@ import { ScrollToTop } from './components/common/ScrollToTop';
 
 // Authentication
 import LoginPage from './pages/Login';
+import InstallPWA from './pages/InstallPWA';
 
 // Dashboard
 import DashboardPage from './pages/Dashboard';
@@ -125,6 +126,7 @@ function App() {
                     <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+                <Route path="/install" element={<InstallPWA />} />
                 
                 <Route element={<ProtectedRoute />}>
                   <Route element={<AppLayout />}>

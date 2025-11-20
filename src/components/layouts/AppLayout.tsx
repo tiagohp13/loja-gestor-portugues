@@ -4,6 +4,7 @@ import { Outlet } from 'react-router-dom';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import Sidebar from '@/components/navigation/Sidebar';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
+import { PWAInstallPrompt } from '@/components/common/PWAInstallPrompt';
 
 /**
  * Main application layout with sidebar and content area
@@ -34,6 +35,7 @@ const AppLayout = () => {
           </div>
         </main>
       </div>
+      <PWAInstallPrompt />
     </SidebarProvider>
   );
 };
