@@ -531,6 +531,7 @@ export type Database = {
           created_at: string
           id: string
           origem: string
+          preco: number | null
           produto_id: string | null
           produto_nome: string
           quantidade: number
@@ -543,6 +544,7 @@ export type Database = {
           created_at?: string
           id?: string
           origem?: string
+          preco?: number | null
           produto_id?: string | null
           produto_nome: string
           quantidade?: number
@@ -555,6 +557,7 @@ export type Database = {
           created_at?: string
           id?: string
           origem?: string
+          preco?: number | null
           produto_id?: string | null
           produto_nome?: string
           quantidade?: number

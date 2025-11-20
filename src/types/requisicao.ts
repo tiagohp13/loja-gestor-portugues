@@ -18,6 +18,7 @@ export interface RequisicaoItem {
   produtoId: string | null;
   produtoNome: string;
   quantidade: number;
+  preco?: number;
   stockAtual: number;
   stockMinimo: number;
   origem: 'stock_baixo' | 'manual';
@@ -33,6 +34,7 @@ export interface CreateRequisicaoInput {
     produtoId: string;
     produtoNome: string;
     quantidade: number;
+    preco?: number;
     stockAtual: number;
     stockMinimo: number;
     origem: 'stock_baixo' | 'manual';
