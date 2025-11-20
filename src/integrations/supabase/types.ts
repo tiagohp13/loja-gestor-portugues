@@ -1252,6 +1252,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      peek_next_counter_by_year: {
+        Args: { counter_type: string; p_year: number }
+        Returns: number
+      }
       permanent_delete_record: {
         Args: { record_id: string; table_name: string }
         Returns: undefined

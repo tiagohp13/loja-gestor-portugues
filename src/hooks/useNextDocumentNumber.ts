@@ -22,7 +22,8 @@ const prefixMap: Record<DocumentType, string> = {
 async function fetchNextNumber(type: DocumentType): Promise<string> {
   const currentYear = new Date().getFullYear();
   
-  const { data, error } = await supabase.rpc("get_next_counter_by_year", {
+  // Use peek function to preview next number without incrementing
+  const { data, error } = await supabase.rpc("peek_next_counter_by_year", {
     counter_type: counterTypeMap[type],
     p_year: currentYear,
   });
