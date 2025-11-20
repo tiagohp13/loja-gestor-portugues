@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, Package, ExternalLink } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao, RequisicaoItem } from "@/types/requisicao";
@@ -145,11 +145,23 @@ export default function RequisicoesList() {
     );
   };
 
-  const handleCriarCompra = async () => {
+  const handleCancelar = () => {
     if (!selectedRequisicao) return;
-    
+    updateEstado(
+      { id: selectedRequisicao.id, estado: "cancelado" },
+      {
+        onSuccess: () => setSelectedRequisicao(null),
+      },
+    );
+  };
+
+  const handleConcluir = async () => {
+    if (!selectedRequisicao) return;
+
     try {
       const currentYear = new Date().getFullYear();
+      
+      // Obter próximo número de compra
       const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
         counter_type: "COMP",
         p_year: currentYear
@@ -174,48 +186,43 @@ export default function RequisicoesList() {
 
       if (compraError) throw compraError;
 
-      // Criar itens da compra e atualizar stock
-      const items = selectedRequisicao.items || [];
-      for (const item of items) {
-        // Inserir item
-        const { error: itemError } = await supabase
-          .from("stock_entry_items")
-          .insert({
-            entry_id: compra.id,
-            product_id: item.produtoId,
-            product_name: item.produtoNome,
-            quantity: item.quantidade,
-            purchase_price: item.preco || 0,
-          });
+      // Criar itens da compra
+      const items = (selectedRequisicao.items || []).map((item) => ({
+        entry_id: compra.id,
+        product_id: item.produtoId,
+        product_name: item.produtoNome,
+        quantity: item.quantidade,
+        purchase_price: item.preco || 0,
+      }));
 
-        if (itemError) throw itemError;
+      const { error: itemsError } = await supabase.from("stock_entry_items").insert(items);
 
-        // Atualizar stock do produto
+      if (itemsError) throw itemsError;
+
+      // Atualizar stock dos produtos
+      for (const item of (selectedRequisicao.items || [])) {
         if (item.produtoId) {
-          const { data: produto, error: produtoError } = await supabase
+          const { data: product } = await supabase
             .from("products")
             .select("current_stock")
             .eq("id", item.produtoId)
             .single();
 
-          if (!produtoError && produto) {
+          if (product) {
             await supabase
               .from("products")
-              .update({
-                current_stock: produto.current_stock + item.quantidade,
-              })
+              .update({ current_stock: product.current_stock + item.quantidade })
               .eq("id", item.produtoId);
           }
         }
       }
 
-      // Atualizar requisição para concluído e ligar à compra
+      // Atualizar requisição com ID da compra e marcar como concluída
       const { error: updateError } = await supabase
         .from("requisicoes")
         .update({
           estado: "concluido",
           stock_entry_id: compra.id,
-          updated_at: new Date().toISOString(),
         })
         .eq("id", selectedRequisicao.id);
 
@@ -225,28 +232,8 @@ export default function RequisicoesList() {
       setSelectedRequisicao(null);
       window.location.reload();
     } catch (error: any) {
-      toast.error(error.message || "Erro ao criar compra");
+      toast.error(error.message || "Erro ao concluir requisição");
     }
-  };
-
-  const handleCancelar = () => {
-    if (!selectedRequisicao) return;
-    updateEstado(
-      { id: selectedRequisicao.id, estado: "cancelado" },
-      {
-        onSuccess: () => setSelectedRequisicao(null),
-      },
-    );
-  };
-
-  const handleConcluir = () => {
-    if (!selectedRequisicao) return;
-    updateEstado(
-      { id: selectedRequisicao.id, estado: "concluido" },
-      {
-        onSuccess: () => setSelectedRequisicao(null),
-      },
-    );
   };
 
   const handleItemChange = (index: number, field: string, value: any) => {
@@ -636,15 +623,11 @@ export default function RequisicoesList() {
                 </Button>
                 {selectedRequisicao?.estado === "encomendado" && (
                   <>
-                    <Button variant="default" onClick={handleCriarCompra} className="bg-green-600 hover:bg-green-700">
-                      <Package className="h-4 w-4 mr-2" />
-                      Criar Compra
-                    </Button>
                     <Button variant="destructive" onClick={handleCancelar}>
                       <X className="h-4 w-4 mr-2" />
                       Cancelar
                     </Button>
-                    <Button onClick={handleConcluir}>
+                    <Button onClick={handleConcluir} className="bg-green-600 hover:bg-green-700">
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Concluir
                     </Button>
