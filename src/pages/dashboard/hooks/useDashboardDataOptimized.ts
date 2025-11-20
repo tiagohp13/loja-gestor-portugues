@@ -50,8 +50,32 @@ export const useDashboardDataOptimized = () => {
       )
       .subscribe();
     
+    // Subscribe to orders changes for realtime updates
+    const ordersChannel = supabase
+      .channel('dashboard-orders-updates')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'orders' }, 
+        () => {
+          // Orders context will handle the update
+        }
+      )
+      .subscribe();
+    
+    // Subscribe to products changes for realtime updates  
+    const productsChannel = supabase
+      .channel('dashboard-products-updates')
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'products' }, 
+        () => {
+          // Products context will handle the update
+        }
+      )
+      .subscribe();
+    
     return () => {
       supabase.removeChannel(expensesChannel);
+      supabase.removeChannel(ordersChannel);
+      supabase.removeChannel(productsChannel);
     };
   }, []);
 
