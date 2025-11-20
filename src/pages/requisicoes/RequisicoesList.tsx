@@ -22,64 +22,73 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 // Component to display stock entry link
-function StockEntryLink({ stockEntryId }: { stockEntryId: string }) {
+function StockEntryLink({
+  stockEntryId
+}: {
+  stockEntryId: string;
+}) {
   const [stockEntryNumber, setStockEntryNumber] = useState<string | null>(null);
   const navigate = useNavigate();
-
   useEffect(() => {
     async function fetchStockEntryNumber() {
-      const { data } = await supabase
-        .from('stock_entries')
-        .select('number')
-        .eq('id', stockEntryId)
-        .single();
-      
+      const {
+        data
+      } = await supabase.from('stock_entries').select('number').eq('id', stockEntryId).single();
       if (data) {
         setStockEntryNumber(data.number);
       }
     }
     fetchStockEntryNumber();
   }, [stockEntryId]);
-
-  return (
-    <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
+  return <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
       <div className="flex items-center justify-between">
         <div>
           <Label className="text-green-700 dark:text-green-300">Compra Criada</Label>
           <p className="text-sm text-muted-foreground mt-1">
             Esta requisição foi convertida em compra
           </p>
-          {stockEntryNumber && (
-            <p className="text-sm font-semibold mt-2 text-green-700 dark:text-green-300">
+          {stockEntryNumber && <p className="text-sm font-semibold mt-2 text-green-700 dark:text-green-300">
               {stockEntryNumber}
-            </p>
-          )}
+            </p>}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/entradas/${stockEntryId}`)}
-        >
+        <Button variant="outline" size="sm" onClick={() => navigate(`/entradas/${stockEntryId}`)}>
           <ExternalLink className="h-4 w-4 mr-2" />
           Ver Compra
         </Button>
       </div>
-    </div>
-  );
+    </div>;
 }
-
 const estadoBadge = {
-  encomendado: { variant: "default" as const, label: "🟡 Encomendado", className: "" },
-  cancelado: { variant: "destructive" as const, label: "🔴 Cancelado", className: "" },
-  concluido: { variant: "default" as const, label: "🟢 Concluído", className: "bg-green-600" },
+  encomendado: {
+    variant: "default" as const,
+    label: "🟡 Encomendado",
+    className: ""
+  },
+  cancelado: {
+    variant: "destructive" as const,
+    label: "🔴 Cancelado",
+    className: ""
+  },
+  concluido: {
+    variant: "default" as const,
+    label: "🟢 Concluído",
+    className: "bg-green-600"
+  }
 };
-
 export default function RequisicoesList() {
   const navigate = useNavigate();
-  const { requisicoes, isLoading, updateEstado, deleteRequisicao } = useRequisicoesQuery();
-  const { suppliers } = useSuppliersQuery();
-  const { products } = useProductsQuery();
-  
+  const {
+    requisicoes,
+    isLoading,
+    updateEstado,
+    deleteRequisicao
+  } = useRequisicoesQuery();
+  const {
+    suppliers
+  } = useSuppliersQuery();
+  const {
+    products
+  } = useProductsQuery();
   const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editableItems, setEditableItems] = useState<RequisicaoItem[]>([]);
@@ -87,7 +96,6 @@ export default function RequisicoesList() {
   const [editableFornecedorNome, setEditableFornecedorNome] = useState<string>("");
   const [editableObservacoes, setEditableObservacoes] = useState<string>("");
   const [selectedProductId, setSelectedProductId] = useState<string>("");
-
   const handleExportPdf = async () => {
     if (!selectedRequisicao) return;
     const container = document.createElement("div");
@@ -101,7 +109,10 @@ export default function RequisicoesList() {
     `;
     document.body.appendChild(container);
     try {
-      await exportToPdf({ filename: `requisicao-${selectedRequisicao.numero}`, contentSelector: ".pdf-content" });
+      await exportToPdf({
+        filename: `requisicao-${selectedRequisicao.numero}`,
+        contentSelector: ".pdf-content"
+      });
       toast.success("PDF exportado com sucesso");
     } catch {
       toast.error("Erro ao exportar PDF");
@@ -109,7 +120,6 @@ export default function RequisicoesList() {
       document.body.removeChild(container);
     }
   };
-
   const handleEdit = (req: Requisicao) => {
     if (req.estado === "cancelado" || req.estado === "concluido") {
       toast.warning("Não é possível editar uma requisição cancelada ou concluída.");
@@ -122,7 +132,6 @@ export default function RequisicoesList() {
     setEditableObservacoes(req.observacoes || "");
     setIsEditing(true);
   };
-
   const handleDelete = async (req: Requisicao) => {
     if (req.estado === "cancelado" || req.estado === "concluido") {
       toast.warning("Não é possível eliminar uma requisição cancelada ou concluída.");
@@ -132,102 +141,90 @@ export default function RequisicoesList() {
       deleteRequisicao(req.id);
     }
   };
-
   const handleRestaurar = (req: Requisicao) => {
-    updateEstado(
-      { id: req.id, estado: "encomendado" },
-      {
-        onSuccess: () => {
-          toast.success("Requisição restaurada com sucesso");
-          setSelectedRequisicao(null);
-        },
+    updateEstado({
+      id: req.id,
+      estado: "encomendado"
+    }, {
+      onSuccess: () => {
+        toast.success("Requisição restaurada com sucesso");
+        setSelectedRequisicao(null);
       }
-    );
+    });
   };
-
   const handleCancelar = () => {
     if (!selectedRequisicao) return;
-    updateEstado(
-      { id: selectedRequisicao.id, estado: "cancelado" },
-      {
-        onSuccess: () => setSelectedRequisicao(null),
-      },
-    );
+    updateEstado({
+      id: selectedRequisicao.id,
+      estado: "cancelado"
+    }, {
+      onSuccess: () => setSelectedRequisicao(null)
+    });
   };
-
   const handleConcluir = async () => {
     if (!selectedRequisicao) return;
-
     try {
       const currentYear = new Date().getFullYear();
-      
+
       // Obter próximo número de compra
-      const { data: counterData, error: counterError } = await supabase.rpc("get_next_counter_by_year", {
+      const {
+        data: counterData,
+        error: counterError
+      } = await supabase.rpc("get_next_counter_by_year", {
         counter_type: "COMP",
         p_year: currentYear
       });
-
       if (counterError) throw counterError;
-
       const compraNumber = `COMP-${currentYear}/${String(counterData || 1).padStart(3, "0")}`;
 
       // Criar compra
-      const { data: compra, error: compraError } = await supabase
-        .from("stock_entries")
-        .insert({
-          number: compraNumber,
-          supplier_id: selectedRequisicao.fornecedorId,
-          supplier_name: selectedRequisicao.fornecedorNome,
-          date: new Date().toISOString(),
-          notes: `Criado a partir da requisição ${selectedRequisicao.numero}${selectedRequisicao.observacoes ? '\n\n' + selectedRequisicao.observacoes : ''}`,
-        })
-        .select()
-        .single();
-
+      const {
+        data: compra,
+        error: compraError
+      } = await supabase.from("stock_entries").insert({
+        number: compraNumber,
+        supplier_id: selectedRequisicao.fornecedorId,
+        supplier_name: selectedRequisicao.fornecedorNome,
+        date: new Date().toISOString(),
+        notes: `Criado a partir da requisição ${selectedRequisicao.numero}${selectedRequisicao.observacoes ? '\n\n' + selectedRequisicao.observacoes : ''}`
+      }).select().single();
       if (compraError) throw compraError;
 
       // Criar itens da compra
-      const items = (selectedRequisicao.items || []).map((item) => ({
+      const items = (selectedRequisicao.items || []).map(item => ({
         entry_id: compra.id,
         product_id: item.produtoId,
         product_name: item.produtoNome,
         quantity: item.quantidade,
-        purchase_price: item.preco || 0,
+        purchase_price: item.preco || 0
       }));
-
-      const { error: itemsError } = await supabase.from("stock_entry_items").insert(items);
-
+      const {
+        error: itemsError
+      } = await supabase.from("stock_entry_items").insert(items);
       if (itemsError) throw itemsError;
 
       // Atualizar stock dos produtos
-      for (const item of (selectedRequisicao.items || [])) {
+      for (const item of selectedRequisicao.items || []) {
         if (item.produtoId) {
-          const { data: product } = await supabase
-            .from("products")
-            .select("current_stock")
-            .eq("id", item.produtoId)
-            .single();
-
+          const {
+            data: product
+          } = await supabase.from("products").select("current_stock").eq("id", item.produtoId).single();
           if (product) {
-            await supabase
-              .from("products")
-              .update({ current_stock: product.current_stock + item.quantidade })
-              .eq("id", item.produtoId);
+            await supabase.from("products").update({
+              current_stock: product.current_stock + item.quantidade
+            }).eq("id", item.produtoId);
           }
         }
       }
 
       // Atualizar requisição com ID da compra e marcar como concluída
-      const { error: updateError } = await supabase
-        .from("requisicoes")
-        .update({
-          estado: "concluido",
-          stock_entry_id: compra.id,
-        })
-        .eq("id", selectedRequisicao.id);
-
+      const {
+        error: updateError
+      } = await supabase.from("requisicoes").update({
+        estado: "concluido",
+        stock_entry_id: compra.id
+      }).eq("id", selectedRequisicao.id);
       if (updateError) throw updateError;
-
       toast.success(`Compra ${compraNumber} criada com sucesso!`);
       setSelectedRequisicao(null);
       window.location.reload();
@@ -235,28 +232,27 @@ export default function RequisicoesList() {
       toast.error(error.message || "Erro ao concluir requisição");
     }
   };
-
   const handleItemChange = (index: number, field: string, value: any) => {
     const updated = [...editableItems];
-    updated[index] = { ...updated[index], [field]: value };
+    updated[index] = {
+      ...updated[index],
+      [field]: value
+    };
     setEditableItems(updated);
   };
-
   const handleAddProduct = () => {
     if (!selectedProductId) {
       toast.error("Seleciona um produto primeiro");
       return;
     }
-    
-    const product = products.find((p) => p.id === selectedProductId);
+    const product = products.find(p => p.id === selectedProductId);
     if (!product) return;
-    
+
     // Check if product already exists
-    if (editableItems.some((item) => item.produtoId === product.id)) {
+    if (editableItems.some(item => item.produtoId === product.id)) {
       toast.error("Este produto já foi adicionado");
       return;
     }
-    
     const newItem: RequisicaoItem = {
       id: crypto.randomUUID(),
       requisicaoId: selectedRequisicao?.id || "",
@@ -268,47 +264,39 @@ export default function RequisicoesList() {
       stockMinimo: product.minStock,
       origem: "manual",
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     };
-    
     setEditableItems([...editableItems, newItem]);
     setSelectedProductId("");
     toast.success("Produto adicionado");
   };
-
   const handleRemoveItem = (index: number) => {
     const updated = [...editableItems];
     updated.splice(index, 1);
     setEditableItems(updated);
   };
-
   const handleSaveChanges = async () => {
     if (!selectedRequisicao) return;
-    
     try {
       // Update requisicao main data
-      const { error: reqError } = await supabase
-        .from("requisicoes")
-        .update({
-          fornecedor_id: editableFornecedorId,
-          fornecedor_nome: editableFornecedorNome,
-          observacoes: editableObservacoes || null,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", selectedRequisicao.id);
-
+      const {
+        error: reqError
+      } = await supabase.from("requisicoes").update({
+        fornecedor_id: editableFornecedorId,
+        fornecedor_nome: editableFornecedorNome,
+        observacoes: editableObservacoes || null,
+        updated_at: new Date().toISOString()
+      }).eq("id", selectedRequisicao.id);
       if (reqError) throw reqError;
 
       // Delete all existing items
-      const { error: deleteError } = await supabase
-        .from("requisicao_itens")
-        .delete()
-        .eq("requisicao_id", selectedRequisicao.id);
-
+      const {
+        error: deleteError
+      } = await supabase.from("requisicao_itens").delete().eq("requisicao_id", selectedRequisicao.id);
       if (deleteError) throw deleteError;
 
       // Insert updated items
-      const itemsToInsert = editableItems.map((item) => ({
+      const itemsToInsert = editableItems.map(item => ({
         requisicao_id: selectedRequisicao.id,
         produto_id: item.produtoId,
         produto_nome: item.produtoNome,
@@ -316,42 +304,30 @@ export default function RequisicoesList() {
         preco: item.preco || 0,
         stock_atual: item.stockAtual,
         stock_minimo: item.stockMinimo,
-        origem: item.origem,
+        origem: item.origem
       }));
-
-      const { error: insertError } = await supabase
-        .from("requisicao_itens")
-        .insert(itemsToInsert);
-
+      const {
+        error: insertError
+      } = await supabase.from("requisicao_itens").insert(itemsToInsert);
       if (insertError) throw insertError;
-
       toast.success("Requisição atualizada com sucesso");
       setIsEditing(false);
       setSelectedRequisicao(null);
-      
+
       // Invalidate query to refresh data
       window.location.reload();
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar requisição");
     }
   };
-
   if (isLoading) {
     return <div className="container mx-auto py-6">A carregar...</div>;
   }
-
-  return (
-    <div className="container mx-auto py-6 space-y-6">
-      <PageHeader 
-        title="Requisições" 
-        description="Gerir requisições de stock"
-        actions={
-          <Button onClick={() => navigate("/requisicoes/nova")}>
+  return <div className="container mx-auto py-6 space-y-6">
+      <PageHeader title="Requisições" description="Gerir requisições de stock" actions={<Button onClick={() => navigate("/requisicoes/nova")}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Requisição
-          </Button>
-        }
-      />
+          </Button>} />
 
       <Card>
         <CardContent className="pt-6">
@@ -366,67 +342,38 @@ export default function RequisicoesList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {requisicoes.length === 0 ? (
-                <TableRow>
+              {requisicoes.length === 0 ? <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                     Nenhuma requisição criada
                   </TableCell>
-                </TableRow>
-              ) : (
-                requisicoes.map((req) => (
-                  <TableRow
-                    key={req.id}
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => {
-                      setSelectedRequisicao(req);
-                      setIsEditing(false);
-                    }}
-                  >
+                </TableRow> : requisicoes.map(req => <TableRow key={req.id} className="cursor-pointer hover:bg-accent" onClick={() => {
+              setSelectedRequisicao(req);
+              setIsEditing(false);
+            }}>
                     <TableCell className="font-medium">{req.numero}</TableCell>
                     <TableCell>{req.fornecedorNome}</TableCell>
-                    <TableCell>{format(req.data, "dd/MM/yyyy", { locale: ptBR })}</TableCell>
+                    <TableCell>{format(req.data, "dd/MM/yyyy", {
+                  locale: ptBR
+                })}</TableCell>
                     <TableCell>
                       <Badge variant={estadoBadge[req.estado].variant} className={estadoBadge[req.estado].className}>
                         {estadoBadge[req.estado].label}
                       </Badge>
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()} className="text-right">
+                    <TableCell onClick={e => e.stopPropagation()} className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(req)}
-                          disabled={req.estado === "cancelado" || req.estado === "concluido"}
-                          className={req.estado === "cancelado" || req.estado === "concluido" ? "opacity-50 cursor-not-allowed" : ""}
-                          title={req.estado === "cancelado" || req.estado === "concluido" ? "Bloqueado" : "Editar"}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleEdit(req)} disabled={req.estado === "cancelado" || req.estado === "concluido"} className={req.estado === "cancelado" || req.estado === "concluido" ? "opacity-50 cursor-not-allowed" : ""} title={req.estado === "cancelado" || req.estado === "concluido" ? "Bloqueado" : "Editar"}>
                           <Pencil className="h-4 w-4 text-blue-500" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(req)}
-                          disabled={req.estado === "cancelado" || req.estado === "concluido"}
-                          className={req.estado === "cancelado" || req.estado === "concluido" ? "opacity-50 cursor-not-allowed" : ""}
-                          title={req.estado === "cancelado" || req.estado === "concluido" ? "Bloqueado" : "Eliminar"}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => handleDelete(req)} disabled={req.estado === "cancelado" || req.estado === "concluido"} className={req.estado === "cancelado" || req.estado === "concluido" ? "opacity-50 cursor-not-allowed" : ""} title={req.estado === "cancelado" || req.estado === "concluido" ? "Bloqueado" : "Eliminar"}>
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
-                        {req.estado === "cancelado" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleRestaurar(req)}
-                            title="Restaurar"
-                          >
+                        {req.estado === "cancelado" && <Button variant="ghost" size="icon" onClick={() => handleRestaurar(req)} title="Restaurar">
                             <RotateCcw className="h-4 w-4 text-green-500" />
-                          </Button>
-                        )}
+                          </Button>}
                       </div>
                     </TableCell>
-                  </TableRow>
-                ))
-              )}
+                  </TableRow>)}
             </TableBody>
           </Table>
         </CardContent>
@@ -437,92 +384,67 @@ export default function RequisicoesList() {
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-primary">
-              {isEditing
-                ? `Editar Requisição ${selectedRequisicao?.numero}`
-                : `Requisição ${selectedRequisicao?.numero}`}
+              {isEditing ? `Editar Requisição ${selectedRequisicao?.numero}` : `Requisição ${selectedRequisicao?.numero}`}
             </DialogTitle>
           </DialogHeader>
 
-          {selectedRequisicao && (
-            <div className="space-y-6 py-4">
+          {selectedRequisicao && <div className="space-y-6 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Fornecedor</Label>
-                  {isEditing ? (
-                    <Select
-                      value={editableFornecedorId || ""}
-                      onValueChange={(value) => {
-                        setEditableFornecedorId(value);
-                        const supplier = suppliers.find((s) => s.id === value);
-                        if (supplier) setEditableFornecedorNome(supplier.name);
-                      }}
-                    >
+                  {isEditing ? <Select value={editableFornecedorId || ""} onValueChange={value => {
+                setEditableFornecedorId(value);
+                const supplier = suppliers.find(s => s.id === value);
+                if (supplier) setEditableFornecedorNome(supplier.name);
+              }}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecionar fornecedor" />
                       </SelectTrigger>
                       <SelectContent>
-                        {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
+                        {suppliers.map(supplier => <SelectItem key={supplier.id} value={supplier.id}>
                             {supplier.name}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
-                    </Select>
-                  ) : (
-                    <p className="font-semibold text-primary">{selectedRequisicao.fornecedorNome}</p>
-                  )}
+                    </Select> : <p className="font-semibold text-primary">{selectedRequisicao.fornecedorNome}</p>}
                 </div>
                 <div>
                   <Label>Data</Label>
-                  <p className="font-semibold text-primary">{format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
+                  <p className="font-semibold text-primary">{format(selectedRequisicao.data, "dd/MM/yyyy", {
+                  locale: ptBR
+                })}</p>
                 </div>
               </div>
 
-              {isEditing && (
-                <div>
+              {isEditing && <div>
                   <Label>Observações</Label>
-                  <Textarea
-                    value={editableObservacoes}
-                    onChange={(e) => setEditableObservacoes(e.target.value)}
-                    placeholder="Observações adicionais..."
-                    rows={3}
-                  />
-                </div>
-              )}
+                  <Textarea value={editableObservacoes} onChange={e => setEditableObservacoes(e.target.value)} placeholder="Observações adicionais..." rows={3} />
+                </div>}
 
-              {!isEditing && selectedRequisicao.observacoes && (
-                <div>
+              {!isEditing && selectedRequisicao.observacoes && <div>
                   <Label>Observações</Label>
                   <p className="text-sm">{selectedRequisicao.observacoes}</p>
-                </div>
-              )}
+                </div>}
 
-              {!isEditing && selectedRequisicao.estado === "concluido" && selectedRequisicao.stockEntryId && (
-                <StockEntryLink stockEntryId={selectedRequisicao.stockEntryId} />
-              )}
+              {!isEditing && selectedRequisicao.estado === "concluido" && selectedRequisicao.stockEntryId && <StockEntryLink stockEntryId={selectedRequisicao.stockEntryId} />}
 
               <div>
-                <h3 className="font-semibold mb-2">Produtos</h3>
                 
-                {isEditing && (
-                  <div className="flex gap-2 mb-4">
+                
+                {isEditing && <div className="flex gap-2 mb-4">
                     <Select value={selectedProductId} onValueChange={setSelectedProductId}>
                       <SelectTrigger className="flex-1">
                         <SelectValue placeholder="Selecionar produto para adicionar" />
                       </SelectTrigger>
                       <SelectContent>
-                        {products.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
+                        {products.map(product => <SelectItem key={product.id} value={product.id}>
                             {product.name} (Stock: {product.currentStock}, Mín: {product.minStock})
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                     <Button onClick={handleAddProduct} disabled={!selectedProductId}>
                       <Plus className="h-4 w-4 mr-2" /> Adicionar
                     </Button>
-                  </div>
-                )}
+                  </div>}
                 
                 <Table>
                   <TableHeader>
@@ -536,93 +458,52 @@ export default function RequisicoesList() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {editableItems.length === 0 && isEditing ? (
-                      <TableRow>
+                    {editableItems.length === 0 && isEditing ? <TableRow>
                         <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
                           Nenhum produto adicionado
                         </TableCell>
-                      </TableRow>
-                    ) : (
-                      (isEditing ? editableItems : selectedRequisicao.items)?.map((item, index) => (
-                        <TableRow key={item.id}>
+                      </TableRow> : (isEditing ? editableItems : selectedRequisicao.items)?.map((item, index) => <TableRow key={item.id}>
                           <TableCell>
-                            {!isEditing && item.produtoId ? (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  navigate(`/produtos/${item.produtoId}`);
-                                }}
-                                className="text-primary hover:underline text-left"
-                              >
+                            {!isEditing && item.produtoId ? <button onClick={e => {
+                      e.stopPropagation();
+                      navigate(`/produtos/${item.produtoId}`);
+                    }} className="text-primary hover:underline text-left">
                                 {item.produtoNome}
-                              </button>
-                            ) : (
-                              item.produtoNome
-                            )}
+                              </button> : item.produtoNome}
                           </TableCell>
                           <TableCell className="text-right">
-                            {isEditing ? (
-                              <Input
-                                type="number"
-                                min="1"
-                                value={item.quantidade}
-                                onChange={(e) => handleItemChange(index, "quantidade", Number(e.target.value))}
-                                className="w-20 text-right"
-                              />
-                            ) : (
-                              item.quantidade
-                            )}
+                            {isEditing ? <Input type="number" min="1" value={item.quantidade} onChange={e => handleItemChange(index, "quantidade", Number(e.target.value))} className="w-20 text-right" /> : item.quantidade}
                           </TableCell>
                           <TableCell className="text-right">
-                            {isEditing ? (
-                              <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={item.preco || 0}
-                                onChange={(e) => handleItemChange(index, "preco", Number(e.target.value))}
-                                className="w-24 text-right"
-                              />
-                            ) : (
-                              `${(item.preco || 0).toFixed(2)}€`
-                            )}
+                            {isEditing ? <Input type="number" min="0" step="0.01" value={item.preco || 0} onChange={e => handleItemChange(index, "preco", Number(e.target.value))} className="w-24 text-right" /> : `${(item.preco || 0).toFixed(2)}€`}
                           </TableCell>
                           <TableCell className="text-right">{item.stockAtual}</TableCell>
                           <TableCell className="text-right">{item.stockMinimo}</TableCell>
-                          {isEditing && (
-                            <TableCell className="text-right">
+                          {isEditing && <TableCell className="text-right">
                               <Button variant="ghost" size="icon" onClick={() => handleRemoveItem(index)} title="Remover">
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      ))
-                    )}
+                            </TableCell>}
+                        </TableRow>)}
                   </TableBody>
                 </Table>
               </div>
-            </div>
-          )}
+            </div>}
 
           <DialogFooter className="gap-2">
-            {isEditing ? (
-              <>
+            {isEditing ? <>
                 <Button variant="outline" onClick={() => setIsEditing(false)}>
                   Cancelar
                 </Button>
                 <Button onClick={handleSaveChanges}>
                   <CheckCircle className="h-4 w-4 mr-2" /> Guardar Alterações
                 </Button>
-              </>
-            ) : (
-              <>
+              </> : <>
                 <Button onClick={handleExportPdf} className="bg-[#D32F2F] hover:bg-[#B71C1C] text-white">
                   <FileDown className="h-4 w-4 mr-2" />
                   PDF
                 </Button>
-                {selectedRequisicao?.estado === "encomendado" && (
-                  <>
+                {selectedRequisicao?.estado === "encomendado" && <>
                     <Button variant="destructive" onClick={handleCancelar}>
                       <X className="h-4 w-4 mr-2" />
                       Cancelar
@@ -631,19 +512,14 @@ export default function RequisicoesList() {
                       <CheckCircle className="h-4 w-4 mr-2" />
                       Concluir
                     </Button>
-                  </>
-                )}
-                {selectedRequisicao?.estado === "cancelado" && (
-                  <Button onClick={() => handleRestaurar(selectedRequisicao)}>
+                  </>}
+                {selectedRequisicao?.estado === "cancelado" && <Button onClick={() => handleRestaurar(selectedRequisicao)}>
                     <RotateCcw className="h-4 w-4 mr-2" />
                     Restaurar
-                  </Button>
-                )}
-              </>
-            )}
+                  </Button>}
+              </>}
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  );
+    </div>;
 }
