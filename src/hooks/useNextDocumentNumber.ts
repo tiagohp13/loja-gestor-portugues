@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type DocumentType = "stock_entries" | "stock_exits" | "orders" | "expenses" | "requisicoes";
 
 const counterTypeMap: Record<DocumentType, string> = {
-  stock_entries: "COMP",
+  stock_entries: "stock_entries",
   stock_exits: "stock_exits",
   orders: "orders",
   expenses: "expenses",

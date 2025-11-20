@@ -186,7 +186,7 @@ async function updateRequisicaoEstado(id: string, estado: "encomendado" | "cance
     if (counterError) throw counterError;
 
     const nextNumber = typeof counterData === 'number' ? counterData : (parseInt(String(counterData ?? "1"), 10) || 1);
-    const numero = `ENT-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
+    const numero = `COMP-${currentYear}/${String(nextNumber).padStart(3, "0")}`;
 
     // Create stock entry
     const { data: entry, error: entryError } = await supabase
