@@ -21,11 +21,11 @@ export const createCategoryData = (products: Product[]): { name: string, quantid
 };
 
 /**
- * Identifies products with stock levels below their minimum threshold
+ * Identifies products with stock levels at or below their minimum threshold
  */
 export const identifyLowStockProducts = (products: Product[]): Product[] => {
   return products.filter(product => 
-    product.currentStock <= (product.minStock || 0) && product.minStock > 0
+    product.currentStock <= product.minStock && product.minStock > 0
   );
 };
 

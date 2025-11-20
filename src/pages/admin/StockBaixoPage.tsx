@@ -35,7 +35,7 @@ export default function StockBaixoPage() {
   // Products stay in this list until purchase is completed (stock is increased)
   const lowStockProducts = useMemo(() => {
     return products.filter(p => 
-      p.currentStock < p.minStock && 
+      p.currentStock <= p.minStock && 
       p.status === 'active'
     );
   }, [products]);
