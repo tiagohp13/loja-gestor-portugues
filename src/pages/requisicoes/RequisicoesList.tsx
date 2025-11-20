@@ -143,6 +143,7 @@ export default function RequisicoesList() {
       produtoId: product.id,
       produtoNome: product.name,
       quantidade: Math.max(1, product.minStock - product.currentStock),
+      preco: 0,
       stockAtual: product.currentStock,
       stockMinimo: product.minStock,
       origem: "manual",
@@ -192,6 +193,7 @@ export default function RequisicoesList() {
         produto_id: item.produtoId,
         produto_nome: item.produtoNome,
         quantidade: item.quantidade,
+        preco: item.preco || 0,
         stock_atual: item.stockAtual,
         stock_minimo: item.stockMinimo,
         origem: item.origem,
@@ -394,6 +396,7 @@ export default function RequisicoesList() {
                     <TableRow>
                       <TableHead>Nome</TableHead>
                       <TableHead className="text-right">Quantidade</TableHead>
+                      <TableHead className="text-right">Preço (€)</TableHead>
                       <TableHead className="text-right">Stock Atual</TableHead>
                       <TableHead className="text-right">Stock Mínimo</TableHead>
                       {isEditing && <TableHead className="text-right">Ações</TableHead>}
@@ -402,7 +405,7 @@ export default function RequisicoesList() {
                   <TableBody>
                     {editableItems.length === 0 && isEditing ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="text-center text-muted-foreground py-4">
+                        <TableCell colSpan={6} className="text-center text-muted-foreground py-4">
                           Nenhum produto adicionado
                         </TableCell>
                       </TableRow>
@@ -421,6 +424,20 @@ export default function RequisicoesList() {
                               />
                             ) : (
                               item.quantidade
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                value={item.preco || 0}
+                                onChange={(e) => handleItemChange(index, "preco", Number(e.target.value))}
+                                className="w-24 text-right"
+                              />
+                            ) : (
+                              `${(item.preco || 0).toFixed(2)}€`
                             )}
                           </TableCell>
                           <TableCell className="text-right">{item.stockAtual}</TableCell>
