@@ -86,6 +86,7 @@ import AdminRoute from './components/layouts/AdminRoute';
 
 // Requisições
 import RequisicoesList from './pages/requisicoes/RequisicoesList';
+import RequisicaoNew from './pages/requisicoes/RequisicaoNew';
 import StockBaixoPage from './pages/admin/StockBaixoPage';
 
 // Error pages
@@ -151,6 +152,7 @@ function App() {
                     <Route path="/fornecedores/editar/:id" element={<SupplierEdit />} />
                     
                     <Route path="/requisicoes" element={<RequisicoesList />} />
+                    <Route path="/requisicoes/nova" element={<RequisicaoNew />} />
                     
                     <Route path="/encomendas/consultar" element={<OrderList />} />
                     <Route path="/encomendas/nova" element={<OrderNew />} />
