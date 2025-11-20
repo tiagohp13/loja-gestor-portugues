@@ -33,6 +33,7 @@ async function fetchRequisicoes(): Promise<Requisicao[]> {
         data: new Date(req.data),
         estado: req.estado as "encomendado" | "cancelado" | "concluido",
         observacoes: req.observacoes,
+        stockEntryId: req.stock_entry_id,
         userId: req.user_id,
         createdAt: new Date(req.created_at),
         updatedAt: new Date(req.updated_at),

@@ -6,6 +6,7 @@ export interface Requisicao {
   data: Date;
   estado: 'encomendado' | 'cancelado' | 'concluido';
   observacoes: string | null;
+  stockEntryId?: string | null;
   userId: string;
   createdAt: Date;
   updatedAt: Date;
