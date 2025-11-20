@@ -383,8 +383,12 @@ export default function RequisicoesList() {
       <Dialog open={!!selectedRequisicao} onOpenChange={() => setSelectedRequisicao(null)}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-primary">
-              {isEditing ? `Editar Requisição ${selectedRequisicao?.numero}` : `Requisição ${selectedRequisicao?.numero}`}
+            <DialogTitle>
+              {isEditing ? (
+                <>Editar Requisição <span className="text-primary">{selectedRequisicao?.numero}</span></>
+              ) : (
+                <>Requisição <span className="text-primary">{selectedRequisicao?.numero}</span></>
+              )}
             </DialogTitle>
           </DialogHeader>
 
