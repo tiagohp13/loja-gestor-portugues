@@ -7,8 +7,10 @@ import ExpenseTotalCard from "./components/ExpenseTotalCard";
 import ExpenseFormActions from "./components/ExpenseFormActions";
 import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
+import { useNextDocumentNumber } from "@/hooks/useNextDocumentNumber";
 
 const ExpenseNew = () => {
+  const { data: nextNumber } = useNextDocumentNumber("expenses");
   const {
     suppliers,
     formData,
@@ -38,7 +40,7 @@ const ExpenseNew = () => {
   return (
     <div className="p-6 space-y-6">
       {/* Cabeçalho */}
-      <ExpenseFormHeader />
+      <ExpenseFormHeader nextNumber={nextNumber} />
 
       {/* Formulário */}
       <form onSubmit={handleFormSubmit} className="space-y-6">

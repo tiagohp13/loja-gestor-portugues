@@ -12,13 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, Package } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, Package, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao, RequisicaoItem } from "@/types/requisicao";
 import { exportToPdf } from "@/utils/pdfExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { NovaRequisicaoDialog } from "./components/NovaRequisicaoDialog";
 
 const estadoBadge = {
   encomendado: { variant: "default" as const, label: "🟡 Encomendado", className: "" },
@@ -33,6 +34,7 @@ export default function RequisicoesList() {
   
   const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [isNovaRequisicaoOpen, setIsNovaRequisicaoOpen] = useState(false);
   const [editableItems, setEditableItems] = useState<RequisicaoItem[]>([]);
   const [editableFornecedorId, setEditableFornecedorId] = useState<string | null>(null);
   const [editableFornecedorNome, setEditableFornecedorNome] = useState<string>("");
@@ -310,11 +312,16 @@ export default function RequisicoesList() {
         title="Requisições" 
         description="Gerir requisições de stock"
         actions={
-          <Button onClick={() => window.location.href = '/admin/stock-baixo'}>
+          <Button onClick={() => setIsNovaRequisicaoOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Requisição
           </Button>
         }
+      />
+
+      <NovaRequisicaoDialog 
+        open={isNovaRequisicaoOpen} 
+        onOpenChange={setIsNovaRequisicaoOpen} 
       />
 
       <Card>
@@ -463,24 +470,33 @@ export default function RequisicoesList() {
 
               {!isEditing && selectedRequisicao.estado === "concluido" && selectedRequisicao.stockEntryId && (
                 <div className="p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
-                  <Label className="text-green-700 dark:text-green-300">Compra Associada</Label>
-                  <Button
-                    variant="link"
-                    className="p-0 h-auto font-semibold text-green-600 hover:text-green-700"
-                    onClick={async () => {
-                      const { data } = await supabase
-                        .from('stock_entries')
-                        .select('number')
-                        .eq('id', selectedRequisicao.stockEntryId)
-                        .single();
-                      
-                      if (data) {
-                        window.location.href = `/entradas/${selectedRequisicao.stockEntryId}`;
-                      }
-                    }}
-                  >
-                    Ver Compra →
-                  </Button>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-green-700 dark:text-green-300">Compra Criada</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Esta requisição foi convertida em compra
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={async () => {
+                        const { data } = await supabase
+                          .from('stock_entries')
+                          .select('number')
+                          .eq('id', selectedRequisicao.stockEntryId)
+                          .single();
+                        
+                        if (data) {
+                          toast.success(`A redirecionar para compra ${data.number}`);
+                          window.location.href = `/entradas/${selectedRequisicao.stockEntryId}`;
+                        }
+                      }}
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Ver Compra
+                    </Button>
+                  </div>
                 </div>
               )}
 
