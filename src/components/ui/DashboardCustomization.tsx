@@ -168,6 +168,7 @@ const DashboardCustomization: React.FC = () => {
             if (widgetIndex !== -1 && pageWidgets[widgetIndex].children) {
                 const updatedChildren = pageWidgets[widgetIndex].children!.map(child => ({ ...child, enabled: checked }));
                 pageWidgets[widgetIndex] = { ...pageWidgets[widgetIndex], children: updatedChildren };
+                newConfig[page] = pageWidgets; // CORRIGIDO: aplicar as mudanças
             }
         } else { // Toggle all widgets on a page
             newConfig[page] = pageWidgets.map(widget => ({ ...widget, enabled: checked }));
