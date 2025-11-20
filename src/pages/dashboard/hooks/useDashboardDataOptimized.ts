@@ -38,7 +38,7 @@ export const useDashboardDataOptimized = () => {
   // Add state to track when expenses change
   const [expensesVersion, setExpensesVersion] = useState(0);
 
-  // Subscribe to expenses changes
+  // Subscribe to expenses changes and trigger periodic refresh
   useEffect(() => {
     const expensesChannel = supabase
       .channel('dashboard-expenses-updates')
@@ -61,13 +61,25 @@ export const useDashboardDataOptimized = () => {
       )
       .subscribe();
     
-    // Subscribe to products changes for realtime updates  
+    // Subscribe to products and stock changes for realtime updates  
     const productsChannel = supabase
       .channel('dashboard-products-updates')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'products' }, 
         () => {
           // Products context will handle the update
+        }
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_entry_items' }, 
+        () => {
+          // Stock changes affect product stock levels
+        }
+      )
+      .on('postgres_changes', 
+        { event: '*', schema: 'public', table: 'stock_exit_items' }, 
+        () => {
+          // Stock changes affect product stock levels
         }
       )
       .subscribe();

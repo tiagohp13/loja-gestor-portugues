@@ -46,8 +46,24 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         .from("stock_entries")
         .select(
           `
-          *,
-          stock_entry_items(*)
+          id,
+          number,
+          supplier_id,
+          supplier_name,
+          date,
+          invoice_number,
+          notes,
+          status,
+          created_at,
+          updated_at,
+          stock_entry_items(
+            id,
+            product_id,
+            product_name,
+            quantity,
+            purchase_price,
+            discount_percent
+          )
         `
         )
         .is("deleted_at", null)
@@ -75,8 +91,27 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         .from("stock_exits")
         .select(
           `
-          *,
-          stock_exit_items(*)
+          id,
+          number,
+          client_id,
+          client_name,
+          date,
+          invoice_number,
+          notes,
+          discount,
+          status,
+          from_order_id,
+          from_order_number,
+          created_at,
+          updated_at,
+          stock_exit_items(
+            id,
+            product_id,
+            product_name,
+            quantity,
+            sale_price,
+            discount_percent
+          )
         `
         )
         .is("deleted_at", null)
