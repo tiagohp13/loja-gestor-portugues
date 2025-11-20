@@ -42,32 +42,23 @@ const OrderList = () => {
     orderId: null,
   });
 
+  // CORRIGIDO: Combinado num único useEffect para evitar loops infinitos
   useEffect(() => {
-    const filtered = showCancelled 
+    let filtered = showCancelled 
       ? orders 
       : orders.filter(order => order.status !== 'cancelled');
-    setFilteredOrders(sortOrders(filtered));
-  }, [orders, showCancelled]);
 
-  useEffect(() => {
     if (searchTerm) {
-      const baseOrders = showCancelled 
-        ? orders 
-        : orders.filter(order => order.status !== 'cancelled');
-      const filtered = baseOrders.filter(
+      filtered = filtered.filter(
         (order) =>
           order.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.clientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           order.clientId?.toLowerCase().includes(searchTerm.toLowerCase()),
       );
-      setFilteredOrders(sortOrders(filtered));
-    } else {
-      const baseOrders = showCancelled 
-        ? orders 
-        : orders.filter(order => order.status !== 'cancelled');
-      setFilteredOrders(sortOrders(baseOrders));
     }
-  }, [searchTerm, orders, showCancelled]);
+
+    setFilteredOrders(sortOrders(filtered));
+  }, [orders, showCancelled, searchTerm]);
 
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
