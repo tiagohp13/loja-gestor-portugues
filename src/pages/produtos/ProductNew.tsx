@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import PageHeader from "@/components/ui/PageHeader";
 import { toast } from "sonner";
 import { Save, ArrowLeft } from "lucide-react";
@@ -22,6 +24,7 @@ const ProductNew = () => {
   const [salePrice, setSalePrice] = useState(0);
   const [currentStock, setCurrentStock] = useState(0);
   const [minStock, setMinStock] = useState(0);
+  const [hasMinStock, setHasMinStock] = useState(false);
   const [image, setImage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,7 +51,7 @@ const ProductNew = () => {
         purchasePrice,
         salePrice,
         currentStock,
-        minStock,
+        minStock: hasMinStock ? minStock : 0,
         image,
         status: "active",
       });
@@ -216,20 +219,42 @@ const ProductNew = () => {
               />
             </div>
 
-            <div className="space-y-2">
-              <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
-                Stock Mínimo
-              </label>
-              <Input
-                id="minStock"
-                type="number"
-                min="0"
-                step="1"
-                value={minStock}
-                onChange={(e) => setMinStock(Number(e.target.value))}
-                placeholder="0"
-                required
-              />
+            <div className="space-y-3">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="hasMinStock"
+                  checked={hasMinStock}
+                  onCheckedChange={(checked) => setHasMinStock(checked as boolean)}
+                />
+                <Label 
+                  htmlFor="hasMinStock" 
+                  className="text-sm font-medium cursor-pointer"
+                >
+                  Este produto tem stock mínimo
+                </Label>
+              </div>
+              
+              <div className="space-y-2">
+                <label htmlFor="minStock" className="text-sm font-medium text-gestorApp-gray-dark">
+                  Stock Mínimo
+                </label>
+                <Input
+                  id="minStock"
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={minStock}
+                  onChange={(e) => setMinStock(Number(e.target.value))}
+                  placeholder="0"
+                  disabled={!hasMinStock}
+                  className={!hasMinStock ? 'opacity-50 cursor-not-allowed' : ''}
+                />
+                {hasMinStock && (
+                  <p className="text-xs text-muted-foreground">
+                    Receberá alertas quando o stock atingir este valor
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </form>
