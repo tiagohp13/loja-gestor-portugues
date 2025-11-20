@@ -132,7 +132,7 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       const currentYear = new Date().getFullYear();
       const { data: entryNumberData, error: entryNumberError } = await supabase.rpc("get_next_counter_by_year", {
-        counter_type: "COMP",
+        counter_type: "stock_entries",
         p_year: currentYear
       });
 
@@ -277,7 +277,7 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
       if (exitNumberError) throw exitNumberError;
 
-      const exitNumber = `VEN-${currentYear}/${String(exitNumberData || 1).padStart(3, "0")}`;
+      const exitNumber = `VEND-${currentYear}/${String(exitNumberData || 1).padStart(3, "0")}`;
 
       const itemsWithIds = exit.items.map((item) => {
         if (!item.id) {
