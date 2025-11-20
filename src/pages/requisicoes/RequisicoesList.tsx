@@ -436,7 +436,7 @@ export default function RequisicoesList() {
       <Dialog open={!!selectedRequisicao} onOpenChange={() => setSelectedRequisicao(null)}>
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-primary">
               {isEditing
                 ? `Editar Requisição ${selectedRequisicao?.numero}`
                 : `Requisição ${selectedRequisicao?.numero}`}
@@ -469,12 +469,12 @@ export default function RequisicoesList() {
                       </SelectContent>
                     </Select>
                   ) : (
-                    <p className="font-semibold">{selectedRequisicao.fornecedorNome}</p>
+                    <p className="font-semibold text-primary">{selectedRequisicao.fornecedorNome}</p>
                   )}
                 </div>
                 <div>
                   <Label>Data</Label>
-                  <p className="font-semibold">{format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
+                  <p className="font-semibold text-primary">{format(selectedRequisicao.data, "dd/MM/yyyy", { locale: ptBR })}</p>
                 </div>
               </div>
 
@@ -617,9 +617,9 @@ export default function RequisicoesList() {
               </>
             ) : (
               <>
-                <Button variant="outline" onClick={handleExportPdf}>
+                <Button onClick={handleExportPdf} className="bg-[#D32F2F] hover:bg-[#B71C1C] text-white">
                   <FileDown className="h-4 w-4 mr-2" />
-                  Exportar PDF
+                  PDF
                 </Button>
                 {selectedRequisicao?.estado === "encomendado" && (
                   <>
