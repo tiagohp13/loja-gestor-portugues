@@ -1,6 +1,5 @@
 import React from "react";
 import { useExpenseForm } from "./hooks/useExpenseForm";
-import ExpenseFormHeader from "./components/ExpenseFormHeader";
 import ExpenseBasicInfo from "./components/ExpenseBasicInfo";
 import ExpenseItemsTable from "./components/ExpenseItemsTable";
 import ExpenseTotalCard from "./components/ExpenseTotalCard";
