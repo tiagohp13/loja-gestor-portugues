@@ -14,6 +14,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { validatePermission } from "@/utils/permissionUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { usePaginatedProducts } from "@/hooks/queries/usePaginatedProducts";
+import { useProductsQuery } from "@/hooks/queries/useProducts";
 import { useCategoriesQuery } from "@/hooks/queries/useCategories";
 import {
   Pagination,
@@ -28,11 +29,29 @@ const ProductList = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(0);
-  const { categories } = useCategoriesQuery();
-  const { products: allProducts, totalCount, totalPages, isLoading, deleteProduct } = usePaginatedProducts(currentPage);
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<string>("ALL_CATEGORIES");
+  
+  const { categories } = useCategoriesQuery();
   const { canCreate, canEdit, canDelete } = usePermissions();
+  
+  // Check if filters are active
+  const hasFilters = searchTerm !== "" || categoryFilter !== "ALL_CATEGORIES";
+  
+  // Use paginated query when no filters, full query when filters active
+  const { 
+    products: paginatedProducts, 
+    totalCount: paginatedCount, 
+    totalPages, 
+    isLoading: isPaginatedLoading, 
+    deleteProduct: deletePaginated 
+  } = usePaginatedProducts(currentPage);
+  
+  const { 
+    products: allProducts, 
+    isLoading: isAllLoading, 
+    deleteProduct: deleteAll 
+  } = useProductsQuery();
 
   useScrollToTop();
 
@@ -43,13 +62,21 @@ const ProductList = () => {
     }
   }, [searchParams]);
 
-  const filteredProducts = allProducts.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      product.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === "ALL_CATEGORIES" || product.category === categoryFilter;
-    return matchesSearch && matchesCategory;
-  });
+  // Determine which data to use
+  const products = hasFilters ? allProducts : paginatedProducts;
+  const isLoading = hasFilters ? isAllLoading : isPaginatedLoading;
+  const deleteProduct = hasFilters ? deleteAll : deletePaginated;
+  const totalCount = hasFilters ? allProducts.length : paginatedCount;
+
+  const filteredProducts = hasFilters 
+    ? products.filter((product) => {
+        const matchesSearch =
+          product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.code.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === "ALL_CATEGORIES" || product.category === categoryFilter;
+        return matchesSearch && matchesCategory;
+      })
+    : products;
 
   const handleViewProduct = (id: string) => {
     navigate(`/produtos/${id}`);
@@ -209,8 +236,8 @@ const ProductList = () => {
           </Table>
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
+        {/* Pagination - only show when no filters are active */}
+        {!hasFilters && totalPages > 1 && (
           <div className="flex justify-center mt-6">
             <Pagination>
               <PaginationContent>
