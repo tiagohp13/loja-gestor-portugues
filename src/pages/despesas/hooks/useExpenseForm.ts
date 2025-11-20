@@ -143,6 +143,12 @@ export const useExpenseForm = () => {
 
       const expenseNumber = `DESP-${currentYear}/${String(numberData || 1).padStart(3, '0')}`;
 
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Utilizador não autenticado');
+      }
+
       // Create expense
       const { data: expenseData, error: expenseError } = await supabase
         .from('expenses')
@@ -151,7 +157,8 @@ export const useExpenseForm = () => {
           supplier_id: formData.supplierId,
           supplier_name: formData.supplierName,
           date: formData.date,
-          notes: formData.notes
+          notes: formData.notes,
+          user_id: user.id
         })
         .select()
         .single();
