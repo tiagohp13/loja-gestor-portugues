@@ -45,7 +45,7 @@ export const CategoriesProvider: React.FC<{ children: ReactNode }> = ({ children
         setCategories(formattedCategories);
       }
     } catch (error) {
-      console.error("Error fetching categories:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar categorias");
     } finally {
       setIsLoading(false);

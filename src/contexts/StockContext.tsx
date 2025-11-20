@@ -64,7 +64,7 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setStockEntries(formattedEntries);
       }
     } catch (error) {
-      console.error("Error fetching stock entries:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar entradas de stock");
     }
   };
@@ -93,7 +93,7 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
         setStockExits(formattedExits);
       }
     } catch (error) {
-      console.error("Error fetching stock exits:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar saídas de stock");
     }
   };

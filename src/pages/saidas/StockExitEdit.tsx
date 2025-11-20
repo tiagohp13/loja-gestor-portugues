@@ -69,20 +69,20 @@ const StockExitEdit = () => {
           notes: exitData.notes || "",
           fromOrderId: exitData.from_order_id,
           fromOrderNumber: exitData.from_order_number,
-          items: (exitData.stock_exit_items || []).map((item: any) => ({
-            id: item.id,
-            productId: String(item.product_id || ""),
-            productName: item.product_name,
-            quantity: Number(item.quantity) || 0,
-            salePrice: Number(item.salePrice || item.sale_price || 0), // ✅ mantém camelCase no state
-            discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
-            createdAt: item.created_at,
-            updatedAt: item.updated_at,
-          })),
+        items: (exitData.stock_exit_items || []).map((item: any) => ({
+          id: item.id,
+          productId: String(item.product_id || ""),
+          productName: item.product_name,
+          quantity: Number(item.quantity) || 0,
+          salePrice: Number(item.sale_price || 0),
+          discountPercent: item.discount_percent ? Number(item.discount_percent) : 0,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        })),
         });
       }
     } catch (error) {
-      console.error("Error fetching stock exit:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar saída de stock");
     } finally {
       setIsLoading(false);
