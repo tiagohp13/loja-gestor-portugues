@@ -1059,21 +1059,6 @@ export type Database = {
       }
       cleanup_old_deleted_records: { Args: never; Returns: number }
       duplicate_order: { Args: { order_id: string }; Returns: string }
-      generate_padded_sequence:
-        | {
-            Args: { items: Json; prefix?: string }
-            Returns: {
-              id: string
-              new_number: string
-            }[]
-          }
-        | {
-            Args: { items: Json; prefix: string }
-            Returns: {
-              id: string
-              new_number: string
-            }[]
-          }
       get_client_activity: {
         Args: { end_date: string; start_date: string }
         Returns: {
