@@ -12,8 +12,10 @@ import { OrderTypeSelector } from "./components/OrderTypeSelector";
 import { DeliveryInformation } from "./components/DeliveryInformation";
 import { useOrderForm } from "./hooks/useOrderForm";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useNextDocumentNumber } from "@/hooks/useNextDocumentNumber";
 
 const OrderNew = () => {
+  const { data: nextNumber } = useNextDocumentNumber("orders");
   const {
     selectedClientId,
     clientSearchTerm,
@@ -69,7 +71,7 @@ const OrderNew = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <PageHeader
-        title="Nova Encomenda"
+        title={nextNumber ? `Nova Encomenda (${nextNumber})` : "Nova Encomenda"}
         description="Criar uma nova encomenda"
         actions={
           <div className="flex flex-col sm:flex-row gap-2">

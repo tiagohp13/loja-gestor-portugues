@@ -10,10 +10,12 @@ import StockEntryProductForm from "./components/StockEntryProductForm";
 import StockEntryProductsTable from "./components/StockEntryProductsTable";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useNextDocumentNumber } from "@/hooks/useNextDocumentNumber";
 
 const StockEntryNew = () => {
   const navigate = useNavigate();
   const { suppliers } = useSuppliersQuery();
+  const { data: nextNumber } = useNextDocumentNumber("stock_entries");
   const {
     entryDetails,
     items,
@@ -51,8 +53,10 @@ const StockEntryNew = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <div className="flex flex-col space-y-1">
-          <h1 className="text-2xl font-bold">Nova Compra</h1>
-          <p className="text-gray-500">Registar uma nova entrada no inventário</p>
+          <h1 className="text-2xl font-bold">
+            Nova Compra {nextNumber && <span className="text-muted-foreground">({nextNumber})</span>}
+          </h1>
+          <p className="text-muted-foreground">Registar uma nova entrada no inventário</p>
         </div>
       </div>
 

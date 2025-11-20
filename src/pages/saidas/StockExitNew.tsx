@@ -9,8 +9,10 @@ import ProductForm from "./components/ProductForm";
 import ProductsTable from "./components/ProductsTable";
 import { toast } from "@/hooks/use-toast";
 import { ExitItem } from "./hooks/stockExit/types";
+import { useNextDocumentNumber } from "@/hooks/useNextDocumentNumber";
 
 const StockExitNew = () => {
+  const { data: nextNumber } = useNextDocumentNumber("stock_exits");
   const {
     exitDetails,
     items,
@@ -53,8 +55,10 @@ const StockExitNew = () => {
     <div className="container mx-auto px-4 py-6">
       <div className="mb-6">
         <div className="flex flex-col space-y-1">
-          <h1 className="text-2xl font-bold">Nova Venda</h1>
-          <p className="text-gray-500">Registar uma nova venda de stock</p>
+          <h1 className="text-2xl font-bold">
+            Nova Venda {nextNumber && <span className="text-muted-foreground">({nextNumber})</span>}
+          </h1>
+          <p className="text-muted-foreground">Registar uma nova venda de stock</p>
         </div>
       </div>
 
