@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useProductsQuery } from "@/hooks/queries/useProducts";
@@ -19,7 +20,6 @@ import { Requisicao, RequisicaoItem } from "@/types/requisicao";
 import { exportToPdf } from "@/utils/pdfExport";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { NovaRequisicaoDialog } from "./components/NovaRequisicaoDialog";
 
 const estadoBadge = {
   encomendado: { variant: "default" as const, label: "🟡 Encomendado", className: "" },
@@ -28,13 +28,13 @@ const estadoBadge = {
 };
 
 export default function RequisicoesList() {
+  const navigate = useNavigate();
   const { requisicoes, isLoading, updateEstado, deleteRequisicao } = useRequisicoesQuery();
   const { suppliers } = useSuppliersQuery();
   const { products } = useProductsQuery();
   
   const [selectedRequisicao, setSelectedRequisicao] = useState<Requisicao | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [isNovaRequisicaoOpen, setIsNovaRequisicaoOpen] = useState(false);
   const [editableItems, setEditableItems] = useState<RequisicaoItem[]>([]);
   const [editableFornecedorId, setEditableFornecedorId] = useState<string | null>(null);
   const [editableFornecedorNome, setEditableFornecedorNome] = useState<string>("");
@@ -312,16 +312,11 @@ export default function RequisicoesList() {
         title="Requisições" 
         description="Gerir requisições de stock"
         actions={
-          <Button onClick={() => setIsNovaRequisicaoOpen(true)}>
+          <Button onClick={() => navigate("/requisicoes/nova")}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Requisição
           </Button>
         }
-      />
-
-      <NovaRequisicaoDialog 
-        open={isNovaRequisicaoOpen} 
-        onOpenChange={setIsNovaRequisicaoOpen} 
       />
 
       <Card>

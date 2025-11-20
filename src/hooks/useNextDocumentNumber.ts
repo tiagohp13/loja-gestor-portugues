@@ -3,6 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type DocumentType = "stock_entries" | "stock_exits" | "orders" | "expenses" | "requisicoes";
 
+const counterTypeMap: Record<DocumentType, string> = {
+  stock_entries: "COMP",
+  stock_exits: "stock_exits",
+  orders: "orders",
+  expenses: "expenses",
+  requisicoes: "requisicoes",
+};
+
 const prefixMap: Record<DocumentType, string> = {
   stock_entries: "COMP",
   stock_exits: "VEND",
@@ -15,7 +23,7 @@ async function fetchNextNumber(type: DocumentType): Promise<string> {
   const currentYear = new Date().getFullYear();
   
   const { data, error } = await supabase.rpc("get_next_counter_by_year", {
-    counter_type: type,
+    counter_type: counterTypeMap[type],
     p_year: currentYear,
   });
 
