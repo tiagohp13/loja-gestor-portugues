@@ -68,7 +68,7 @@ export const OrdersProvider: React.FC<{ children: ReactNode }> = ({ children }) 
         setOrders(formattedOrders);
       }
     } catch (error) {
-      console.error("Error fetching orders:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar encomendas");
     } finally {
       setIsLoading(false);

@@ -57,7 +57,7 @@ const ProductNew = () => {
       });
       navigate("/produtos/consultar");
     } catch (error) {
-      console.error("Error adding product:", error);
+      // Error handled by addProduct
     } finally {
       setIsSubmitting(false);
     }

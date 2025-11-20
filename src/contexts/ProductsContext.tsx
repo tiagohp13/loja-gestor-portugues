@@ -46,7 +46,7 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
         setProducts(formattedProducts);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar produtos");
     } finally {
       setIsLoading(false);

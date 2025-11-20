@@ -117,7 +117,7 @@ export const useConvertOrder = () => {
       toast.success("Encomenda convertida em saída com sucesso");
       return stockExit;
     } catch (error: any) {
-      console.error("Error converting order:", error);
+      // Error handled by toast
       toast.error(error.message || "Erro ao converter encomenda");
       return undefined;
     } finally {

@@ -46,7 +46,7 @@ export const ClientsProvider: React.FC<{ children: ReactNode }> = ({ children })
         setClients(formattedClients);
       }
     } catch (error) {
-      console.error("Error fetching clients:", error);
+      // Error handled by toast
       toast.error("Erro ao carregar clientes");
     } finally {
       setIsLoading(false);
