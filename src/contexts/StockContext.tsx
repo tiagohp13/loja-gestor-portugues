@@ -132,13 +132,13 @@ export const StockProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     try {
       const currentYear = new Date().getFullYear();
       const { data: entryNumberData, error: entryNumberError } = await supabase.rpc("get_next_counter_by_year", {
-        counter_type: "stock_entries",
+        counter_type: "COMP",
         p_year: currentYear
       });
 
       if (entryNumberError) throw entryNumberError;
 
-      const entryNumber = `ENT-${currentYear}/${String(entryNumberData || 1).padStart(3, "0")}`;
+      const entryNumber = `COMP-${currentYear}/${String(entryNumberData || 1).padStart(3, "0")}`;
 
       const itemsWithIds = entry.items.map((item) => {
         if (!item.id) {
