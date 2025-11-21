@@ -13,119 +13,50 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePermissions } from "@/hooks/usePermissions";
 import { ExportDataType } from "@/types";
-import { Database, Download, Upload } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import { ImportButton } from "@/components/admin/ImportButton";
+import { useQueryClient } from "@tanstack/react-query";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 const DataManagement = () => {
   const { exportData } = useExportData();
-  const { products } = useProductsQuery();
-  const { categories } = useCategoriesQuery();
-  const { clients } = useClientsQuery();
-  const { suppliers } = useSuppliersQuery();
-  const { orders } = useOrdersQuery();
-  const { stockEntries } = useStockEntriesQuery();
-  const { stockExits } = useStockExitsQuery();
+  const queryClient = useQueryClient();
+  
+  const { products, isLoading: isLoadingProducts, error: errorProducts } = useProductsQuery();
+  const { categories, isLoading: isLoadingCategories, error: errorCategories } = useCategoriesQuery();
+  const { clients, isLoading: isLoadingClients, error: errorClients } = useClientsQuery();
+  const { suppliers, isLoading: isLoadingSuppliers, error: errorSuppliers } = useSuppliersQuery();
+  const { orders, isLoading: isLoadingOrders, error: errorOrders } = useOrdersQuery();
+  const { stockEntries, isLoading: isLoadingEntries, error: errorEntries } = useStockEntriesQuery();
+  const { stockExits, isLoading: isLoadingExits, error: errorExits } = useStockExitsQuery();
   const { isAdmin } = usePermissions();
+
+  const isLoading = isLoadingProducts || isLoadingCategories || isLoadingClients || 
+                    isLoadingSuppliers || isLoadingOrders || isLoadingEntries || isLoadingExits;
+  
+  const hasError = errorProducts || errorCategories || errorClients || 
+                   errorSuppliers || errorOrders || errorEntries || errorExits;
 
   // Additional security check - redirect if not admin
   if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }
 
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>, type: ExportDataType) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImportSuccess = () => {
+    // Invalidate all queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ['products'] });
+    queryClient.invalidateQueries({ queryKey: ['categories'] });
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
+    queryClient.invalidateQueries({ queryKey: ['suppliers'] });
+    queryClient.invalidateQueries({ queryKey: ['orders'] });
+    queryClient.invalidateQueries({ queryKey: ['stock-entries'] });
+    queryClient.invalidateQueries({ queryKey: ['stock-exits'] });
+  };
 
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      const content = (event.target?.result as string) ?? "";
-
-      // --- Pré-visualização simples (sem criar componentes novos) ---
-      // Tenta perceber quantos registos existem e mostra um confirm()
-      let summary = "";
-      let okToProceed = true;
-
-      try {
-        const json = JSON.parse(content);
-
-        const countArray = (arr: unknown) => (Array.isArray(arr) ? arr.length : 0);
-
-        if (type === "all") {
-          // Espera-se um objeto com várias coleções
-          const counts: Record<string, number> = {
-            products: countArray(json?.products),
-            categories: countArray(json?.categories),
-            clients: countArray(json?.clients),
-            suppliers: countArray(json?.suppliers),
-            orders: countArray(json?.orders),
-            stockEntries: countArray(json?.stockEntries),
-            stockExits: countArray(json?.stockExits),
-          };
-
-          const total =
-            counts.products +
-            counts.categories +
-            counts.clients +
-            counts.suppliers +
-            counts.orders +
-            counts.stockEntries +
-            counts.stockExits;
-
-          summary =
-            `Será importado o conjunto completo:\n` +
-            `• Produtos: ${counts.products}\n` +
-            `• Categorias: ${counts.categories}\n` +
-            `• Clientes: ${counts.clients}\n` +
-            `• Fornecedores: ${counts.suppliers}\n` +
-            `• Encomendas: ${counts.orders}\n` +
-            `• Entradas: ${counts.stockEntries}\n` +
-            `• Saídas: ${counts.stockExits}\n` +
-            `Total de registos: ${total}\n\n` +
-            `Continuar com a importação?`;
-        } else {
-          // Cada tipo individual normalmente é um array
-          const total = countArray(json);
-          const labelMap: Record<ExportDataType, string> = {
-            products: "Produtos",
-            categories: "Categorias",
-            clients: "Clientes",
-            suppliers: "Fornecedores",
-            orders: "Encomendas",
-            stockEntries: "Entradas de Stock",
-            stockExits: "Saídas de Stock",
-            expenses: "Despesas",
-            all: "Todos os Dados",
-          };
-
-          summary =
-            `Ficheiro detetado: ${labelMap[type]}.\n` +
-            `Registos identificados: ${total}\n\n` +
-            `Continuar com a importação?`;
-        }
-
-        okToProceed = window.confirm(summary);
-      } catch {
-        // Se não for JSON válido, pergunta mesmo assim
-        okToProceed = window.confirm(
-          "O ficheiro não parece ser um JSON válido.\n" + "Queres tentar importá-lo na mesma?",
-        );
-      }
-
-      if (!okToProceed) return;
-
-      // Import efetivo - temporarily disabled during context refactor
-      // TODO: Re-implement importData in the appropriate context
-      /*
-      if (content) {
-        await importData(type, content);
-      }
-      */
-      console.warn('Import functionality temporarily disabled during context migration');
-
-      // Limpar o input para poderes importar o mesmo ficheiro novamente se quiseres
-      e.currentTarget.value = "";
-    };
-
-    reader.readAsText(file);
+  const handleExport = (type: ExportDataType) => {
+    console.log(`[AUDIT] User exported ${type} at ${new Date().toISOString()}`);
+    exportData(type);
   };
 
   return (
@@ -134,6 +65,15 @@ const DataManagement = () => {
         title="Gestão de Dados" 
         description="Exporte e importe dados do sistema"
       />
+
+      {hasError && (
+        <Alert variant="destructive" className="mt-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Erro ao carregar dados. Por favor, recarregue a página.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="mt-6 space-y-6">
         <Card>
@@ -144,31 +84,114 @@ const DataManagement = () => {
             </CardTitle>
             <CardDescription>Exporte seus dados para backup ou transferência</CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid grid-cols-3 gap-2">
-              <Button variant="outline" onClick={() => exportData("products")}>
-                Exportar Produtos ({products.length})
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("products")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingProducts ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Produtos ({isLoadingProducts ? "..." : products.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("categories")}>
-                Exportar Categorias ({categories.length})
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("categories")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingCategories ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Categorias ({isLoadingCategories ? "..." : categories.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("clients")}>
-                Exportar Clientes ({clients.length})
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("clients")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingClients ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Clientes ({isLoadingClients ? "..." : clients.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("suppliers")}>
-                Exportar Fornecedores ({suppliers.length})
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("suppliers")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingSuppliers ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Fornecedores ({isLoadingSuppliers ? "..." : suppliers.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("orders")}>
-                Exportar Encomendas ({orders.length})
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("orders")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingOrders ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Encomendas ({isLoadingOrders ? "..." : orders.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("stockEntries")}>
-                Exportar Entradas ({stockEntries.length})
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("stockEntries")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingEntries ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Entradas ({isLoadingEntries ? "..." : stockEntries.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("stockExits")}>
-                Exportar Saídas ({stockExits.length})
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("stockExits")}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoadingExits ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Download className="w-4 h-4 mr-2" />
+                )}
+                Saídas ({isLoadingExits ? "..." : stockExits.length})
               </Button>
-              <Button variant="outline" onClick={() => exportData("all" as ExportDataType)}>
-                Exportar Todos os Dados
+              
+              <Button 
+                variant="outline" 
+                onClick={() => handleExport("all")}
+                disabled={isLoading}
+                className="w-full md:col-span-2 lg:col-span-1"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Todos os Dados
               </Button>
             </div>
           </CardContent>
@@ -177,92 +200,45 @@ const DataManagement = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
+              <Download className="w-5 h-5" />
               Importar Dados
             </CardTitle>
-            <CardDescription>Importe seus dados de arquivo JSON</CardDescription>
+            <CardDescription>
+              Importe dados de ficheiros JSON. Os dados serão validados antes da importação.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4">
-            <div className="grid grid-cols-3 gap-2">
-              <div>
-                <label
-                  htmlFor="import-products"
-                  className="cursor-pointer block w-full px-4 py-2 text-center border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  Importar Produtos
-                </label>
-                <input
-                  id="import-products"
-                  type="file"
-                  accept=".json"
-                  onChange={(e) => handleImport(e, "products")}
-                  className="hidden"
-                />
-              </div>
+          <CardContent className="space-y-4">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Atenção:</strong> A importação irá adicionar novos registos. Dados duplicados podem ser criados.
+              </AlertDescription>
+            </Alert>
 
-              <div>
-                <label
-                  htmlFor="import-categories"
-                  className="cursor-pointer block w-full px-4 py-2 text-center border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  Importar Categorias
-                </label>
-                <input
-                  id="import-categories"
-                  type="file"
-                  accept=".json"
-                  onChange={(e) => handleImport(e, "categories")}
-                  className="hidden"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="import-clients"
-                  className="cursor-pointer block w-full px-4 py-2 text-center border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  Importar Clientes
-                </label>
-                <input
-                  id="import-clients"
-                  type="file"
-                  accept=".json"
-                  onChange={(e) => handleImport(e, "clients")}
-                  className="hidden"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="import-suppliers"
-                  className="cursor-pointer block w-full px-4 py-2 text-center border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  Importar Fornecedores
-                </label>
-                <input
-                  id="import-suppliers"
-                  type="file"
-                  accept=".json"
-                  onChange={(e) => handleImport(e, "suppliers")}
-                  className="hidden"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="import-all"
-                  className="cursor-pointer block w-full px-4 py-2 text-center border border-input rounded-md bg-background hover:bg-accent hover:text-accent-foreground"
-                >
-                  Importar Todos os Dados
-                </label>
-                <input
-                  id="import-all"
-                  type="file"
-                  accept=".json"
-                  onChange={(e) => handleImport(e, "all")}
-                  className="hidden"
-                />
-              </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              <ImportButton 
+                type="products" 
+                label="Importar Produtos"
+                onSuccess={handleImportSuccess}
+              />
+              
+              <ImportButton 
+                type="categories" 
+                label="Importar Categorias"
+                onSuccess={handleImportSuccess}
+              />
+              
+              <ImportButton 
+                type="clients" 
+                label="Importar Clientes"
+                onSuccess={handleImportSuccess}
+              />
+              
+              <ImportButton 
+                type="suppliers" 
+                label="Importar Fornecedores"
+                onSuccess={handleImportSuccess}
+              />
             </div>
           </CardContent>
         </Card>
