@@ -201,7 +201,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               PDF
             </Button>
             
-            {isPending && !isDeleted && order.status !== 'cancelled' && (
+            {isPending && !isDeleted && order.status !== 'cancelled' && canEdit && (
               <>
                 <Button
                   onClick={handleConvertDialog}
@@ -211,14 +211,16 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
                   Converter
                 </Button>
                 
-                <Button
-                  variant="secondary"
-                  onClick={handleEditOrder}
-                  className="flex items-center gap-2"
-                >
-                  <Pencil className="h-4 w-4" />
-                  Editar
-                </Button>
+                {canEdit && (
+                  <Button
+                    variant="secondary"
+                    onClick={handleEditOrder}
+                    className="flex items-center gap-2"
+                  >
+                    <Pencil className="h-4 w-4" />
+                    Editar
+                  </Button>
+                )}
                 
                 {(canEdit || canDelete) && (
                   <Button
@@ -233,7 +235,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
               </>
             )}
             
-            {order.status === 'cancelled' && !isDeleted && (
+            {order.status === 'cancelled' && !isDeleted && (canEdit || canDelete) && (
               <Button
                 variant="outline"
                 onClick={handleRestoreOrder}
