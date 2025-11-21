@@ -11,6 +11,7 @@ const GlobalSearch: React.FC = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [isOpen, setIsOpen] = useState(false);
+  const [userInteracted, setUserInteracted] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const { query, setQuery, results, isLoading, hasResults, clearSearch } = useGlobalSearch();
@@ -108,15 +109,24 @@ const GlobalSearch: React.FC = () => {
           onChange={(e) => {
             setQuery(e.target.value);
             setIsOpen(true);
+            if (isMobile) setUserInteracted(true);
           }}
-          onFocus={() => {
+          onFocus={(e) => {
+            if (isMobile && !userInteracted) {
+              e.target.blur();
+              return;
+            }
             if (!isMobile) {
               setIsOpen(true);
             }
           }}
-          onClick={() => setIsOpen(true)}
+          onClick={() => {
+            if (isMobile) setUserInteracted(true);
+            setIsOpen(true);
+          }}
           className="pl-10 pr-10"
           inputMode={isMobile ? "search" : undefined}
+          readOnly={isMobile && !userInteracted}
         />
         {query && (
           <Button
