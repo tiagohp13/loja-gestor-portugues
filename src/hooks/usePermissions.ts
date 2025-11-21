@@ -1,4 +1,4 @@
-import { useUserProfile } from './useUserProfile';
+import { useUserProfileQuery } from './queries/useUserProfileQuery';
 import { useRolePermissions } from './useRolePermissions';
 
 export type AccessLevel = 'admin' | 'editor' | 'viewer';
@@ -8,7 +8,7 @@ export type AccessLevel = 'admin' | 'editor' | 'viewer';
  * Usa o novo sistema RBAC mas mantém compatibilidade com o código existente
  */
 export const usePermissions = () => {
-  const { profile, loading } = useUserProfile();
+  const { data: profile, isLoading: loading } = useUserProfileQuery();
   const rbac = useRolePermissions();
   
   // Usar o role do RBAC se disponível, senão fallback para access_level
