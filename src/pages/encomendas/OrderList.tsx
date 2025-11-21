@@ -342,12 +342,13 @@ const OrderList = () => {
                             <RotateCcw className="h-4 w-4" />
                           </Button>
                         )}
-                        {!order.convertedToStockExitId && order.status !== 'cancelled' && canEdit && (
+                        {!order.convertedToStockExitId && order.status !== 'cancelled' && (canEdit || canCreate) && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (!validatePermission(canEdit, "cancelar encomendas")) return;
                               handleCancelOrder(order.id);
                             }}
                             className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950"
