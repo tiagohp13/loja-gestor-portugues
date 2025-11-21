@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useUpdateUserProfile } from './mutations/useUpdateUserProfile';
@@ -17,6 +17,13 @@ export const useUserProfileForm = ({ userId, initialProfile, onSuccess }: UseUse
   const [profile, setProfile] = useState<UserProfile | null>(initialProfile);
   const [uploading, setUploading] = useState(false);
   const updateProfileMutation = useUpdateUserProfile();
+
+  // Sync profile state when initialProfile changes
+  useEffect(() => {
+    if (initialProfile) {
+      setProfile(initialProfile);
+    }
+  }, [initialProfile]);
 
   const validateName = (name: string): boolean => {
     const trimmed = name.trim();
