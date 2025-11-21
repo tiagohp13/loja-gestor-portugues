@@ -70,7 +70,6 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
     let targetUserId = userId;
 
     // Se o usuário for viewer, buscar as metas de um administrador
-    // e limpar qualquer meta que o viewer possa ter salvo anteriormente
     if (userRole?.role === 'viewer') {
       const { data: adminUser } = await supabase
         .from('user_roles')
@@ -81,12 +80,6 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
 
       if (adminUser) {
         targetUserId = adminUser.user_id;
-        
-        // Limpar metas antigas do viewer se existirem
-        await supabase
-          .from('kpi_targets')
-          .delete()
-          .eq('user_id', userId);
       }
     }
 
