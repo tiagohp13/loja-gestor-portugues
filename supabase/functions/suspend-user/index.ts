@@ -107,6 +107,21 @@ Deno.serve(async (req) => {
       // Continue anyway, profile was updated
     }
 
+    // Record suspension history
+    const { error: historyError } = await supabaseAdmin
+      .from('user_suspension_history')
+      .insert({
+        user_id: userId,
+        action: suspend ? 'suspended' : 'reactivated',
+        performed_by: user.id,
+        reason: suspend ? 'Suspenso por administrador' : 'Reativado por administrador'
+      });
+
+    if (historyError) {
+      console.error('Error recording suspension history:', historyError);
+      // Continue anyway, main operation succeeded
+    }
+
     // If suspending, sign out all sessions for this user
     if (suspend) {
       console.log('Signing out all sessions for user:', userId);
