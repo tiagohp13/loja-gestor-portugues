@@ -987,6 +987,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity_logs: {
+        Row: {
+          action_description: string
+          action_type: string
+          created_at: string
+          entity_id: string | null
+          entity_name: string | null
+          entity_type: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_description: string
+          action_type: string
+          created_at?: string
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_description?: string
+          action_type?: string
+          created_at?: string
+          entity_id?: string | null
+          entity_name?: string | null
+          entity_type?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           access_level: string | null
@@ -1277,6 +1310,17 @@ export type Database = {
           affected_table?: string
           event_description: string
           event_type: string
+        }
+        Returns: undefined
+      }
+      log_user_activity: {
+        Args: {
+          p_action_description: string
+          p_action_type: string
+          p_entity_id?: string
+          p_entity_name?: string
+          p_entity_type?: string
+          p_user_id: string
         }
         Returns: undefined
       }

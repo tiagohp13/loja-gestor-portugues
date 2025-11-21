@@ -6,6 +6,7 @@ import { useOrderValidation } from "./useOrderValidation";
 import { Order } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import { format, startOfDay } from "date-fns";
+import { activityLogger } from "@/utils/activityLogger";
 
 export const useOrderSubmit = (
   createOrder: (order: any, callbacks?: any) => void,
@@ -60,6 +61,14 @@ export const useOrderSubmit = (
     // ✅ Guardar encomenda usando React Query mutation
     createOrder(newOrder as any, {
       onSuccess: (savedOrder: any) => {
+        // Log activity
+        if (savedOrder?.id) {
+          activityLogger.created(
+            'encomenda',
+            savedOrder.number || `Encomenda para ${selectedClient?.name}`,
+            savedOrder.id
+          );
+        }
         navigate("/encomendas/consultar");
       },
       onError: () => {

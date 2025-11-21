@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import PageHeader from "@/components/ui/PageHeader";
 import { toast } from "sonner";
 import { Save, ArrowLeft } from "lucide-react";
+import { activityLogger } from "@/utils/activityLogger";
 
 const ProductNew = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ const ProductNew = () => {
     setIsSubmitting(true);
 
     try {
-      await addProduct({
+      const newProduct = await addProduct({
         name,
         code,
         description,
@@ -55,6 +56,12 @@ const ProductNew = () => {
         image,
         status: "active",
       });
+      
+      // Log activity
+      if (newProduct?.id) {
+        await activityLogger.created('produto', name, newProduct.id);
+      }
+      
       navigate("/produtos/consultar");
     } catch (error) {
       // Error handled by addProduct

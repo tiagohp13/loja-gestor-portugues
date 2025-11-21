@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { getUserFriendlyError } from "@/utils/errorUtils";
 import { Product } from "../types";
 import { mapDbProductToProduct } from "../utils/mappers";
+import { activityLogger } from "@/utils/activityLogger";
 
 interface ProductsContextType {
   products: Product[];
@@ -115,6 +116,11 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
       // 🔥 Atualizar lista para garantir consistência com paginação
       await fetchProducts();
 
+      // Log activity
+      if (data?.id) {
+        await activityLogger.created('produto', product.name, data.id);
+      }
+
       toast.success("Produto criado com sucesso");
       return newProduct;
 
@@ -149,6 +155,10 @@ export const ProductsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
       // Atualiza local
       setProducts(prev => prev.map((p) => (p.id === id ? { ...p, ...product } : p)));
+      
+      // Log activity
+      await activityLogger.updated('produto', product.name || 'Produto', id);
+      
       toast.success("Produto atualizado com sucesso");
 
       // 🔥 Linha essencial:
