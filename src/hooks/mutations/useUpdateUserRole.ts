@@ -33,7 +33,19 @@ export const useUpdateUserRole = (options?: UpdateUserRoleOptions) => {
         throw new Error('Não pode alterar o seu próprio papel por motivos de segurança');
       }
 
-      // Security validation 2: Check if this is the last admin
+      // Security validation 2: Check if target user is the owner (primary admin)
+      const { data: targetProfile } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('user_id', userId)
+        .single();
+
+      const OWNER_EMAIL = 'tiagohp13@hotmail.com';
+      if (targetProfile?.email === OWNER_EMAIL && newRole !== 'admin') {
+        throw new Error('O administrador principal não pode ter o seu papel alterado');
+      }
+
+      // Security validation 3: Check if this is the last admin
       if (newRole !== 'admin') {
         // Get current role
         const { data: currentRoleData } = await supabase

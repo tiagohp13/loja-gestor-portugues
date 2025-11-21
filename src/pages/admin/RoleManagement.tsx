@@ -211,6 +211,8 @@ const RoleManagement: React.FC = () => {
                 {users.map((user) => {
                   const isUpdating = updatingUserId === user.id;
                   const isCurrentUser = currentUser?.id === user.id;
+                  const OWNER_EMAIL = 'tiagohp13@hotmail.com';
+                  const isOwner = user.email === OWNER_EMAIL;
                   
                   return (
                     <div
@@ -235,10 +237,15 @@ const RoleManagement: React.FC = () => {
                       <div className="flex items-center gap-3">
                         <Badge variant={getRoleBadgeVariant(user.role)}>
                           {getRoleLabel(user.role)}
+                          {isOwner && <Shield className="h-3 w-3 ml-1" />}
                         </Badge>
                         {isCurrentUser ? (
                           <div className="w-[180px] text-sm text-muted-foreground text-center">
                             Não pode alterar o seu próprio papel
+                          </div>
+                        ) : isOwner ? (
+                          <div className="w-[180px] text-sm text-muted-foreground text-center">
+                            Administrador Principal
                           </div>
                         ) : (
                           <Select
