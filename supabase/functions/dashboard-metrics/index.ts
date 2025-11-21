@@ -19,22 +19,20 @@ serve(async (req) => {
   }
 
   try {
+    // Get authorization header
+    const authHeader = req.headers.get('Authorization');
+    
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+      authHeader ? { global: { headers: { Authorization: authHeader } } } : {}
     );
 
-    // Verify authentication
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
-    if (authError || !user) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
+    // Optional: Log for audit (don't block if user check fails, let RLS handle it)
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+      console.log(`[AUDIT] Dashboard metrics calculated for user ${user.id} at ${new Date().toISOString()}`);
     }
-
-    console.log(`[AUDIT] Dashboard metrics calculated for user ${user.id} at ${new Date().toISOString()}`);
 
     // Fetch data with limits for better performance (last 12 months)
     const twelveMonthsAgo = new Date();
