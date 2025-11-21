@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Ban, CheckCircle, Trash2, Shield, User, Users, History, ChevronDown } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { UserWithRole } from '@/hooks/queries/useUsersWithRoles';
@@ -25,7 +24,7 @@ interface UserRowProps {
   isDeleting: boolean;
 }
 
-const UserRow: React.FC<UserRowProps> = ({
+const UserRow = ({
   user,
   isCurrentUser,
   isOwner,
