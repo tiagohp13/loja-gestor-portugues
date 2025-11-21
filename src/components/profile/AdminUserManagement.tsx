@@ -60,6 +60,12 @@ const AdminUserManagement: React.FC = () => {
     }
   };
   const handleAccessLevelChange = async (userId: string, newAccessLevel: string) => {
+    // Prevenir que o utilizador edite as suas próprias permissões
+    if (userId === user?.id) {
+      toast.error('Não pode alterar as suas próprias permissões. Esta é uma medida de segurança.');
+      return;
+    }
+    
     try {
       const {
         error
@@ -172,7 +178,7 @@ const AdminUserManagement: React.FC = () => {
                 {userProfile.access_level === 'admin' ? <Badge variant="secondary" className="w-40 justify-center">
                     <Shield className="h-4 w-4 mr-2" />
                     Admin
-                  </Badge> : <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)} disabled={userProfile.access_level === 'admin'}>
+                  </Badge> : <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)} disabled={userProfile.access_level === 'admin' || userProfile.user_id === user?.id}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
