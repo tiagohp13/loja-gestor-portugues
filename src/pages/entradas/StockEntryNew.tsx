@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,9 +10,12 @@ import StockEntryProductForm from "./components/StockEntryProductForm";
 import StockEntryProductsTable from "./components/StockEntryProductsTable";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toast } from "sonner";
 
 const StockEntryNew = () => {
   const navigate = useNavigate();
+  const { canCreate } = usePermissions();
   const { suppliers } = useSuppliersQuery();
   const {
     entryDetails,
@@ -44,6 +47,13 @@ const StockEntryNew = () => {
     removeItem,
     handleSubmit,
   } = useStockEntryForm();
+
+  useEffect(() => {
+    if (!canCreate) {
+      toast.error("Não tem permissão para criar compras");
+      navigate("/entradas/historico");
+    }
+  }, [canCreate, navigate]);
 
   const selectedSupplier = suppliers.find((s) => s.id === entryDetails.supplierId);
 

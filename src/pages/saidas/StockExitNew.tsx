@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Save } from "lucide-react";
@@ -9,8 +9,11 @@ import ProductForm from "./components/ProductForm";
 import ProductsTable from "./components/ProductsTable";
 import { toast } from "@/hooks/use-toast";
 import { ExitItem } from "./hooks/stockExit/types";
+import { usePermissions } from "@/hooks/usePermissions";
+import { toast as sonnerToast } from "sonner";
 
 const StockExitNew = () => {
+  const { canCreate } = usePermissions();
   const {
     exitDetails,
     items,
@@ -48,6 +51,13 @@ const StockExitNew = () => {
     navigate,
     isSubmitting,
   } = useStockExit();
+
+  useEffect(() => {
+    if (!canCreate) {
+      sonnerToast.error("Não tem permissão para criar vendas");
+      navigate("/saidas/historico");
+    }
+  }, [canCreate, navigate]);
 
   return (
     <div className="container mx-auto px-4 py-6">
