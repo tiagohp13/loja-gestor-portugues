@@ -21,21 +21,36 @@ async function fetchPaginatedStockExits(page: number = 0): Promise<{ stockExits:
 
   if (exitsError) throw exitsError;
 
-  const exits = await Promise.all(
-    (exitsData || []).map(async (exit) => {
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("stock_exit_items")
-        .select("*")
-        .eq("exit_id", exit.id);
+  if (!exitsData || exitsData.length === 0) {
+    return {
+      stockExits: [],
+      totalCount: count || 0,
+    };
+  }
 
-      if (itemsError) throw itemsError;
+  // Fetch all items in a single query
+  const exitIds = exitsData.map(exit => exit.id);
+  const { data: allItemsData, error: itemsError } = await supabase
+    .from("stock_exit_items")
+    .select("*")
+    .in("exit_id", exitIds);
 
-      return {
-        ...exit,
-        items: itemsData || [],
-      };
-    })
-  );
+  if (itemsError) throw itemsError;
+
+  // Group items by exit_id
+  const itemsByExitId = (allItemsData || []).reduce((acc, item) => {
+    if (!acc[item.exit_id!]) {
+      acc[item.exit_id!] = [];
+    }
+    acc[item.exit_id!].push(item);
+    return acc;
+  }, {} as Record<string, typeof allItemsData>);
+
+  // Map exits with their items
+  const exits = exitsData.map(exit => ({
+    ...exit,
+    items: itemsByExitId[exit.id] || [],
+  }));
 
   return {
     stockExits: exits.map(mapStockExit),
