@@ -131,86 +131,67 @@ const calculateKpiDeltas = (stockExits: StockExit[], stockEntries: StockEntry[])
   };
 };
 
-// Fetch ALL dashboard data in parallel from Supabase directly
+// Fetch dashboard data with optimizations (limits + edge function for heavy calculations)
 export const fetchAllDashboardData = async () => {
   try {
-    // Fetch all data from Supabase in parallel - single round trip
+    // Fetch data with limits for better performance
     const [
       productsRes,
       ordersRes,
-      stockExitsRes,
-      stockEntriesRes,
       clientsRes,
       suppliersRes,
       categoriesRes,
       supportStats,
       savedTargets,
-      monthlyExpenses
+      metricsRes
     ] = await Promise.all([
-      supabase.from('products').select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
-      supabase.from('orders').select('id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, deleted_at, items:order_items(id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').is('deleted_at', null).neq('status', 'cancelled').order('created_at', { ascending: false }),
-      supabase.from('stock_exits').select('id, number, client_id, client_name, date, invoice_number, notes, from_order_id, from_order_number, discount, status, user_id, created_at, updated_at, deleted_at, items:stock_exit_items(id, exit_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').eq('status', 'active').order('date', { ascending: false }),
-      supabase.from('stock_entries').select('id, number, supplier_id, supplier_name, date, invoice_number, notes, status, user_id, created_at, updated_at, deleted_at, items:stock_entry_items(id, entry_id, product_id, product_name, quantity, purchase_price, discount_percent, created_at, updated_at)').eq('status', 'active').order('date', { ascending: false }),
-      supabase.from('clients').select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
-      supabase.from('suppliers').select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
-      supabase.from('categories').select('id, name, description, status, product_count, user_id, created_at, updated_at, deleted_at').eq('status', 'active').order('name'),
+      supabase.from('products').select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at').eq('status', 'active').order('name').limit(1000),
+      supabase.from('orders').select('id, number, client_id, client_name, date, order_type, delivery_location, expected_delivery_date, expected_delivery_time, notes, total_amount, discount, converted_to_stock_exit_id, converted_to_stock_exit_number, status, user_id, created_at, updated_at, items:order_items(id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at)').is('deleted_at', null).neq('status', 'cancelled').order('created_at', { ascending: false }).limit(200),
+      supabase.from('clients').select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at').eq('status', 'active').order('name').limit(500),
+      supabase.from('suppliers').select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at').eq('status', 'active').order('name').limit(500),
+      supabase.from('categories').select('id, name, description, status, product_count, user_id, created_at, updated_at').eq('status', 'active').order('name').limit(100),
       fetchSupportStats(),
       loadKpiTargets(),
-      getMonthlyExpensesData()
+      supabase.functions.invoke('dashboard-metrics')
     ]);
 
-    // Check for errors and log them but don't throw to prevent complete failure
-    if (productsRes.error) {
-      console.error("Error fetching products:", productsRes.error);
-    }
-    if (ordersRes.error) {
-      console.error("Error fetching orders:", ordersRes.error);
-    }
-    if (stockExitsRes.error) {
-      console.error("Error fetching stock exits:", stockExitsRes.error);
-    }
-    if (stockEntriesRes.error) {
-      console.error("Error fetching stock entries:", stockEntriesRes.error);
-    }
-    if (clientsRes.error) {
-      console.error("Error fetching clients:", clientsRes.error);
-    }
-    if (suppliersRes.error) {
-      console.error("Error fetching suppliers:", suppliersRes.error);
-    }
-    if (categoriesRes.error) {
-      console.error("Error fetching categories:", categoriesRes.error);
-    }
+    // Check for errors
+    const errors: string[] = [];
+    if (productsRes.error) errors.push(`Produtos: ${productsRes.error.message}`);
+    if (ordersRes.error) errors.push(`Encomendas: ${ordersRes.error.message}`);
+    if (clientsRes.error) errors.push(`Clientes: ${clientsRes.error.message}`);
+    if (suppliersRes.error) errors.push(`Fornecedores: ${suppliersRes.error.message}`);
+    if (categoriesRes.error) errors.push(`Categorias: ${categoriesRes.error.message}`);
+    if (metricsRes.error) errors.push(`Métricas: ${metricsRes.error.message}`);
 
-    // Map Supabase data to camelCase types with safe fallbacks
+    // Map data
     const products: Product[] = (productsRes.data || []).map(mapProduct);
     const orders: Order[] = (ordersRes.data || []).map(mapOrder);
-    const stockExits: StockExit[] = (stockExitsRes.data || []).map(mapStockExit);
-    const stockEntries: StockEntry[] = (stockEntriesRes.data || []).map(mapStockEntry);
     const clients = (clientsRes.data || []).map(mapClient);
     const suppliers = (suppliersRes.data || []).map(mapSupplier);
     const categories = (categoriesRes.data || []).map(mapCategory);
 
-    // Calculate financial metrics in parallel
-    const [
-      totalSpent,
-      totalProfit,
-      profitMargin,
-      roiVal,
-      roiPerc
-    ] = await Promise.all([
-      calculateTotalSpent(stockEntries),
-      calculateTotalProfitWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
-      calculateProfitMarginPercentWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
-      calculateRoiValueWithExpenses(calculateTotalSalesValue(stockExits), stockEntries),
-      calculateRoiPercentWithExpenses(calculateTotalSalesValue(stockExits), stockEntries)
-    ]);
+    // Get metrics from edge function
+    const metrics = metricsRes.data || {
+      kpiDeltas: {
+        sales: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 },
+        spent: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 },
+        profit: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 },
+        margin: { pct30d: 0, pctMoM: 0, value30d: 0, valueMoM: 0 }
+      },
+      totals: { totalSales: 0, totalSpent: 0, totalProfit: 0, profitMargin: 0 },
+      monthlyData: []
+    };
 
-    // Update stats with fetched data
+    // Update stats
     supportStats.clientsCount = clients.length;
     supportStats.productsCount = products.length;
     supportStats.suppliersCount = suppliers.length;
     supportStats.categoriesCount = categories.length;
+    supportStats.totalSales = metrics.totals.totalSales;
+    supportStats.totalSpent = metrics.totals.totalSpent;
+    supportStats.profit = metrics.totals.totalProfit;
+    supportStats.profitMargin = metrics.totals.profitMargin;
 
     // Generate KPIs
     const calculatedKpis = generateKPIs(supportStats);
@@ -224,28 +205,6 @@ export const fetchAllDashboardData = async () => {
         }))
       : calculatedKpis;
 
-    // Calculate deltas
-    const kpiDeltas = calculateKpiDeltas(stockExits, stockEntries);
-
-    // Build monthly data
-    const dataMap = createMonthlyDataMap();
-    processExitsForMonthlyData(stockExits, dataMap);
-    processEntriesForMonthlyData(stockEntries, dataMap);
-    
-    Object.entries(monthlyExpenses).forEach(([monthKey, expenseValue]) => {
-      const [year, month] = monthKey.split('-');
-      const monthDate = new Date(parseInt(year), parseInt(month) - 1);
-      const monthName = monthDate.toLocaleDateString('pt-PT', { 
-        month: 'short', 
-        year: 'numeric' 
-      });
-      
-      if (dataMap.has(monthName)) {
-        dataMap.get(monthName)!.compras += expenseValue;
-      }
-    });
-    
-    const monthlyData = Array.from(dataMap.values());
     const lowStockProducts = identifyLowStockProducts(products);
 
     // Find orders with insufficient stock (exclude cancelled and already converted orders)
@@ -269,31 +228,27 @@ export const fetchAllDashboardData = async () => {
     return {
       products,
       orders,
-      stockExits,
-      stockEntries,
       clients,
       suppliers,
       categories,
       supportStats,
       kpis,
-      kpiDeltas,
-      monthlyData,
+      kpiDeltas: metrics.kpiDeltas,
+      monthlyData: metrics.monthlyData,
       lowStockProducts,
       insufficientStockItems,
       pendingOrders,
-      totalSalesValue: calculateTotalSalesValue(stockExits),
-      totalPurchaseValue: calculateTotalPurchaseValue(stockEntries),
+      totalSalesValue: metrics.totals.totalSales,
       totalStockValue: calculateTotalStockValue(products),
-      totalSpentWithExpenses: totalSpent,
-      totalProfitWithExpenses: totalProfit,
-      profitMarginPercentWithExpenses: profitMargin,
-      roiValueWithExpenses: roiVal,
-      roiPercentWithExpenses: roiPerc
+      totalSpentWithExpenses: metrics.totals.totalSpent,
+      totalProfitWithExpenses: metrics.totals.totalProfit,
+      profitMarginPercentWithExpenses: metrics.totals.profitMargin,
+      errors
     };
   } catch (error) {
     console.error("Critical error in fetchAllDashboardData:", error);
-    // Return empty data structure instead of throwing
     return {
+      errors: [error instanceof Error ? error.message : 'Erro desconhecido'],
       products: [],
       orders: [],
       stockExits: [],
@@ -333,27 +288,23 @@ export const fetchAllDashboardData = async () => {
       insufficientStockItems: [],
       pendingOrders: [],
       totalSalesValue: 0,
-      totalPurchaseValue: 0,
       totalStockValue: 0,
       totalSpentWithExpenses: 0,
       totalProfitWithExpenses: 0,
-      profitMarginPercentWithExpenses: 0,
-      roiValueWithExpenses: 0,
-      roiPercentWithExpenses: 0
+      profitMarginPercentWithExpenses: 0
     };
   }
 };
 
 export const useDashboardOptimized = () => {
-  // Single query that fetches ALL data in parallel from Supabase
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboard-optimized'],
     queryFn: () => fetchAllDashboardData(),
-    staleTime: 1000 * 60, // 1 minute
+    staleTime: 1000 * 60 * 2, // 2 minutes
     gcTime: 1000 * 60 * 15, // 15 minutes
-    refetchOnWindowFocus: true,
-    refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+    refetchOnReconnect: true
   });
 
   const defaultKpiDeltas: KpiDeltas = {
@@ -366,6 +317,7 @@ export const useDashboardOptimized = () => {
   return {
     isLoading,
     error,
+    refetch,
     products: data?.products || [],
     orders: data?.orders || [],
     monthlyData: data?.monthlyData || [],
@@ -376,12 +328,10 @@ export const useDashboardOptimized = () => {
     insufficientStockItems: data?.insufficientStockItems || [],
     pendingOrders: data?.pendingOrders || [],
     totalSalesValue: data?.totalSalesValue || 0,
-    totalPurchaseValue: data?.totalPurchaseValue || 0,
     totalStockValue: data?.totalStockValue || 0,
     totalSpentWithExpenses: data?.totalSpentWithExpenses || 0,
     totalProfitWithExpenses: data?.totalProfitWithExpenses || 0,
     profitMarginPercentWithExpenses: data?.profitMarginPercentWithExpenses || 0,
-    roiValueWithExpenses: data?.roiValueWithExpenses || 0,
-    roiPercentWithExpenses: data?.roiPercentWithExpenses || 0
+    errors: data?.errors || []
   };
 };
