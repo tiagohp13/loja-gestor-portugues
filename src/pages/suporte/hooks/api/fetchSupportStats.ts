@@ -4,21 +4,10 @@ import { fetchMonthlyData, fetchMonthlyOrders } from './fetchMonthlyData';
 import { SupportStats, LowStockProduct } from '../../types/supportTypes';
 import { toast } from '@/components/ui/use-toast';
 
-// Cache para armazenar os resultados das consultas
-const cache = {
-  supportStats: null as SupportStats | null,
-  lastFetch: 0
-};
-
-// Cache de 10 minutos para melhor performance
-const CACHE_DURATION = 10 * 60 * 1000;
+// REMOVIDO: Cache manual que causava partilha de dados entre utilizadores diferentes
+// O React Query já faz o caching correto por utilizador
 
 export const fetchSupportStats = async (): Promise<SupportStats> => {
-  // Verificar se temos dados em cache válidos
-  const now = Date.now();
-  if (cache.supportStats && (now - cache.lastFetch < CACHE_DURATION)) {
-    return cache.supportStats;
-  }
 
   try {
     // Query otimizada: buscar apenas IDs de exits ativas primeiro
@@ -181,9 +170,7 @@ export const fetchSupportStats = async (): Promise<SupportStats> => {
       numberOfExpenses
     };
     
-    // Armazenar em cache
-    cache.supportStats = stats;
-    cache.lastFetch = now;
+    // REMOVIDO: Cache manual - o React Query já faz caching correto
     
     return stats;
   } catch (error) {
