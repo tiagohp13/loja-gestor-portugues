@@ -15,6 +15,10 @@ import { useUsersWithRoles, useRoleStats } from "@/hooks/queries/useUsersWithRol
 import { useUpdateUserRole } from "@/hooks/mutations/useUpdateUserRole";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useAuth } from "@/contexts/AuthContext";
+import CreateUserForm from "@/components/admin/CreateUserForm";
+import { useSuspendUser, useDeleteUser } from "@/hooks/mutations/useManageUser";
+import { Ban, Trash2, CheckCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 const USERS_PER_PAGE = 20;
 
@@ -46,11 +50,30 @@ const RoleManagement: React.FC = () => {
   const updateUserRole = useUpdateUserRole({
     onSuccess: () => {
       setUpdatingUserId(null);
+      refetch();
     },
     onError: () => {
       setUpdatingUserId(null);
     },
   });
+
+  // Suspend/reactivate user mutation
+  const suspendUser = useSuspendUser();
+
+  // Delete user mutation
+  const deleteUser = useDeleteUser();
+
+  const handleSuspendUser = (userId: string, userName: string, currentlySuspended: boolean) => {
+    suspendUser.mutate({
+      userId,
+      suspend: !currentlySuspended,
+      userName,
+    });
+  };
+
+  const handleDeleteUser = (userId: string, userName: string) => {
+    deleteUser.mutate({ userId, userName });
+  };
 
   const handleRoleChange = (userId: string, userName: string, newRole: 'admin' | 'editor' | 'viewer') => {
     setUpdatingUserId(userId);
@@ -190,6 +213,9 @@ const RoleManagement: React.FC = () => {
         </Card>
       </div>
 
+      {/* Create User Form */}
+      <CreateUserForm onSuccess={() => refetch()} />
+
       {/* Users List */}
       <Card>
         <CardHeader>
@@ -227,8 +253,13 @@ const RoleManagement: React.FC = () => {
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-foreground">
+                          <p className="font-medium text-foreground flex items-center gap-2">
                             {user.name || "Sem nome"}
+                            {user.is_suspended && (
+                              <Badge variant="destructive" className="text-xs">
+                                Suspenso
+                              </Badge>
+                            )}
                           </p>
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
@@ -290,6 +321,62 @@ const RoleManagement: React.FC = () => {
                               </SelectItem>
                             </SelectContent>
                           </Select>
+                        )}
+
+                        {/* Suspend/Reactivate Button */}
+                        {!isCurrentUser && !isOwner && (
+                          <Button
+                            variant={user.is_suspended ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => handleSuspendUser(user.id, user.name || user.email, user.is_suspended || false)}
+                            disabled={suspendUser.isPending}
+                          >
+                            {user.is_suspended ? (
+                              <>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Reativar
+                              </>
+                            ) : (
+                              <>
+                                <Ban className="h-4 w-4 mr-2" />
+                                Suspender
+                              </>
+                            )}
+                          </Button>
+                        )}
+
+                        {/* Delete Button */}
+                        {!isCurrentUser && !isOwner && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                disabled={deleteUser.isPending}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Eliminar
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Eliminar Utilizador</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Tem a certeza de que pretende eliminar permanentemente {user.name || user.email}?
+                                  Esta ação não pode ser revertida e todos os dados do utilizador serão removidos.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteUser(user.id, user.name || user.email)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Eliminar Permanentemente
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </div>
