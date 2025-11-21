@@ -3,8 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
 import { Ban, CheckCircle, Trash2, Shield, User, Users, History, ChevronDown, Calendar as CalendarIcon, X, Loader2 } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { UserWithRole } from '@/hooks/queries/useUsersWithRoles';
@@ -48,7 +47,6 @@ const UserRow = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isUpdatingExpiration, setIsUpdatingExpiration] = useState(false);
-  const [calendarOpen, setCalendarOpen] = useState(false);
   const [expirationDate, setExpirationDate] = useState<Date | null>(
     user.access_expires_at ? new Date(user.access_expires_at) : null
   );
@@ -75,11 +73,12 @@ const UserRow = ({
 
   const isAccessExpired = expirationDate && isPast(expirationDate);
 
-  const handleUpdateExpiration = async (newDate: Date | null) => {
+  const handleUpdateExpiration = async (dateString: string) => {
     setIsUpdatingExpiration(true);
-    setCalendarOpen(false);
     
     try {
+      const newDate = dateString ? new Date(dateString + 'T00:00:00') : null;
+      
       const { error } = await supabase
         .from('user_profiles')
         .update({ access_expires_at: newDate?.toISOString() })
@@ -109,7 +108,35 @@ const UserRow = ({
   };
 
   const handleRemoveExpiration = async () => {
-    await handleUpdateExpiration(null);
+    setIsUpdatingExpiration(true);
+    
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ access_expires_at: null })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setExpirationDate(null);
+      toast.success('Data de expiração removida');
+      
+      // Log audit action
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        await supabase.rpc('log_user_audit', {
+          p_admin_id: currentUser.id,
+          p_target_user_id: user.id,
+          p_action: 'access_expiration_updated',
+          p_details: { new_expiration: null },
+        });
+      }
+    } catch (error) {
+      console.error('Error removing expiration:', error);
+      toast.error('Erro ao remover data de expiração');
+    } finally {
+      setIsUpdatingExpiration(false);
+    }
   };
 
   return (
@@ -275,44 +302,25 @@ const UserRow = ({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "flex-1 justify-start text-left font-normal",
-                        !expirationDate && "text-muted-foreground",
-                        isAccessExpired && "border-destructive"
-                      )}
-                      disabled={isUpdatingExpiration}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {expirationDate 
-                        ? format(expirationDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
-                        : "Sem data de expiração"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={expirationDate || undefined}
-                      onSelect={(date) => {
-                        if (date) {
-                          handleUpdateExpiration(date);
-                        }
-                      }}
-                      disabled={(date) => date < new Date()}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
+                <div className="flex-1">
+                  <Input
+                    type="date"
+                    value={expirationDate ? format(expirationDate, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => handleUpdateExpiration(e.target.value)}
+                    min={format(new Date(), 'yyyy-MM-dd')}
+                    disabled={isUpdatingExpiration}
+                    className={cn(
+                      isAccessExpired && "border-destructive"
+                    )}
+                  />
+                </div>
                 {expirationDate && (
                   <Button
                     variant="outline"
                     size="icon"
                     onClick={handleRemoveExpiration}
                     disabled={isUpdatingExpiration}
+                    title="Remover data de expiração"
                   >
                     {isUpdatingExpiration ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
