@@ -8,9 +8,12 @@ import { Ban, CheckCircle, Trash2, Shield, User, Users, History, ChevronDown } f
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { UserWithRole } from '@/hooks/queries/useUsersWithRoles';
 import { useUserSuspensionHistory } from '@/hooks/queries/useUserSuspensionHistory';
+import { useUserAuthInfo } from '@/hooks/queries/useUserAuthInfo';
+import { useUserLastActivity } from '@/hooks/queries/useUserActivity';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Clock, MapPin, Smartphone } from 'lucide-react';
 
 interface UserRowProps {
   user: UserWithRole;
@@ -35,9 +38,10 @@ const UserRow = ({
   isSuspending,
   isDeleting,
 }) => {
-  const [showHistory, setShowHistory] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const { data: suspensionHistory } = useUserSuspensionHistory(user.id);
+  const { data: authInfo } = useUserAuthInfo(user.id);
+  const { data: lastActivity } = useUserLastActivity(user.id);
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
@@ -212,6 +216,58 @@ const UserRow = ({
         {/* Expanded Content */}
         <CollapsibleContent>
           <div className="border-t border-border p-4 bg-muted/30 space-y-4">
+            {/* Login Information */}
+            <div>
+              <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                Informações de Login
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="flex items-start gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="font-medium text-foreground">Último Login</p>
+                    <p className="text-muted-foreground">
+                      {authInfo?.lastLoginFormatted || 'Nunca'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-2 text-sm">
+                  <Smartphone className="h-4 w-4 text-muted-foreground mt-0.5" />
+                  <div>
+                    <p className="font-medium text-foreground">Dispositivo</p>
+                    <p className="text-muted-foreground">
+                      {authInfo?.deviceType || 'Desconhecido'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Last Activity */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2">Última Atividade</h4>
+              {lastActivity ? (
+                <div className="text-sm">
+                  <p className="text-foreground font-medium">
+                    {lastActivity.action_description}
+                  </p>
+                  {lastActivity.entity_name && (
+                    <p className="text-muted-foreground">
+                      {lastActivity.entity_type}: {lastActivity.entity_name}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {lastActivity.formatted_time}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Sem atividade registada
+                </p>
+              )}
+            </div>
+
             {/* Suspension History */}
             {suspensionHistory && suspensionHistory.length > 0 && (
               <div>
@@ -245,14 +301,6 @@ const UserRow = ({
                 </div>
               </div>
             )}
-
-            {/* Last Activity Placeholder */}
-            <div>
-              <h4 className="text-sm font-semibold mb-2">Última Atividade</h4>
-              <p className="text-sm text-muted-foreground">
-                Informações de atividade estarão disponíveis em breve
-              </p>
-            </div>
           </div>
         </CollapsibleContent>
       </div>
