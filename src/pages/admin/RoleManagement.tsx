@@ -14,11 +14,13 @@ import PermissionsGuide from "./PermissionsGuide";
 import { useUsersWithRoles, useRoleStats } from "@/hooks/queries/useUsersWithRoles";
 import { useUpdateUserRole } from "@/hooks/mutations/useUpdateUserRole";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const USERS_PER_PAGE = 20;
 
 const RoleManagement: React.FC = () => {
   const { isAdmin, loading: permissionsLoading } = usePermissions();
+  const { user: currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
 
@@ -208,6 +210,7 @@ const RoleManagement: React.FC = () => {
               <div className="space-y-3">
                 {users.map((user) => {
                   const isUpdating = updatingUserId === user.id;
+                  const isCurrentUser = currentUser?.id === user.id;
                   
                   return (
                     <div
@@ -233,48 +236,54 @@ const RoleManagement: React.FC = () => {
                         <Badge variant={getRoleBadgeVariant(user.role)}>
                           {getRoleLabel(user.role)}
                         </Badge>
-                        <Select
-                          value={user.role}
-                          onValueChange={(value) =>
-                            handleRoleChange(
-                              user.id,
-                              user.name || user.email,
-                              value as "admin" | "editor" | "viewer"
-                            )
-                          }
-                          disabled={isUpdating}
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            {isUpdating ? (
-                              <div className="flex items-center gap-2">
-                                <LoadingSpinner />
-                                <span>A atualizar...</span>
-                              </div>
-                            ) : (
-                              <SelectValue placeholder="Selecionar papel" />
-                            )}
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="admin">
-                              <div className="flex items-center gap-2">
-                                <Shield className="h-4 w-4 text-red-500" />
-                                <span>Administrador</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="editor">
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-blue-500" />
-                                <span>Editor</span>
-                              </div>
-                            </SelectItem>
-                            <SelectItem value="viewer">
-                              <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <span>Visualizador</span>
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
+                        {isCurrentUser ? (
+                          <div className="w-[180px] text-sm text-muted-foreground text-center">
+                            Não pode alterar o seu próprio papel
+                          </div>
+                        ) : (
+                          <Select
+                            value={user.role}
+                            onValueChange={(value) =>
+                              handleRoleChange(
+                                user.id,
+                                user.name || user.email,
+                                value as "admin" | "editor" | "viewer"
+                              )
+                            }
+                            disabled={isUpdating}
+                          >
+                            <SelectTrigger className="w-[180px]">
+                              {isUpdating ? (
+                                <div className="flex items-center gap-2">
+                                  <LoadingSpinner />
+                                  <span>A atualizar...</span>
+                                </div>
+                              ) : (
+                                <SelectValue placeholder="Selecionar papel" />
+                              )}
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="admin">
+                                <div className="flex items-center gap-2">
+                                  <Shield className="h-4 w-4 text-red-500" />
+                                  <span>Administrador</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="editor">
+                                <div className="flex items-center gap-2">
+                                  <User className="h-4 w-4 text-blue-500" />
+                                  <span>Editor</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="viewer">
+                                <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-muted-foreground" />
+                                  <span>Visualizador</span>
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                     </div>
                   );
