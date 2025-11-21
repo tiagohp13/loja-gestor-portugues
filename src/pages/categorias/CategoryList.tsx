@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCategoriesQuery } from '@/hooks/queries/useCategories';
-import { useProductsQuery } from '@/hooks/queries/useProducts';
 import { usePermissions } from '@/hooks/usePermissions';
 import { validatePermission } from '@/utils/permissionUtils';
 import { Button } from '@/components/ui/button';
@@ -28,7 +27,6 @@ type SortDirection = 'asc' | 'desc';
 const CategoryList: React.FC = () => {
   const navigate = useNavigate();
   const { categories, deleteCategory, isLoading } = useCategoriesQuery();
-  const { products } = useProductsQuery();
   const { canCreate, canEdit, canDelete } = usePermissions();
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -55,18 +53,14 @@ const CategoryList: React.FC = () => {
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const getCategoryProductCount = (categoryName: string) => {
-    return products.filter(product => product.category === categoryName).length;
-  };
-
   const sortedCategories = [...filteredCategories].sort((a, b) => {
     if (sortField === 'name') {
       return sortDirection === 'asc' 
         ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
     } else if (sortField === 'productCount') {
-      const aCount = getCategoryProductCount(a.name);
-      const bCount = getCategoryProductCount(b.name);
+      const aCount = a.productCount || 0;
+      const bCount = b.productCount || 0;
       return sortDirection === 'asc' ? aCount - bCount : bCount - aCount;
     }
     return 0;
@@ -181,85 +175,82 @@ const CategoryList: React.FC = () => {
             />
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {sortedCategories.map((category) => {
-                const productCount = getCategoryProductCount(category.name);
-                return (
-                  <Card 
-                    key={category.id} 
-                    className="hover:shadow-md transition-shadow cursor-pointer" 
-                    onClick={(e) => handleCategoryClick(category.id, category.name, e)}
-                  >
-                    <CardHeader className="pb-3">
-                      <CardTitle className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <Package size={18} className="text-gestorApp-blue shrink-0" />
-                          <span className="text-lg truncate">{category.name}</span>
-                        </div>
-                        <div className="flex items-center justify-end gap-1 shrink-0">
-                          {canEdit && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleEditCategory(category.id);
-                                  }}
-                                >
-                                  <Edit size={16} />
-                                </Button>
-                              </TooltipTrigger>
-                              <TooltipContent>Editar categoria</TooltipContent>
-                            </Tooltip>
-                          )}
-                          {canDelete && (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <DeleteConfirmDialog
-                                  title="Eliminar Categoria"
-                                  description="Tem a certeza que deseja eliminar esta categoria?"
-                                  onDelete={() => handleDeleteCategory(category.id)}
-                                  checkDependencies={() => checkCategoryDependencies(category.name)}
-                                  trigger={
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon"
-                                      className="h-8 w-8"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                      }}
-                                    >
-                                      <Trash size={16} />
-                                    </Button>
-                                  }
-                                />
-                              </TooltipTrigger>
-                              <TooltipContent>Eliminar categoria</TooltipContent>
-                            </Tooltip>
-                          )}
-                        </div>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {category.description && (
-                          <p className="text-sm text-gestorApp-gray">
-                            {category.description}
-                          </p>
-                        )}
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <span className="text-sm text-gestorApp-gray">Produtos:</span>
-                          <span className="text-sm font-medium text-gestorApp-blue">
-                            {productCount}
-                          </span>
-                        </div>
+              {sortedCategories.map((category) => (
+                <Card 
+                  key={category.id} 
+                  className="hover:shadow-md transition-shadow cursor-pointer" 
+                  onClick={(e) => handleCategoryClick(category.id, category.name, e)}
+                >
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <Package size={18} className="text-gestorApp-blue shrink-0" />
+                        <span className="text-lg truncate">{category.name}</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                      <div className="flex items-center justify-end gap-1 shrink-0">
+                        {canEdit && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCategory(category.id);
+                                }}
+                              >
+                                <Edit size={16} />
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>Editar categoria</TooltipContent>
+                          </Tooltip>
+                        )}
+                        {canDelete && (
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <DeleteConfirmDialog
+                                title="Eliminar Categoria"
+                                description="Tem a certeza que deseja eliminar esta categoria?"
+                                onDelete={() => handleDeleteCategory(category.id)}
+                                checkDependencies={() => checkCategoryDependencies(category.name)}
+                                trigger={
+                                  <Button 
+                                    variant="ghost" 
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                    }}
+                                  >
+                                    <Trash size={16} />
+                                  </Button>
+                                }
+                              />
+                            </TooltipTrigger>
+                            <TooltipContent>Eliminar categoria</TooltipContent>
+                          </Tooltip>
+                        )}
+                      </div>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {category.description && (
+                        <p className="text-sm text-gestorApp-gray">
+                          {category.description}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-between pt-2 border-t">
+                        <span className="text-sm text-gestorApp-gray">Produtos:</span>
+                        <span className="text-sm font-medium text-gestorApp-blue">
+                          {category.productCount || 0}
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </div>
