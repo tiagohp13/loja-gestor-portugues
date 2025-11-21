@@ -45,7 +45,7 @@ export const useOrderDetail = (id: string | undefined) => {
               order_items(*)
             `)
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
           if (error) throw error;
 

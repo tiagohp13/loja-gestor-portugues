@@ -10,6 +10,7 @@ import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
    FETCH ORDERS
 --------------------------------------------------------- */
 async function fetchOrders(): Promise<Order[]> {
+  // Fetch all orders
   const { data: ordersData, error: ordersError } = await supabase
     .from("orders")
     .select(
@@ -19,24 +20,35 @@ async function fetchOrders(): Promise<Order[]> {
     .order("date", { ascending: false });
 
   if (ordersError) throw ordersError;
+  if (!ordersData || ordersData.length === 0) return [];
 
-  const orders = await Promise.all(
-    (ordersData || []).map(async (order) => {
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("order_items")
-        .select(
-          "id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at"
-        )
-        .eq("order_id", order.id);
+  // Get all order IDs
+  const orderIds = ordersData.map(o => o.id);
 
-      if (itemsError) throw itemsError;
+  // Fetch ALL items in a single query (batch operation)
+  const { data: allItemsData, error: itemsError } = await supabase
+    .from("order_items")
+    .select(
+      "id, order_id, product_id, product_name, quantity, sale_price, discount_percent, created_at, updated_at"
+    )
+    .in("order_id", orderIds);
 
-      return {
-        ...order,
-        items: itemsData || [],
-      };
-    })
-  );
+  if (itemsError) throw itemsError;
+
+  // Group items by order_id in memory
+  const itemsByOrderId = (allItemsData || []).reduce((acc, item) => {
+    if (!acc[item.order_id]) {
+      acc[item.order_id] = [];
+    }
+    acc[item.order_id].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Combine orders with their items
+  const orders = ordersData.map((order) => ({
+    ...order,
+    items: itemsByOrderId[order.id] || [],
+  }));
 
   return orders.map(mapOrder);
 }
