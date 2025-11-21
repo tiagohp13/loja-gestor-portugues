@@ -48,6 +48,7 @@ const UserRow = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isUpdatingExpiration, setIsUpdatingExpiration] = useState(false);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [expirationDate, setExpirationDate] = useState<Date | null>(
     user.access_expires_at ? new Date(user.access_expires_at) : null
   );
@@ -76,6 +77,8 @@ const UserRow = ({
 
   const handleUpdateExpiration = async (newDate: Date | null) => {
     setIsUpdatingExpiration(true);
+    setCalendarOpen(false);
+    
     try {
       const { error } = await supabase
         .from('user_profiles')
@@ -103,6 +106,10 @@ const UserRow = ({
     } finally {
       setIsUpdatingExpiration(false);
     }
+  };
+
+  const handleRemoveExpiration = async () => {
+    await handleUpdateExpiration(null);
   };
 
   return (
@@ -268,7 +275,7 @@ const UserRow = ({
                 </div>
               </div>
               <div className="flex gap-2">
-                <Popover>
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
                       variant="outline"
@@ -281,7 +288,7 @@ const UserRow = ({
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {expirationDate 
-                        ? format(expirationDate, "PPP", { locale: ptBR })
+                        ? format(expirationDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR })
                         : "Sem data de expiração"}
                     </Button>
                   </PopoverTrigger>
@@ -289,10 +296,14 @@ const UserRow = ({
                     <Calendar
                       mode="single"
                       selected={expirationDate || undefined}
-                      onSelect={(date) => handleUpdateExpiration(date || null)}
+                      onSelect={(date) => {
+                        if (date) {
+                          handleUpdateExpiration(date);
+                        }
+                      }}
                       disabled={(date) => date < new Date()}
                       initialFocus
-                      className="pointer-events-auto"
+                      className="p-3 pointer-events-auto"
                     />
                   </PopoverContent>
                 </Popover>
@@ -300,7 +311,7 @@ const UserRow = ({
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleUpdateExpiration(null)}
+                    onClick={handleRemoveExpiration}
                     disabled={isUpdatingExpiration}
                   >
                     {isUpdatingExpiration ? (
