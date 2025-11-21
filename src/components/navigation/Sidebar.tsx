@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserProfileQuery } from '@/hooks/queries/useUserProfileQuery';
 import { usePermissions } from '@/hooks/usePermissions';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
@@ -25,7 +25,7 @@ import GlobalSearch from './GlobalSearch';
  */
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
-  const { profile } = useUserProfile();
+  const { data: profile } = useUserProfileQuery();
   const { isAdmin } = usePermissions();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
