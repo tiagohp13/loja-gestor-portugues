@@ -90,7 +90,10 @@ export function mapOrder(data: any): Order {
 
   // Apply global order discount
   const orderDiscount = data.discount || 0;
-  const total = subtotal * (1 - orderDiscount / 100);
+  const calculatedTotal = subtotal * (1 - orderDiscount / 100);
+  
+  // Use calculated total from items if available, otherwise fallback to total_amount from DB
+  const total = items.length > 0 ? calculatedTotal : (data.total_amount || 0);
 
   return {
     id: data.id,
