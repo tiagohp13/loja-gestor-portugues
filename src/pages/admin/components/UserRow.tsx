@@ -13,8 +13,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Clock, MapPin, Smartphone } from 'lucide-react';
-import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 import { UserAuditHistory } from '@/components/admin/UserAuditHistory';
+import { ActiveSessionsSection } from '@/components/admin/ActiveSessionsSection';
+import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
 
 interface UserRowProps {
   user: UserWithRole;
@@ -289,6 +290,11 @@ const UserRow = ({
                 </div>
               </div>
             )}
+
+            {/* Active Sessions Section */}
+            <div className="pt-4 border-t">
+              <ActiveSessionsSection userId={user.id} />
+            </div>
 
             {/* Audit History Section */}
             <div className="pt-4 border-t">

@@ -225,6 +225,36 @@ export type Database = {
           },
         ]
       }
+      failed_login_attempts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          ip_address: string | null
+          reason: string
+          timestamp: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          ip_address?: string | null
+          reason: string
+          timestamp?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          ip_address?: string | null
+          reason?: string
+          timestamp?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       kpi_targets: {
         Row: {
           created_at: string | null
@@ -1052,6 +1082,7 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          access_expires_at: string | null
           access_level: string | null
           avatar_url: string | null
           created_at: string
@@ -1066,6 +1097,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          access_expires_at?: string | null
           access_level?: string | null
           avatar_url?: string | null
           created_at?: string
@@ -1080,6 +1112,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          access_expires_at?: string | null
           access_level?: string | null
           avatar_url?: string | null
           created_at?: string
@@ -1155,6 +1188,7 @@ export type Database = {
       can_delete_data: { Args: { user_id?: string }; Returns: boolean }
       can_read_data: { Args: { user_id?: string }; Returns: boolean }
       can_write_data: { Args: { user_id?: string }; Returns: boolean }
+      check_and_suspend_expired_users: { Args: never; Returns: undefined }
       check_rate_limit: {
         Args: {
           max_attempts?: number
@@ -1334,6 +1368,15 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_user_admin: { Args: { user_id?: string }; Returns: boolean }
+      log_failed_login_attempt: {
+        Args: {
+          p_email: string
+          p_ip_address?: string
+          p_reason?: string
+          p_user_agent?: string
+        }
+        Returns: Json
+      }
       log_security_event: {
         Args: {
           affected_id?: string
