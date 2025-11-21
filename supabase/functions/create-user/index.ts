@@ -126,6 +126,7 @@ Deno.serve(async (req) => {
     console.log('User created successfully:', newUser.user.id);
 
     // Upsert user profile (trigger may have already created it)
+    // Note: The sync_user_role_from_profile trigger will automatically create/update the user_role
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
       .upsert({
@@ -147,24 +148,7 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Create user role
-    const { error: roleError } = await supabaseAdmin
-      .from('user_roles')
-      .insert({
-        user_id: newUser.user.id,
-        role
-      });
-
-    if (roleError) {
-      console.error('Error creating role:', roleError);
-      // Rollback: delete the auth user and profile
-      await supabaseAdmin.auth.admin.deleteUser(newUser.user.id);
-      await supabaseAdmin.from('user_profiles').delete().eq('user_id', newUser.user.id);
-      return new Response(
-        JSON.stringify({ error: 'Failed to create user role' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    // No need to manually create user_role - the sync_user_role_from_profile trigger handles it
 
     console.log('User setup completed successfully');
 
