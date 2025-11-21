@@ -24,22 +24,38 @@ async function fetchPaginatedOrders(page: number = 0): Promise<{ orders: Order[]
     .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
   if (ordersError) throw ordersError;
+  if (!ordersData || ordersData.length === 0) {
+    return {
+      orders: [],
+      totalCount: count || 0,
+    };
+  }
 
-  const orders = await Promise.all(
-    (ordersData || []).map(async (order) => {
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("order_items")
-        .select("*")
-        .eq("order_id", order.id);
+  // Get all order IDs from this page
+  const orderIds = ordersData.map(o => o.id);
 
-      if (itemsError) throw itemsError;
+  // Fetch ALL items for these orders in a single query (batch operation)
+  const { data: allItemsData, error: itemsError } = await supabase
+    .from("order_items")
+    .select("*")
+    .in("order_id", orderIds);
 
-      return {
-        ...order,
-        items: itemsData || [],
-      };
-    }),
-  );
+  if (itemsError) throw itemsError;
+
+  // Group items by order_id in memory
+  const itemsByOrderId = (allItemsData || []).reduce((acc, item) => {
+    if (!acc[item.order_id]) {
+      acc[item.order_id] = [];
+    }
+    acc[item.order_id].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Combine orders with their items
+  const orders = ordersData.map((order) => ({
+    ...order,
+    items: itemsByOrderId[order.id] || [],
+  }));
 
   return {
     orders: orders.map(mapOrder),
@@ -149,6 +165,26 @@ async function updateOrder({ id, items, ...updates }: any) {
   return id;
 }
 
+async function restoreOrder(id: string) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: 'active' })
+    .eq("id", id);
+
+  if (error) throw error;
+  return id;
+}
+
+async function cancelOrder(id: string) {
+  const { error } = await supabase
+    .from("orders")
+    .update({ status: 'cancelled' })
+    .eq("id", id);
+
+  if (error) throw error;
+  return id;
+}
+
 export function usePaginatedOrders(page: number = 0) {
   const queryClient = useQueryClient();
 
@@ -192,6 +228,28 @@ export function usePaginatedOrders(page: number = 0) {
     onError: (err: any) => toast.error(err.message || "Erro ao atualizar encomenda"),
   });
 
+  const restoreMutation = useMutation({
+    mutationFn: restoreOrder,
+    onSuccess: async () => {
+      toast.success("Encomenda restaurada com sucesso");
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao restaurar encomenda"),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: cancelOrder,
+    onSuccess: async () => {
+      toast.success("Encomenda cancelada com sucesso");
+      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
+    },
+    onError: (err: any) => toast.error(err.message || "Erro ao cancelar encomenda"),
+  });
+
   return {
     orders: query.data?.orders || [],
     totalCount: query.data?.totalCount || 0,
@@ -202,5 +260,7 @@ export function usePaginatedOrders(page: number = 0) {
     deleteOrder: deleteMutation.mutate,
     createOrder: createMutation.mutate,
     updateOrder: updateMutation.mutate,
+    restoreOrder: restoreMutation.mutate,
+    cancelOrder: cancelMutation.mutate,
   };
 }

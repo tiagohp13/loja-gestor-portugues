@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,7 +15,6 @@ import { validatePermission } from "@/utils/permissionUtils";
 import { checkOrderDependencies } from "@/utils/dependencyUtils";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { usePaginatedOrders } from "@/hooks/queries/usePaginatedOrders";
-import { supabase } from "@/integrations/supabase/client";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import {
@@ -30,10 +28,9 @@ import {
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [currentPage, setCurrentPage] = useState(0);
-  const { orders, totalCount, totalPages, isLoading, deleteOrder } = usePaginatedOrders(currentPage);
+  const { orders, totalCount, totalPages, isLoading, deleteOrder, restoreOrder, cancelOrder } = usePaginatedOrders(currentPage);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCancelled, setShowCancelled] = useState(false);
@@ -86,42 +83,12 @@ const OrderList = () => {
     }
   };
 
-  const handleRestoreOrder = async (orderId: string) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: 'active' })
-        .eq("id", orderId);
-
-      if (error) throw error;
-      toast.success("Encomenda restaurada com sucesso");
-
-      await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
-    } catch (error) {
-      console.error("Error restoring order:", error);
-      toast.error("Erro ao restaurar encomenda");
-    }
+  const handleRestoreOrder = (orderId: string) => {
+    restoreOrder(orderId);
   };
 
-  const handleCancelOrder = async (orderId: string) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: 'cancelled' })
-        .eq("id", orderId);
-
-      if (error) throw error;
-      toast.success("Encomenda cancelada com sucesso");
-
-      await queryClient.invalidateQueries({ queryKey: ["orders"] });
-      await queryClient.invalidateQueries({ queryKey: ["orders-paginated"] });
-      await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
-    } catch (error) {
-      console.error("Error cancelling order:", error);
-      toast.error("Erro ao cancelar encomenda");
-    }
+  const handleCancelOrder = (orderId: string) => {
+    cancelOrder(orderId);
   };
 
   const formatCurrency = (value: number) =>
