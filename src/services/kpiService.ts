@@ -20,49 +20,24 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
       throw new Error('Usuário não autenticado');
     }
 
-    // Para cada KPI, inserimos ou atualizamos sua meta
-    for (const kpi of kpis) {
-      const { data: existingTargets, error: fetchError } = await supabase
-        .from('kpi_targets')
-        .select('id, kpi_name, target_value, user_id, created_at, updated_at')
-        .eq('user_id', userId)
-        .eq('kpi_name', kpi.name)
-        .maybeSingle();
+    // Use upsert to handle insert/update in a single batch operation
+    const upserts = kpis.map((kpi) => ({
+      user_id: userId,
+      kpi_name: kpi.name,
+      target_value: kpi.target,
+      updated_at: new Date().toISOString()
+    }));
 
-      if (fetchError) {
-        console.error(`Erro ao verificar metas existentes para ${kpi.name}:`, fetchError);
-        continue;
-      }
+    const { error } = await supabase
+      .from('kpi_targets')
+      .upsert(upserts, {
+        onConflict: 'user_id,kpi_name',
+        ignoreDuplicates: false
+      });
 
-      if (existingTargets) {
-        // Atualizar meta existente
-        const { error } = await supabase
-          .from('kpi_targets')
-          .update({
-            target_value: kpi.target,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingTargets.id);
-
-        if (error) {
-          console.error(`Erro ao atualizar meta para ${kpi.name}:`, error);
-          throw error;
-        }
-      } else {
-        // Inserir nova meta
-        const { error } = await supabase
-          .from('kpi_targets')
-          .insert({
-            user_id: userId,
-            kpi_name: kpi.name,
-            target_value: kpi.target
-          });
-
-        if (error) {
-          console.error(`Erro ao inserir meta para ${kpi.name}:`, error);
-          throw error;
-        }
-      }
+    if (error) {
+      console.error('Erro ao salvar metas dos KPIs:', error);
+      throw error;
     }
   } catch (error) {
     console.error('Erro ao salvar metas dos KPIs:', error);

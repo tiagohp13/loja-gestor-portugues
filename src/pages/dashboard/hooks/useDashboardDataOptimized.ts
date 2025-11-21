@@ -34,62 +34,6 @@ export const useDashboardDataOptimized = () => {
     profitMarginPercentWithExpenses: 0,
     monthlyExpensesData: {} as Record<string, number>
   });
-  
-  // Add state to track when expenses change
-  const [expensesVersion, setExpensesVersion] = useState(0);
-
-  // Subscribe to expenses changes and trigger periodic refresh
-  useEffect(() => {
-    const expensesChannel = supabase
-      .channel('dashboard-expenses-updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'expenses' }, 
-        () => {
-          setExpensesVersion(v => v + 1);
-        }
-      )
-      .subscribe();
-    
-    // Subscribe to orders changes for realtime updates
-    const ordersChannel = supabase
-      .channel('dashboard-orders-updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'orders' }, 
-        () => {
-          // Orders context will handle the update
-        }
-      )
-      .subscribe();
-    
-    // Subscribe to products and stock changes for realtime updates  
-    const productsChannel = supabase
-      .channel('dashboard-products-updates')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'products' }, 
-        () => {
-          // Products context will handle the update
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_entry_items' }, 
-        () => {
-          // Stock changes affect product stock levels
-        }
-      )
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'stock_exit_items' }, 
-        () => {
-          // Stock changes affect product stock levels
-        }
-      )
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(expensesChannel);
-      supabase.removeChannel(ordersChannel);
-      supabase.removeChannel(productsChannel);
-    };
-  }, []);
 
   // Calculate basic financial metrics (memoized for performance)
   const basicFinancials = useMemo(() => ({
@@ -127,7 +71,7 @@ export const useDashboardDataOptimized = () => {
     return identifyLowStockProducts(products);
   }, [products]);
 
-  // Calculate financial metrics including expenses (debounced)
+  // Calculate financial metrics including expenses
   const calculateExpensiveMetrics = useCallback(async () => {
     try {
       const [totalSpent, totalProfitWithExp, profitMarginWithExp, expensesData] = await Promise.all([
@@ -146,12 +90,11 @@ export const useDashboardDataOptimized = () => {
     } catch (error) {
       console.error('Error calculating financial metrics with expenses:', error);
     }
-  }, [stockEntries, basicFinancials.totalSalesValue, expensesVersion]);
+  }, [stockEntries, basicFinancials.totalSalesValue]);
 
-  // Debounce expensive calculations
+  // Calculate on mount and when dependencies change
   useEffect(() => {
-    const timer = setTimeout(calculateExpensiveMetrics, 300);
-    return () => clearTimeout(timer);
+    calculateExpensiveMetrics();
   }, [calculateExpensiveMetrics]);
 
   return {

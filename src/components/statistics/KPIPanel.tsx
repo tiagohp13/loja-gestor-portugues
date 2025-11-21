@@ -94,7 +94,12 @@ const KPIPanel = ({
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
         </div>
-        {isAdmin}
+        {isAdmin && (
+          <Button variant="outline" size="sm" onClick={() => setIsEditModalOpen(true)}>
+            <Pencil className="h-4 w-4 mr-2" />
+            Editar Metas
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         <KPIGrid kpis={kpisState} onSaveKpis={handleSaveTargets} />
