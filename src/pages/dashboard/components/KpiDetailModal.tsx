@@ -26,17 +26,18 @@ interface DeltaCardProps {
 }
 
 const DeltaCard: React.FC<DeltaCardProps> = ({ delta, label }) => {
-  const isPositive = delta >= 0;
+  const safeValue = delta ?? 0;
+  const isPositive = safeValue >= 0;
   const Icon = isPositive ? TrendingUp : TrendingDown;
   const colorClass = isPositive ? 'text-emerald-600' : 'text-rose-600';
   const bgClass = isPositive ? 'bg-emerald-50' : 'bg-rose-50';
   
   const message = useMemo(() => {
-    const variation = `${isPositive ? '+' : ''}${delta.toFixed(1)}%`;
+    const variation = `${isPositive ? '+' : ''}${safeValue.toFixed(1)}%`;
     return label === 'Últimos 30 dias'
       ? `Comparado com os 30 dias anteriores, houve uma variação de ${variation}.`
       : `Em relação ao mês anterior, a variação foi de ${variation}.`;
-  }, [delta, isPositive, label]);
+  }, [safeValue, isPositive, label]);
   
   return (
     <div className={`${bgClass} rounded-lg p-4`}>
@@ -45,7 +46,7 @@ const DeltaCard: React.FC<DeltaCardProps> = ({ delta, label }) => {
         <span className="font-semibold text-foreground">{label}</span>
       </div>
       <div className={`text-2xl font-bold ${colorClass}`}>
-        {isPositive ? '+' : ''}{delta.toFixed(1)}%
+        {isPositive ? '+' : ''}{safeValue.toFixed(1)}%
       </div>
       <p className="text-sm text-gray-600 mt-2">{message}</p>
     </div>

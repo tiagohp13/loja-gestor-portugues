@@ -89,6 +89,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false, d
     const diff = currentValue - previousValue;
     const percentChange = (diff / previousValue) * 100;
     const isPositive = percentChange >= 0;
+    const safePercent = percentChange ?? 0;
     
     return (
       <div className={`flex items-center text-sm ${isPositive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} mt-1`}>
@@ -97,7 +98,7 @@ const SummaryCards: React.FC<SummaryCardsProps> = ({ stats, isLoading = false, d
         ) : (
           <ArrowDown className="h-3 w-3 mr-1" />
         )}
-        <span>{isPositive ? '+' : ''}{percentChange.toFixed(1)}%</span>
+        <span>{isPositive ? '+' : ''}{safePercent.toFixed(1)}%</span>
       </div>
     );
   };
