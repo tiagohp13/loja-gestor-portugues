@@ -152,7 +152,14 @@ export const fetchAllDashboardData = async () => {
       supabase.from('categories').select('id, name, description, status, product_count, user_id, created_at, updated_at').eq('status', 'active').order('name').limit(100),
       fetchSupportStats(),
       loadKpiTargets(),
-      supabase.functions.invoke('dashboard-metrics')
+      (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        return supabase.functions.invoke('dashboard-metrics', {
+          headers: session?.access_token ? {
+            Authorization: `Bearer ${session.access_token}`
+          } : {}
+        });
+      })()
     ]);
 
     // Check for errors
