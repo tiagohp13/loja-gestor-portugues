@@ -2,6 +2,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/PageHeader";
 import { FileText, Pencil, ArrowLeft } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 type StockExitDetailHeaderProps = {
   exitNumber: string;
@@ -18,6 +19,8 @@ const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({
   onExportPdf,
   isDeleted = false,
 }) => {
+  const { canEdit } = usePermissions();
+  
   return (
     <PageHeader
       title={`Venda: ${exitNumber || ""}`}
@@ -31,7 +34,7 @@ const StockExitDetailHeader: React.FC<StockExitDetailHeaderProps> = ({
           </Button>
 
           {/* Editar */}
-          {!isDeleted && (
+          {!isDeleted && canEdit && (
             <Button onClick={() => onNavigateBack(`/saidas/editar/${id}`)}>
               <Pencil className="h-4 w-4 mr-1" />
               Editar

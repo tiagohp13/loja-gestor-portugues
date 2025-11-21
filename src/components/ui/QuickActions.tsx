@@ -3,9 +3,16 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, ShoppingCart, Package, Users, FileText, Receipt } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const QuickActions: React.FC = () => {
   const navigate = useNavigate();
+  const { canCreate } = usePermissions();
+
+  // Viewers não devem ver os botões de criação
+  if (!canCreate) {
+    return null;
+  }
 
   // Load configuration from localStorage
   const getQuickActionConfig = () => {

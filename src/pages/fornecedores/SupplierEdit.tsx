@@ -9,6 +9,7 @@ import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { toast } from "sonner";
 import { ArrowLeft, Save } from "lucide-react";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const SupplierEdit = () => {
   const { id } = useParams<{ id: string }>();
@@ -16,6 +17,15 @@ const SupplierEdit = () => {
   const { updateSupplier } = usePaginatedSuppliers();
   const { data: foundSupplier, isLoading } = useSupplierQuery(id);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { canEdit } = usePermissions();
+
+  // Viewers não podem editar fornecedores
+  useEffect(() => {
+    if (!canEdit) {
+      toast.error("Não tem permissão para editar fornecedores");
+      navigate(`/fornecedores/${id}`);
+    }
+  }, [canEdit, navigate, id]);
 
   const [supplier, setSupplier] = useState({
     name: "",
