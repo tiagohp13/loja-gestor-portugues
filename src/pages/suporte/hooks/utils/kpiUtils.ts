@@ -2,29 +2,19 @@
 import { KPI } from '@/components/statistics/KPIPanel';
 import { SupportStats } from '../useSupportData';
 
-// Helper function to safely convert to number and handle null/undefined/NaN
-const safeNumber = (value: number | null | undefined, defaultValue: number = 0): number => {
-  if (value === null || value === undefined || isNaN(value) || !isFinite(value)) {
-    return defaultValue;
-  }
-  return value;
-};
-
 export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Calculamos as métricas básicas
   const completedExitsCount = stats.monthlyOrders.reduce((sum, month) => sum + month.completedExits, 0);
   const totalEntries = stats.topSuppliers.reduce((sum, supplier) => sum + supplier.entries, 0);
   
-  // Valores para cálculos (com guards de segurança)
-  const clientsCount = safeNumber(stats.clientsCount, 1); // Evitar divisão por zero
-  const salesCount = safeNumber(stats.completedOrders, 0);
-  const totalSpent = safeNumber(stats.totalSpent, 0);
-  const totalSales = safeNumber(stats.totalSales, 0);
-  const profit = safeNumber(stats.profit, 0);
+  // Valores para cálculos
+  const clientsCount = stats.clientsCount;
+  // Usar o número real de vendas (saídas de stock ativas)
+  const salesCount = stats.completedOrders; // Número dinâmico de vendas
   
-  // Cálculos dos KPIs com valores seguros
-  const roi = totalSpent > 0 ? (profit / totalSpent) * 100 : 0;
-  const profitMargin = safeNumber(stats.profitMargin, 0);
+  // Cálculos dos KPIs
+  const roi = stats.totalSpent > 0 ? (stats.profit / stats.totalSpent) * 100 : 0;
+  const profitMargin = stats.profitMargin;
   
   // Taxa de Conversão = (Número de Vendas / Número de Clientes) * 100
   // Isso calcula a porcentagem de clientes que fizeram compras
@@ -36,24 +26,26 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   const totalTransactions = totalEntries + (stats.numberOfExpenses || 0);
   
   // Valor Médio de Compra = (Total Compras + Total Despesas) / (Número de Compras + Número de Despesas)
-  const averagePurchaseValue = totalTransactions > 0 ? totalSpent / totalTransactions : 0;
+  const averagePurchaseValue = totalTransactions > 0 ? stats.totalSpent / totalTransactions : 0;
   
   // Valor Médio de Venda = Valor de Vendas / Número de Vendas
-  const averageSaleValue = salesCount > 0 ? totalSales / salesCount : 0;
+  // Correção: Usar o valor completo sem arredondamento para evitar imprecisões
+  const averageSaleValue = salesCount > 0 ? stats.totalSales / salesCount : 0;
   
   // Lucro Médio por Venda = Lucro / Número de Vendas
-  const averageProfitPerSale = salesCount > 0 ? profit / salesCount : 0;
+  // Correção: Usar o valor completo sem arredondamento para evitar imprecisões
+  const averageProfitPerSale = salesCount > 0 ? stats.profit / salesCount : 0;
   
-  const profitPerClient = clientsCount > 0 ? profit / clientsCount : 0;
+  const profitPerClient = clientsCount > 0 ? stats.profit / clientsCount : 0;
   
   // Array de KPIs
   const kpis: KPI[] = [];
   
-  // Adicionamos os KPIs ao array com valores seguros e arredondados
+  // Adicionamos os KPIs ao array com valores arredondados a 2 casas decimais
   kpis.push(
     {
       name: "ROI",
-      value: safeNumber(Number(roi.toFixed(2))),
+      value: Number(roi.toFixed(2)),
       target: 40,
       unit: '%',
       isPercentage: true,
@@ -64,21 +56,21 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     },
     {
       name: "Margem de Lucro",
-      value: safeNumber(Number(profitMargin.toFixed(2))),
+      value: Number(stats.profitMargin.toFixed(2)),
       target: 25,
       unit: '%',
       isPercentage: true,
       previousValue: 25.2,
       description: "Mede a rentabilidade da empresa.",
       formula: "(Lucro / Receita) × 100",
-      belowTarget: profitMargin < 25
+      belowTarget: stats.profitMargin < 25
     }
   );
   
   // Criamos a Taxa de Conversão como um objeto separado para garantir que está correto
   const taxaConversao: KPI = {
     name: "Taxa de Conversão",
-    value: safeNumber(Number(salesConversionRate.toFixed(2))),
+    value: Number(salesConversionRate.toFixed(2)),
     target: 20,
     unit: '%',
     isPercentage: true,
@@ -94,7 +86,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Valor Médio de Compra CORRIGIDO - agora inclui despesas no denominador
   const valorMedioCompra: KPI = {
     name: "Valor Médio de Compra",
-    value: safeNumber(Number(averagePurchaseValue.toFixed(2))),
+    value: Number(averagePurchaseValue.toFixed(2)),
     target: 500,
     unit: '€',
     isPercentage: false,
@@ -108,11 +100,11 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
   // Adicionamos o Valor Médio de Compra corrigido ao array de KPIs
   kpis.push(valorMedioCompra);
   
-  // Adicionamos os KPIs restantes ao array com valores seguros e arredondados
+  // Adicionamos os KPIs restantes ao array com valores arredondados
   kpis.push(
     {
       name: "Valor Médio de Venda",
-      value: safeNumber(Number(averageSaleValue.toFixed(2))),
+      value: Number(averageSaleValue.toFixed(2)),
       target: 600,
       unit: '€',
       isPercentage: false,
@@ -123,7 +115,7 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     },
     {
       name: "Lucro Médio por Venda",
-      value: safeNumber(Number(averageProfitPerSale.toFixed(2))),
+      value: Number(averageProfitPerSale.toFixed(2)),
       target: 200,
       unit: '€',
       isPercentage: false,
@@ -134,18 +126,18 @@ export const generateKPIs = (stats: SupportStats): KPI[] => {
     },
     {
       name: "Lucro Total",
-      value: safeNumber(Number(profit.toFixed(2))),
+      value: Number(stats.profit.toFixed(2)),
       target: 10000,
       unit: '€',
       isPercentage: false,
       previousValue: 9500,
       description: "Lucro total gerado no período.",
       formula: "Valor de Vendas - (Valor de Compras + Despesas)",
-      belowTarget: profit < 10000
+      belowTarget: stats.profit < 10000
     },
     {
       name: "Lucro por Cliente",
-      value: safeNumber(Number(profitPerClient.toFixed(2))),
+      value: Number(profitPerClient.toFixed(2)),
       target: 800,
       unit: '€',
       isPercentage: false,

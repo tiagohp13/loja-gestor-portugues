@@ -7,9 +7,6 @@ import TableSkeleton from "@/components/ui/TableSkeleton";
 import ChartSkeleton from "@/components/ui/ChartSkeleton";
 import SummaryCardSkeleton from "@/components/ui/SummaryCardSkeleton";
 import { WidgetConfig } from "@/components/ui/DashboardCustomization/types";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, RefreshCw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 // Lazy load heavy components for better performance
 const SalesAndPurchasesChart = lazy(() => import("./dashboard/components/SalesAndPurchasesChart"));
@@ -32,10 +29,9 @@ const defaultDashboardConfig: WidgetConfig[] = [
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   
+  // Single optimized hook with all data fetched in parallel
   const {
     isLoading,
-    error,
-    refetch,
     products,
     orders,
     monthlyData,
@@ -44,30 +40,18 @@ const DashboardPage: React.FC = () => {
     kpiDeltas,
     supportStats,
     insufficientStockItems,
-    pendingOrders: filteredPendingOrders,
-    errors
+    pendingOrders: filteredPendingOrders
   } = useDashboardOptimized();
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    await refetch();
-    setIsRefreshing(false);
-  };
-
   const [dashboardConfig] = useState<WidgetConfig[]>(() => {
-    try {
-      const saved = localStorage.getItem("dashboard-layout-config");
-      if (saved) {
+    const saved = localStorage.getItem("dashboard-layout-config");
+    if (saved) {
+      try {
         const cfg = JSON.parse(saved);
-        if (cfg?.dashboard && Array.isArray(cfg.dashboard)) {
-          return cfg.dashboard;
-        }
+        if (cfg.dashboard) return cfg.dashboard;
+      } catch {
+        // ignore parse errors
       }
-    } catch (error) {
-      console.error("Error loading dashboard config:", error);
-      localStorage.removeItem("dashboard-layout-config");
     }
     return defaultDashboardConfig;
   });
@@ -140,30 +124,7 @@ const DashboardPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 bg-background min-h-screen animate-fade-in">
-      <div className="flex items-center justify-between mb-6">
-        <PageHeader title="Dashboard" description="Vista geral do seu negócio" />
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleRefresh}
-          disabled={isRefreshing || isLoading}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
-      </div>
-
-      {(error || errors.length > 0) && (
-        <Alert variant="destructive" className="mb-6">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            <strong>Erro ao carregar dados:</strong>
-            <ul className="list-disc list-inside mt-2">
-              {errors.map((err, i) => <li key={i}>{err}</li>)}
-            </ul>
-          </AlertDescription>
-        </Alert>
-      )}
+      <PageHeader title="Dashboard" description="Vista geral do seu negócio" />
 
       <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
         {/* Quick Actions, Summary Cards, Sales/Purchases Chart */}

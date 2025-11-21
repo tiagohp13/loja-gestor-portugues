@@ -2,26 +2,24 @@
 /**
  * Formata um número para exibição em formato de moeda
  */
-export function formatCurrency(amount: number | null | undefined): string {
-  const safeAmount = amount ?? 0;
+export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('pt-PT', {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(safeAmount);
+  }).format(amount);
 }
 
 /**
  * Formata um número para exibição em formato de percentagem
  */
-export function formatPercentage(value: number | null | undefined): string {
-  const safeValue = value ?? 0;
+export function formatPercentage(value: number): string {
   return new Intl.NumberFormat('pt-PT', {
     style: 'percent',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
-  }).format(safeValue / 100);
+  }).format(value / 100);
 }
 
 /**
