@@ -10,19 +10,20 @@ export interface KpiTarget {
 }
 
 /**
- * Salva as metas dos KPIs no banco de dados
+ * Salva as metas dos KPIs no banco de dados (metas globais para toda a aplicação)
+ * Apenas admin pode salvar metas
  */
 export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
   try {
+    // Verificar se o usuário está autenticado
     const userId = await getCurrentUserId();
     if (!userId) {
       console.error('Usuário não autenticado');
       throw new Error('Usuário não autenticado');
     }
 
-    // Use upsert to handle insert/update in a single batch operation
+    // Usar upsert para criar/atualizar metas globais (sem user_id)
     const upserts = kpis.map((kpi) => ({
-      user_id: userId,
       kpi_name: kpi.name,
       target_value: kpi.target,
       updated_at: new Date().toISOString()
@@ -31,7 +32,7 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
     const { error } = await supabase
       .from('kpi_targets')
       .upsert(upserts, {
-        onConflict: 'user_id,kpi_name',
+        onConflict: 'kpi_name', // Metas globais: apenas um registo por KPI
         ignoreDuplicates: false
       });
 
@@ -46,47 +47,17 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
 };
 
 /**
- * Carrega as metas dos KPIs do banco de dados
- * Para viewers, carrega as metas definidas por um administrador
- * Para admins/editors, carrega suas próprias metas
+ * Carrega as metas dos KPIs do banco de dados (metas globais)
+ * Todos os utilizadores (admin, editor, viewer) veem as mesmas metas
  */
 export const loadKpiTargets = async (): Promise<Record<string, number>> => {
   const targets: Record<string, number> = {};
   
   try {
-    const userId = await getCurrentUserId();
-    if (!userId) {
-      console.error('Usuário não autenticado');
-      return targets;
-    }
-
-    // Verificar o role do usuário atual
-    const { data: userRole } = await supabase
-      .from('user_roles')
-      .select('role')
-      .eq('user_id', userId)
-      .single();
-
-    let targetUserId = userId;
-
-    // Se o usuário for viewer, buscar as metas de um administrador
-    if (userRole?.role === 'viewer') {
-      const { data: adminUser } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'admin')
-        .limit(1)
-        .single();
-
-      if (adminUser) {
-        targetUserId = adminUser.user_id;
-      }
-    }
-
+    // Ler todas as metas globais (sem filtro por user_id)
     const { data, error } = await supabase
       .from('kpi_targets')
-      .select('kpi_name, target_value')
-      .eq('user_id', targetUserId);
+      .select('kpi_name, target_value');
 
     if (error) {
       console.error('Erro ao carregar metas dos KPIs:', error);
