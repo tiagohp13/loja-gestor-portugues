@@ -125,14 +125,16 @@ Deno.serve(async (req) => {
 
     console.log('User created successfully:', newUser.user.id);
 
-    // Create user profile
+    // Upsert user profile (trigger may have already created it)
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
-      .insert({
+      .upsert({
         user_id: newUser.user.id,
         email,
         name,
         access_level: role
+      }, {
+        onConflict: 'user_id'
       });
 
     if (profileError) {
