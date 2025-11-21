@@ -14,7 +14,7 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<boolean | 'suspended'>;
   register: (email: string, password: string, name: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -124,20 +124,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, [navigate]);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const login = async (email: string, password: string): Promise<boolean | 'suspended'> => {
     try {
       await new Promise(resolve => setTimeout(resolve, 300));
       
-      const { user, session } = await loginUser(email, password);
+      const result = await loginUser(email, password);
       
-      if (!user) {
+      if (result === 'suspended') {
+        return 'suspended';
+      }
+      
+      if (!result || !result.user) {
         throw new Error('Utilizador não encontrado');
       }
       
       setState(prevState => ({ 
         ...prevState,
-        user, 
-        session,
+        user: result.user, 
+        session: result.session,
         isAuthenticated: true 
       }));
       

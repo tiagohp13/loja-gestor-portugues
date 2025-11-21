@@ -57,8 +57,10 @@ const Login: React.FC = () => {
 
       try {
         // Ajuste: login agora recebe apenas email e password
-        const success = await login(email, password);
-        if (!success) {
+        const result = await login(email, password);
+        if (result === 'suspended') {
+          setLoginError('Utilizador Suspenso');
+        } else if (!result) {
           setLoginError('Email ou palavra-passe inválidos.');
         } else {
           navigate(from, { replace: true });
@@ -114,7 +116,15 @@ const Login: React.FC = () => {
 
           {/* Mensagem de erro geral */}
           {loginError && (
-            <p role="alert" aria-live="assertive" className="text-sm text-red-600 mb-4 text-center">
+            <p 
+              role="alert" 
+              aria-live="assertive" 
+              className={`text-sm mb-4 text-center font-semibold ${
+                loginError === 'Utilizador Suspenso' 
+                  ? 'text-red-600 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md py-2 px-3' 
+                  : 'text-red-600'
+              }`}
+            >
               {loginError}
             </p>
           )}

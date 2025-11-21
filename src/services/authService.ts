@@ -1,7 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { User, Session } from '@supabase/supabase-js';
 
-export async function loginUser(email: string, password: string) {
+export async function loginUser(email: string, password: string): Promise<{ user: User; session: Session } | 'suspended'> {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -9,6 +10,26 @@ export async function loginUser(email: string, password: string) {
     });
     
     if (error) throw error;
+    
+    if (!data.user) {
+      throw new Error('Utilizador não encontrado');
+    }
+
+    // Check if user is suspended
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('is_suspended')
+      .eq('user_id', data.user.id)
+      .single();
+
+    if (profileError) {
+      console.error('Error checking suspension status:', profileError);
+    }
+
+    if (profile?.is_suspended) {
+      await supabase.auth.signOut();
+      return 'suspended';
+    }
     
     return { 
       user: data.user,
