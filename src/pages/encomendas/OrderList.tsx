@@ -28,7 +28,7 @@ import {
 
 const OrderList = () => {
   const navigate = useNavigate();
-  const { canCreate, canEdit, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete, isAdmin } = usePermissions();
   const [currentPage, setCurrentPage] = useState(0);
   const { orders, totalCount, totalPages, isLoading, deleteOrder, restoreOrder, cancelOrder } = usePaginatedOrders(currentPage);
   const [filteredOrders, setFilteredOrders] = useState<Order[]>([]);
@@ -328,7 +328,7 @@ const OrderList = () => {
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                          {order.status === 'cancelled' && !order.convertedToStockExitId && (
+                          {order.status === 'cancelled' && !order.convertedToStockExitId && isAdmin && (
                           <Button
                             variant="ghost"
                             size="sm"
@@ -342,13 +342,12 @@ const OrderList = () => {
                             <RotateCcw className="h-4 w-4" />
                           </Button>
                         )}
-                        {!order.convertedToStockExitId && order.status !== 'cancelled' && (canEdit || canCreate) && (
+                        {!order.convertedToStockExitId && order.status !== 'cancelled' && isAdmin && (
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
-                              if (!validatePermission(canEdit, "cancelar encomendas")) return;
                               handleCancelOrder(order.id);
                             }}
                             className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:bg-orange-950"
