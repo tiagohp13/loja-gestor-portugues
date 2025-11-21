@@ -7,6 +7,7 @@ export interface UserWithRole {
   name?: string;
   avatar_url?: string;
   role: 'admin' | 'editor' | 'viewer';
+  is_suspended?: boolean;
 }
 
 interface UseUsersWithRolesOptions {
@@ -29,7 +30,7 @@ export const useUsersWithRoles = (options: UseUsersWithRolesOptions = {}) => {
       // Get user profiles without initial ordering
       const { data: profiles, error: profilesError, count } = await supabase
         .from('user_profiles')
-        .select('user_id, name, email, avatar_url', { count: 'exact' })
+        .select('user_id, name, email, avatar_url, is_suspended', { count: 'exact' })
         .range(offset, offset + limit - 1);
 
       if (profilesError) throw profilesError;
@@ -56,6 +57,7 @@ export const useUsersWithRoles = (options: UseUsersWithRolesOptions = {}) => {
         name: profile.name || undefined,
         avatar_url: profile.avatar_url || undefined,
         role: rolesMap.get(profile.user_id) || 'viewer',
+        is_suspended: profile.is_suspended || false,
       }));
 
       // Custom sorting: Owner first, then by role, then alphabetically by name
