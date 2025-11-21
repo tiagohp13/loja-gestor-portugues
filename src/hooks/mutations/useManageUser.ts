@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { sendEmail, EMAIL_TEMPLATES } from '@/services/emailService';
 
 interface SuspendUserParams {
   userId: string;
@@ -24,6 +25,13 @@ export const useSuspendUser = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Utilizador não autenticado');
 
+      // Get user email before suspending
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('email')
+        .eq('user_id', userId)
+        .single();
+
       // Call edge function to suspend user and invalidate sessions
       const { data, error } = await supabase.functions.invoke('suspend-user', {
         body: {
@@ -43,15 +51,28 @@ export const useSuspendUser = () => {
         p_details: null,
       });
 
-      return { userId, suspend };
+      return { userId, suspend, userEmail: userProfile?.email };
     },
-    onSuccess: (data, variables) => {
+    onSuccess: async (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       queryClient.invalidateQueries({ queryKey: ['user-audit-logs', data.userId] });
       
       const action = data.suspend ? 'suspenso' : 'reativado';
       const userName = variables.userName || 'Utilizador';
       toast.success(`${userName} foi ${action} com sucesso`);
+
+      // Send email notification if user has email
+      if (data.userEmail) {
+        const template = data.suspend 
+          ? EMAIL_TEMPLATES.userSuspended 
+          : EMAIL_TEMPLATES.userReactivated;
+        
+        await sendEmail({
+          to: data.userEmail,
+          subject: template.subject,
+          text: template.text,
+        });
+      }
     },
     onError: (error: Error) => {
       console.error('Error suspending user:', error);
