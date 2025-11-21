@@ -1060,6 +1060,7 @@ export type Database = {
     Functions: {
       archive_expired_notifications: { Args: never; Returns: undefined }
       can_delete_data: { Args: { user_id?: string }; Returns: boolean }
+      can_read_data: { Args: { user_id?: string }; Returns: boolean }
       can_write_data: { Args: { user_id?: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
