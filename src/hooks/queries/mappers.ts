@@ -59,8 +59,12 @@ export function mapSupplier(data: any): Supplier {
     paymentTerms: data.payment_terms,
     notes: data.notes,
     status: data.status,
+    userId: data.user_id,
+    totalSpent: data.total_spent,
+    purchaseCount: data.purchase_count,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+    deletedAt: data.deleted_at,
   };
 }
 

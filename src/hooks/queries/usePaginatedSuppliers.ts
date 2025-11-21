@@ -15,7 +15,7 @@ async function fetchPaginatedSuppliers(page: number = 0): Promise<{ suppliers: S
 
   const { data, error } = await supabase
     .from("suppliers")
-    .select("*")
+    .select("id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, total_spent, purchase_count, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("name")
     .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
