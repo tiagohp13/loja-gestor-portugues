@@ -1,16 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { supabase } from '@/integrations/supabase/client';
 import { formatDateTime, formatCurrency } from '@/utils/formatting';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
-import { Package, Users, Building2, ShoppingCart, TrendingDown, TrendingUp } from 'lucide-react';
+import { Package, Users, Building2, ShoppingCart, TrendingDown, TrendingUp, Receipt } from 'lucide-react';
+import { useDeletedRecordDetail } from '@/hooks/queries/useDeletedRecordDetail';
 
 interface DeletedRecordModalProps {
   isOpen: boolean;
@@ -27,104 +27,10 @@ const DeletedRecordModal: React.FC<DeletedRecordModalProps> = ({
   recordType,
   recordNumber
 }) => {
-  const [recordData, setRecordData] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-
-  useEffect(() => {
-    if (isOpen && recordId) {
-      fetchRecordData();
-    }
-  }, [isOpen, recordId, recordType]);
-
-  const fetchRecordData = async () => {
-    setIsLoading(true);
-    try {
-      let data = null;
-
-      switch (recordType) {
-        case 'products':
-          const { data: product } = await supabase
-            .from('products')
-            .select('id, code, name, description, category, purchase_price, sale_price, current_stock, min_stock, image, status, user_id, created_at, updated_at, deleted_at')
-            .eq('id', recordId)
-            .single();
-          data = product;
-          break;
-
-        case 'clients':
-          const { data: client } = await supabase
-            .from('clients')
-            .select('id, name, email, phone, address, tax_id, notes, status, last_purchase_date, user_id, created_at, updated_at, deleted_at')
-            .eq('id', recordId)
-            .single();
-          data = client;
-          break;
-
-        case 'suppliers':
-          const { data: supplier } = await supabase
-            .from('suppliers')
-            .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at')
-            .eq('id', recordId)
-            .single();
-          data = supplier;
-          break;
-
-        case 'orders':
-          const { data: order } = await supabase
-            .from('orders')
-            .select(`
-              *,
-              order_items(*)
-            `)
-            .eq('id', recordId)
-            .single();
-          data = order;
-          break;
-
-        case 'stock_entries':
-          const { data: entry } = await supabase
-            .from('stock_entries')
-            .select(`
-              *,
-              stock_entry_items(*)
-            `)
-            .eq('id', recordId)
-            .single();
-          data = entry;
-          break;
-
-        case 'stock_exits':
-          const { data: exit } = await supabase
-            .from('stock_exits')
-            .select(`
-              *,
-              stock_exit_items(*)
-            `)
-            .eq('id', recordId)
-            .single();
-          data = exit;
-          break;
-
-        case 'expenses':
-          const { data: expense } = await supabase
-            .from('expenses')
-            .select(`
-              *,
-              expense_items(*)
-            `)
-            .eq('id', recordId)
-            .single();
-          data = expense;
-          break;
-      }
-
-      setRecordData(data);
-    } catch (error) {
-      console.error('Error fetching record data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { data: recordData, isLoading } = useDeletedRecordDetail(
+    isOpen ? recordId : null,
+    isOpen ? recordType : null
+  );
 
   const renderProductDetails = () => (
     <div className="space-y-4">
@@ -496,7 +402,7 @@ const DeletedRecordModal: React.FC<DeletedRecordModalProps> = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <TrendingDown className="w-5 h-5" />
+              <Receipt className="w-5 h-5" />
               Informações da Despesa
             </CardTitle>
           </CardHeader>
