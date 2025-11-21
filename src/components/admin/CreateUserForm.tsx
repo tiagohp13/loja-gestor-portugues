@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,9 +9,14 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserPlus, Loader2 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { UserPlus, Loader2, Calendar as CalendarIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 const createUserSchema = z.object({
   name: z.string()
@@ -29,6 +34,7 @@ const createUserSchema = z.object({
   role: z.enum(['admin', 'editor', 'viewer'], {
     required_error: 'Selecione uma permissão',
   }),
+  accessExpiresAt: z.date().nullable().optional(),
 });
 
 type CreateUserFormData = z.infer<typeof createUserSchema>;
@@ -48,14 +54,17 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
     setValue,
     watch,
     reset,
+    control,
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
       role: 'viewer',
+      accessExpiresAt: null,
     },
   });
 
   const selectedRole = watch('role');
+  const accessExpiresAt = watch('accessExpiresAt');
 
   const onSubmit = async (data: CreateUserFormData) => {
     setIsSubmitting(true);
@@ -76,6 +85,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
           password: data.password,
           name: data.name,
           role: data.role,
+          accessExpiresAt: data.accessExpiresAt?.toISOString(),
         },
       });
 
@@ -222,6 +232,57 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                   <p className="text-sm text-destructive">{errors.role.message}</p>
                 )}
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="accessExpiresAt">Validade de acesso até (opcional)</Label>
+              <Controller
+                control={control}
+                name="accessExpiresAt"
+                render={({ field }) => (
+                  <div className="flex gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                          disabled={isSubmitting}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "PPP", { locale: ptBR }) : "Selecionar data"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value || undefined}
+                          onSelect={field.onChange}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    {field.value && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        onClick={() => field.onChange(null)}
+                        disabled={isSubmitting}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
+              />
+              <p className="text-sm text-muted-foreground">
+                Após esta data, o utilizador será automaticamente suspenso
+              </p>
             </div>
 
             <div className="flex justify-end">

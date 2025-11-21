@@ -3,19 +3,24 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Ban, CheckCircle, Trash2, Shield, User, Users, History, ChevronDown } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { Ban, CheckCircle, Trash2, Shield, User, Users, History, ChevronDown, Calendar as CalendarIcon, X, Loader2 } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { UserWithRole } from '@/hooks/queries/useUsersWithRoles';
 import { useUserSuspensionHistory } from '@/hooks/queries/useUserSuspensionHistory';
 import { useUserAuthInfo } from '@/hooks/queries/useUserAuthInfo';
 import { useUserLastActivity } from '@/hooks/queries/useUserActivity';
-import { formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Clock, MapPin, Smartphone } from 'lucide-react';
 import { UserAuditHistory } from '@/components/admin/UserAuditHistory';
 import { ActiveSessionsSection } from '@/components/admin/ActiveSessionsSection';
 import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
+import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 interface UserRowProps {
   user: UserWithRole;
@@ -42,6 +47,10 @@ const UserRow = ({
 }: UserRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isUpdatingExpiration, setIsUpdatingExpiration] = useState(false);
+  const [expirationDate, setExpirationDate] = useState<Date | null>(
+    user.access_expires_at ? new Date(user.access_expires_at) : null
+  );
   const { data: suspensionHistory } = useUserSuspensionHistory(user.id);
   const { data: authInfo } = useUserAuthInfo(user.id);
   const { data: lastActivity } = useUserLastActivity(user.id);
@@ -63,6 +72,39 @@ const UserRow = ({
     return "secondary";
   };
 
+  const isAccessExpired = expirationDate && isPast(expirationDate);
+
+  const handleUpdateExpiration = async (newDate: Date | null) => {
+    setIsUpdatingExpiration(true);
+    try {
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ access_expires_at: newDate?.toISOString() })
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      setExpirationDate(newDate);
+      toast.success(newDate ? 'Data de expiração atualizada' : 'Data de expiração removida');
+      
+      // Log audit action
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (currentUser) {
+        await supabase.rpc('log_user_audit', {
+          p_admin_id: currentUser.id,
+          p_target_user_id: user.id,
+          p_action: 'access_expiration_updated',
+          p_details: { new_expiration: newDate?.toISOString() },
+        });
+      }
+    } catch (error) {
+      console.error('Error updating expiration:', error);
+      toast.error('Erro ao atualizar data de expiração');
+    } finally {
+      setIsUpdatingExpiration(false);
+    }
+  };
+
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <div className="rounded-lg border border-border bg-card">
@@ -82,6 +124,10 @@ const UserRow = ({
                   <Badge variant="destructive" className="text-xs">
                     Suspenso
                   </Badge>
+                ) : isAccessExpired ? (
+                  <Badge variant="destructive" className="text-xs">
+                    Acesso Expirado
+                  </Badge>
                 ) : (
                   <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
                     Ativo
@@ -90,6 +136,12 @@ const UserRow = ({
                 {hasNeverLoggedIn && (
                   <Badge variant="secondary" className="text-xs">
                     Nunca fez login
+                  </Badge>
+                )}
+                {expirationDate && !isAccessExpired && (
+                  <Badge variant="outline" className="text-xs text-orange-600">
+                    <CalendarIcon className="w-3 h-3 mr-1" />
+                    Expira {format(expirationDate, "dd/MM/yyyy")}
                   </Badge>
                 )}
               </p>
@@ -205,6 +257,67 @@ const UserRow = ({
         {/* Expanded Content */}
         <CollapsibleContent>
           <div className="border-t border-border p-4 bg-muted/30 space-y-4">
+            {/* Expiration Date Management */}
+            <div className="p-4 bg-background rounded-lg border space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium">Validade de Acesso</p>
+                  <p className="text-xs text-muted-foreground">
+                    Definir data de expiração automática
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "flex-1 justify-start text-left font-normal",
+                        !expirationDate && "text-muted-foreground",
+                        isAccessExpired && "border-destructive"
+                      )}
+                      disabled={isUpdatingExpiration}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {expirationDate 
+                        ? format(expirationDate, "PPP", { locale: ptBR })
+                        : "Sem data de expiração"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={expirationDate || undefined}
+                      onSelect={(date) => handleUpdateExpiration(date || null)}
+                      disabled={(date) => date < new Date()}
+                      initialFocus
+                      className="pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+                {expirationDate && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handleUpdateExpiration(null)}
+                    disabled={isUpdatingExpiration}
+                  >
+                    {isUpdatingExpiration ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <X className="h-4 w-4" />
+                    )}
+                  </Button>
+                )}
+              </div>
+              {isAccessExpired && (
+                <p className="text-xs text-destructive">
+                  O acesso deste utilizador expirou. Atualize a data para reativar.
+                </p>
+              )}
+            </div>
+
             {/* Login Information */}
             <div>
               <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">

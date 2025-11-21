@@ -10,6 +10,7 @@ interface CreateUserRequest {
   password: string;
   name: string;
   role: 'admin' | 'editor' | 'viewer';
+  accessExpiresAt?: string;
 }
 
 Deno.serve(async (req) => {
@@ -69,7 +70,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { email, password, name, role }: CreateUserRequest = await req.json();
+    const { email, password, name, role, accessExpiresAt }: CreateUserRequest = await req.json();
 
     // Validate input
     if (!email || !password || !name || !role) {
@@ -133,7 +134,8 @@ Deno.serve(async (req) => {
         user_id: newUser.user.id,
         email,
         name,
-        access_level: role
+        access_level: role,
+        access_expires_at: accessExpiresAt || null
       }, {
         onConflict: 'user_id'
       });
