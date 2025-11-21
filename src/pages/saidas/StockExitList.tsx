@@ -21,6 +21,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 import { usePaginatedStockExits } from "@/hooks/queries/usePaginatedStockExits";
 import { useSortableTable } from "@/hooks/useSortableTable";
 import TableSkeleton from "@/components/ui/TableSkeleton";
+import StockExitTotalCard from "./components/StockExitTotalCard";
 
 export default function StockExitList() {
   const navigate = useNavigate();
@@ -130,11 +131,13 @@ export default function StockExitList() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mx-auto px-4 py-6 space-y-6">
       <PageHeader 
         title="Vendas" 
         description="Gerir saídas de stock e vendas"
       />
+
+      <StockExitTotalCard totalCount={totalCount} />
 
       <Card>
         <CardHeader>
@@ -216,7 +219,7 @@ export default function StockExitList() {
                         className="cursor-pointer hover:bg-muted/50"
                         onClick={() => handleViewExit(exit.id)}
                       >
-                        <TableCell className="font-medium">{exit.number}</TableCell>
+                        <TableCell className="font-medium text-gestorApp-blue">{exit.number}</TableCell>
                         <TableCell>{formatDate(exit.date)}</TableCell>
                         <TableCell>{exit.clientName}</TableCell>
                         <TableCell>{exit.invoiceNumber || "-"}</TableCell>
