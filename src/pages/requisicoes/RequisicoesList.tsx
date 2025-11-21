@@ -344,9 +344,9 @@ export default function RequisicoesList() {
     }
   };
   if (isLoading) {
-    return <div className="container mx-auto py-6">A carregar...</div>;
+    return <div className="w-full px-4 md:px-6 lg:px-8 py-6">A carregar...</div>;
   }
-  return <div className="container mx-auto py-6 space-y-6">
+  return <div className="w-full px-4 md:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader title="Requisições" description="Gerir requisições de stock" actions={<Button onClick={() => navigate("/requisicoes/nova")}>
             <Plus className="h-4 w-4 mr-2" />
             Nova Requisição

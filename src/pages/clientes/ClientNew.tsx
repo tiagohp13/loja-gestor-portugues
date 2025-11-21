@@ -42,7 +42,7 @@ const ClientNew = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader
         title="Novo Cliente"
         description="Adicione um novo cliente ao sistema"

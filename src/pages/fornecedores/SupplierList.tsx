@@ -46,7 +46,7 @@ const SupplierList = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <PageHeader title="Fornecedores" description="Consultar e gerir todos os fornecedores" />
         <TableSkeleton title="A carregar fornecedores..." rows={5} columns={5} />
       </div>
@@ -54,7 +54,7 @@ const SupplierList = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader title="Fornecedores" description="Consultar e gerir todos os fornecedores" />
 
       {/* Header igual às outras páginas (Despesas, Saídas, Compras) */}

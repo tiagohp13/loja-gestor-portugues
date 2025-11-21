@@ -131,7 +131,7 @@ export default function StockExitList() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 space-y-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6 space-y-6">
       <PageHeader 
         title="Vendas" 
         description="Gerir saídas de stock e vendas"

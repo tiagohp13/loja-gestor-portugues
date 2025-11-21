@@ -16,7 +16,7 @@ const Settings = () => {
     "mt-4 space-y-4 transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100";
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader title="Configurações" description="Gerencie as configurações do sistema" />
 
       <Tabs defaultValue="settings" className="mt-6">
