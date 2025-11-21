@@ -342,7 +342,7 @@ const OrderList = () => {
                             <RotateCcw className="h-4 w-4" />
                           </Button>
                         )}
-                        {!order.convertedToStockExitId && order.status !== 'cancelled' && (
+                        {!order.convertedToStockExitId && order.status !== 'cancelled' && canEdit && (
                           <Button
                             variant="ghost"
                             size="sm"

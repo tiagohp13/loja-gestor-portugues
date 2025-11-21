@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, FileText } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface StockEntryDetailHeaderProps {
   entryNumber: string;
@@ -18,6 +19,7 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
   isDeleted = false,
 }) => {
   const navigate = useNavigate();
+  const { canEdit } = usePermissions();
 
   return (
     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -37,7 +39,7 @@ const StockEntryDetailHeader: React.FC<StockEntryDetailHeaderProps> = ({
         </Button>
 
         {/* Editar (mantém cor padrão) */}
-        {!isDeleted && (
+        {!isDeleted && canEdit && (
           <Button size="sm" onClick={() => navigate(`/entradas/editar/${id}`)}>
             Editar
           </Button>

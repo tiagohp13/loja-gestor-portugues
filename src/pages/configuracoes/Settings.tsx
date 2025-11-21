@@ -6,8 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import DashboardCustomization from "@/components/ui/DashboardCustomization";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const Settings = () => {
+  const { canCreate } = usePermissions();
+  
   // Classe utilitária para fade suave nas tabs (sem ficheiros novos)
   const tabFade =
     "mt-4 space-y-4 transition-opacity duration-200 data-[state=inactive]:opacity-0 data-[state=active]:opacity-100";
@@ -50,13 +53,15 @@ const Settings = () => {
 
               <Separator />
 
-              <div>
-                <h4 className="text-sm font-medium mb-3">Personalização de Componentes</h4>
-                <p className="text-xs text-muted-foreground mb-4">
-                  Configure a aparência e a ordem dos elementos em todas as páginas do CRM
-                </p>
-                <DashboardCustomization />
-              </div>
+              {canCreate && (
+                <div>
+                  <h4 className="text-sm font-medium mb-3">Personalização de Componentes</h4>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Configure a aparência e a ordem dos elementos em todas as páginas do CRM
+                  </p>
+                  <DashboardCustomization />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

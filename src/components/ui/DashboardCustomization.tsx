@@ -4,8 +4,16 @@ import { Palette } from 'lucide-react';
 import { LayoutConfig, WidgetConfig } from './DashboardCustomization/types';
 import { defaultLayoutConfig } from './DashboardCustomization/defaultConfigs';
 import PageCard from './DashboardCustomization/PageCard';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const DashboardCustomization: React.FC = () => {
+  const { canCreate } = usePermissions();
+
+  // Viewers não podem personalizar o dashboard
+  if (!canCreate) {
+    return null;
+  }
+
   const [layoutConfig, setLayoutConfig] = useState<LayoutConfig>(() => {
     const saved = localStorage.getItem('dashboard-layout-config');
     if (saved) {
