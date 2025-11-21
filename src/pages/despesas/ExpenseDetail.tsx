@@ -1,79 +1,15 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, FileText, Receipt, Calendar, User } from "lucide-react";
-import { toast } from "sonner";
-import { Expense } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import DeleteConfirmDialog from "@/components/common/DeleteConfirmDialog";
-import { checkExpenseDependencies } from "@/utils/dependencyUtils";
+import { useExpenseDetail } from "./hooks/useExpenseDetail";
 
 const ExpenseDetail = () => {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [expense, setExpense] = useState<Expense | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [deleteDialog, setDeleteDialog] = useState(false);
-
-  useEffect(() => {
-    if (id) {
-      fetchExpenseDetail();
-    }
-  }, [id]);
-
-  const fetchExpenseDetail = async () => {
-    try {
-      setIsLoading(true);
-      const { data: expenseData, error: expenseError } = await supabase
-        .from("expenses")
-        .select(`*, expense_items(*)`)
-        .eq("id", id)
-        .single();
-
-      if (expenseError) throw expenseError;
-
-      if (expenseData) {
-        const formattedExpense: Expense = {
-          id: expenseData.id,
-          number: expenseData.number,
-          supplierId: expenseData.supplier_id || undefined,
-          supplierName: expenseData.supplier_name,
-          date: expenseData.date,
-          notes: expenseData.notes || "",
-          discount: Number(expenseData.discount || 0),
-          createdAt: expenseData.created_at,
-          updatedAt: expenseData.updated_at,
-          items: (expenseData.expense_items || []).map((item: any) => ({
-            id: item.id,
-            productName: item.product_name,
-            quantity: item.quantity,
-            unitPrice: Number(item.unit_price),
-            discountPercent: Number(item.discount_percent || 0),
-            createdAt: item.created_at,
-            updatedAt: item.updated_at,
-          })),
-          total:
-            (expenseData.expense_items || []).reduce((sum: number, item: any) => {
-              const itemTotal = item.quantity * Number(item.unit_price);
-              const itemDiscount = Number(item.discount_percent || 0);
-              const discountAmount = itemTotal * (itemDiscount / 100);
-              return sum + (itemTotal - discountAmount);
-            }, 0) *
-            (1 - Number(expenseData.discount || 0) / 100),
-        };
-        setExpense(formattedExpense);
-      }
-    } catch (error) {
-      console.error("Error fetching expense detail:", error);
-      toast.error("Erro ao carregar detalhes da despesa");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const { expense, isLoading } = useExpenseDetail();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-PT", {

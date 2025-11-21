@@ -34,43 +34,57 @@ async function fetchExpenses(): Promise<Expense[]> {
 
   if (expensesError) throw expensesError;
 
-  const expenses = await Promise.all(
-    (expensesData || []).map(async (expense) => {
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("expense_items")
-        .select("id, expense_id, product_name, quantity, unit_price, discount_percent, created_at, updated_at")
-        .eq("expense_id", expense.id);
+  if (!expensesData || expensesData.length === 0) {
+    return [];
+  }
 
-      if (itemsError) throw itemsError;
+  // Fetch all items in a single query
+  const expenseIds = expensesData.map(expense => expense.id);
+  const { data: allItemsData, error: itemsError } = await supabase
+    .from("expense_items")
+    .select("id, expense_id, product_name, quantity, unit_price, discount_percent, created_at, updated_at")
+    .in("expense_id", expenseIds);
 
-      const items = (itemsData || []).map((item: any) => ({
-        id: item.id,
-        productName: item.product_name,
-        quantity: item.quantity,
-        unitPrice: Number(item.unit_price),
-        discountPercent: Number(item.discount_percent || 0),
-      }));
+  if (itemsError) throw itemsError;
 
-      const total = items.reduce((sum, item) => {
-        const subtotal = item.quantity * item.unitPrice;
-        const discount = subtotal * ((item.discountPercent || 0) / 100);
-        return sum + (subtotal - discount);
-      }, 0);
+  // Group items by expense_id
+  const itemsByExpenseId = (allItemsData || []).reduce((acc, item) => {
+    if (!acc[item.expense_id!]) {
+      acc[item.expense_id!] = [];
+    }
+    acc[item.expense_id!].push(item);
+    return acc;
+  }, {} as Record<string, typeof allItemsData>);
 
-      return {
-        id: expense.id,
-        number: expense.number,
-        supplierId: expense.supplier_id,
-        supplierName: expense.supplier_name,
-        date: expense.date,
-        notes: expense.notes,
-        items,
-        total,
-        createdAt: expense.created_at,
-        updatedAt: expense.updated_at,
-      };
-    })
-  );
+  // Map expenses with their items
+  const expenses = expensesData.map((expense) => {
+    const items = (itemsByExpenseId[expense.id] || []).map((item: any) => ({
+      id: item.id,
+      productName: item.product_name,
+      quantity: item.quantity,
+      unitPrice: Number(item.unit_price),
+      discountPercent: Number(item.discount_percent || 0),
+    }));
+
+    const total = items.reduce((sum, item) => {
+      const subtotal = item.quantity * item.unitPrice;
+      const discount = subtotal * ((item.discountPercent || 0) / 100);
+      return sum + (subtotal - discount);
+    }, 0);
+
+    return {
+      id: expense.id,
+      number: expense.number,
+      supplierId: expense.supplier_id,
+      supplierName: expense.supplier_name,
+      date: expense.date,
+      notes: expense.notes,
+      items,
+      total,
+      createdAt: expense.created_at,
+      updatedAt: expense.updated_at,
+    };
+  });
 
   return expenses;
 }
