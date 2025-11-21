@@ -1,38 +1,31 @@
-import React, { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { toast } from 'sonner';
 import { RefreshCw, Trash2, Package, Users, ShoppingCart, TrendingUp, TrendingDown, Receipt, Building2 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
 import PageHeader from '@/components/ui/PageHeader';
 import { useScrollToTop } from '@/hooks/useScrollToTop';
 import { formatDateTime } from '@/utils/formatting';
+import { usePermissions } from '@/hooks/usePermissions';
+import { useDeletedRecords, useRestoreRecord, usePermanentDeleteRecord, DeletedRecord } from '@/hooks/queries/useDeletedRecords';
 import DeletedRecordModal from './Reciclagem/components/DeletedRecordModal';
-interface DeletedRecord {
-  id: string;
-  name: string;
-  table_type: string;
-  deleted_at: string;
-  additional_info: any;
-}
 interface GroupedRecords {
   [key: string]: DeletedRecord[];
 }
 const Reciclagem = () => {
-  const queryClient = useQueryClient();
-  const [deletedRecords, setDeletedRecords] = useState<DeletedRecord[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRestoring, setIsRestoring] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const { isAdmin } = usePermissions();
+  const { data: deletedRecords = [], isLoading, refetch } = useDeletedRecords();
+  const restoreMutation = useRestoreRecord();
+  const deleteMutation = usePermanentDeleteRecord();
+  
   const [selectedRecord, setSelectedRecord] = useState<{
     id: string;
     type: string;
     number: string;
   } | null>(null);
+  
   useScrollToTop();
   const tableTypeLabels: {
     [key: string]: {
@@ -73,91 +66,24 @@ const Reciclagem = () => {
       icon: Receipt
     }
   };
-  const fetchDeletedRecords = async () => {
-    try {
-      setIsLoading(true);
-      const {
-        data,
-        error
-      } = await supabase.rpc('get_deleted_records');
-      if (error) {
-        console.error('Error fetching deleted records:', error);
-        toast.error('Erro ao carregar registos apagados');
-        return;
-      }
-      setDeletedRecords((data as DeletedRecord[]) || []);
-    } catch (error) {
-      console.error('Error fetching deleted records:', error);
-      toast.error('Erro ao carregar registos apagados');
-    } finally {
-      setIsLoading(false);
+  const handleRestore = (record: DeletedRecord) => {
+    if (!isAdmin) {
+      return;
     }
+    restoreMutation.mutate({
+      tableType: record.table_type,
+      recordId: record.id
+    });
   };
-  useEffect(() => {
-    fetchDeletedRecords();
-  }, []);
-  const handleRestore = async (record: DeletedRecord) => {
-    setIsRestoring(record.id);
-    try {
-      const {
-        data,
-        error
-      } = await supabase.rpc('restore_record', {
-        table_name: record.table_type,
-        record_id: record.id
-      });
-      if (error) {
-        console.error('Error restoring record:', error);
-        toast.error('Erro ao restaurar registo');
-        return;
-      }
-      toast.success(`${tableTypeLabels[record.table_type]?.label || 'Registo'} restaurado com sucesso`);
-      
-      // Invalidate all relevant queries to ensure UI updates immediately
-      // Invalidate specific table query
-      await queryClient.invalidateQueries({ queryKey: [getQueryKeyForTable(record.table_type)] });
-      
-      // Invalidate dashboard if it's orders, stock_exits, or stock_entries
-      if (['orders', 'stock_exits', 'stock_entries'].includes(record.table_type)) {
-        await queryClient.invalidateQueries({ queryKey: ["dashboard-optimized"] });
-      }
-      
-      // Invalidate products query if related
-      if (['products', 'categories', 'stock_entries', 'stock_exits', 'orders'].includes(record.table_type)) {
-        await queryClient.invalidateQueries({ queryKey: ["products"] });
-      }
-      
-      await fetchDeletedRecords(); // Refresh the list
-    } catch (error) {
-      console.error('Error restoring record:', error);
-      toast.error('Erro ao restaurar registo');
-    } finally {
-      setIsRestoring(null);
+  
+  const handlePermanentDelete = (record: DeletedRecord) => {
+    if (!isAdmin) {
+      return;
     }
-  };
-  const handlePermanentDelete = async (record: DeletedRecord) => {
-    setIsDeleting(record.id);
-    try {
-      const {
-        data,
-        error
-      } = await supabase.rpc('permanent_delete_record', {
-        table_name: record.table_type,
-        record_id: record.id
-      });
-      if (error) {
-        console.error('Error permanently deleting record:', error);
-        toast.error('Erro ao eliminar permanentemente');
-        return;
-      }
-      toast.success(`${tableTypeLabels[record.table_type]?.label || 'Registo'} eliminado permanentemente`);
-      await fetchDeletedRecords(); // Refresh the list
-    } catch (error) {
-      console.error('Error permanently deleting record:', error);
-      toast.error('Erro ao eliminar permanentemente');
-    } finally {
-      setIsDeleting(null);
-    }
+    deleteMutation.mutate({
+      tableType: record.table_type,
+      recordId: record.id
+    });
   };
   const groupedRecords: GroupedRecords = deletedRecords.reduce((acc, record) => {
     if (!acc[record.table_type]) {
@@ -188,21 +114,6 @@ const Reciclagem = () => {
   const handleCloseRecordModal = () => {
     setSelectedRecord(null);
   };
-  
-  // Helper function to get the correct query key for each table type
-  const getQueryKeyForTable = (tableType: string): string => {
-    const queryKeyMap: { [key: string]: string } = {
-      products: 'products',
-      categories: 'categories',
-      clients: 'clients',
-      suppliers: 'suppliers',
-      orders: 'orders',
-      stock_entries: 'stock-entries',
-      stock_exits: 'stock-exits',
-      expenses: 'expenses'
-    };
-    return queryKeyMap[tableType] || tableType;
-  };
   if (isLoading) {
     return <div className="p-6">
         <PageHeader title="Reciclagem" description="Gerir registos apagados e recuperação de dados" />
@@ -229,8 +140,8 @@ const Reciclagem = () => {
                 Total de registos na reciclagem: {deletedRecords.length}
               </span>
             </div>
-            <Button variant="outline" size="sm" onClick={fetchDeletedRecords} disabled={isLoading}>
-              <RefreshCw className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
+              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
           </div>
@@ -261,13 +172,13 @@ const Reciclagem = () => {
 
           <TabsContent value="all">
             <div className="space-y-4">
-              {deletedRecords.map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={isRestoring === record.id} isDeleting={isDeleting === record.id} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} onOpenModal={handleOpenRecordModal} />)}
+              {deletedRecords.map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={restoreMutation.isPending} isDeleting={deleteMutation.isPending} isAdmin={isAdmin} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} onOpenModal={handleOpenRecordModal} />)}
             </div>
           </TabsContent>
 
           {Object.keys(tableTypeLabels).map(tableType => <TabsContent key={tableType} value={tableType}>
               <div className="space-y-4">
-                {(groupedRecords[tableType] || []).map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={isRestoring === record.id} isDeleting={isDeleting === record.id} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} onOpenModal={handleOpenRecordModal} />)}
+                {(groupedRecords[tableType] || []).map(record => <RecordCard key={record.id} record={record} onRestore={handleRestore} onPermanentDelete={handlePermanentDelete} isRestoring={restoreMutation.isPending} isDeleting={deleteMutation.isPending} isAdmin={isAdmin} tableTypeLabels={tableTypeLabels} getDaysInRecycleBin={getDaysInRecycleBin} getPermanentDeletionDate={getPermanentDeletionDate} onOpenModal={handleOpenRecordModal} />)}
                 {(!groupedRecords[tableType] || groupedRecords[tableType].length === 0) && <Card>
                     <CardContent className="pt-6">
                       <div className="text-center py-4">
@@ -288,6 +199,7 @@ interface RecordCardProps {
   onPermanentDelete: (record: DeletedRecord) => void;
   isRestoring: boolean;
   isDeleting: boolean;
+  isAdmin: boolean;
   tableTypeLabels: {
     [key: string]: {
       label: string;
@@ -304,6 +216,7 @@ const RecordCard: React.FC<RecordCardProps> = ({
   onPermanentDelete,
   isRestoring,
   isDeleting,
+  isAdmin,
   tableTypeLabels,
   getDaysInRecycleBin,
   getPermanentDeletionDate,
@@ -337,36 +250,38 @@ const RecordCard: React.FC<RecordCardProps> = ({
               </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => onRestore(record)} disabled={isRestoring || isDeleting}>
-              {isRestoring ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-              Restaurar
-            </Button>
-            
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isRestoring || isDeleting}>
-                  {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                  Eliminar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Eliminar Permanentemente</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Tem a certeza que pretende eliminar permanentemente "{record.name}"? 
-                    Esta ação não pode ser desfeita e os dados serão perdidos para sempre.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onPermanentDelete(record)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                    Eliminar Permanentemente
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          {isAdmin && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => onRestore(record)} disabled={isRestoring || isDeleting}>
+                {isRestoring ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                Restaurar
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={isRestoring || isDeleting}>
+                    {isDeleting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                    Eliminar
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Eliminar Permanentemente</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Tem a certeza que pretende eliminar permanentemente "{record.name}"? 
+                      Esta ação não pode ser desfeita e os dados serão perdidos para sempre.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={() => onPermanentDelete(record)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                      Eliminar Permanentemente
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
       </CardHeader>
       
@@ -384,9 +299,6 @@ const RecordCard: React.FC<RecordCardProps> = ({
               </button>
             </div>}
         </div>
-        
-        {record.additional_info && Object.keys(record.additional_info).length > 0}
-        
         <div className="pt-2 border-t">
           <p className="text-sm text-[#c41e1e] font-extrabold">
             <span className="font-normal">Será eliminado definitivamente em:</span> {permanentDeletionDate}
