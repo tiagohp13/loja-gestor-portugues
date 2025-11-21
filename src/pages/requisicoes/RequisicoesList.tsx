@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { usePaginatedRequisicoes } from "@/hooks/queries/usePaginatedRequisicoes";
 import { useRequisicoesQuery } from "@/hooks/queries/useRequisicoes";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
 import { useProductsQuery } from "@/hooks/queries/useProducts";
@@ -13,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, ExternalLink } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao, RequisicaoItem } from "@/types/requisicao";
@@ -33,7 +34,7 @@ function StockEntryLink({
     async function fetchStockEntryNumber() {
       const {
         data
-      } = await supabase.from('stock_entries').select('number').eq('id', stockEntryId).single();
+      } = await supabase.from('stock_entries').select('number').eq('id', stockEntryId).maybeSingle();
       if (data) {
         setStockEntryNumber(data.number);
       }
@@ -77,12 +78,16 @@ const estadoBadge = {
 };
 export default function RequisicoesList() {
   const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(0);
   const {
     requisicoes,
+    totalCount,
+    totalPages,
     isLoading,
     updateEstado,
-    deleteRequisicao
-  } = useRequisicoesQuery();
+    deleteRequisicao: deletePaginatedRequisicao
+  } = usePaginatedRequisicoes(currentPage);
+  const { createRequisicao } = useRequisicoesQuery();
   const {
     suppliers
   } = useSuppliersQuery();
@@ -138,7 +143,7 @@ export default function RequisicoesList() {
       return;
     }
     if (confirm("Tens a certeza que queres eliminar esta requisição?")) {
-      deleteRequisicao(req.id);
+      deletePaginatedRequisicao(req.id);
     }
   };
   const handleRestaurar = (req: Requisicao) => {
@@ -203,17 +208,34 @@ export default function RequisicoesList() {
       } = await supabase.from("stock_entry_items").insert(items);
       if (itemsError) throw itemsError;
 
-      // Atualizar stock dos produtos
-      for (const item of selectedRequisicao.items || []) {
-        if (item.produtoId) {
-          const {
-            data: product
-          } = await supabase.from("products").select("current_stock").eq("id", item.produtoId).single();
-          if (product) {
-            await supabase.from("products").update({
-              current_stock: product.current_stock + item.quantidade
-            }).eq("id", item.produtoId);
-          }
+      // Atualizar stock dos produtos em batch
+      const productIds = (selectedRequisicao.items || [])
+        .map(item => item.produtoId)
+        .filter(Boolean);
+      
+      if (productIds.length > 0) {
+        const { data: products } = await supabase
+          .from("products")
+          .select("id, current_stock")
+          .in("id", productIds);
+
+        if (products) {
+          // Update all products in parallel
+          await Promise.all(
+            (selectedRequisicao.items || []).map(async (item) => {
+              if (item.produtoId) {
+                const product = products.find(p => p.id === item.produtoId);
+                if (product) {
+                  await supabase
+                    .from("products")
+                    .update({
+                      current_stock: product.current_stock + item.quantidade
+                    })
+                    .eq("id", item.produtoId);
+                }
+              }
+            })
+          );
         }
       }
 
@@ -227,7 +249,8 @@ export default function RequisicoesList() {
       if (updateError) throw updateError;
       toast.success(`Compra ${compraNumber} criada com sucesso!`);
       setSelectedRequisicao(null);
-      window.location.reload();
+      // Refresh data without full page reload
+      window.location.href = '/requisicoes';
     } catch (error: any) {
       toast.error(error.message || "Erro ao concluir requisição");
     }
@@ -314,8 +337,8 @@ export default function RequisicoesList() {
       setIsEditing(false);
       setSelectedRequisicao(null);
 
-      // Invalidate query to refresh data
-      window.location.reload();
+      // Refresh data without full page reload
+      window.location.href = '/requisicoes';
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar requisição");
     }
@@ -376,6 +399,35 @@ export default function RequisicoesList() {
                   </TableRow>)}
             </TableBody>
           </Table>
+
+          {/* Paginação */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Página {currentPage + 1} de {totalPages} • {totalCount} requisições
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 0}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage >= totalPages - 1}
+                >
+                  Seguinte
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
