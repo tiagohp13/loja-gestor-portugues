@@ -21,6 +21,9 @@ export const useSuspendUser = () => {
 
   return useMutation({
     mutationFn: async ({ userId, suspend }: SuspendUserParams) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utilizador não autenticado');
+
       // Call edge function to suspend user and invalidate sessions
       const { data, error } = await supabase.functions.invoke('suspend-user', {
         body: {
@@ -32,10 +35,19 @@ export const useSuspendUser = () => {
       if (error) throw error;
       if (data?.error) throw new Error(data.error);
 
+      // Log audit action
+      await supabase.rpc('log_user_audit', {
+        p_admin_id: user.id,
+        p_target_user_id: userId,
+        p_action: suspend ? 'suspended' : 'reactivated',
+        p_details: null,
+      });
+
       return { userId, suspend };
     },
     onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
+      queryClient.invalidateQueries({ queryKey: ['user-audit-logs', data.userId] });
       
       const action = data.suspend ? 'suspenso' : 'reativado';
       const userName = variables.userName || 'Utilizador';
@@ -55,7 +67,23 @@ export const useDeleteUser = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId }: DeleteUserParams) => {
+    mutationFn: async ({ userId, userName }: DeleteUserParams) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Utilizador não autenticado');
+
+      // Check if user is trying to delete themselves
+      if (userId === user.id) {
+        throw new Error('Não pode eliminar a sua própria conta');
+      }
+
+      // Log audit action before deletion
+      await supabase.rpc('log_user_audit', {
+        p_admin_id: user.id,
+        p_target_user_id: userId,
+        p_action: 'deleted',
+        p_details: { userName },
+      });
+
       // First, delete from user_roles
       const { error: rolesError } = await supabase
         .from('user_roles')

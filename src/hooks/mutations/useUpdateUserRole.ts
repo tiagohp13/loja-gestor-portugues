@@ -114,8 +114,26 @@ export const useUpdateUserRole = (options?: UpdateUserRoleOptions) => {
         // Don't throw, as the main operation succeeded
       }
 
+      // Get old role for audit log
+      const { data: oldRoleData } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId)
+        .single();
+
       // Log the action for audit purposes
       console.info(`Role updated: User ${userId} changed to ${newRole} by ${currentUser?.id}`);
+      
+      // Log audit action
+      await supabase.rpc('log_user_audit', {
+        p_admin_id: currentUser?.id,
+        p_target_user_id: userId,
+        p_action: 'role_changed',
+        p_details: {
+          oldRole: oldRoleData?.role,
+          newRole,
+        },
+      });
 
       return { userId, newRole };
     },
@@ -124,6 +142,7 @@ export const useUpdateUserRole = (options?: UpdateUserRoleOptions) => {
       queryClient.invalidateQueries({ queryKey: ['users-with-roles'] });
       queryClient.invalidateQueries({ queryKey: ['role-stats'] });
       queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      queryClient.invalidateQueries({ queryKey: ['user-audit-logs', data.userId] });
 
       const roleLabels = {
         admin: 'Administrador',

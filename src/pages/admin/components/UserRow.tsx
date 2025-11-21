@@ -3,7 +3,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Ban, CheckCircle, Trash2, Shield, User, Users, History, ChevronDown } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { UserWithRole } from '@/hooks/queries/useUsersWithRoles';
@@ -14,6 +13,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { Clock, MapPin, Smartphone } from 'lucide-react';
+import { DeleteUserDialog } from '@/components/admin/DeleteUserDialog';
+import { UserAuditHistory } from '@/components/admin/UserAuditHistory';
 
 interface UserRowProps {
   user: UserWithRole;
@@ -37,11 +38,14 @@ const UserRow = ({
   onDelete,
   isSuspending,
   isDeleting,
-}) => {
+}: UserRowProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { data: suspensionHistory } = useUserSuspensionHistory(user.id);
   const { data: authInfo } = useUserAuthInfo(user.id);
   const { data: lastActivity } = useUserLastActivity(user.id);
+
+  const hasNeverLoggedIn = !authInfo?.lastLogin;
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
@@ -80,6 +84,11 @@ const UserRow = ({
                 ) : (
                   <Badge variant="outline" className="text-xs bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
                     Ativo
+                  </Badge>
+                )}
+                {hasNeverLoggedIn && (
+                  <Badge variant="secondary" className="text-xs">
+                    Nunca fez login
                   </Badge>
                 )}
               </p>
@@ -170,36 +179,15 @@ const UserRow = ({
 
             {/* Delete Button */}
             {!isCurrentUser && !isOwner && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    disabled={isDeleting}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Eliminar
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Eliminar Utilizador</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Tem a certeza de que pretende eliminar permanentemente {user.name || user.email}?
-                      Esta ação não pode ser revertida e todos os dados do utilizador serão removidos.
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => onDelete(user.id, user.name || user.email)}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                    >
-                      Eliminar Permanentemente
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setDeleteDialogOpen(true)}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Eliminar
+              </Button>
             )}
 
             {/* Expand Button */}
@@ -301,9 +289,26 @@ const UserRow = ({
                 </div>
               </div>
             )}
+
+            {/* Audit History Section */}
+            <div className="pt-4 border-t">
+              <UserAuditHistory userId={user.id} />
+            </div>
           </div>
         </CollapsibleContent>
       </div>
+
+      <DeleteUserDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        userId={user.id}
+        userName={user.name || user.email}
+        onConfirm={() => {
+          onDelete(user.id, user.name || user.email);
+          setDeleteDialogOpen(false);
+        }}
+        isDeleting={isDeleting}
+      />
     </Collapsible>
   );
 };
