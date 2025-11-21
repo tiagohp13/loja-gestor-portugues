@@ -47,6 +47,8 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [createdUser, setCreatedUser] = useState<{ email: string; name: string } | null>(null);
 
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
   const {
     register,
     handleSubmit,
@@ -241,7 +243,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                 name="accessExpiresAt"
                 render={({ field }) => (
                   <div className="flex gap-2">
-                    <Popover>
+                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -252,17 +254,24 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                           disabled={isSubmitting}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP", { locale: ptBR }) : "Selecionar data"}
+                          {field.value 
+                            ? format(field.value, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) 
+                            : "Selecionar data"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0" align="start">
                         <Calendar
                           mode="single"
                           selected={field.value || undefined}
-                          onSelect={field.onChange}
+                          onSelect={(date) => {
+                            field.onChange(date);
+                            if (date) {
+                              setCalendarOpen(false);
+                            }
+                          }}
                           disabled={(date) => date < new Date()}
                           initialFocus
-                          className="pointer-events-auto"
+                          className="p-3 pointer-events-auto"
                         />
                       </PopoverContent>
                     </Popover>
@@ -271,7 +280,10 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => field.onChange(null)}
+                        onClick={() => {
+                          field.onChange(null);
+                          setCalendarOpen(false);
+                        }}
                         disabled={isSubmitting}
                       >
                         <X className="h-4 w-4" />
