@@ -21,6 +21,8 @@ import { toast } from '@/components/ui/use-toast';
 import { useProducts } from '@/contexts/ProductsContext';
 import { useOrders } from '@/contexts/OrdersContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 interface OrderDetailHeaderProps {
   order: Order;
@@ -35,6 +37,7 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
   const queryClient = useQueryClient();
   const { products } = useProducts();
   const { convertOrderToStockExit } = useOrders();
+  const { canEdit, canDelete } = usePermissions();
   const isPending = !order.convertedToStockExitId;
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false);
   const [isStockWarningOpen, setIsStockWarningOpen] = useState(false);
@@ -85,6 +88,8 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
   };
 
   const handleCancelOrder = async () => {
+    if (!validatePermission(canEdit || canDelete, "cancelar encomendas")) return;
+    
     try {
       const { error } = await supabase
         .from("orders")
@@ -215,14 +220,16 @@ const OrderDetailHeader: React.FC<OrderDetailHeaderProps> = ({ order, relatedSto
                   Editar
                 </Button>
                 
-                <Button
-                  variant="outline"
-                  onClick={handleCancelOrder}
-                  className="flex items-center gap-2 text-orange-600 hover:text-orange-700 border-orange-300 hover:bg-orange-50"
-                >
-                  <X className="h-4 w-4" />
-                  Cancelar
-                </Button>
+                {(canEdit || canDelete) && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelOrder}
+                    className="flex items-center gap-2 text-orange-600 hover:text-orange-700 border-orange-300 hover:bg-orange-50"
+                  >
+                    <X className="h-4 w-4" />
+                    Cancelar
+                  </Button>
+                )}
               </>
             )}
             

@@ -9,6 +9,8 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { Order } from "@/types";
 import { formatCurrency } from "@/utils/formatting";
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 import {
   Tooltip,
   TooltipContent,
@@ -41,6 +43,8 @@ const OrderTable = React.memo<OrderTableProps>(({
   sortOrder = 'desc',
   onSortChange = () => {},
 }) => {
+  const { canEdit, canDelete } = usePermissions();
+  
   const getSortIcon = (field: string) => {
     if (sortField !== field) return null;
     return sortOrder === 'asc' ? <ArrowUp className="inline h-4 w-4 ml-1" /> : <ArrowDown className="inline h-4 w-4 ml-1" />;
@@ -218,7 +222,7 @@ const OrderTable = React.memo<OrderTableProps>(({
                     </TooltipProvider>
                   )}
                   
-                  {!order.convertedToStockExitId && order.status !== 'cancelled' && onCancel && (
+                  {!order.convertedToStockExitId && order.status !== 'cancelled' && onCancel && (canEdit || canDelete) && (
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -227,6 +231,7 @@ const OrderTable = React.memo<OrderTableProps>(({
                             size="sm"
                             onClick={(e) => {
                               e.stopPropagation();
+                              if (!validatePermission(canEdit || canDelete, "cancelar encomendas")) return;
                               onCancel(order.id);
                             }}
                             className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
