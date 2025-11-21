@@ -131,9 +131,21 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const result = await loginUser(email, password);
       
       if (result === 'suspended') {
+        toast.error('Esta conta está suspensa. Por favor, contacte o administrador.');
+        return 'suspended';
+      }
+
+      if (result === 'access_expired') {
+        toast.error('O seu acesso expirou. Por favor, contacte o administrador.');
+        return 'suspended';
+      }
+
+      if (result === 'excessive_attempts') {
+        toast.error('Conta temporariamente bloqueada por tentativas excessivas. Contacte o administrador.');
         return 'suspended';
       }
       
+      // At this point, result must be an object with user and session
       if (!result || !result.user) {
         throw new Error('Utilizador não encontrado');
       }

@@ -2,23 +2,59 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from '@supabase/supabase-js';
 
-export async function loginUser(email: string, password: string): Promise<{ user: User; session: Session } | 'suspended'> {
+export async function loginUser(email: string, password: string): Promise<{ user: User; session: Session } | 'suspended' | 'access_expired' | 'excessive_attempts'> {
   try {
+    // Pre-validate login before attempting authentication
+    const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-login', {
+      body: { 
+        email,
+        ipAddress: window.location.hostname,
+        userAgent: navigator.userAgent
+      }
+    });
+
+    if (validationError) {
+      console.error('Error validating login:', validationError);
+    }
+
+    if (validationData && !validationData.valid) {
+      if (validationData.reason === 'account_suspended' || validationData.reason === 'excessive_attempts') {
+        return 'suspended';
+      }
+      if (validationData.reason === 'access_expired') {
+        return 'access_expired';
+      }
+    }
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     
-    if (error) throw error;
+    if (error) {
+      // Log failed login attempt
+      try {
+        await supabase.rpc('log_failed_login_attempt', {
+          p_email: email,
+          p_ip_address: window.location.hostname,
+          p_user_agent: navigator.userAgent,
+          p_reason: 'incorrect_password'
+        });
+      } catch (logError) {
+        console.error('Failed to log attempt:', logError);
+      }
+      
+      throw error;
+    }
     
     if (!data.user) {
       throw new Error('Utilizador não encontrado');
     }
 
-    // Check if user is suspended
+    // Check if user is suspended (double-check after successful auth)
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('is_suspended')
+      .select('is_suspended, access_expires_at')
       .eq('user_id', data.user.id)
       .single();
 
@@ -29,6 +65,17 @@ export async function loginUser(email: string, password: string): Promise<{ user
     if (profile?.is_suspended) {
       await supabase.auth.signOut();
       return 'suspended';
+    }
+
+    // Check if access has expired
+    if (profile?.access_expires_at) {
+      const expirationDate = new Date(profile.access_expires_at);
+      const now = new Date();
+      
+      if (expirationDate < now) {
+        await supabase.auth.signOut();
+        return 'access_expired';
+      }
     }
     
     return { 
