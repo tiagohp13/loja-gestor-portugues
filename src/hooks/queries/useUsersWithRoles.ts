@@ -26,11 +26,10 @@ export const useUsersWithRoles = (options: UseUsersWithRolesOptions = {}) => {
   return useQuery({
     queryKey: ['users-with-roles', page, limit],
     queryFn: async () => {
-      // Get user profiles with pagination
+      // Get user profiles without initial ordering
       const { data: profiles, error: profilesError, count } = await supabase
         .from('user_profiles')
         .select('user_id, name, email, avatar_url', { count: 'exact' })
-        .order('name', { ascending: true, nullsFirst: false })
         .range(offset, offset + limit - 1);
 
       if (profilesError) throw profilesError;
@@ -59,8 +58,28 @@ export const useUsersWithRoles = (options: UseUsersWithRolesOptions = {}) => {
         role: rolesMap.get(profile.user_id) || 'viewer',
       }));
 
+      // Custom sorting: Owner first, then by role, then alphabetically by name
+      const OWNER_EMAIL = 'tiagohp13@hotmail.com';
+      const sortedUsers = usersWithRoles.sort((a, b) => {
+        // Owner always first
+        const aIsOwner = a.email === OWNER_EMAIL;
+        const bIsOwner = b.email === OWNER_EMAIL;
+        if (aIsOwner) return -1;
+        if (bIsOwner) return 1;
+
+        // Then by role: admin > editor > viewer
+        const roleOrder = { admin: 1, editor: 2, viewer: 3 };
+        const roleComparison = roleOrder[a.role] - roleOrder[b.role];
+        if (roleComparison !== 0) return roleComparison;
+
+        // Within same role, alphabetically by name
+        const aName = (a.name || a.email).toLowerCase();
+        const bName = (b.name || b.email).toLowerCase();
+        return aName.localeCompare(bName, 'pt-PT');
+      });
+
       return {
-        users: usersWithRoles,
+        users: sortedUsers,
         totalCount: count || 0,
         currentPage: page,
         totalPages: Math.ceil((count || 0) / limit),
