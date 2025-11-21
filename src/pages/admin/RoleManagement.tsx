@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, User, Users, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,7 +18,7 @@ import UserRow from "./components/UserRow";
 
 const USERS_PER_PAGE = 20;
 
-const RoleManagement: React.FC = () => {
+const RoleManagement = () => {
   const { isAdmin, loading: permissionsLoading } = usePermissions();
   const { user: currentUser } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);

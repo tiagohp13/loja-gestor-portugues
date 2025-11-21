@@ -1,4 +1,3 @@
-import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
@@ -12,7 +11,7 @@ interface UserFiltersProps {
   onStatusFilterChange: (value: string) => void;
 }
 
-const UserFilters: React.FC<UserFiltersProps> = ({
+const UserFilters = ({
   searchTerm,
   onSearchChange,
   roleFilter,
