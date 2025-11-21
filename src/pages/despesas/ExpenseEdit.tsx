@@ -13,11 +13,14 @@ import { Expense, Supplier, ExpenseItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { usePermissions } from '@/hooks/usePermissions';
+import { validatePermission } from '@/utils/permissionUtils';
 
 const ExpenseEdit = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { canEdit } = usePermissions();
   const [expense, setExpense] = useState<Expense | null>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,6 +32,13 @@ const ExpenseEdit = () => {
     notes: "",
     items: [] as Omit<ExpenseItem, "id" | "createdAt" | "updatedAt">[],
   });
+
+  useEffect(() => {
+    if (!canEdit) {
+      toast.error("Não tem permissão para editar despesas");
+      navigate("/despesas/historico");
+    }
+  }, [canEdit, navigate]);
 
   useEffect(() => {
     if (id) fetchExpenseAndSuppliers();
@@ -155,6 +165,8 @@ const ExpenseEdit = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!validatePermission(canEdit, "editar despesas")) return;
+
     if (!formData.supplierId) {
       toast.error("Por favor selecione um fornecedor");
       return;
@@ -244,10 +256,12 @@ const ExpenseEdit = () => {
               <ArrowLeft className="w-4 h-4 mr-2" />
               Voltar
             </Button>
-            <Button type="submit" form="expense-edit-form" disabled={isSaving}>
-              <Save className="w-4 h-4 mr-2" />
-              {isSaving ? "A guardar..." : "Guardar Alterações"}
-            </Button>
+            {canEdit && (
+              <Button type="submit" form="expense-edit-form" disabled={isSaving}>
+                <Save className="w-4 h-4 mr-2" />
+                {isSaving ? "A guardar..." : "Guardar Alterações"}
+              </Button>
+            )}
           </div>
         }
       />
