@@ -20,6 +20,7 @@ import { format, parseISO, startOfDay } from "date-fns";
 import ProductSelector from "./components/ProductSelector";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface OrderFormData {
   clientId: string;
@@ -37,11 +38,20 @@ interface OrderFormData {
 const OrderEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { canEdit } = usePermissions();
   const { data: order, isLoading: orderLoading } = useOrderQuery(id);
   const { updateOrder } = useOrdersQuery();
   const { clients } = useClientsQuery();
   const { products } = useProductsQuery();
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Verificar permissões
+  useEffect(() => {
+    if (!canEdit) {
+      toast.error("Não tem permissão para editar encomendas");
+      navigate("/encomendas/consultar");
+    }
+  }, [canEdit, navigate]);
 
   // --- Estados do ProductSelector ---
   const [productSearchTerm, setProductSearchTerm] = useState("");

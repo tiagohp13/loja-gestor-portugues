@@ -13,6 +13,7 @@ import { StockExitItem } from "@/types";
 import { supabase } from "@/integrations/supabase/client";
 import PageHeader from "@/components/ui/PageHeader";
 import { useProducts } from "@/contexts/ProductsContext";
+import { usePermissions } from "@/hooks/usePermissions";
 
 interface StockExitFormData {
   clientId: string;
@@ -28,6 +29,7 @@ interface StockExitFormData {
 const StockExitEdit = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { canEdit } = usePermissions();
   const queryClient = useQueryClient();
   const { products } = useProducts();
   const [isLoading, setIsLoading] = useState(false);
@@ -41,6 +43,14 @@ const StockExitEdit = () => {
     fromOrderNumber: undefined,
     items: [],
   });
+
+  // Verificar permissões
+  useEffect(() => {
+    if (!canEdit) {
+      toast.error("Não tem permissão para editar vendas");
+      navigate("/saidas/historico");
+    }
+  }, [canEdit, navigate]);
 
   useEffect(() => {
     if (id) fetchStockExit(id);

@@ -6,10 +6,12 @@ import { ArrowLeft, Edit, FileText, Receipt, Calendar, User } from "lucide-react
 import PageHeader from "@/components/ui/PageHeader";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { useExpenseDetail } from "./hooks/useExpenseDetail";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const ExpenseDetail = () => {
   const navigate = useNavigate();
   const { expense, isLoading } = useExpenseDetail();
+  const { canEdit } = usePermissions();
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat("pt-PT", {
@@ -64,10 +66,12 @@ const ExpenseDetail = () => {
             </Button>
 
             {/* Editar */}
-            <Button size="sm" onClick={() => navigate(`/despesas/editar/${expense.id}`)}>
-              <Edit className="w-4 h-4 mr-1" />
-              Editar
-            </Button>
+            {canEdit && (
+              <Button size="sm" onClick={() => navigate(`/despesas/editar/${expense.id}`)}>
+                <Edit className="w-4 h-4 mr-1" />
+                Editar
+              </Button>
+            )}
 
             {/* Voltar */}
             <Button
