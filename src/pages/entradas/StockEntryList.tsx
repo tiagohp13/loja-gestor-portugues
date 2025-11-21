@@ -55,7 +55,7 @@ const StockEntryList = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <PageHeader title="Histórico de Compras" description="Consulte o histórico de compras de stock" />
         <TableSkeleton title="A carregar compras..." rows={5} columns={6} />
       </div>
@@ -63,7 +63,7 @@ const StockEntryList = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader title="Histórico de Compras" description="Consulte o histórico de compras de stock" />
 
       <Card className="mb-6">

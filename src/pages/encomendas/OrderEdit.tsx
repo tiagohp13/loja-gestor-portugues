@@ -225,7 +225,7 @@ const OrderEdit = () => {
 
   if (orderLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <PageHeader
           title="Editar Encomenda"
           description="Atualize os detalhes da encomenda"
@@ -237,7 +237,7 @@ const OrderEdit = () => {
 
   if (!order) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <h1 className="text-2xl font-bold">Encomenda não encontrada</h1>
         <Button variant="outline" className="mt-4" onClick={() => navigate('/encomendas/consultar')}>
           Voltar à Lista
@@ -250,7 +250,7 @@ const OrderEdit = () => {
   const isConverted = Boolean(order.convertedToStockExitId);
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader
         title="Editar Encomenda"
         description="Atualize os detalhes da encomenda"

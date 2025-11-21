@@ -68,7 +68,7 @@ const CategoryDetail: React.FC = () => {
 
   if (categoryLoading || productsLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <TableSkeleton />
       </div>
     );
@@ -76,7 +76,7 @@ const CategoryDetail: React.FC = () => {
 
   if (!category) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold mb-2">Categoria não encontrada</h2>
           <p className="mb-4">A categoria que está a procurar não existe ou foi removida.</p>
@@ -89,7 +89,7 @@ const CategoryDetail: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader
         title={category.name}
         description={`Detalhes da categoria`}

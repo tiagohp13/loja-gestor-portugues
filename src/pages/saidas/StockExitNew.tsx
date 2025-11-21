@@ -60,7 +60,7 @@ const StockExitNew = () => {
   }, [canCreate, navigate]);
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <div className="mb-6">
         <div className="flex flex-col space-y-1">
           <h1 className="text-2xl font-bold">Nova Venda</h1>

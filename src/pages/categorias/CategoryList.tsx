@@ -89,7 +89,7 @@ const CategoryList: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <PageHeader
           title="Categorias"
           description="Consultar e gerir todas as categorias"
@@ -101,7 +101,7 @@ const CategoryList: React.FC = () => {
 
   return (
     <TooltipProvider>
-      <div className="container mx-auto px-4 py-6">
+      <div className="w-full px-4 md:px-6 lg:px-8 py-6">
         <PageHeader
           title="Categorias"
           description="Consultar e gerir todas as categorias"

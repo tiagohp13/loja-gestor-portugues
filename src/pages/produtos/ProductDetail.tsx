@@ -41,7 +41,7 @@ const ProductDetail: React.FC = () => {
   if (!product) return <ProductNotFound />;
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       {/* Cabeçalho do produto */}
       <ProductDetailHeader productName={product.name} productCode={product.code} productId={id} isDeleted={isDeleted} />
 

@@ -123,7 +123,7 @@ const DashboardPage: React.FC = () => {
   );
 
   return (
-    <div className="container mx-auto px-4 py-6 bg-background min-h-screen animate-fade-in">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6 bg-background min-h-screen animate-fade-in">
       <PageHeader title="Dashboard" description="Vista geral do seu negócio" />
 
       <div className="space-y-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>

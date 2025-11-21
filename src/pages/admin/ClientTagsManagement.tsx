@@ -116,7 +116,7 @@ const ClientTagsManagement: React.FC = () => {
     : 0;
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="w-full px-4 md:px-6 lg:px-8 py-6">
       <PageHeader 
         title="Gestão de Etiquetas de Clientes" 
         description="Configure as regras automáticas de classificação de clientes"
