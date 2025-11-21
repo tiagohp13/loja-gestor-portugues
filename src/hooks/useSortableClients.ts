@@ -1,40 +1,16 @@
 import { useMemo } from 'react';
 import { useSortableTable } from './useSortableTable';
-import { getClientTotalSpent, getClientLastPurchaseDate } from '@/integrations/supabase/utils/financialUtils';
-import { Client } from '@/types';
 import { useClientsQuery } from './queries/useClients';
-import { useQuery } from '@tanstack/react-query';
 
 export const useSortableClients = () => {
-  const { clients: rawClients, isLoading: clientsLoading } = useClientsQuery();
+  const { clients: rawClients, isLoading } = useClientsQuery();
   const { sortState, handleSort, getSortIcon, getSupabaseOrder } = useSortableTable({
     column: 'name',
     direction: 'asc'
   });
 
-  // Fetch client totals and dates
-  const { data: clientsWithTotals = [], isLoading: totalsLoading } = useQuery({
-    queryKey: ['clients-with-totals', rawClients],
-    queryFn: async () => {
-      return Promise.all(
-        rawClients.map(async (client) => {
-          const [totalSpent, lastPurchaseDate] = await Promise.all([
-            getClientTotalSpent(client.id),
-            getClientLastPurchaseDate(client.id)
-          ]);
-          return {
-            ...client,
-            totalSpent,
-            lastPurchaseDate
-          };
-        })
-      );
-    },
-    enabled: rawClients.length > 0,
-  });
-
   const clients = useMemo(() => {
-    let sortedClients = [...clientsWithTotals];
+    let sortedClients = [...rawClients];
     
     const order = getSupabaseOrder();
     if (order) {
@@ -80,11 +56,11 @@ export const useSortableClients = () => {
     }
     
     return sortedClients;
-  }, [clientsWithTotals, sortState]);
+  }, [rawClients, sortState]);
 
   return {
     clients,
-    isLoading: clientsLoading || totalsLoading,
+    isLoading,
     sortState,
     handleSort,
     getSortIcon

@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import { getClientTotalSpent } from "@/integrations/supabase/client";
 import ClientInfoCard from "./components/ClientInfoCard";
 import ClientHistoryStats from "./components/ClientHistoryStats";
 import ClientOrdersTable from "./components/ClientOrdersTable";
@@ -19,26 +18,6 @@ const ClientDetail = () => {
   const navigate = useNavigate();
   const { client, clientOrders, clientExits, isLoading, isDeleted } = useClientDetail();
   const { canEdit } = usePermissions();
-  const [totalSpent, setTotalSpent] = useState<number>(0);
-  const [isLoadingTotal, setIsLoadingTotal] = useState(false);
-
-  useEffect(() => {
-    if (id) {
-      const fetchClientData = async () => {
-        setIsLoadingTotal(true);
-        try {
-          const spent = await getClientTotalSpent(id);
-          setTotalSpent(spent);
-        } catch (error) {
-          console.error("Error fetching client total spent:", error);
-        } finally {
-          setIsLoadingTotal(false);
-        }
-      };
-
-      fetchClientData();
-    }
-  }, [id]);
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -110,7 +89,7 @@ const ClientDetail = () => {
       )}
 
       <div className="grid md:grid-cols-3 gap-6 mt-6">
-        <ClientInfoCard client={client} totalSpent={totalSpent} isLoadingTotal={isLoadingTotal} />
+        <ClientInfoCard client={client} totalSpent={client.totalSpent || 0} isLoadingTotal={false} />
         <ClientHistoryStats ordersCount={clientOrders?.length || 0} exitsCount={clientExits?.length || 0} />
       </div>
 

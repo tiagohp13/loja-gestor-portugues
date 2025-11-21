@@ -3,7 +3,6 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Trash2, History, Plus, Users } from 'lucide-react';
 import { useClientsQuery } from '@/hooks/queries/useClients';
-import { useStockExitsQuery } from '@/hooks/queries/useStockExits';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import PageHeader from '@/components/ui/PageHeader';
@@ -35,7 +34,6 @@ import ClientInsights from './components/ClientInsights';
 
 const ClientList = () => {
   const navigate = useNavigate();
-  const { stockExits } = useStockExitsQuery();
   const { deleteClient } = useClientsQuery();
   const { config: tagConfig } = useClientTags();
   const { canCreate, canEdit, canDelete } = usePermissions();
@@ -45,8 +43,8 @@ const ClientList = () => {
   // Use sortable clients hook
   const { clients, isLoading, handleSort, getSortIcon } = useSortableClients();
   
-  // Calculate client KPIs
-  const kpis = useClientKpis(clients, stockExits);
+  // Calculate client KPIs using database fields
+  const kpis = useClientKpis(clients, []);
 
   const handleViewAllTopClients = () => {
     // Ensure we sort by totalSpent in descending order
@@ -232,7 +230,7 @@ const ClientList = () => {
                     <TableCell>{client.email || '-'}</TableCell>
                     <TableCell>{client.phone || '-'}</TableCell>
                     <TableCell>
-                      <ClientTag tag={calculateClientTag(client, stockExits, tagConfig)} />
+                      <ClientTag tag={calculateClientTag(client, [], tagConfig)} />
                     </TableCell>
                     <TableCell>
                       {client.lastPurchaseDate ? (
