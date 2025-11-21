@@ -1,61 +1,65 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { StockEntry } from '@/types';
 import { StockEntrySortField } from './stockEntryForm/types';
-import { useStockEntriesQuery } from '@/hooks/queries/useStockEntries';
+import { usePaginatedStockEntries } from '@/hooks/queries/usePaginatedStockEntries';
 
-export const useStockEntries = () => {
-  const { stockEntries: localEntries, isLoading, deleteStockEntry } = useStockEntriesQuery();
+export const useStockEntries = (page: number = 0) => {
+  const { stockEntries: localEntries, totalCount, totalPages, isLoading, deleteStockEntry } = usePaginatedStockEntries(page);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortField, setSortField] = useState<StockEntrySortField>('date');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
-  const filteredEntries = localEntries.filter(entry => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      entry.number.toLowerCase().includes(searchLower) ||
-      entry.supplierName.toLowerCase().includes(searchLower) ||
-      entry.invoiceNumber?.toLowerCase().includes(searchLower) ||
-      entry.notes?.toLowerCase().includes(searchLower)
-    );
-  });
+  const filteredEntries = useMemo(() => {
+    return localEntries.filter(entry => {
+      const searchLower = searchTerm.toLowerCase();
+      return (
+        entry.number.toLowerCase().includes(searchLower) ||
+        entry.supplierName.toLowerCase().includes(searchLower) ||
+        entry.invoiceNumber?.toLowerCase().includes(searchLower) ||
+        entry.notes?.toLowerCase().includes(searchLower)
+      );
+    });
+  }, [localEntries, searchTerm]);
 
-  const sortedEntries = [...filteredEntries].sort((a, b) => {
-    let aValue: string | number;
-    let bValue: string | number;
+  const sortedEntries = useMemo(() => {
+    return [...filteredEntries].sort((a, b) => {
+      let aValue: string | number;
+      let bValue: string | number;
 
-    switch (sortField) {
-      case 'date':
-        aValue = new Date(a.date).getTime();
-        bValue = new Date(b.date).getTime();
-        break;
-      case 'number':
-        aValue = a.number;
-        bValue = b.number;
-        break;
-      case 'supplier':
-        aValue = a.supplierName;
-        bValue = b.supplierName;
-        break;
-      case 'invoiceNumber':
-        aValue = a.invoiceNumber || '';
-        bValue = b.invoiceNumber || '';
-        break;
-      case 'value':
-        aValue = calculateEntryTotal(a);
-        bValue = calculateEntryTotal(b);
-        break;
-      default:
-        aValue = a.date;
-        bValue = b.date;
-    }
+      switch (sortField) {
+        case 'date':
+          aValue = new Date(a.date).getTime();
+          bValue = new Date(b.date).getTime();
+          break;
+        case 'number':
+          aValue = a.number;
+          bValue = b.number;
+          break;
+        case 'supplier':
+          aValue = a.supplierName;
+          bValue = b.supplierName;
+          break;
+        case 'invoiceNumber':
+          aValue = a.invoiceNumber || '';
+          bValue = b.invoiceNumber || '';
+          break;
+        case 'value':
+          aValue = calculateEntryTotal(a);
+          bValue = calculateEntryTotal(b);
+          break;
+        default:
+          aValue = a.date;
+          bValue = b.date;
+      }
 
-    if (sortOrder === 'asc') {
-      return aValue > bValue ? 1 : -1;
-    } else {
-      return aValue < bValue ? 1 : -1;
-    }
-  });
+      if (sortOrder === 'asc') {
+        return aValue > bValue ? 1 : -1;
+      } else {
+        return aValue < bValue ? 1 : -1;
+      }
+    });
+  }, [filteredEntries, sortField, sortOrder]);
 
   const handleSortChange = (field: StockEntrySortField) => {
     if (field === sortField) {
@@ -94,6 +98,8 @@ export const useStockEntries = () => {
     handleSortChange,
     handleDeleteEntry,
     calculateEntryTotal,
-    localEntries
+    localEntries,
+    totalCount,
+    totalPages
   };
 };

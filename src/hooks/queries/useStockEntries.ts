@@ -7,6 +7,7 @@ import { toInsert, toUpdate } from "@/integrations/supabase/utils/mutation";
 import { camelToSnake } from "@/integrations/supabase/utils/formatUtils";
 
 async function fetchStockEntries(): Promise<StockEntry[]> {
+  // Fetch all entries
   const { data: entriesData, error: entriesError } = await supabase
     .from("stock_entries")
     .select("*")
@@ -14,22 +15,33 @@ async function fetchStockEntries(): Promise<StockEntry[]> {
     .order("date", { ascending: false });
 
   if (entriesError) throw entriesError;
+  if (!entriesData || entriesData.length === 0) return [];
 
-  const entries = await Promise.all(
-    (entriesData || []).map(async (entry) => {
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("stock_entry_items")
-        .select("*")
-        .eq("entry_id", entry.id);
+  // Get all entry IDs
+  const entryIds = entriesData.map(e => e.id);
 
-      if (itemsError) throw itemsError;
+  // Fetch ALL items in a single query (batch operation)
+  const { data: allItemsData, error: itemsError } = await supabase
+    .from("stock_entry_items")
+    .select("*")
+    .in("entry_id", entryIds);
 
-      return {
-        ...entry,
-        items: itemsData || [],
-      };
-    })
-  );
+  if (itemsError) throw itemsError;
+
+  // Group items by entry_id in memory
+  const itemsByEntryId = (allItemsData || []).reduce((acc, item) => {
+    if (!acc[item.entry_id]) {
+      acc[item.entry_id] = [];
+    }
+    acc[item.entry_id].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Combine entries with their items
+  const entries = entriesData.map((entry) => ({
+    ...entry,
+    items: itemsByEntryId[entry.id] || [],
+  }));
 
   return entries.map(mapStockEntry);
 }

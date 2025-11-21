@@ -7,11 +7,13 @@ import { mapStockEntry } from "./mappers";
 const PAGE_SIZE = 25;
 
 async function fetchPaginatedStockEntries(page: number = 0): Promise<{ stockEntries: StockEntry[]; totalCount: number }> {
+  // Get total count
   const { count } = await supabase
     .from("stock_entries")
     .select("*", { count: "exact", head: true })
     .is("deleted_at", null);
 
+  // Fetch paginated data
   const { data: entriesData, error: entriesError } = await supabase
     .from("stock_entries")
     .select("*")
@@ -20,22 +22,38 @@ async function fetchPaginatedStockEntries(page: number = 0): Promise<{ stockEntr
     .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
 
   if (entriesError) throw entriesError;
+  if (!entriesData || entriesData.length === 0) {
+    return {
+      stockEntries: [],
+      totalCount: count || 0,
+    };
+  }
 
-  const entries = await Promise.all(
-    (entriesData || []).map(async (entry) => {
-      const { data: itemsData, error: itemsError } = await supabase
-        .from("stock_entry_items")
-        .select("*")
-        .eq("entry_id", entry.id);
+  // Get all entry IDs from this page
+  const entryIds = entriesData.map(e => e.id);
 
-      if (itemsError) throw itemsError;
+  // Fetch ALL items for these entries in a single query (batch operation)
+  const { data: allItemsData, error: itemsError } = await supabase
+    .from("stock_entry_items")
+    .select("*")
+    .in("entry_id", entryIds);
 
-      return {
-        ...entry,
-        items: itemsData || [],
-      };
-    })
-  );
+  if (itemsError) throw itemsError;
+
+  // Group items by entry_id in memory
+  const itemsByEntryId = (allItemsData || []).reduce((acc, item) => {
+    if (!acc[item.entry_id]) {
+      acc[item.entry_id] = [];
+    }
+    acc[item.entry_id].push(item);
+    return acc;
+  }, {} as Record<string, any[]>);
+
+  // Combine entries with their items
+  const entries = entriesData.map((entry) => ({
+    ...entry,
+    items: itemsByEntryId[entry.id] || [],
+  }));
 
   return {
     stockEntries: entries.map(mapStockEntry),
