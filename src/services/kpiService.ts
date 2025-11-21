@@ -47,6 +47,8 @@ export const saveKpiTargets = async (kpis: KPI[]): Promise<void> => {
 
 /**
  * Carrega as metas dos KPIs do banco de dados
+ * Para viewers, carrega as metas definidas por um administrador
+ * Para admins/editors, carrega suas próprias metas
  */
 export const loadKpiTargets = async (): Promise<Record<string, number>> => {
   const targets: Record<string, number> = {};
@@ -58,10 +60,33 @@ export const loadKpiTargets = async (): Promise<Record<string, number>> => {
       return targets;
     }
 
+    // Verificar o role do usuário atual
+    const { data: userRole } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+
+    let targetUserId = userId;
+
+    // Se o usuário for viewer, buscar as metas de um administrador
+    if (userRole?.role === 'viewer') {
+      const { data: adminUser } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'admin')
+        .limit(1)
+        .single();
+
+      if (adminUser) {
+        targetUserId = adminUser.user_id;
+      }
+    }
+
     const { data, error } = await supabase
       .from('kpi_targets')
       .select('kpi_name, target_value')
-      .eq('user_id', userId);
+      .eq('user_id', targetUserId);
 
     if (error) {
       console.error('Erro ao carregar metas dos KPIs:', error);
