@@ -349,11 +349,11 @@ export const useDashboardOptimized = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['dashboard-optimized'],
     queryFn: () => fetchAllDashboardData(),
-    staleTime: 1000 * 60, // 1 minute
-    gcTime: 1000 * 60 * 15, // 15 minutes
+    staleTime: 0, // Não fazer cache para garantir dados atualizados
+    gcTime: 1000 * 60 * 5, // 5 minutos
     refetchOnWindowFocus: true,
-    refetchOnMount: false,
-    refetchOnReconnect: false
+    refetchOnMount: true,
+    refetchOnReconnect: true
   });
 
   const defaultKpiDeltas: KpiDeltas = {
