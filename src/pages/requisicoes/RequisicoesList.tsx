@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { FileDown, X, CheckCircle, Pencil, Trash2, Plus, RotateCcw, ExternalLink, ChevronLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Requisicao, RequisicaoItem } from "@/types/requisicao";
@@ -352,6 +352,15 @@ export default function RequisicoesList() {
             Nova Requisição
           </Button>} />
 
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-2 text-gestorApp-blue">
+            <ClipboardList className="w-5 h-5" />
+            <span className="text-sm font-medium">Total de requisições: {totalCount}</span>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardContent className="pt-6">
           <Table>
@@ -373,7 +382,7 @@ export default function RequisicoesList() {
               setSelectedRequisicao(req);
               setIsEditing(false);
             }}>
-                    <TableCell className="font-medium">{req.numero}</TableCell>
+                    <TableCell className="font-medium text-gestorApp-blue">{req.numero}</TableCell>
                     <TableCell>{req.fornecedorNome}</TableCell>
                     <TableCell>{format(req.data, "dd/MM/yyyy", {
                   locale: ptBR
