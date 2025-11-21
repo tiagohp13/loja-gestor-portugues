@@ -68,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "onboarding@resend.dev",
+        from: "Aqua Paraíso ERP <geral@aquaparaiso.pt>",
         to: [to],
         subject: subject,
         text: text,
