@@ -117,7 +117,7 @@ const SupplierList = () => {
                     className="cursor-pointer hover:bg-gray-50"
                     onClick={() => handleViewSupplier(supplier.id)}
                   >
-                    <TableCell className="font-medium">{supplier.name}</TableCell>
+                    <TableCell className="font-medium text-gestorApp-blue">{supplier.name}</TableCell>
                     <TableCell>{supplier.email || "-"}</TableCell>
                     <TableCell>{supplier.phone || "-"}</TableCell>
                     <TableCell>{supplier.address || "-"}</TableCell>
