@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { UserPlus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -37,6 +39,7 @@ interface CreateUserFormProps {
 
 const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdUser, setCreatedUser] = useState<{ email: string; name: string } | null>(null);
 
   const {
     register,
@@ -87,6 +90,24 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
         return;
       }
 
+      // Log audit action
+      if (result?.user) {
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser) {
+          await supabase.rpc('log_user_audit', {
+            p_admin_id: currentUser.id,
+            p_target_user_id: result.user.id,
+            p_action: 'created',
+            p_details: {
+              email: data.email,
+              name: data.name,
+              role: data.role,
+            },
+          });
+        }
+      }
+
+      setCreatedUser({ email: data.email, name: data.name });
       toast.success(`Utilizador ${data.name} criado com sucesso!`);
       reset();
       onSuccess?.();
@@ -99,102 +120,129 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserPlus className="h-5 w-5" />
-          Criar Novo Utilizador
-        </CardTitle>
-        <CardDescription>
-          Adicione um novo utilizador ao sistema com as permissões apropriadas
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome *</Label>
-              <Input
-                id="name"
-                placeholder="João Silva"
-                {...register('name')}
-                disabled={isSubmitting}
-              />
-              {errors.name && (
-                <p className="text-sm text-destructive">{errors.name.message}</p>
-              )}
+    <>
+      {createdUser && (
+        <Alert className="mb-4 border-green-600/20 bg-green-50 dark:bg-green-950/20">
+          <AlertDescription className="space-y-3">
+            <p className="font-medium text-green-900 dark:text-green-100">
+              Utilizador <span className="font-bold">{createdUser.name}</span> criado com sucesso!
+            </p>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-xs">
+                Nunca fez login
+              </Badge>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="email">Email *</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="joao@exemplo.com"
-                {...register('email')}
-                disabled={isSubmitting}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="password">Password *</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Mínimo 6 caracteres"
-                {...register('password')}
-                disabled={isSubmitting}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">{errors.password.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="role">Permissão *</Label>
-              <Select
-                value={selectedRole}
-                onValueChange={(value) => setValue('role', value as any)}
-                disabled={isSubmitting}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecionar permissão" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                  <SelectItem value="editor">Editor</SelectItem>
-                  <SelectItem value="viewer">Visualizador</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.role && (
-                <p className="text-sm text-destructive">{errors.role.message}</p>
-              )}
-            </div>
-          </div>
-
-          <div className="flex justify-end">
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  A criar...
-                </>
-              ) : (
-                <>
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Criar Utilizador
-                </>
-              )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                toast.info('Funcionalidade de envio de email em desenvolvimento');
+              }}
+              className="mt-2"
+            >
+              Enviar instruções por email
             </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="h-5 w-5" />
+            Criar Novo Utilizador
+          </CardTitle>
+          <CardDescription>
+            Adicione um novo utilizador ao sistema com as permissões apropriadas
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome *</Label>
+                <Input
+                  id="name"
+                  placeholder="João Silva"
+                  {...register('name')}
+                  disabled={isSubmitting}
+                />
+                {errors.name && (
+                  <p className="text-sm text-destructive">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="joao@exemplo.com"
+                  {...register('email')}
+                  disabled={isSubmitting}
+                />
+                {errors.email && (
+                  <p className="text-sm text-destructive">{errors.email.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Mínimo 6 caracteres"
+                  {...register('password')}
+                  disabled={isSubmitting}
+                />
+                {errors.password && (
+                  <p className="text-sm text-destructive">{errors.password.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Permissão *</Label>
+                <Select
+                  value={selectedRole}
+                  onValueChange={(value) => setValue('role', value as any)}
+                  disabled={isSubmitting}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar permissão" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="editor">Editor</SelectItem>
+                    <SelectItem value="viewer">Visualizador</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.role && (
+                  <p className="text-sm text-destructive">{errors.role.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    A criar...
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="mr-2 h-4 w-4" />
+                    Criar Utilizador
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+    </>
   );
 };
 

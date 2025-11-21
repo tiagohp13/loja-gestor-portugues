@@ -1020,6 +1020,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_audit_logs: {
+        Row: {
+          action: string
+          admin_id: string
+          created_at: string
+          details: Json | null
+          id: string
+          target_user_id: string
+          timestamp: string
+        }
+        Insert: {
+          action: string
+          admin_id: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id: string
+          timestamp?: string
+        }
+        Update: {
+          action?: string
+          admin_id?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          target_user_id?: string
+          timestamp?: string
+        }
+        Relationships: []
+      }
       user_profiles: {
         Row: {
           access_level: string | null
@@ -1321,6 +1351,15 @@ export type Database = {
           p_entity_name?: string
           p_entity_type?: string
           p_user_id: string
+        }
+        Returns: undefined
+      }
+      log_user_audit: {
+        Args: {
+          p_action: string
+          p_admin_id: string
+          p_details?: Json
+          p_target_user_id: string
         }
         Returns: undefined
       }
