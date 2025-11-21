@@ -8,7 +8,7 @@ import { mapSupplier } from "./mappers";
 async function fetchSuppliers(): Promise<Supplier[]> {
   const { data, error } = await supabase
     .from("suppliers")
-    .select("id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at")
+    .select("id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, total_spent, purchase_count, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("name");
   
@@ -57,7 +57,7 @@ async function getSupplierById(id: string): Promise<Supplier | null> {
     .select("*")
     .eq("id", id)
     .is("deleted_at", null)
-    .single();
+    .maybeSingle();
   
   if (error) throw error;
   return data ? mapSupplier(data) : null;

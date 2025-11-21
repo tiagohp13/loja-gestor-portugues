@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Edit, Trash2, History, Plus, Users } from "lucide-react";
+import { Search, Edit, Trash2, History, Plus, Users, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSuppliersQuery } from "@/hooks/queries/useSuppliers";
+import { usePaginatedSuppliers } from "@/hooks/queries/usePaginatedSuppliers";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import PageHeader from "@/components/ui/PageHeader";
@@ -11,7 +12,6 @@ import { validatePermission } from "@/utils/permissionUtils";
 import { checkSupplierDependencies } from "@/utils/dependencyUtils";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent } from "@/components/ui/card";
-import { useSortableSuppliers } from "@/hooks/useSortableSuppliers";
 import TableSkeleton from "@/components/ui/TableSkeleton";
 
 const SupplierList = () => {
@@ -19,7 +19,8 @@ const SupplierList = () => {
   const { deleteSupplier } = useSuppliersQuery();
   const { canCreate, canEdit, canDelete } = usePermissions();
   const [searchTerm, setSearchTerm] = useState("");
-  const { suppliers, isLoading } = useSortableSuppliers();
+  const [currentPage, setCurrentPage] = useState(0);
+  const { suppliers, totalCount, totalPages, isLoading } = usePaginatedSuppliers(currentPage);
 
   const filteredSuppliers = suppliers.filter(
     (supplier) =>
@@ -61,7 +62,7 @@ const SupplierList = () => {
         <CardContent className="pt-6">
           <div className="flex items-center gap-2 text-gestorApp-blue">
             <Users className="w-5 h-5" />
-            <span className="text-sm font-medium">Total de fornecedores: {suppliers.length}</span>
+            <span className="text-sm font-medium">Total de fornecedores: {totalCount}</span>
           </div>
         </CardContent>
       </Card>
@@ -164,6 +165,35 @@ const SupplierList = () => {
             </TableBody>
           </Table>
         </div>
+
+        {/* Paginação */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <div className="text-sm text-muted-foreground">
+              Página {currentPage + 1} de {totalPages}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage - 1)}
+                disabled={currentPage === 0}
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(currentPage + 1)}
+                disabled={currentPage >= totalPages - 1}
+              >
+                Seguinte
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

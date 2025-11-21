@@ -896,8 +896,10 @@ export type Database = {
           notes: string | null
           payment_terms: string | null
           phone: string | null
+          purchase_count: number | null
           status: string | null
           tax_id: string | null
+          total_spent: number | null
           updated_at: string
           user_id: string
         }
@@ -911,8 +913,10 @@ export type Database = {
           notes?: string | null
           payment_terms?: string | null
           phone?: string | null
+          purchase_count?: number | null
           status?: string | null
           tax_id?: string | null
+          total_spent?: number | null
           updated_at?: string
           user_id?: string
         }
@@ -926,8 +930,10 @@ export type Database = {
           notes?: string | null
           payment_terms?: string | null
           phone?: string | null
+          purchase_count?: number | null
           status?: string | null
           tax_id?: string | null
+          total_spent?: number | null
           updated_at?: string
           user_id?: string
         }

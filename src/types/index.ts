@@ -81,9 +81,13 @@ export interface Supplier {
   taxId: string;
   paymentTerms: string;
   notes: string;
+  userId?: string;
+  totalSpent?: number;
+  purchaseCount?: number;
   createdAt: string;
   updatedAt: string;
   status?: string;
+  deletedAt?: string | null;
 }
 
 export interface SupplierWithAddress {

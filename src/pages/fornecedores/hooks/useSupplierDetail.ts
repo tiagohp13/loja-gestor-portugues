@@ -29,7 +29,7 @@ export const useSupplierDetail = () => {
         try {
         const { data, error } = await supabase
           .from('suppliers')
-          .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, created_at, updated_at, deleted_at')
+          .select('id, name, email, phone, address, tax_id, payment_terms, notes, status, user_id, total_spent, purchase_count, created_at, updated_at, deleted_at')
           .eq('id', id)
           .single();
 

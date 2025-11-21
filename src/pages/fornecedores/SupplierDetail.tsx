@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getSupplierTotalSpent } from "@/integrations/supabase/client";
 import { useSupplierDetail } from "./hooks/useSupplierDetail";
 import PageHeader from "@/components/ui/PageHeader";
 import { Button } from "@/components/ui/button";
@@ -16,28 +15,7 @@ const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { supplier, supplierEntries, supplierExpenses, isLoading, isDeleted } = useSupplierDetail();
-
-  const [totalSpent, setTotalSpent] = useState<number>(0);
-  const [isLoadingTotal, setIsLoadingTotal] = useState(true);
   const [supplierDocuments, setSupplierDocuments] = useState<any[]>([]);
-
-  useEffect(() => {
-    const fetchSupplierData = async () => {
-      if (id) {
-        setIsLoadingTotal(true);
-        try {
-          const spent = await getSupplierTotalSpent(id);
-          setTotalSpent(spent);
-        } catch (error) {
-          console.error("Error fetching supplier total spent:", error);
-        } finally {
-          setIsLoadingTotal(false);
-        }
-      }
-    };
-
-    fetchSupplierData();
-  }, [id]);
 
   useEffect(() => {
     if (!isLoading && supplierEntries && supplierExpenses) {
@@ -145,11 +123,7 @@ const SupplierDetail = () => {
               <CreditCard className="h-5 w-5 mr-2 text-gray-500" />
               <div>
                 <p className="text-sm font-medium text-gray-500">Total Gasto</p>
-                {isLoadingTotal ? (
-                  <p>A carregar...</p>
-                ) : (
-                  <p className="font-semibold text-blue-600">{formatCurrency(totalSpent)}</p>
-                )}
+                <p className="font-semibold text-blue-600">{formatCurrency(supplier.totalSpent || 0)}</p>
               </div>
             </div>
 
