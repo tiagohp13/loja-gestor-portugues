@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,14 +9,10 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { UserPlus, Loader2, Calendar as CalendarIcon, X } from 'lucide-react';
+import { UserPlus, Loader2, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 
 const createUserSchema = z.object({
   name: z.string()
@@ -48,7 +44,6 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
   const [createdUser, setCreatedUser] = useState<{ email: string; name: string } | null>(null);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
-
   const {
     register,
     handleSubmit,
@@ -56,7 +51,6 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
     setValue,
     watch,
     reset,
-    control,
   } = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
     defaultValues: {
@@ -238,60 +232,33 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
 
             <div className="space-y-2">
               <Label htmlFor="accessExpiresAt">Validade de acesso até (opcional)</Label>
-              <Controller
-                control={control}
-                name="accessExpiresAt"
-                render={({ field }) => (
-                  <div className="flex gap-2">
-                    <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                      <PopoverTrigger asChild>
-                        <Button
-                          variant="outline"
-                          className={cn(
-                            "w-full justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                          disabled={isSubmitting}
-                        >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value 
-                            ? format(field.value, "dd 'de' MMMM 'de' yyyy", { locale: ptBR }) 
-                            : "Selecionar data"}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar
-                          mode="single"
-                          selected={field.value || undefined}
-                          onSelect={(date) => {
-                            field.onChange(date);
-                            if (date) {
-                              setCalendarOpen(false);
-                            }
-                          }}
-                          disabled={(date) => date < new Date()}
-                          initialFocus
-                          className="p-3 pointer-events-auto"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                    {field.value && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          field.onChange(null);
-                          setCalendarOpen(false);
-                        }}
-                        disabled={isSubmitting}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
+              <div className="flex gap-2">
+                <Input
+                  type="date"
+                  value={accessExpiresAt ? format(accessExpiresAt, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setValue('accessExpiresAt', new Date(e.target.value + 'T00:00:00'));
+                    } else {
+                      setValue('accessExpiresAt', null);
+                    }
+                  }}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                  disabled={isSubmitting}
+                  className="flex-1"
+                />
+                {accessExpiresAt && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setValue('accessExpiresAt', null)}
+                    disabled={isSubmitting}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
                 )}
-              />
+              </div>
               <p className="text-sm text-muted-foreground">
                 Após esta data, o utilizador será automaticamente suspenso
               </p>
