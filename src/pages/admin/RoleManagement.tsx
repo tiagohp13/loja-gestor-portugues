@@ -213,9 +213,6 @@ const RoleManagement: React.FC = () => {
         </Card>
       </div>
 
-      {/* Create User Form */}
-      <CreateUserForm onSuccess={() => refetch()} />
-
       {/* Users List */}
       <Card>
         <CardHeader>
@@ -416,6 +413,9 @@ const RoleManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Create User Form */}
+      <CreateUserForm onSuccess={() => refetch()} />
 
       {/* Permissions Guide */}
       <PermissionsGuide />
