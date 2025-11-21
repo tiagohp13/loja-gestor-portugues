@@ -10,12 +10,14 @@ import { formatDateString, formatCurrency } from "@/utils/formatting";
 import StatusBadge from "@/components/common/StatusBadge";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { usePermissions } from "@/hooks/usePermissions";
 
 const SupplierDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { supplier, supplierEntries, supplierExpenses, isLoading, isDeleted } = useSupplierDetail();
   const [supplierDocuments, setSupplierDocuments] = useState<any[]>([]);
+  const { canEdit } = usePermissions();
 
   useEffect(() => {
     if (!isLoading && supplierEntries && supplierExpenses) {
@@ -71,7 +73,7 @@ const SupplierDetail = () => {
             </Button>
 
             {/* Editar */}
-            {!isDeleted && (
+            {!isDeleted && canEdit && (
               <Button size="sm" onClick={() => navigate(`/fornecedores/editar/${id}`)}>
                 <Pencil className="h-4 w-4 mr-1" />
                 Editar

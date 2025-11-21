@@ -28,7 +28,7 @@ export default function StockExitList() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [exitToDelete, setExitToDelete] = useState<StockExit | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
-  const { canCreate, canDelete } = usePermissions();
+  const { canCreate, canEdit, canDelete } = usePermissions();
 
   const {
     stockExits: rawStockExits,
@@ -211,7 +211,11 @@ export default function StockExitList() {
                     </TableRow>
                   ) : (
                     filteredAndSortedExits.map((exit) => (
-                      <TableRow key={exit.id}>
+                      <TableRow 
+                        key={exit.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => handleViewExit(exit.id)}
+                      >
                         <TableCell className="font-medium">{exit.number}</TableCell>
                         <TableCell>{formatDate(exit.date)}</TableCell>
                         <TableCell>{exit.clientName}</TableCell>
@@ -219,7 +223,7 @@ export default function StockExitList() {
                         <TableCell className="text-right font-medium">
                           {formatCurrency(calculateExitTotal(exit))}
                         </TableCell>
-                        <TableCell className="text-right">
+                        <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex justify-end gap-2">
                             <Button
                               variant="ghost"
@@ -228,13 +232,15 @@ export default function StockExitList() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditExit(exit.id)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
+                            {canEdit && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditExit(exit.id)}
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            )}
                             {canDelete && (
                               <Button
                                 variant="ghost"
