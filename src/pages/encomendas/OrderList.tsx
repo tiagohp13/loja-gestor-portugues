@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,26 @@ const OrderList = () => {
     orderId: null,
   });
 
+  // Função de ordenação memoizada para evitar loops infinitos
+  const sortOrders = useCallback((ordersToSort: Order[]) => {
+    return [...ordersToSort].sort((a, b) => {
+      const getPriority = (order: Order) => {
+        if (order.orderType === "combined" && !order.convertedToStockExitId) return 1;
+        if (order.orderType === "awaiting_stock") return 2;
+        return 3;
+      };
+
+      const priorityA = getPriority(a);
+      const priorityB = getPriority(b);
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+  }, []);
+
   // CORRIGIDO: Combinado num único useEffect para evitar loops infinitos
   useEffect(() => {
     let filtered = showCancelled 
@@ -55,7 +75,7 @@ const OrderList = () => {
     }
 
     setFilteredOrders(sortOrders(filtered));
-  }, [orders, showCancelled, searchTerm]);
+  }, [orders, showCancelled, searchTerm, sortOrders]);
 
   const handleDeleteOrder = async () => {
     if (!deleteDialog.orderId) return;
@@ -96,35 +116,6 @@ const OrderList = () => {
 
   const formatDate = (dateString: string) => new Date(dateString).toLocaleDateString("pt-PT");
 
-  // Função de ordenação centralizada
-  const sortOrders = (ordersToSort: Order[]) => {
-    return [...ordersToSort].sort((a, b) => {
-      const getPriority = (order: Order) => {
-        if (order.orderType === "combined" && !order.convertedToStockExitId) return 1;
-        if (order.orderType === "awaiting_stock") return 2;
-        return 3;
-      };
-
-      const priorityA = getPriority(a);
-      const priorityB = getPriority(b);
-      if (priorityA !== priorityB) return priorityA - priorityB;
-
-      let dateA = 0;
-      let dateB = 0;
-
-      if (priorityA === 1) {
-        dateA = a.expectedDeliveryDate ? new Date(a.expectedDeliveryDate).getTime() : 0;
-        dateB = b.expectedDeliveryDate ? new Date(b.expectedDeliveryDate).getTime() : 0;
-        if (dateA !== dateB) return dateA - dateB;
-      } else {
-        dateA = new Date(a.date).getTime();
-        dateB = new Date(b.date).getTime();
-        if (dateA !== dateB) return dateB - dateA;
-      }
-
-      return a.number.localeCompare(b.number, undefined, { numeric: true });
-    });
-  };
 
   if (isLoading) {
     return (
