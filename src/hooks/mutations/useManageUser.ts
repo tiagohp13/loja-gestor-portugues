@@ -21,12 +21,16 @@ export const useSuspendUser = () => {
 
   return useMutation({
     mutationFn: async ({ userId, suspend }: SuspendUserParams) => {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ is_suspended: suspend })
-        .eq('user_id', userId);
+      // Call edge function to suspend user and invalidate sessions
+      const { data, error } = await supabase.functions.invoke('suspend-user', {
+        body: {
+          userId,
+          suspend,
+        },
+      });
 
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
       return { userId, suspend };
     },

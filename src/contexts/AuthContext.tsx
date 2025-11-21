@@ -46,20 +46,64 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         navigate('/login');
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        // When a user signs in or token refreshes, update auth state
-        setState(prevState => ({
-          ...prevState,
-          user: session?.user || null,
-          session: session,
-          isAuthenticated: !!session,
-          isInitialized: true
-        }));
+        // Check if user is suspended
+        if (session?.user) {
+          setTimeout(async () => {
+            const { data: profile } = await supabase
+              .from('user_profiles')
+              .select('is_suspended')
+              .eq('user_id', session.user.id)
+              .single();
+
+            if (profile?.is_suspended) {
+              console.log('User is suspended, signing out');
+              await supabase.auth.signOut();
+              toast.error('A sua conta foi suspensa. Contacte o administrador.');
+              return;
+            }
+
+            // When a user signs in or token refreshes, update auth state
+            setState(prevState => ({
+              ...prevState,
+              user: session?.user || null,
+              session: session,
+              isAuthenticated: !!session,
+              isInitialized: true
+            }));
+          }, 0);
+        } else {
+          setState(prevState => ({
+            ...prevState,
+            user: session?.user || null,
+            session: session,
+            isAuthenticated: !!session,
+            isInitialized: true
+          }));
+        }
       }
     });
 
     // Initial session check
-    getCurrentUser().then((data) => {
-      if (data) {
+    getCurrentUser().then(async (data) => {
+      if (data?.user) {
+        // Check if user is suspended
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('is_suspended')
+          .eq('user_id', data.user.id)
+          .single();
+
+        if (profile?.is_suspended) {
+          console.log('User is suspended during initialization, signing out');
+          await supabase.auth.signOut();
+          toast.error('A sua conta foi suspensa. Contacte o administrador.');
+          setState(prevState => ({
+            ...prevState,
+            isInitialized: true
+          }));
+          return;
+        }
+
         setState(prevState => ({
           ...prevState,
           user: data.user,
