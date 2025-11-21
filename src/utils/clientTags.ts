@@ -1,4 +1,4 @@
-import { Client, StockExit } from '@/types';
+import { Client } from '@/types';
 import { differenceInMonths, parseISO } from 'date-fns';
 
 export type ClientTag = 'Novo' | 'Recorrente' | 'Inativo' | 'VIP';
@@ -13,17 +13,18 @@ export const DEFAULT_TAG_CONFIG: ClientTagConfig = {
 
 /**
  * Calcula a etiqueta automática para um cliente baseado no seu histórico de compras
+ * Agora usa campos calculados diretamente da tabela clients
  */
 export const calculateClientTag = (
   client: Client, 
-  stockExits: StockExit[], 
+  _unused: any[], // Mantido para compatibilidade
   config: ClientTagConfig = DEFAULT_TAG_CONFIG
 ): ClientTag => {
-  // Filtrar apenas as saídas de stock para este cliente
-  const clientExits = stockExits.filter(exit => exit.clientId === client.id);
+  const purchaseCount = client.purchaseCount || 0;
+  const lastPurchaseDate = client.lastPurchaseDate;
   
   // Se não tem compras, verificar se é inativo
-  if (clientExits.length === 0) {
+  if (purchaseCount === 0) {
     const clientCreatedDate = parseISO(client.createdAt);
     const monthsSinceCreation = differenceInMonths(new Date(), clientCreatedDate);
     
@@ -32,35 +33,27 @@ export const calculateClientTag = (
       return 'Inativo';
     }
     
-    // Se foi criado recentemente e não tem compras, ainda não classificamos
+    // Se foi criado recentemente e não tem compras, ainda é novo
     return 'Novo';
   }
   
   // Verificar se está inativo (sem compras nos últimos X meses)
-  const lastPurchaseDate = clientExits
-    .map(exit => parseISO(exit.date))
-    .sort((a, b) => b.getTime() - a.getTime())[0];
-  
-  const monthsSinceLastPurchase = differenceInMonths(new Date(), lastPurchaseDate);
-  
-  if (monthsSinceLastPurchase >= config.inactivityMonths) {
-    return 'Inativo';
+  if (lastPurchaseDate) {
+    const monthsSinceLastPurchase = differenceInMonths(new Date(), parseISO(lastPurchaseDate));
+    
+    if (monthsSinceLastPurchase >= config.inactivityMonths) {
+      return 'Inativo';
+    }
   }
   
-  // Verificar se é VIP (3+ compras nos últimos 3 meses)
-  const threeMonthsAgo = new Date();
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-  
-  const recentPurchases = clientExits.filter(exit => 
-    parseISO(exit.date) >= threeMonthsAgo
-  );
-  
-  if (recentPurchases.length >= 3) {
+  // VIP: Para uma classificação mais precisa de VIP, precisaríamos de dados temporais
+  // Por enquanto, vamos classificar como VIP clientes com muitas compras (5+)
+  if (purchaseCount >= 5) {
     return 'VIP';
   }
   
   // Classificar baseado no número de compras
-  if (clientExits.length === 1) {
+  if (purchaseCount === 1) {
     return 'Novo';
   } else {
     return 'Recorrente';

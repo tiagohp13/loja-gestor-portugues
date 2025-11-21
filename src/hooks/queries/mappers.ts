@@ -43,6 +43,8 @@ export function mapClient(data: any): Client {
     createdAt: data.created_at,
     updatedAt: data.updated_at,
     lastPurchaseDate: data.last_purchase_date,
+    totalSpent: data.total_spent,
+    purchaseCount: data.purchase_count,
   };
 }
 

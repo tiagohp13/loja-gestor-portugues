@@ -51,6 +51,8 @@ export interface Client {
   updatedAt: string;
   status?: string;
   lastPurchaseDate?: string;
+  totalSpent?: number;
+  purchaseCount?: number;
 }
 
 export interface ClientWithAddress {

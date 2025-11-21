@@ -15,7 +15,7 @@ async function fetchPaginatedClients(page: number = 0): Promise<{ clients: Clien
 
   const { data, error } = await supabase
     .from("clients")
-    .select("*")
+    .select("id, name, email, phone, address, tax_id, notes, status, last_purchase_date, total_spent, purchase_count, user_id, created_at, updated_at, deleted_at")
     .is("deleted_at", null)
     .order("name")
     .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
