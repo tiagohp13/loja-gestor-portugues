@@ -66,6 +66,14 @@ const AdminUserManagement: React.FC = () => {
       return;
     }
     
+    // Verificar se é o administrador principal (owner)
+    const targetUser = users.find(u => u.user_id === userId);
+    const OWNER_EMAIL = 'tiagohp13@hotmail.com';
+    if (targetUser?.email === OWNER_EMAIL && newAccessLevel !== 'admin') {
+      toast.error('O administrador principal não pode ter o seu papel alterado.');
+      return;
+    }
+    
     try {
       const {
         error
@@ -161,10 +169,18 @@ const AdminUserManagement: React.FC = () => {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {users.map(userProfile => <div key={userProfile.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
+          {users.map(userProfile => {
+            const OWNER_EMAIL = 'tiagohp13@hotmail.com';
+            const isOwner = userProfile.email === OWNER_EMAIL;
+            
+            return <div key={userProfile.id} className="flex items-center justify-between p-4 border rounded-lg bg-card">
               <div className="flex-1">
                 <div className="font-medium">
                   {userProfile.name || 'Nome não definido'}
+                  {isOwner && <Badge variant="secondary" className="ml-2">
+                    <Shield className="h-3 w-3 mr-1" />
+                    Owner
+                  </Badge>}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {userProfile.email}
@@ -175,10 +191,10 @@ const AdminUserManagement: React.FC = () => {
               </div>
               
               <div className="flex items-center gap-2">
-                {userProfile.access_level === 'admin' ? <Badge variant="secondary" className="w-40 justify-center">
+                {userProfile.access_level === 'admin' || isOwner ? <Badge variant="secondary" className="w-40 justify-center">
                     <Shield className="h-4 w-4 mr-2" />
                     Admin
-                  </Badge> : <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)} disabled={userProfile.access_level === 'admin' || userProfile.user_id === user?.id}>
+                  </Badge> : <Select value={userProfile.access_level || 'viewer'} onValueChange={value => handleAccessLevelChange(userProfile.user_id, value)} disabled={userProfile.access_level === 'admin' || userProfile.user_id === user?.id || isOwner}>
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
@@ -204,7 +220,7 @@ const AdminUserManagement: React.FC = () => {
                     </SelectContent>
                   </Select>}
 
-                {userProfile.user_id !== user?.id && userProfile.access_level !== 'admin' && <AlertDialog>
+                {userProfile.user_id !== user?.id && userProfile.access_level !== 'admin' && !isOwner && <AlertDialog>
                     <AlertDialogTrigger asChild>
                       
                     </AlertDialogTrigger>
@@ -224,7 +240,8 @@ const AdminUserManagement: React.FC = () => {
                     </AlertDialogContent>
                   </AlertDialog>}
               </div>
-            </div>)}
+            </div>;
+          })}
 
           {users.length === 0 && <div className="text-center text-muted-foreground py-8">
               Nenhum utilizador encontrado
