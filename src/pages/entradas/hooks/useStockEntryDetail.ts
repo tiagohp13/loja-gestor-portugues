@@ -35,7 +35,7 @@ export const useStockEntryDetail = (id: string | undefined) => {
               stock_entry_items(*)
             `)
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
           if (error) throw error;
 
