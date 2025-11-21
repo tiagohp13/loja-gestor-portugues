@@ -41,7 +41,7 @@ export const useStockExitDetail = () => {
               stock_exit_items(*)
             `)
             .eq('id', id)
-            .single();
+            .maybeSingle();
 
           if (error) throw error;
 
