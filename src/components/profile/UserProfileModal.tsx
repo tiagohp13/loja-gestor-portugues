@@ -109,6 +109,7 @@ const UserProfileModal: React.FC<UserProfileModalProps> = ({ open, onOpenChange 
                 onChange={(e) => handleInputChange('name', e.target.value)}
                 placeholder="Introduza o seu nome"
                 maxLength={100}
+                autoFocus={false}
               />
             </div>
 

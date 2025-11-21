@@ -107,6 +107,7 @@ const UserProfileForm: React.FC = () => {
               onChange={e => handleInputChange('name', e.target.value)} 
               placeholder="Introduza o seu nome"
               maxLength={100}
+              autoFocus={false}
             />
           </div>
 
