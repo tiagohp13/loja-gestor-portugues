@@ -32,14 +32,43 @@ const TenantContext = createContext<TenantContextType | undefined>(undefined);
 export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const queryClient = useQueryClient();
   const [currentTenant, setCurrentTenant] = useState<Tenant | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  // Monitorar mudanças de autenticação para resetar o estado
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const newUserId = session?.user?.id || null;
+      
+      if (event === 'SIGNED_OUT') {
+        console.log('🏢 TenantContext: Limpando estado no SIGNED_OUT');
+        setUserId(null);
+        setCurrentTenant(null);
+      } else if (event === 'SIGNED_IN' && newUserId !== userId) {
+        console.log('🏢 TenantContext: Novo utilizador detectado, atualizando:', session?.user?.email);
+        setUserId(newUserId);
+        setCurrentTenant(null);
+        
+        // Invalidar queries para forçar refresh com novo utilizador
+        queryClient.invalidateQueries({ queryKey: ['user-context'] });
+        queryClient.invalidateQueries({ queryKey: ['user-tenants'] });
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [userId, queryClient]);
 
   // Carregar tenant atual do contexto do usuário
   const { data: contextData, isLoading: contextLoading } = useQuery({
-    queryKey: ['user-context'],
+    queryKey: ['user-context', userId],
     queryFn: async () => {
+      if (!userId) {
+        console.log('🏢 TenantContext: Sem utilizador autenticado');
+        return null;
+      }
+
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('🏢 TenantContext: Sem utilizador autenticado');
+        console.log('🏢 TenantContext: Utilizador não encontrado');
         return null;
       }
 
@@ -55,7 +84,7 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       console.log('🏢 TenantContext: Tenant atual:', data?.current_tenant_id);
       return data;
     },
-    // CRÍTICO: Sem staleTime para garantir recalculo em cada sessão
+    enabled: !!userId,
     staleTime: 0,
     gcTime: 0,
   });
@@ -83,8 +112,13 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   // Carregar lista de tenants do usuário
   const { data: userTenants = [], isLoading: tenantsLoading } = useQuery({
-    queryKey: ['user-tenants'],
+    queryKey: ['user-tenants', userId],
     queryFn: async () => {
+      if (!userId) {
+        console.log('🏢 TenantContext: Sem utilizador para carregar tenants');
+        return [];
+      }
+
       const { data, error } = await supabase.rpc('get_user_tenants');
       
       if (error) throw error;
@@ -97,9 +131,10 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         isCurrent: t.is_current,
       }));
       
-      console.log('🏢 TenantContext: Tenants do utilizador:', tenants.length);
+      console.log('🏢 TenantContext: Tenants do utilizador:', tenants.length, tenants);
       return tenants;
     },
+    enabled: !!userId,
     staleTime: 0,
     gcTime: 0,
   });
