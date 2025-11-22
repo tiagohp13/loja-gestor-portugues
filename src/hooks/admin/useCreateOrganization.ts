@@ -2,6 +2,13 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export interface AdditionalUser {
+  name: string;
+  email: string;
+  role: 'admin' | 'editor' | 'viewer';
+  phone?: string;
+}
+
 export interface CreateOrganizationData {
   tenantName: string;
   adminEmail: string;
@@ -10,6 +17,11 @@ export interface CreateOrganizationData {
   subscriptionStartsAt: string;
   notes?: string;
   isSuperAdminTenant?: boolean;
+  taxId?: string;
+  phone?: string;
+  website?: string;
+  industrySector?: string;
+  additionalUsers?: Omit<AdditionalUser, 'id'>[];
 }
 
 export const useCreateOrganization = () => {
@@ -37,15 +49,29 @@ export const useCreateOrganization = () => {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['all-tenants'] });
       queryClient.invalidateQueries({ queryKey: ['user-tenants'] });
-      
+
       let message = 'Organização criada com sucesso!';
-      if (data.passwordGenerated && data.temporaryPassword) {
-        message += ` Password temporária enviada para ${data.userId}`;
-        // Mostrar password temporária ao super admin
-        toast.success(message, {
-          description: `Password temporária: ${data.temporaryPassword}`,
-          duration: 10000
-        });
+      
+      if (data.tenant?.name) {
+        message = `Organização "${data.tenant.name}" criada com sucesso!`;
+      }
+      
+      if (data.newUsers > 0) {
+        message += ` ${data.newUsers} novo(s) utilizador(es) criado(s).`;
+        
+        // Mostrar passwords temporárias
+        if (data.createdUsers && data.createdUsers.length > 0) {
+          const passwordsList = data.createdUsers
+            .map((u: any) => `${u.email}: ${u.password}`)
+            .join('\\n');
+          
+          toast.success(message, {
+            description: `Passwords temporárias criadas. Guarde estas informações:\n\n${passwordsList}`,
+            duration: 15000,
+          });
+        } else {
+          toast.success(message);
+        }
       } else {
         toast.success(message);
       }

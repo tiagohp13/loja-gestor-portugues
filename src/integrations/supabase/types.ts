@@ -1152,29 +1152,41 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          industry_sector: string | null
           name: string
+          phone: string | null
           settings: Json | null
           slug: string
           status: string
+          tax_id: string | null
           updated_at: string
+          website: string | null
         }
         Insert: {
           created_at?: string
           id?: string
+          industry_sector?: string | null
           name: string
+          phone?: string | null
           settings?: Json | null
           slug: string
           status?: string
+          tax_id?: string | null
           updated_at?: string
+          website?: string | null
         }
         Update: {
           created_at?: string
           id?: string
+          industry_sector?: string | null
           name?: string
+          phone?: string | null
           settings?: Json | null
           slug?: string
           status?: string
+          tax_id?: string | null
           updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
