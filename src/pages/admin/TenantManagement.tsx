@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
 import { Navigate } from 'react-router-dom';
@@ -10,6 +10,10 @@ import { Badge } from '@/components/ui/badge';
 import { Building2, Users, Settings, Plus } from 'lucide-react';
 import { TenantInfo } from '@/components/tenant/TenantInfo';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 interface Tenant {
   id: string;
@@ -22,6 +26,10 @@ interface Tenant {
 const TenantManagement: React.FC = () => {
   const { isSuperAdmin, isLoading: superAdminLoading } = useIsSuperAdmin();
   const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [newTenantName, setNewTenantName] = useState('');
+  const [newTenantSlug, setNewTenantSlug] = useState('');
+  const queryClient = useQueryClient();
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['all-tenants'],
@@ -36,6 +44,58 @@ const TenantManagement: React.FC = () => {
     },
     enabled: isSuperAdmin,
   });
+
+  const createTenantMutation = useMutation({
+    mutationFn: async () => {
+      const { data, error } = await supabase
+        .from('tenants')
+        .insert({
+          name: newTenantName,
+          slug: newTenantSlug,
+          status: 'active',
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['all-tenants'] });
+      toast.success('Organização criada com sucesso');
+      setShowCreateDialog(false);
+      setNewTenantName('');
+      setNewTenantSlug('');
+    },
+    onError: (error) => {
+      console.error('Error creating tenant:', error);
+      toast.error('Erro ao criar organização');
+    },
+  });
+
+  const handleCreateTenant = () => {
+    if (!newTenantName.trim() || !newTenantSlug.trim()) {
+      toast.error('Nome e slug são obrigatórios');
+      return;
+    }
+    createTenantMutation.mutate();
+  };
+
+  const generateSlug = (name: string) => {
+    return name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+  };
+
+  const handleNameChange = (name: string) => {
+    setNewTenantName(name);
+    if (!newTenantSlug || newTenantSlug === generateSlug(newTenantName)) {
+      setNewTenantSlug(generateSlug(name));
+    }
+  };
 
   if (superAdminLoading) {
     return <LoadingSpinner />;
@@ -74,7 +134,7 @@ const TenantManagement: React.FC = () => {
             <CardTitle>Todas as Organizações</CardTitle>
             <CardDescription>Lista completa de organizações do sistema</CardDescription>
           </div>
-          <Button>
+          <Button onClick={() => setShowCreateDialog(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Nova Organização
           </Button>
@@ -115,6 +175,58 @@ const TenantManagement: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Create Tenant Dialog */}
+      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nova Organização</DialogTitle>
+            <DialogDescription>
+              Criar uma nova organização no sistema
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nome da Organização</Label>
+              <Input
+                id="name"
+                value={newTenantName}
+                onChange={(e) => handleNameChange(e.target.value)}
+                placeholder="Ex: Empresa ABC"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="slug">Slug (Identificador único)</Label>
+              <Input
+                id="slug"
+                value={newTenantSlug}
+                onChange={(e) => setNewTenantSlug(e.target.value)}
+                placeholder="Ex: empresa-abc"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Usado em URLs. Apenas letras minúsculas, números e hífens.
+              </p>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateDialog(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={handleCreateTenant}
+                disabled={createTenantMutation.isPending}
+              >
+                {createTenantMutation.isPending ? 'Criando...' : 'Criar Organização'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
