@@ -89,6 +89,7 @@ import AdminPanelDashboard from './pages/admin/AdminPanelDashboard';
 import UsersManagement from './pages/admin/UsersManagement';
 import SubscriptionsManagement from './pages/admin/SubscriptionsManagement';
 import AdminSettings from './pages/admin/AdminSettings';
+import AdminConfigurations from './pages/admin/AdminConfigurations';
 import AdminRoute from './components/layouts/AdminRoute';
 import SuperAdminRoute from './components/layouts/SuperAdminRoute';
 
@@ -175,7 +176,7 @@ function App() {
                       path="/admin-panel/settings" 
                       element={
                         <SuperAdminRoute>
-                          <AdminSettings />
+                          <AdminConfigurations />
                         </SuperAdminRoute>
                       } 
                     />
