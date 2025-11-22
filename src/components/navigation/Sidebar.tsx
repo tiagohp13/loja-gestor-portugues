@@ -7,7 +7,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useTenant } from '@/contexts/TenantContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Shield, BarChart2, Database
+  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Shield, BarChart2, Database, Crown
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { 
@@ -28,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const { data: profile } = useUserProfileQuery();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, isSuperAdmin } = usePermissions();
   const { currentTenant } = useTenant();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -239,6 +239,27 @@ const AppSidebar: React.FC = () => {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Painel Administrativo NEXORA - apenas para super admins */}
+        {isSuperAdmin && (
+          <SidebarGroup className="mt-auto pt-4 border-t">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation('/admin-panel/dashboard')}
+                    isActive={location.pathname.includes('/admin-panel')}
+                    tooltip="Painel Administrativo NEXORA"
+                    className="font-semibold"
+                  >
+                    <Crown className="w-5 h-5" />
+                    <span>Painel Administrativo (NEXORA)</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
