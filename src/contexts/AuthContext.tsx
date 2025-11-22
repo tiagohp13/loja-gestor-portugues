@@ -5,6 +5,7 @@ import { loginUser, registerUser, logoutUser, getCurrentUser } from '../services
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface AuthState {
   user: User | null;
@@ -31,12 +32,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [state, setState] = useState<AuthState>(initialState);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     // Setting up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       
       if (event === 'SIGNED_OUT') {
+        console.log('🔴 SIGNED_OUT - Limpando todo o estado');
+        
+        // CRÍTICO: Limpar COMPLETAMENTE o cache do React Query
+        queryClient.clear();
+        
         setState({
           user: null,
           session: null,
@@ -46,6 +53,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         
         navigate('/login');
       } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        console.log('🟢 SIGNED_IN/TOKEN_REFRESHED - Recalculando permissões');
+        
+        // CRÍTICO: Limpar cache antes de carregar novo utilizador
+        if (event === 'SIGNED_IN') {
+          queryClient.clear();
+        }
+        
         // Check if user is suspended
         if (session?.user) {
           setTimeout(async () => {
@@ -62,6 +76,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
               return;
             }
 
+            console.log('✅ Utilizador autenticado:', session.user.email);
+            
             // When a user signs in or token refreshes, update auth state
             setState(prevState => ({
               ...prevState,
@@ -205,6 +221,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = async () => {
     try {
+      console.log('🔴 LOGOUT - Iniciando limpeza completa');
+      
+      // CRÍTICO: Limpar COMPLETAMENTE o cache do React Query
+      queryClient.clear();
+      console.log('🔴 Cache do React Query limpo');
+      
       await logoutUser();
       
       setState({
@@ -212,6 +234,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isInitialized: true
       });
       
+      console.log('🔴 Estado de autenticação limpo');
       toast.success('Sessão terminada');
       return true;
     } catch (error) {

@@ -38,7 +38,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     queryKey: ['user-context'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
+      if (!user) {
+        console.log('🏢 TenantContext: Sem utilizador autenticado');
+        return null;
+      }
+
+      console.log('🏢 TenantContext: Carregando contexto para:', user.email);
 
       const { data, error } = await supabase
         .from('user_contexts')
@@ -47,9 +52,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .single();
 
       if (error) throw error;
+      console.log('🏢 TenantContext: Tenant atual:', data?.current_tenant_id);
       return data;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    // CRÍTICO: Sem staleTime para garantir recalculo em cada sessão
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Carregar dados do tenant atual
@@ -65,10 +73,12 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         .single();
 
       if (error) throw error;
+      console.log('🏢 TenantContext: Dados do tenant carregados:', data?.name);
       return data as Tenant;
     },
     enabled: !!contextData?.current_tenant_id,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Carregar lista de tenants do usuário
@@ -79,15 +89,19 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       
       if (error) throw error;
       
-      return (data || []).map((t: any) => ({
+      const tenants = (data || []).map((t: any) => ({
         tenantId: t.tenant_id,
         tenantName: t.tenant_name,
         tenantSlug: t.tenant_slug,
         userRole: t.user_role,
         isCurrent: t.is_current,
       }));
+      
+      console.log('🏢 TenantContext: Tenants do utilizador:', tenants.length);
+      return tenants;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   // Mutation para trocar de tenant

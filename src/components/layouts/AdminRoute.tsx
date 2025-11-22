@@ -12,18 +12,23 @@ interface AdminRouteProps {
  * Redirects non-admin users to the dashboard
  */
 const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-  const { isAdmin, loading } = usePermissions();
+  const { isAdmin, isSuperAdmin, loading } = usePermissions();
 
   // Show loading state while checking permissions
   if (loading) {
+    console.log('🔐 AdminRoute: Verificando permissões...');
     return <LoadingSpinner />;
   }
 
+  console.log('🔐 AdminRoute: isAdmin=', isAdmin, 'isSuperAdmin=', isSuperAdmin);
+
   // Redirect non-admin users to dashboard
   if (!isAdmin) {
+    console.log('❌ AdminRoute: Acesso negado, redirecionando para /dashboard');
     return <Navigate to="/dashboard" replace />;
   }
 
+  console.log('✅ AdminRoute: Acesso permitido');
   // Allow admin users to access the route
   return <>{children}</>;
 };

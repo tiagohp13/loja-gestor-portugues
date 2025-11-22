@@ -10,7 +10,12 @@ export const useIsSuperAdmin = () => {
     queryKey: ['is-super-admin'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return false;
+      if (!user) {
+        console.log('🔍 useIsSuperAdmin: Sem utilizador autenticado');
+        return false;
+      }
+
+      console.log('🔍 useIsSuperAdmin: Verificando para utilizador:', user.email);
 
       const { data, error } = await supabase
         .from('user_system_roles')
@@ -20,13 +25,17 @@ export const useIsSuperAdmin = () => {
         .maybeSingle();
 
       if (error) {
-        console.error('Error checking super admin:', error);
+        console.error('❌ Error checking super admin:', error);
         return false;
       }
 
-      return !!data;
+      const result = !!data;
+      console.log('🔍 useIsSuperAdmin resultado:', result ? '✅ É SUPER ADMIN' : '❌ NÃO é super admin');
+      return result;
     },
-    staleTime: 10 * 60 * 1000, // 10 minutos
+    // CRÍTICO: Sem staleTime para garantir recalculo em cada sessão
+    staleTime: 0,
+    gcTime: 0, // Não manter em cache após unmount
   });
 
   return {

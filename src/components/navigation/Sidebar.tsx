@@ -35,6 +35,8 @@ const AppSidebar: React.FC = () => {
   const { setOpenMobile } = useSidebar();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   
+  console.log('🎯 Sidebar: isSuperAdmin=', isSuperAdmin, ', isAdmin=', isAdmin, ', tenant=', currentTenant?.name);
+  
   const navigationItems = [
     { 
       path: '/dashboard', 
