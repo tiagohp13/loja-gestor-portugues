@@ -1663,6 +1663,7 @@ export type Database = {
       }
       is_admin: { Args: never; Returns: boolean }
       is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
+      is_tenant_admin: { Args: { p_tenant_id: string }; Returns: boolean }
       is_user_admin: { Args: { user_id?: string }; Returns: boolean }
       log_failed_login_attempt: {
         Args: {
