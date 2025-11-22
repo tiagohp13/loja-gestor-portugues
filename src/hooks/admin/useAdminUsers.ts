@@ -91,6 +91,9 @@ export const useAdminUsers = () => {
   });
 };
 
+// Email do super admin protegido que nunca pode ser removido
+const PROTECTED_SUPER_ADMIN_EMAIL = 'tiagohp13@hotmail.com';
+
 /**
  * Hook para alternar o status de super admin de um utilizador
  */
@@ -98,7 +101,12 @@ export const useToggleSuperAdmin = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ userId, isSuperAdmin }: { userId: string; isSuperAdmin: boolean }) => {
+    mutationFn: async ({ userId, isSuperAdmin, email }: { userId: string; isSuperAdmin: boolean; email: string }) => {
+      // Proteger o super admin principal
+      if (email === PROTECTED_SUPER_ADMIN_EMAIL && isSuperAdmin) {
+        throw new Error('Este super administrador não pode ser removido');
+      }
+
       if (isSuperAdmin) {
         // Remove super admin
         const { error } = await supabase

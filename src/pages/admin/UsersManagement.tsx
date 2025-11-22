@@ -29,7 +29,13 @@ const UsersManagement: React.FC = () => {
     await toggleSuperAdmin.mutateAsync({
       userId: user.user_id,
       isSuperAdmin: user.is_super_admin,
+      email: user.email,
     });
+  };
+
+  // Verificar se é o super admin protegido
+  const isProtectedSuperAdmin = (email: string) => {
+    return email === 'tiagohp13@hotmail.com';
   };
 
   if (loadingSuperAdmin) {
@@ -139,14 +145,17 @@ const UsersManagement: React.FC = () => {
                   <div>
                     <div className="font-medium">Super Administrador</div>
                     <div className="text-sm text-muted-foreground">
-                      Acesso total ao sistema NEXORA
+                      {isProtectedSuperAdmin(selectedUser.email) 
+                        ? 'Super administrador protegido do sistema'
+                        : 'Acesso total ao sistema NEXORA'
+                      }
                     </div>
                   </div>
                 </div>
                 <Switch
                   checked={selectedUser.is_super_admin}
                   onCheckedChange={() => handleToggleSuperAdmin(selectedUser)}
-                  disabled={toggleSuperAdmin.isPending}
+                  disabled={toggleSuperAdmin.isPending || (selectedUser.is_super_admin && isProtectedSuperAdmin(selectedUser.email))}
                 />
               </div>
 
