@@ -4,6 +4,9 @@ project_id = "ptkqosrcopnsclgyrjqh"
 [functions.create-organization]
 verify_jwt = true
 
+[functions.create-organization-users]
+verify_jwt = true
+
 [api]
   # Enable additional logging for RLS and SQL errors
   debug_logging = true

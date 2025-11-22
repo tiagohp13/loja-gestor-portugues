@@ -13,13 +13,21 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Save, Users, Shield, AlertCircle } from 'lucide-react';
+import { Settings, Save, Users, Shield, AlertCircle, UserPlus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTenantUsers } from '@/hooks/admin/useTenantUsers';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+
+interface NewUser {
+  id: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'editor' | 'viewer';
+  phone?: string;
+}
 
 interface TenantEditData {
   id: string;
@@ -78,6 +86,7 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
   
   const { data: tenantUsers = [], isLoading: isLoadingUsers } = useTenantUsers(tenant?.id || null);
   const [userRoleChanges, setUserRoleChanges] = useState<Record<string, 'admin' | 'editor' | 'viewer'>>({});
+  const [newUsers, setNewUsers] = useState<NewUser[]>([]);
 
   useEffect(() => {
     if (tenant) {
@@ -97,6 +106,7 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
       
       fetchSubscription();
       setUserRoleChanges({});
+      setNewUsers([]);
     }
   }, [tenant]);
 
@@ -120,7 +130,29 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
     const effectiveRoles = tenantUsers.map(user => 
       getEffectiveRole(user.user_id, user.role)
     );
-    return effectiveRoles.includes('admin');
+    const newUsersRoles = newUsers.map(user => user.role);
+    const allRoles = [...effectiveRoles, ...newUsersRoles];
+    return allRoles.includes('admin');
+  };
+
+  const addNewUser = () => {
+    setNewUsers([...newUsers, {
+      id: crypto.randomUUID(),
+      name: '',
+      email: '',
+      role: 'viewer',
+      phone: ''
+    }]);
+  };
+
+  const removeNewUser = (id: string) => {
+    setNewUsers(newUsers.filter(user => user.id !== id));
+  };
+
+  const updateNewUser = (id: string, field: keyof NewUser, value: string) => {
+    setNewUsers(newUsers.map(user =>
+      user.id === id ? { ...user, [field]: value } : user
+    ));
   };
 
   const handleSubmit = async () => {
@@ -136,6 +168,28 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
 
     if (!hasAtLeastOneAdmin()) {
       toast.error('Tem de haver pelo menos um administrador na organização');
+      return;
+    }
+
+    // Validar novos utilizadores
+    for (const user of newUsers) {
+      if (!user.name.trim()) {
+        toast.error('Nome completo é obrigatório para todos os utilizadores');
+        return;
+      }
+      if (!user.email.trim() || !user.email.includes('@')) {
+        toast.error('Email válido é obrigatório para todos os utilizadores');
+        return;
+      }
+    }
+
+    // Verificar emails duplicados (incluindo novos utilizadores)
+    const existingEmails = tenantUsers.map(u => u.email);
+    const newEmails = newUsers.map(u => u.email);
+    const allEmails = [...existingEmails, ...newEmails];
+    const uniqueEmails = new Set(allEmails);
+    if (uniqueEmails.size !== allEmails.length) {
+      toast.error('Existem emails duplicados na lista de utilizadores');
       return;
     }
 
@@ -179,6 +233,32 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
             .eq('user_id', userId);
 
           if (roleError) throw roleError;
+        }
+      }
+
+      // Create new users
+      if (newUsers.length > 0) {
+        const { data: functionData, error: functionError } = await supabase.functions.invoke('create-organization-users', {
+          body: {
+            tenantId: formData.id,
+            tenantName: formData.name,
+            users: newUsers.map(({ id, ...user }) => user)
+          }
+        });
+
+        if (functionError) throw functionError;
+        if (!functionData?.success) throw new Error(functionData?.error || 'Erro ao criar utilizadores');
+
+        // Show passwords
+        if (functionData.createdUsers && functionData.createdUsers.length > 0) {
+          const passwordsList = functionData.createdUsers
+            .map((u: any) => `${u.email}: ${u.password}`)
+            .join('\n');
+          
+          toast.success(`${functionData.createdUsers.length} utilizador(es) criado(s)`, {
+            description: `Passwords temporárias. Guarde estas informações:\n\n${passwordsList}`,
+            duration: 15000,
+          });
         }
       }
 
@@ -432,6 +512,108 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
+          {/* Adicionar Novos Utilizadores */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-muted-foreground">Adicionar Novos Utilizadores</h3>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={addNewUser}
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Adicionar Utilizador
+              </Button>
+            </div>
+
+            {newUsers.length > 0 && (
+              <div className="space-y-3">
+                {newUsers.map((user) => (
+                  <div key={user.id} className="p-4 rounded-lg border bg-card space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-sm font-medium">Novo Utilizador</h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeNewUser(user.id)}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <Label>Nome Completo *</Label>
+                        <Input
+                          value={user.name}
+                          onChange={(e) => updateNewUser(user.id, 'name', e.target.value)}
+                          placeholder="Ex: João Silva"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Email *</Label>
+                        <Input
+                          type="email"
+                          value={user.email}
+                          onChange={(e) => updateNewUser(user.id, 'email', e.target.value)}
+                          placeholder="joao@exemplo.pt"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Telefone</Label>
+                        <Input
+                          value={user.phone || ''}
+                          onChange={(e) => updateNewUser(user.id, 'phone', e.target.value)}
+                          placeholder="+351..."
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Permissões *</Label>
+                        <Select
+                          value={user.role}
+                          onValueChange={(value: 'admin' | 'editor' | 'viewer') =>
+                            updateNewUser(user.id, 'role', value)
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="admin">
+                              <div className="flex items-center gap-2">
+                                <Shield className="h-3 w-3" />
+                                Admin
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="editor">
+                              <div className="flex items-center gap-2">
+                                <Shield className="h-3 w-3" />
+                                Editor
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="viewer">
+                              <div className="flex items-center gap-2">
+                                <Shield className="h-3 w-3" />
+                                Viewer
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
