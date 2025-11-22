@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfileQuery } from '@/hooks/queries/useUserProfileQuery';
 import { usePermissions } from '@/hooks/usePermissions';
+import { useTenant } from '@/contexts/TenantContext';
 import { 
   LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
   UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Shield, BarChart2, Database
@@ -18,6 +19,8 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
 import GlobalSearch from './GlobalSearch';
+import { TenantSwitcher } from '@/components/tenant/TenantSwitcher';
+import { Badge } from '@/components/ui/badge';
 
 /**
  * Main navigation sidebar component 
@@ -27,6 +30,8 @@ const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const { data: profile } = useUserProfileQuery();
   const { isAdmin } = usePermissions();
+  const { isSuperAdmin } = usePermissions();
+  const { currentTenant } = useTenant();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { setOpenMobile } = useSidebar();
@@ -138,7 +143,13 @@ const AppSidebar: React.FC = () => {
       label: 'Etiquetas de Clientes',
       icon: <Tag className="w-5 h-5" />,
       isActive: location.pathname.includes('/admin/client-tags')
-    }
+    },
+    ...(isSuperAdmin ? [{
+      path: '/admin/tenants',
+      label: 'Organizações',
+      icon: <Users className="w-5 h-5" />,
+      isActive: location.pathname.includes('/admin/tenants')
+    }] : [])
   ];
 
   const handleLogout = async () => {
@@ -186,6 +197,13 @@ const AppSidebar: React.FC = () => {
       </SidebarHeader>
       
       <SidebarContent>
+        {/* Tenant Switcher */}
+        <SidebarGroup>
+          <SidebarGroupContent className="px-2 py-2">
+            <TenantSwitcher className="w-full" />
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         {/* Global Search */}
         <SidebarGroup>
           <SidebarGroupContent className="px-2">
