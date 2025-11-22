@@ -30,6 +30,12 @@ interface TenantEditData {
   website?: string | null;
   industry_sector?: string | null;
   status: string;
+  subscription?: {
+    plan_name: string;
+    status: string;
+    created_at?: string;
+    expires_at?: string | null;
+  };
 }
 
 interface TenantEditModalProps {
@@ -67,6 +73,7 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
     website: '',
     industry_sector: '',
     status: 'active',
+    subscription: undefined,
   });
   
   const { data: tenantUsers = [], isLoading: isLoadingUsers } = useTenantUsers(tenant?.id || null);
@@ -74,7 +81,21 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
 
   useEffect(() => {
     if (tenant) {
-      setFormData(tenant);
+      // Fetch subscription data
+      const fetchSubscription = async () => {
+        const { data: subscription } = await supabase
+          .from('tenant_subscriptions')
+          .select('plan_name, status, created_at, expires_at')
+          .eq('tenant_id', tenant.id)
+          .single();
+        
+        setFormData({
+          ...tenant,
+          subscription: subscription || undefined,
+        });
+      };
+      
+      fetchSubscription();
       setUserRoleChanges({});
     }
   }, [tenant]);
@@ -136,6 +157,18 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
 
       if (tenantError) throw tenantError;
 
+      // Update subscription if expires_at was changed
+      if (formData.subscription) {
+        const { error: subscriptionError } = await supabase
+          .from('tenant_subscriptions')
+          .update({
+            expires_at: formData.subscription.expires_at || null,
+          })
+          .eq('tenant_id', formData.id);
+
+        if (subscriptionError) throw subscriptionError;
+      }
+
       // Update user roles if there are changes
       if (Object.keys(userRoleChanges).length > 0) {
         for (const [userId, newRole] of Object.entries(userRoleChanges)) {
@@ -173,7 +206,7 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
               <Settings className="h-5 w-5 text-primary" />
             </div>
             <div>
-              <DialogTitle>Editar Organização</DialogTitle>
+              <DialogTitle>Gerir Organização</DialogTitle>
               <DialogDescription>
                 Atualize as informações da organização
               </DialogDescription>
@@ -272,6 +305,47 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="plan">Plano Contratado</Label>
+                <Input
+                  id="plan"
+                  value={formData.subscription?.plan_name || 'N/A'}
+                  disabled
+                  className="bg-muted capitalize"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subscription_start">Data de Início</Label>
+                <Input
+                  id="subscription_start"
+                  type="date"
+                  value={formData.subscription?.created_at?.split('T')[0] || ''}
+                  disabled
+                  className="bg-muted"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="subscription_end">Data de Fim (opcional)</Label>
+                <Input
+                  id="subscription_end"
+                  type="date"
+                  value={formData.subscription?.expires_at?.split('T')[0] || ''}
+                  onChange={(e) => setFormData({ 
+                    ...formData, 
+                    subscription: {
+                      ...formData.subscription!,
+                      expires_at: e.target.value || null
+                    }
+                  })}
+                  className="w-full"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Se não for preenchida, a subscrição será por tempo ilimitado
+                </p>
               </div>
             </div>
           </div>
