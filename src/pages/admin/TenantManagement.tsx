@@ -19,6 +19,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
+import TenantDetailModal from './components/TenantDetailModal';
+import TenantEditModal from './components/TenantEditModal';
+import { useAdminTenants, TenantWithStats } from '@/hooks/admin/useAdminTenants';
 
 interface Tenant {
   id: string;
@@ -59,7 +62,12 @@ const INDUSTRY_SECTORS = [
 const TenantManagement: React.FC = () => {
   const { isSuperAdmin, isLoading: superAdminLoading } = useIsSuperAdmin();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState<TenantWithStats | null>(null);
   const createOrganization = useCreateOrganization();
+  
+  const { data: tenantsWithStats = [], isLoading: isLoadingStats } = useAdminTenants();
 
   // Form state
   const [formData, setFormData] = useState<CreateOrganizationData>({
@@ -79,20 +87,17 @@ const TenantManagement: React.FC = () => {
 
   const [additionalUsers, setAdditionalUsers] = useState<AdditionalUser[]>([]);
 
-  const { data: tenants = [], isLoading } = useQuery({
-    queryKey: ['all-tenants'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('status', 'active')
-        .order('name');
+  const handleTenantClick = (tenant: TenantWithStats) => {
+    setSelectedTenant(tenant);
+    setShowDetailModal(true);
+  };
 
-      if (error) throw error;
-      return data as Tenant[];
-    },
-    enabled: isSuperAdmin,
-  });
+  const handleEditClick = () => {
+    setShowDetailModal(false);
+    setShowEditModal(true);
+  };
+
+  const isLoading = isLoadingStats;
 
   const validateNIF = (nif: string): boolean => {
     if (!nif) return true; // Empty is valid (will be checked for required later)
@@ -238,7 +243,7 @@ const TenantManagement: React.FC = () => {
             <CardDescription>Total de organizações no sistema</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{tenants.length}</div>
+            <div className="text-3xl font-bold">{tenantsWithStats.length}</div>
           </CardContent>
         </Card>
 
@@ -261,16 +266,17 @@ const TenantManagement: React.FC = () => {
         <CardContent>
           {isLoading ? (
             <LoadingSpinner />
-          ) : tenants.length === 0 ? (
+          ) : tenantsWithStats.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               Nenhuma organização encontrada. Crie a primeira organização.
             </div>
           ) : (
             <div className="space-y-4">
-              {tenants.map((tenant) => (
+              {tenantsWithStats.map((tenant) => (
                 <div
                   key={tenant.id}
-                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors"
+                  className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer"
+                  onClick={() => handleTenantClick(tenant)}
                 >
                   <div className="flex items-center gap-4">
                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -281,7 +287,13 @@ const TenantManagement: React.FC = () => {
                       <div className="text-sm text-muted-foreground">@{tenant.slug}</div>
                     </div>
                   </div>
-                  <Badge variant="outline">{tenant.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">
+                      <Users className="h-3 w-3 mr-1" />
+                      {tenant.stats.users}
+                    </Badge>
+                    <Badge variant="outline">{tenant.status}</Badge>
+                  </div>
                 </div>
               ))}
             </div>
@@ -583,6 +595,30 @@ const TenantManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Detalhes */}
+      <TenantDetailModal
+        tenant={selectedTenant}
+        open={showDetailModal}
+        onOpenChange={setShowDetailModal}
+        onEdit={handleEditClick}
+      />
+
+      {/* Modal de Edição */}
+      <TenantEditModal
+        tenant={selectedTenant ? {
+          id: selectedTenant.id,
+          name: selectedTenant.name,
+          slug: selectedTenant.slug,
+          tax_id: selectedTenant.tax_id,
+          phone: selectedTenant.phone,
+          website: selectedTenant.website,
+          industry_sector: selectedTenant.industry_sector,
+          status: selectedTenant.status,
+        } : null}
+        open={showEditModal}
+        onOpenChange={setShowEditModal}
+      />
     </div>
   );
 };

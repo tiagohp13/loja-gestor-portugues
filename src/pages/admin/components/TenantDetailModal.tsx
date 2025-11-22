@@ -10,7 +10,9 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Package, TrendingUp, ShoppingCart, Calendar, Phone, Globe, Briefcase, FileText, CreditCard, Settings } from 'lucide-react';
+import { Building2, Users, Package, TrendingUp, ShoppingCart, Calendar, Phone, Globe, Briefcase, FileText, CreditCard, Settings, Mail, Shield } from 'lucide-react';
+import { useTenantUsers } from '@/hooks/admin/useTenantUsers';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 
 interface TenantStats {
   users: number;
@@ -47,13 +49,17 @@ interface TenantDetailModalProps {
   tenant: TenantDetail | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEdit?: () => void;
 }
 
 const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
   tenant,
   open,
   onOpenChange,
+  onEdit,
 }) => {
+  const { data: tenantUsers = [], isLoading: isLoadingUsers } = useTenantUsers(tenant?.id || null);
+  
   if (!tenant) return null;
 
   const formatDate = (dateString: string) => {
@@ -89,7 +95,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
               </Badge>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={onEdit}>
                 <Settings className="h-4 w-4 mr-2" />
                 Gerir
               </Button>
@@ -156,6 +162,61 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
               <Separator />
             </>
           )}
+
+          {/* Utilizadores da Organização */}
+          <div>
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">
+              Utilizadores da Organização
+            </h3>
+            {isLoadingUsers ? (
+              <div className="text-sm text-muted-foreground">A carregar...</div>
+            ) : tenantUsers.length === 0 ? (
+              <div className="text-sm text-muted-foreground">
+                Nenhum utilizador encontrado
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {tenantUsers.map((user) => (
+                  <div
+                    key={user.user_id}
+                    className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-10 w-10">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium text-sm">
+                          {user.name || 'Sem nome'}
+                        </div>
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Mail className="h-3 w-3" />
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+                    <Badge 
+                      variant="outline" 
+                      className={
+                        user.role === 'admin'
+                          ? 'bg-primary/10 text-primary border-primary/20'
+                          : user.role === 'editor'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-400'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-400'
+                      }
+                    >
+                      <Shield className="h-3 w-3 mr-1" />
+                      {user.role}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <Separator />
 
           {/* Dados Fiscais e Contacto */}
           <div>
