@@ -141,7 +141,8 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     queryClient.invalidateQueries({ queryKey: ['user-context'] });
   };
 
-  const isLoading = contextLoading || tenantLoading || tenantsLoading;
+  // Só considera tenantLoading se a query estiver enabled
+  const isLoading = contextLoading || (contextData?.current_tenant_id ? tenantLoading : false) || tenantsLoading;
 
   return (
     <TenantContext.Provider
