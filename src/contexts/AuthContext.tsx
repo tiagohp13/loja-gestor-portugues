@@ -41,9 +41,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (event === 'SIGNED_OUT') {
         console.log('🔴 SIGNED_OUT - Limpando todo o estado');
         
-        // CRÍTICO: Limpar COMPLETAMENTE o cache do React Query
+        // CRÍTICO: Limpar COMPLETAMENTE o cache do React Query antes de atualizar estado
         queryClient.clear();
         
+        // Limpar estado DEPOIS do cache
         setState({
           user: null,
           session: null,
@@ -52,13 +53,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         });
         
         navigate('/login');
-      } else if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        console.log('🟢 SIGNED_IN/TOKEN_REFRESHED - Recalculando permissões');
+      } else if (event === 'SIGNED_IN') {
+        console.log('🟢 SIGNED_IN - Novo utilizador, limpando cache anterior');
         
-        // CRÍTICO: Limpar cache antes de carregar novo utilizador
-        if (event === 'SIGNED_IN') {
-          queryClient.clear();
-        }
+        // CRÍTICO: Limpar cache completamente antes de carregar novo utilizador
+        queryClient.clear();
         
         // Check if user is suspended
         if (session?.user) {
@@ -78,24 +77,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
             console.log('✅ Utilizador autenticado:', session.user.email);
             
-            // When a user signs in or token refreshes, update auth state
-            setState(prevState => ({
-              ...prevState,
-              user: session?.user || null,
+            // Atualizar estado DEPOIS de verificar suspensão
+            setState({
+              user: session.user,
               session: session,
-              isAuthenticated: !!session,
+              isAuthenticated: true,
               isInitialized: true
-            }));
+            });
           }, 0);
-        } else {
-          setState(prevState => ({
-            ...prevState,
-            user: session?.user || null,
-            session: session,
-            isAuthenticated: !!session,
-            isInitialized: true
-          }));
         }
+      } else if (event === 'TOKEN_REFRESHED') {
+        // Apenas atualizar sessão, sem limpar cache
+        setState(prevState => ({
+          ...prevState,
+          user: session?.user || null,
+          session: session,
+          isAuthenticated: !!session,
+          isInitialized: true
+        }));
       }
     });
 

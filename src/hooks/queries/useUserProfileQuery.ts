@@ -20,7 +20,12 @@ export const useUserProfileQuery = () => {
   return useQuery({
     queryKey: ['user-profile', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
+      if (!user?.id) {
+        console.log('👤 useUserProfileQuery: Sem utilizador');
+        return null;
+      }
+
+      console.log('👤 useUserProfileQuery: Carregando perfil para:', user.email);
 
       const { data, error } = await supabase
         .from('user_profiles')
@@ -33,9 +38,11 @@ export const useUserProfileQuery = () => {
         throw error;
       }
 
+      console.log('👤 useUserProfileQuery: Perfil carregado, access_level:', data?.access_level);
       return data as UserProfile | null;
     },
     enabled: !!user?.id,
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
+    gcTime: 0,
   });
 };
