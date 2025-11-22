@@ -71,6 +71,8 @@ const TenantManagement: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStats | null>(null);
   const createOrganization = useCreateOrganization();
+  const [startDateOpen, setStartDateOpen] = useState(false);
+  const [endDateOpen, setEndDateOpen] = useState(false);
   
   const { data: tenantsWithStats = [], isLoading: isLoadingStats } = useAdminTenants();
 
@@ -439,21 +441,16 @@ const TenantManagement: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="subscriptionStartsAt">Data de Início *</Label>
-                  <Popover>
+                  <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !formData.subscriptionStartsAt && "text-muted-foreground"
-                        )}
+                        className="w-full justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.subscriptionStartsAt ? (
-                          format(new Date(formData.subscriptionStartsAt), "PPP", { locale: pt })
-                        ) : (
-                          <span>Selecione a data</span>
-                        )}
+                        {formData.subscriptionStartsAt 
+                          ? format(new Date(formData.subscriptionStartsAt), "dd 'de' MMMM 'de' yyyy", { locale: pt })
+                          : "Selecione a data"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -466,32 +463,28 @@ const TenantManagement: React.FC = () => {
                               ...formData, 
                               subscriptionStartsAt: format(date, 'yyyy-MM-dd')
                             });
+                            setStartDateOpen(false);
                           }
                         }}
                         initialFocus
-                        className="pointer-events-auto"
+                        className="p-3 pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="subscriptionExpiresAt">Data de Fim</Label>
-                  <Popover>
+                  <Label htmlFor="subscriptionExpiresAt">Data de Fim (opcional)</Label>
+                  <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !formData.subscriptionExpiresAt && "text-muted-foreground"
-                        )}
+                        className="w-full justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.subscriptionExpiresAt ? (
-                          format(new Date(formData.subscriptionExpiresAt), "PPP", { locale: pt })
-                        ) : (
-                          <span>Ilimitado</span>
-                        )}
+                        {formData.subscriptionExpiresAt 
+                          ? format(new Date(formData.subscriptionExpiresAt), "dd 'de' MMMM 'de' yyyy", { locale: pt })
+                          : "Ilimitado - Clique para definir"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -499,24 +492,18 @@ const TenantManagement: React.FC = () => {
                         mode="single"
                         selected={formData.subscriptionExpiresAt ? new Date(formData.subscriptionExpiresAt) : undefined}
                         onSelect={(date) => {
-                          if (date) {
-                            setFormData({ 
-                              ...formData, 
-                              subscriptionExpiresAt: format(date, 'yyyy-MM-dd')
-                            });
-                          } else {
-                            setFormData({ 
-                              ...formData, 
-                              subscriptionExpiresAt: undefined
-                            });
-                          }
+                          setFormData({ 
+                            ...formData, 
+                            subscriptionExpiresAt: date ? format(date, 'yyyy-MM-dd') : undefined
+                          });
+                          setEndDateOpen(false);
                         }}
                         disabled={(date) => {
                           const startDate = formData.subscriptionStartsAt ? new Date(formData.subscriptionStartsAt) : new Date();
                           return date < startDate;
                         }}
                         initialFocus
-                        className="pointer-events-auto"
+                        className="p-3 pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>
