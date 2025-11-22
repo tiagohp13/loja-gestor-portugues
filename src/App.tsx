@@ -99,23 +99,22 @@ import NotFound from './pages/NotFound';
 // Layout
 import AppLayout from './components/layouts/AppLayout';
 
-// Auth Route Guard
-const ProtectedRoute = () => {
-  const { isAuthenticated, isInitialized } = useAuth();
-  const location = useLocation();
-  
-  if (!isInitialized) {
-    return <LoadingSpinner />;
-  }
-  
-  if (isAuthenticated === false) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-  
-  return <Outlet />;
-};
-
 function App() {
+  // Auth Route Guard - definido dentro do App para ter acesso ao AuthProvider
+  const ProtectedRoute = () => {
+    const { isAuthenticated, isInitialized } = useAuth();
+    const location = useLocation();
+    
+    if (!isInitialized) {
+      return <LoadingSpinner />;
+    }
+    
+    if (isAuthenticated === false) {
+      return <Navigate to="/login" state={{ from: location }} replace />;
+    }
+    
+    return <Outlet />;
+  };
   return (
     <BrowserRouter>
       <ScrollToTop />
