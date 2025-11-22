@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
+
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
@@ -21,7 +21,6 @@ import {
 } from 'recharts';
 
 interface TagRuleConfig {
-  enabled: boolean;
   inactivityMonths: number;
   vipThreshold: number;
   vipPeriodMonths: number;
@@ -30,7 +29,6 @@ interface TagRuleConfig {
 }
 
 const DEFAULT_CONFIG: TagRuleConfig = {
-  enabled: true,
   inactivityMonths: 3,
   vipThreshold: 500,
   vipPeriodMonths: 6,
@@ -249,22 +247,14 @@ const ClientTagsManagement: React.FC = () => {
           <CardContent className="space-y-6">
             {/* Novo */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium flex items-center gap-2">
-                    <Badge className="bg-blue-100 text-blue-800 border-blue-200">Novo</Badge>
-                    Cliente Novo
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Clientes com apenas 1 compra registada
-                  </p>
-                </div>
-                <Switch 
-                  checked={localConfig.enabled}
-                  onCheckedChange={(checked) => 
-                    setLocalConfig({ ...localConfig, enabled: checked })
-                  }
-                />
+              <div>
+                <h4 className="font-medium flex items-center gap-2">
+                  <Badge className="bg-blue-100 text-blue-800 border-blue-200">Novo</Badge>
+                  Cliente Novo
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Clientes com apenas 1 compra registada
+                </p>
               </div>
               <div className="pl-4 border-l-2 border-blue-200">
                 <p className="text-sm text-muted-foreground">
@@ -277,22 +267,14 @@ const ClientTagsManagement: React.FC = () => {
 
             {/* Recorrente */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium flex items-center gap-2">
-                    <Badge className="bg-green-100 text-green-800 border-green-200">Recorrente</Badge>
-                    Cliente Recorrente
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Clientes com mais de 1 compra registada e ativos
-                  </p>
-                </div>
-                <Switch 
-                  checked={localConfig.enabled}
-                  onCheckedChange={(checked) => 
-                    setLocalConfig({ ...localConfig, enabled: checked })
-                  }
-                />
+              <div>
+                <h4 className="font-medium flex items-center gap-2">
+                  <Badge className="bg-green-100 text-green-800 border-green-200">Recorrente</Badge>
+                  Cliente Recorrente
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Clientes com mais de 1 compra registada e ativos
+                </p>
               </div>
               <div className="pl-4 border-l-2 border-green-200">
                 <p className="text-sm text-muted-foreground">
@@ -305,22 +287,14 @@ const ClientTagsManagement: React.FC = () => {
 
             {/* VIP */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium flex items-center gap-2">
-                    <Badge className="bg-amber-100 text-amber-800 border-amber-200">VIP</Badge>
-                    Cliente VIP
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Clientes com 3 ou mais compras nos últimos 3 meses
-                  </p>
-                </div>
-                <Switch 
-                  checked={localConfig.enabled}
-                  onCheckedChange={(checked) => 
-                    setLocalConfig({ ...localConfig, enabled: checked })
-                  }
-                />
+              <div>
+                <h4 className="font-medium flex items-center gap-2">
+                  <Badge className="bg-amber-100 text-amber-800 border-amber-200">VIP</Badge>
+                  Cliente VIP
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Clientes com 3 ou mais compras nos últimos 3 meses
+                </p>
               </div>
               <div className="pl-4 border-l-2 border-amber-200 space-y-3">
                 <div className="space-y-2">
@@ -365,22 +339,14 @@ const ClientTagsManagement: React.FC = () => {
 
             {/* Inativo */}
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium flex items-center gap-2">
-                    <Badge className="bg-gray-100 text-gray-800 border-gray-200">Inativo</Badge>
-                    Cliente Inativo
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Clientes sem compras há mais de X meses
-                  </p>
-                </div>
-                <Switch 
-                  checked={localConfig.enabled}
-                  onCheckedChange={(checked) => 
-                    setLocalConfig({ ...localConfig, enabled: checked })
-                  }
-                />
+              <div>
+                <h4 className="font-medium flex items-center gap-2">
+                  <Badge className="bg-gray-100 text-gray-800 border-gray-200">Inativo</Badge>
+                  Cliente Inativo
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  Clientes sem compras há mais de X meses
+                </p>
               </div>
               <div className="pl-4 border-l-2 border-gray-200 space-y-3">
                 <div className="space-y-2">
