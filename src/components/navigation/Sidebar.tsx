@@ -209,13 +209,13 @@ const AppSidebar: React.FC = () => {
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton onClick={() => handleNavigation('/admin-panel/dashboard')} isActive={location.pathname.includes('/admin-panel')} tooltip="Painel Administrativo NEXORA" className="font-semibold h-auto py-3">
-                    <Crown className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-                    <div className="flex-col gap-0.5 flex items-center justify-start">
-                      <span className="leading-tight">Painel Administrativo</span>
-                      <span className="text-xs text-muted-foreground leading-tight text-left">(NEXORA)</span>
-                    </div>
-                  </SidebarMenuButton>
+          <SidebarMenuButton onClick={() => handleNavigation('/admin-panel/dashboard')} isActive={location.pathname.includes('/admin-panel')} tooltip="Painel Administrativo NEXORA" className="font-semibold h-auto py-3">
+            <div className="flex flex-col items-center gap-1 w-full">
+              <Crown className="w-5 h-5 text-yellow-500" />
+              <span className="leading-tight text-center">Painel Administrativo</span>
+              <span className="text-xs text-primary leading-tight">NEXORA</span>
+            </div>
+          </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
