@@ -96,8 +96,9 @@ import StockBaixoPage from './pages/admin/StockBaixoPage';
 // Error pages
 import NotFound from './pages/NotFound';
 
-// Layout
+// Layouts
 import AppLayout from './components/layouts/AppLayout';
+import AdminLayout from './components/layouts/AdminLayout';
 
 function App() {
   // Auth Route Guard - definido dentro do App para ter acesso ao AuthProvider
@@ -132,19 +133,63 @@ function App() {
                 <Route path="/install" element={<InstallPWA />} />
                 
                 <Route element={<ProtectedRoute />}>
-                  <Route element={<AppLayout />}>
-                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                    <Route path="/dashboard" element={<DashboardPage />} />
-                    
-                    {/* Admin Panel Routes - Super Admin Only */}
-                    <Route
-                      path="/admin-panel/dashboard"
+                  {/* Admin Panel Routes - Layout Separado NEXORA */}
+                  <Route element={<AdminLayout />}>
+                    <Route 
+                      path="/admin-panel/dashboard" 
                       element={
                         <AdminRoute>
                           <AdminPanelDashboard />
                         </AdminRoute>
-                      }
+                      } 
                     />
+                    <Route 
+                      path="/admin-panel/tenants" 
+                      element={
+                        <AdminRoute>
+                          <TenantManagement />
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin-panel/users" 
+                      element={
+                        <AdminRoute>
+                          <div className="p-8">
+                            <h1 className="text-2xl font-bold">Gestão de Utilizadores</h1>
+                            <p className="text-muted-foreground">Em desenvolvimento</p>
+                          </div>
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin-panel/subscriptions" 
+                      element={
+                        <AdminRoute>
+                          <div className="p-8">
+                            <h1 className="text-2xl font-bold">Gestão de Subscrições</h1>
+                            <p className="text-muted-foreground">Em desenvolvimento</p>
+                          </div>
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin-panel/settings" 
+                      element={
+                        <AdminRoute>
+                          <div className="p-8">
+                            <h1 className="text-2xl font-bold">Configurações do Sistema</h1>
+                            <p className="text-muted-foreground">Em desenvolvimento</p>
+                          </div>
+                        </AdminRoute>
+                      } 
+                    />
+                  </Route>
+
+                  {/* ERP Routes - Layout do Cliente */}
+                  <Route element={<AppLayout />}>
+                    <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                    <Route path="/dashboard" element={<DashboardPage />} />
                     
                     <Route path="/produtos/consultar" element={<ProductList />} />
                     <Route path="/produtos/novo" element={<ProductNew />} />
@@ -225,14 +270,6 @@ function App() {
                       element={
                         <AdminRoute>
                           <ClientTagsManagement />
-                        </AdminRoute>
-                      } 
-                    />
-                    <Route 
-                      path="/admin/tenants" 
-                      element={
-                        <AdminRoute>
-                          <TenantManagement />
                         </AdminRoute>
                       } 
                     />
