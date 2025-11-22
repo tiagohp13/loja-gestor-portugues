@@ -156,8 +156,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         session: result.session,
         isAuthenticated: true 
       }));
-      
+
+      // Check if user is super admin to determine redirect
+      const { data: superAdminData } = await supabase
+        .from('user_system_roles')
+        .select('role')
+        .eq('user_id', result.user.id)
+        .eq('role', 'super_admin')
+        .maybeSingle();
+
       toast.success('Login efetuado com sucesso');
+      
+      // Navigate based on user role
+      if (superAdminData) {
+        navigate('/admin-panel/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+      
       return true;
     } catch (error) {
       if (error instanceof Error) {

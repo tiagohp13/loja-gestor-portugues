@@ -85,6 +85,7 @@ import RoleManagement from './pages/admin/RoleManagement';
 import DataManagement from './pages/admin/DataManagement';
 import ClientTagsManagement from './pages/admin/ClientTagsManagement';
 import TenantManagement from './pages/admin/TenantManagement';
+import AdminPanelDashboard from './pages/admin/AdminPanelDashboard';
 import AdminRoute from './components/layouts/AdminRoute';
 
 // Requisições
@@ -135,6 +136,16 @@ function App() {
                   <Route element={<AppLayout />}>
                     <Route path="/" element={<Navigate to="/dashboard" replace />} />
                     <Route path="/dashboard" element={<DashboardPage />} />
+                    
+                    {/* Admin Panel Routes - Super Admin Only */}
+                    <Route
+                      path="/admin-panel/dashboard"
+                      element={
+                        <AdminRoute>
+                          <AdminPanelDashboard />
+                        </AdminRoute>
+                      }
+                    />
                     
                     <Route path="/produtos/consultar" element={<ProductList />} />
                     <Route path="/produtos/novo" element={<ProductNew />} />

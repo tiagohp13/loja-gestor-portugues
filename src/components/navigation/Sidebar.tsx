@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
 import GlobalSearch from './GlobalSearch';
 import { TenantSwitcher } from '@/components/tenant/TenantSwitcher';
+import { ContextSwitcher } from './ContextSwitcher';
 import { Badge } from '@/components/ui/badge';
 
 /**
@@ -185,14 +186,27 @@ const AppSidebar: React.FC = () => {
 
   return (
     <Sidebar variant="sidebar" collapsible="offcanvas">
-      <SidebarHeader className="p-4 flex items-center border-b">
-        <div className="flex items-center space-x-2">
-          <img 
-            src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
-            alt="Aqua Paraíso Logo" 
-            className="h-8 w-auto"
-          />
-          <h2 className="text-lg font-bold text-gestorApp-blue">Aqua Paraíso</h2>
+      <SidebarHeader className="p-4 border-b">
+        <div className="flex flex-col space-y-3">
+          {/* Logo e Nome do Tenant */}
+          <div className="flex items-center space-x-2">
+            <img 
+              src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
+              alt="Logo" 
+              className="h-8 w-auto"
+            />
+            <div className="flex flex-col">
+              <h2 className="text-lg font-bold text-primary">{currentTenant?.name || 'AquaParaíso'}</h2>
+              <p className="text-[10px] text-muted-foreground font-medium">
+                powered by <span className="text-primary font-bold">NEXORA (NXR)</span>
+              </p>
+            </div>
+          </div>
+          
+          {/* Context Switcher - apenas para super admin */}
+          {isSuperAdmin && (
+            <ContextSwitcher variant="outline" className="w-full" />
+          )}
         </div>
       </SidebarHeader>
       
