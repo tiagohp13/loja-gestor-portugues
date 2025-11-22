@@ -1356,6 +1356,8 @@ export type Database = {
     }
     Functions: {
       archive_expired_notifications: { Args: never; Returns: undefined }
+      can_add_product: { Args: { _tenant_id: string }; Returns: boolean }
+      can_add_user: { Args: { _tenant_id: string }; Returns: boolean }
       can_delete_data: { Args: { user_id?: string }; Returns: boolean }
       can_read_data: { Args: { user_id?: string }; Returns: boolean }
       can_write_data: { Args: { user_id?: string }; Returns: boolean }
@@ -1379,6 +1381,7 @@ export type Database = {
           recurrent_clients: number
         }[]
       }
+      get_current_tenant_id: { Args: { _user_id?: string }; Returns: string }
       get_deleted_records:
         | { Args: { table_name: string }; Returns: Record<string, unknown>[] }
         | {
@@ -1537,7 +1540,12 @@ export type Database = {
         }
         Returns: boolean
       }
+      has_tenant_access: {
+        Args: { _tenant_id: string; _user_id: string }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: { _user_id?: string }; Returns: boolean }
       is_user_admin: { Args: { user_id?: string }; Returns: boolean }
       log_failed_login_attempt: {
         Args: {
