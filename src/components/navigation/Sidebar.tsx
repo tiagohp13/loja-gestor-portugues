@@ -256,10 +256,13 @@ const AppSidebar: React.FC = () => {
                     onClick={() => handleNavigation('/admin-panel/dashboard')}
                     isActive={location.pathname.includes('/admin-panel')}
                     tooltip="Painel Administrativo NEXORA"
-                    className="font-semibold"
+                    className="font-semibold h-auto py-3"
                   >
-                    <Crown className="w-5 h-5" />
-                    <span>Painel Administrativo (NEXORA)</span>
+                    <Crown className="w-5 h-5 text-yellow-500 flex-shrink-0" />
+                    <div className="flex flex-col items-start gap-0.5">
+                      <span className="leading-tight">Painel Administrativo</span>
+                      <span className="text-xs text-muted-foreground leading-tight">(NEXORA)</span>
+                    </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
