@@ -1,20 +1,12 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useUserProfileQuery } from '@/hooks/queries/useUserProfileQuery';
 import { usePermissions } from '@/hooks/usePermissions';
 import { useTenant } from '@/contexts/TenantContext';
-import { 
-  LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, 
-  UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Shield, BarChart2, Database, Crown
-} from 'lucide-react';
+import { LayoutDashboard, Package, Users, Truck, LogIn, LogOut, ShoppingCart, UserIcon, Settings, Tag, BarChart, ClipboardList, Receipt, Trash2, Shield, BarChart2, Database, Crown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { 
-  Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, 
-  SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, 
-  SidebarMenuItem, useSidebar
-} from '@/components/ui/sidebar';
+import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
@@ -26,126 +18,116 @@ import { Badge } from '@/components/ui/badge';
  * Provides consistent navigation across the application
  */
 const AppSidebar: React.FC = () => {
-  const { user, logout } = useAuth();
-  const { data: profile } = useUserProfileQuery();
-  const { isAdmin, isSuperAdmin } = usePermissions();
-  const { currentTenant } = useTenant();
+  const {
+    user,
+    logout
+  } = useAuth();
+  const {
+    data: profile
+  } = useUserProfileQuery();
+  const {
+    isAdmin,
+    isSuperAdmin
+  } = usePermissions();
+  const {
+    currentTenant
+  } = useTenant();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { setOpenMobile } = useSidebar();
+  const {
+    setOpenMobile
+  } = useSidebar();
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  
   console.log('🎯 Sidebar: isSuperAdmin=', isSuperAdmin, ', isAdmin=', isAdmin, ', tenant=', currentTenant?.name);
-  
-  const navigationItems = [
-    { 
-      path: '/dashboard', 
-      label: 'Dashboard', 
-      icon: <LayoutDashboard className="w-5 h-5" />,
-      isActive: location.pathname === '/' || location.pathname === '/dashboard'
-    },
-    { 
-      path: '/produtos/consultar', 
-      label: 'Produtos', 
-      icon: <Package className="w-5 h-5" />,
-      isActive: location.pathname.includes('/produtos')
-    },
-    { 
-      path: '/categorias/consultar', 
-      label: 'Categorias', 
-      icon: <Tag className="w-5 h-5" />,
-      isActive: location.pathname.includes('/categorias')
-    },
-    { 
-      path: '/clientes/consultar', 
-      label: 'Clientes', 
-      icon: <Users className="w-5 h-5" />,
-      isActive: location.pathname.includes('/clientes')
-    },
-    { 
-      path: '/fornecedores/consultar', 
-      label: 'Fornecedores', 
-      icon: <Truck className="w-5 h-5" />,
-      isActive: location.pathname.includes('/fornecedores')
-    },
-    { 
-      path: '/requisicoes', 
-      label: 'Requisições', 
-      icon: <ClipboardList className="w-5 h-5" />,
-      isActive: location.pathname.includes('/requisicoes')
-    },
-    { 
-      path: '/encomendas/consultar', 
-      label: 'Encomendas', 
-      icon: <ShoppingCart className="w-5 h-5" />,
-      isActive: location.pathname.includes('/encomendas')
-    },
-    { 
-      path: '/entradas/historico', 
-      label: 'Compras', 
-      icon: <LogIn className="w-5 h-5" />,
-      isActive: location.pathname.includes('/entradas')
-    },
-    { 
-      path: '/saidas/historico', 
-      label: 'Vendas', 
-      icon: <LogOut className="w-5 h-5" />,
-      isActive: location.pathname.includes('/saidas')
-    },
-    { 
-      path: '/despesas/historico', 
-      label: 'Despesas', 
-      icon: <Receipt className="w-5 h-5" />,
-      isActive: location.pathname.includes('/despesas')
-    },
-    { 
-      path: '/suporte', 
-      label: 'Estatísticas', 
-      icon: <BarChart className="w-5 h-5" />,
-      isActive: location.pathname.includes('/suporte')
-    },
-    { 
-      path: '/reciclagem',
-      label: 'Reciclagem', 
-      icon: <Trash2 className="w-5 h-5" />,
-      isActive: location.pathname.includes('/reciclagem')
-    },
-    { 
-      path: '/configuracoes', 
-      label: 'Configurações', 
-      icon: <Settings className="w-5 h-5" />,
-      isActive: location.pathname.includes('/configuracoes')
-    }
-  ];
+  const navigationItems = [{
+    path: '/dashboard',
+    label: 'Dashboard',
+    icon: <LayoutDashboard className="w-5 h-5" />,
+    isActive: location.pathname === '/' || location.pathname === '/dashboard'
+  }, {
+    path: '/produtos/consultar',
+    label: 'Produtos',
+    icon: <Package className="w-5 h-5" />,
+    isActive: location.pathname.includes('/produtos')
+  }, {
+    path: '/categorias/consultar',
+    label: 'Categorias',
+    icon: <Tag className="w-5 h-5" />,
+    isActive: location.pathname.includes('/categorias')
+  }, {
+    path: '/clientes/consultar',
+    label: 'Clientes',
+    icon: <Users className="w-5 h-5" />,
+    isActive: location.pathname.includes('/clientes')
+  }, {
+    path: '/fornecedores/consultar',
+    label: 'Fornecedores',
+    icon: <Truck className="w-5 h-5" />,
+    isActive: location.pathname.includes('/fornecedores')
+  }, {
+    path: '/requisicoes',
+    label: 'Requisições',
+    icon: <ClipboardList className="w-5 h-5" />,
+    isActive: location.pathname.includes('/requisicoes')
+  }, {
+    path: '/encomendas/consultar',
+    label: 'Encomendas',
+    icon: <ShoppingCart className="w-5 h-5" />,
+    isActive: location.pathname.includes('/encomendas')
+  }, {
+    path: '/entradas/historico',
+    label: 'Compras',
+    icon: <LogIn className="w-5 h-5" />,
+    isActive: location.pathname.includes('/entradas')
+  }, {
+    path: '/saidas/historico',
+    label: 'Vendas',
+    icon: <LogOut className="w-5 h-5" />,
+    isActive: location.pathname.includes('/saidas')
+  }, {
+    path: '/despesas/historico',
+    label: 'Despesas',
+    icon: <Receipt className="w-5 h-5" />,
+    isActive: location.pathname.includes('/despesas')
+  }, {
+    path: '/suporte',
+    label: 'Estatísticas',
+    icon: <BarChart className="w-5 h-5" />,
+    isActive: location.pathname.includes('/suporte')
+  }, {
+    path: '/reciclagem',
+    label: 'Reciclagem',
+    icon: <Trash2 className="w-5 h-5" />,
+    isActive: location.pathname.includes('/reciclagem')
+  }, {
+    path: '/configuracoes',
+    label: 'Configurações',
+    icon: <Settings className="w-5 h-5" />,
+    isActive: location.pathname.includes('/configuracoes')
+  }];
 
   // Items apenas para administradores
-  const adminItems = [
-    {
-      path: '/admin/stock-baixo',
-      label: 'Stock Baixo',
-      icon: <Package className="w-5 h-5" />,
-      isActive: location.pathname.includes('/admin/stock-baixo')
-    },
-    {
-      path: '/admin/roles',
-      label: 'Gestão de Papéis',
-      icon: <Shield className="w-5 h-5" />,
-      isActive: location.pathname.includes('/admin/roles')
-    },
-    {
-      path: '/admin/data',
-      label: 'Gestão de Dados',
-      icon: <Database className="w-5 h-5" />,
-      isActive: location.pathname.includes('/admin/data')
-    },
-    {
-      path: '/admin/client-tags',
-      label: 'Etiquetas de Clientes',
-      icon: <Tag className="w-5 h-5" />,
-      isActive: location.pathname.includes('/admin/client-tags')
-    }
-  ];
-
+  const adminItems = [{
+    path: '/admin/stock-baixo',
+    label: 'Stock Baixo',
+    icon: <Package className="w-5 h-5" />,
+    isActive: location.pathname.includes('/admin/stock-baixo')
+  }, {
+    path: '/admin/roles',
+    label: 'Gestão de Papéis',
+    icon: <Shield className="w-5 h-5" />,
+    isActive: location.pathname.includes('/admin/roles')
+  }, {
+    path: '/admin/data',
+    label: 'Gestão de Dados',
+    icon: <Database className="w-5 h-5" />,
+    isActive: location.pathname.includes('/admin/data')
+  }, {
+    path: '/admin/client-tags',
+    label: 'Etiquetas de Clientes',
+    icon: <Tag className="w-5 h-5" />,
+    isActive: location.pathname.includes('/admin/client-tags')
+  }];
   const handleLogout = async () => {
     try {
       await logout();
@@ -156,36 +138,26 @@ const AppSidebar: React.FC = () => {
       toast.error('Erro ao terminar sessão');
     }
   };
-
   const handleNavigation = (path: string) => {
     navigate(path);
     if (isMobile) {
       setOpenMobile(false);
     }
   };
-
   const getUserDisplayName = () => {
     if (profile?.name) return profile.name;
     if (!user) return '';
-    
     const userName = user.user_metadata?.name;
     return userName || user.email?.split('@')[0] || '';
   };
-
   const getInitials = (name?: string) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
-
-  return (
-    <Sidebar variant="sidebar" collapsible="offcanvas">
+  return <Sidebar variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="p-4 border-b">
         <div className="flex items-center space-x-2">
-          <img 
-            src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
-            alt="Logo" 
-            className="h-8 w-auto"
-          />
+          <img src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" alt="Logo" className="h-8 w-auto" />
           <div className="flex flex-col">
             <h2 className="text-lg font-bold text-primary">{currentTenant?.name || 'AquaParaíso'}</h2>
             <p className="text-[10px] text-muted-foreground font-medium">
@@ -207,77 +179,52 @@ const AppSidebar: React.FC = () => {
           <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton 
-                    onClick={() => handleNavigation(item.path)}
-                    isActive={item.isActive}
-                    tooltip={item.label}
-                  >
+              {navigationItems.map(item => <SidebarMenuItem key={item.path}>
+                  <SidebarMenuButton onClick={() => handleNavigation(item.path)} isActive={item.isActive} tooltip={item.label}>
                     {item.icon}
                     <span>{item.label}</span>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
         {/* Seção Admin - apenas visível para administradores */}
-        {isAdmin && (
-          <SidebarGroup>
+        {isAdmin && <SidebarGroup>
             <SidebarGroupLabel>Administração</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {adminItems.map((item) => (
-                  <SidebarMenuItem key={item.path}>
-                    <SidebarMenuButton 
-                      onClick={() => handleNavigation(item.path)}
-                      isActive={item.isActive}
-                      tooltip={item.label}
-                    >
+                {adminItems.map(item => <SidebarMenuItem key={item.path}>
+                    <SidebarMenuButton onClick={() => handleNavigation(item.path)} isActive={item.isActive} tooltip={item.label}>
                       {item.icon}
                       <span>{item.label}</span>
                     </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                  </SidebarMenuItem>)}
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+          </SidebarGroup>}
 
         {/* Painel Administrativo NEXORA - apenas para super admins */}
-        {isSuperAdmin && (
-          <SidebarGroup className="mt-auto pt-4 border-t">
+        {isSuperAdmin && <SidebarGroup className="mt-auto pt-4 border-t">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={() => handleNavigation('/admin-panel/dashboard')}
-                    isActive={location.pathname.includes('/admin-panel')}
-                    tooltip="Painel Administrativo NEXORA"
-                    className="font-semibold h-auto py-3"
-                  >
+                  <SidebarMenuButton onClick={() => handleNavigation('/admin-panel/dashboard')} isActive={location.pathname.includes('/admin-panel')} tooltip="Painel Administrativo NEXORA" className="font-semibold h-auto py-3">
                     <Crown className="w-5 h-5 text-yellow-500 flex-shrink-0" />
-                    <div className="flex flex-col items-start gap-0.5">
+                    <div className="flex-col gap-0.5 flex items-center justify-start">
                       <span className="leading-tight">Painel Administrativo</span>
-                      <span className="text-xs text-muted-foreground leading-tight">(NEXORA)</span>
+                      <span className="text-xs text-muted-foreground leading-tight text-left">(NEXORA)</span>
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
-          </SidebarGroup>
-        )}
+          </SidebarGroup>}
       </SidebarContent>
       
       <SidebarFooter className="p-4 border-t">
         <div className="flex flex-col space-y-4">
-          {user && (
-            <button
-              onClick={() => setIsProfileModalOpen(true)}
-              className="flex items-center space-x-3 text-sm hover:bg-accent hover:text-accent-foreground p-2 rounded-md transition-colors cursor-pointer"
-            >
+          {user && <button onClick={() => setIsProfileModalOpen(true)} className="flex items-center space-x-3 text-sm hover:bg-accent hover:text-accent-foreground p-2 rounded-md transition-colors cursor-pointer">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={profile?.avatar_url} alt="Profile picture" />
                 <AvatarFallback className="text-xs">
@@ -285,24 +232,15 @@ const AppSidebar: React.FC = () => {
                 </AvatarFallback>
               </Avatar>
               <span className="text-gestorApp-gray-dark truncate">{getUserDisplayName()}</span>
-            </button>
-          )}
-          <button
-            onClick={handleLogout}
-            className="flex items-center space-x-2 text-gestorApp-gray hover:text-gestorApp-blue transition-colors"
-          >
+            </button>}
+          <button onClick={handleLogout} className="flex items-center space-x-2 text-gestorApp-gray hover:text-gestorApp-blue transition-colors">
             <ShoppingCart className="w-5 h-5" />
             <span>Terminar Sessão</span>
           </button>
         </div>
       </SidebarFooter>
       
-      <UserProfileModal 
-        open={isProfileModalOpen} 
-        onOpenChange={setIsProfileModalOpen} 
-      />
-    </Sidebar>
-  );
+      <UserProfileModal open={isProfileModalOpen} onOpenChange={setIsProfileModalOpen} />
+    </Sidebar>;
 };
-
 export default AppSidebar;
