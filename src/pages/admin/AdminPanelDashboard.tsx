@@ -1,19 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
-import { useAdminStats, useAdminTenants } from '@/hooks/admin';
+import { useAdminStats, useAdminTenants, TenantWithStats } from '@/hooks/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Package, TrendingUp, ArrowRight } from 'lucide-react';
+import { Building2, Users, Package, TrendingUp, ArrowRight, Info } from 'lucide-react';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Navigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
+import TenantDetailModal from './components/TenantDetailModal';
 
 const AdminPanelDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isSuperAdmin, isLoading: loadingSuperAdmin } = useIsSuperAdmin();
+  const [selectedTenant, setSelectedTenant] = useState<TenantWithStats | null>(null);
   
   // Fetch global stats
   const { data: stats, isLoading: loadingStats } = useAdminStats();
@@ -105,7 +107,11 @@ const AdminPanelDashboard: React.FC = () => {
                 </div>
               ) : (
                 tenants.map((tenant) => (
-                  <Card key={tenant.id} className="hover:shadow-md transition-shadow">
+                  <Card 
+                    key={tenant.id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => setSelectedTenant(tenant)}
+                  >
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
@@ -151,7 +157,10 @@ const AdminPanelDashboard: React.FC = () => {
                           </Badge>
 
                           <Button
-                            onClick={() => handleEnterTenant(tenant.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEnterTenant(tenant.id);
+                            }}
                             variant="default"
                             size="sm"
                             className="gap-2"
@@ -169,6 +178,13 @@ const AdminPanelDashboard: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Modal de Detalhes */}
+      <TenantDetailModal 
+        tenant={selectedTenant}
+        open={!!selectedTenant}
+        onOpenChange={(open) => !open && setSelectedTenant(null)}
+      />
     </div>
   );
 };
