@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -50,9 +50,15 @@ const UserRow = ({
   const [expirationDate, setExpirationDate] = useState<Date | null>(
     user.access_expires_at ? new Date(user.access_expires_at) : null
   );
+  
   const { data: suspensionHistory } = useUserSuspensionHistory(user.id);
   const { data: authInfo } = useUserAuthInfo(user.id);
   const { data: lastActivity } = useUserLastActivity(user.id);
+
+  // Reset expiration date when user is reactivated or when user prop changes
+  useEffect(() => {
+    setExpirationDate(user.access_expires_at ? new Date(user.access_expires_at) : null);
+  }, [user.access_expires_at, user.is_suspended]);
 
   const hasNeverLoggedIn = !authInfo?.lastLogin;
 
