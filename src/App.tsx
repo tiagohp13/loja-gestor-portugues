@@ -86,6 +86,9 @@ import DataManagement from './pages/admin/DataManagement';
 import ClientTagsManagement from './pages/admin/ClientTagsManagement';
 import TenantManagement from './pages/admin/TenantManagement';
 import AdminPanelDashboard from './pages/admin/AdminPanelDashboard';
+import UsersManagement from './pages/admin/UsersManagement';
+import SubscriptionsManagement from './pages/admin/SubscriptionsManagement';
+import AdminSettings from './pages/admin/AdminSettings';
 import AdminRoute from './components/layouts/AdminRoute';
 
 // Requisições
@@ -155,10 +158,7 @@ function App() {
                       path="/admin-panel/users" 
                       element={
                         <AdminRoute>
-                          <div className="p-8">
-                            <h1 className="text-2xl font-bold">Gestão de Utilizadores</h1>
-                            <p className="text-muted-foreground">Em desenvolvimento</p>
-                          </div>
+                          <UsersManagement />
                         </AdminRoute>
                       } 
                     />
@@ -166,10 +166,7 @@ function App() {
                       path="/admin-panel/subscriptions" 
                       element={
                         <AdminRoute>
-                          <div className="p-8">
-                            <h1 className="text-2xl font-bold">Gestão de Subscrições</h1>
-                            <p className="text-muted-foreground">Em desenvolvimento</p>
-                          </div>
+                          <SubscriptionsManagement />
                         </AdminRoute>
                       } 
                     />
@@ -177,10 +174,7 @@ function App() {
                       path="/admin-panel/settings" 
                       element={
                         <AdminRoute>
-                          <div className="p-8">
-                            <h1 className="text-2xl font-bold">Configurações do Sistema</h1>
-                            <p className="text-muted-foreground">Em desenvolvimento</p>
-                          </div>
+                          <AdminSettings />
                         </AdminRoute>
                       } 
                     />
