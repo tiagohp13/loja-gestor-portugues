@@ -18,7 +18,6 @@ export interface CreateOrganizationData {
   subscriptionStartsAt: string;
   subscriptionExpiresAt?: string;
   notes?: string;
-  isSuperAdminTenant?: boolean;
   taxId?: string;
   phone?: string;
   website?: string;

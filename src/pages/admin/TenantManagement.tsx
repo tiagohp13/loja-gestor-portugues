@@ -86,7 +86,6 @@ const TenantManagement: React.FC = () => {
     subscriptionStartsAt: new Date().toISOString().split('T')[0],
     subscriptionExpiresAt: undefined,
     notes: '',
-    isSuperAdminTenant: false,
     taxId: '',
     phone: '',
     website: '',
@@ -114,7 +113,7 @@ const TenantManagement: React.FC = () => {
   };
 
   const getMaxUsers = (plan: string): number | null => {
-    return formData.isSuperAdminTenant ? null : PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS]?.maxUsers || null;
+    return PLAN_LIMITS[plan as keyof typeof PLAN_LIMITS]?.maxUsers || null;
   };
 
   const getRemainingSlots = (): number | null => {
@@ -129,7 +128,7 @@ const TenantManagement: React.FC = () => {
   };
 
   const showUsersSection = (): boolean => {
-    return formData.subscriptionPlan !== 'free' || formData.isSuperAdminTenant;
+    return formData.subscriptionPlan !== 'free';
   };
 
   const addAdditionalUser = () => {
@@ -175,7 +174,7 @@ const TenantManagement: React.FC = () => {
     }
 
     // Validar NIF
-    const needsTaxId = (formData.subscriptionPlan === 'basic' || formData.subscriptionPlan === 'premium') && !formData.isSuperAdminTenant;
+    const needsTaxId = (formData.subscriptionPlan === 'basic' || formData.subscriptionPlan === 'premium');
     if (needsTaxId && !formData.taxId?.trim()) {
       toast.error('NIF é obrigatório para planos Basic e Premium');
       return;
@@ -222,8 +221,8 @@ const TenantManagement: React.FC = () => {
         subscriptionPlan: 'free',
         subscriptionStatus: 'active',
         subscriptionStartsAt: new Date().toISOString().split('T')[0],
+        subscriptionExpiresAt: undefined,
         notes: '',
-        isSuperAdminTenant: false,
         taxId: '',
         phone: '',
         website: '',
@@ -344,7 +343,7 @@ const TenantManagement: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="taxId">
-                    NIF {(formData.subscriptionPlan === 'basic' || formData.subscriptionPlan === 'premium') && !formData.isSuperAdminTenant && '*'}
+                    NIF {(formData.subscriptionPlan === 'basic' || formData.subscriptionPlan === 'premium') && '*'}
                   </Label>
                   <Input
                     id="taxId"
@@ -407,11 +406,10 @@ const TenantManagement: React.FC = () => {
                     onValueChange={(value) => {
                       setFormData({ ...formData, subscriptionPlan: value as any });
                       // Reset additional users if switching to free
-                      if (value === 'free' && !formData.isSuperAdminTenant) {
+                      if (value === 'free') {
                         setAdditionalUsers([]);
                       }
                     }}
-                    disabled={formData.isSuperAdminTenant}
                   >
                     <SelectTrigger id="subscriptionPlan">
                       <SelectValue />
@@ -511,17 +509,6 @@ const TenantManagement: React.FC = () => {
                     Se não for preenchida, a subscrição será por tempo ilimitado
                   </p>
                 </div>
-              </div>
-
-              <div className="flex items-center space-x-2 p-3 bg-muted/50 rounded-lg">
-                <Checkbox
-                  id="isSuperAdminTenant"
-                  checked={formData.isSuperAdminTenant}
-                  onCheckedChange={(checked) => setFormData({ ...formData, isSuperAdminTenant: checked as boolean })}
-                />
-                <Label htmlFor="isSuperAdminTenant" className="cursor-pointer">
-                  Tenant Interno (Unlimited) - apenas super admin
-                </Label>
               </div>
             </div>
 
