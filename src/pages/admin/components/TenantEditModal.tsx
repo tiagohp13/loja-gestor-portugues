@@ -13,10 +13,13 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Settings, Save } from 'lucide-react';
+import { Settings, Save, Users, Shield, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { useTenantUsers } from '@/hooks/admin/useTenantUsers';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface TenantEditData {
   id: string;
@@ -65,16 +68,38 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
     industry_sector: '',
     status: 'active',
   });
+  
+  const { data: tenantUsers = [], isLoading: isLoadingUsers } = useTenantUsers(tenant?.id || null);
+  const [userRoleChanges, setUserRoleChanges] = useState<Record<string, 'admin' | 'editor' | 'viewer'>>({});
 
   useEffect(() => {
     if (tenant) {
       setFormData(tenant);
+      setUserRoleChanges({});
     }
   }, [tenant]);
 
   const validateNIF = (nif: string): boolean => {
     if (!nif) return true;
     return /^\d{9}$/.test(nif);
+  };
+
+  const handleUserRoleChange = (userId: string, newRole: 'admin' | 'editor' | 'viewer') => {
+    setUserRoleChanges(prev => ({
+      ...prev,
+      [userId]: newRole
+    }));
+  };
+
+  const getEffectiveRole = (userId: string, currentRole: string) => {
+    return userRoleChanges[userId] || currentRole;
+  };
+
+  const hasAtLeastOneAdmin = () => {
+    const effectiveRoles = tenantUsers.map(user => 
+      getEffectiveRole(user.user_id, user.role)
+    );
+    return effectiveRoles.includes('admin');
   };
 
   const handleSubmit = async () => {
@@ -88,10 +113,16 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
       return;
     }
 
+    if (!hasAtLeastOneAdmin()) {
+      toast.error('Tem de haver pelo menos um administrador na organização');
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      const { error } = await supabase
+      // Update tenant info
+      const { error: tenantError } = await supabase
         .from('tenants')
         .update({
           name: formData.name,
@@ -103,11 +134,25 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
         })
         .eq('id', formData.id);
 
-      if (error) throw error;
+      if (tenantError) throw tenantError;
+
+      // Update user roles if there are changes
+      if (Object.keys(userRoleChanges).length > 0) {
+        for (const [userId, newRole] of Object.entries(userRoleChanges)) {
+          const { error: roleError } = await supabase
+            .from('tenant_users')
+            .update({ role: newRole })
+            .eq('tenant_id', formData.id)
+            .eq('user_id', userId);
+
+          if (roleError) throw roleError;
+        }
+      }
 
       toast.success('Organização atualizada com sucesso');
       queryClient.invalidateQueries({ queryKey: ['all-tenants'] });
       queryClient.invalidateQueries({ queryKey: ['admin-all-tenants'] });
+      queryClient.invalidateQueries({ queryKey: ['tenant-users'] });
       onOpenChange(false);
     } catch (error: any) {
       console.error('Error updating tenant:', error);
@@ -229,6 +274,92 @@ const TenantEditModal: React.FC<TenantEditModalProps> = ({
                 </Select>
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Utilizadores da Organização */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-sm font-medium text-muted-foreground">Utilizadores da Organização</h3>
+              {!hasAtLeastOneAdmin() && (
+                <Alert variant="destructive" className="py-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs">
+                    Tem de haver pelo menos um administrador
+                  </AlertDescription>
+                </Alert>
+              )}
+            </div>
+
+            {isLoadingUsers ? (
+              <div className="text-sm text-muted-foreground">A carregar utilizadores...</div>
+            ) : tenantUsers.length === 0 ? (
+              <div className="text-sm text-muted-foreground">Nenhum utilizador encontrado</div>
+            ) : (
+              <div className="space-y-3">
+                {tenantUsers.map((user) => {
+                  const effectiveRole = getEffectiveRole(user.user_id, user.role);
+                  const isChanged = userRoleChanges[user.user_id] !== undefined;
+                  
+                  return (
+                    <div
+                      key={user.user_id}
+                      className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        isChanged ? 'bg-primary/5 border-primary/20' : 'bg-card'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <div className="font-medium text-sm">
+                            {user.name || 'Sem nome'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {user.email}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <Select
+                        value={effectiveRole}
+                        onValueChange={(value: 'admin' | 'editor' | 'viewer') => 
+                          handleUserRoleChange(user.user_id, value)
+                        }
+                      >
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="admin">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-3 w-3" />
+                              Admin
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="editor">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-3 w-3" />
+                              Editor
+                            </div>
+                          </SelectItem>
+                          <SelectItem value="viewer">
+                            <div className="flex items-center gap-2">
+                              <Shield className="h-3 w-3" />
+                              Viewer
+                            </div>
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
 
