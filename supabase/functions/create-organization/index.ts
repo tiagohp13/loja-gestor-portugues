@@ -22,7 +22,6 @@ interface CreateOrganizationRequest {
   subscriptionStartsAt: string;
   subscriptionExpiresAt?: string;
   notes?: string;
-  isSuperAdminTenant?: boolean;
   taxId?: string;
   phone?: string;
   website?: string;
@@ -49,7 +48,6 @@ serve(async (req) => {
       subscriptionStartsAt,
       subscriptionExpiresAt,
       notes,
-      isSuperAdminTenant = false,
       taxId,
       phone,
       website,
@@ -65,7 +63,7 @@ serve(async (req) => {
     }
 
     // Validar NIF para planos Basic e Premium
-    const needsTaxId = (subscriptionPlan === 'basic' || subscriptionPlan === 'premium') && !isSuperAdminTenant;
+    const needsTaxId = (subscriptionPlan === 'basic' || subscriptionPlan === 'premium');
     if (needsTaxId && !taxId) {
       throw new Error('NIF é obrigatório para planos Basic e Premium');
     }
@@ -86,7 +84,7 @@ serve(async (req) => {
 
     // Validar número de utilizadores
     const totalUsers = 1 + additionalUsers.length; // +1 para o admin principal
-    if (!isSuperAdminTenant && limits.maxUsers && totalUsers > limits.maxUsers) {
+    if (limits.maxUsers && totalUsers > limits.maxUsers) {
       throw new Error(`Limite de utilizadores excedido. Plano ${subscriptionPlan} permite no máximo ${limits.maxUsers} utilizadores`);
     }
 
@@ -117,8 +115,7 @@ serve(async (req) => {
         website: website || null,
         industry_sector: industrySector || null,
         settings: {
-          notes: notes || null,
-          is_superadmin_tenant: isSuperAdminTenant
+          notes: notes || null
         }
       })
       .select()
@@ -136,10 +133,10 @@ serve(async (req) => {
       .from('tenant_subscriptions')
       .insert({
         tenant_id: tenant.id,
-        plan_name: isSuperAdminTenant ? 'unlimited' : subscriptionPlan,
+        plan_name: subscriptionPlan,
         status: subscriptionStatus,
-        max_users: isSuperAdminTenant ? null : limits.maxUsers,
-        max_products: isSuperAdminTenant ? null : limits.maxProducts,
+        max_users: limits.maxUsers,
+        max_products: limits.maxProducts,
         expires_at: subscriptionExpiresAt || null,
         created_at: subscriptionStartsAt
       });
