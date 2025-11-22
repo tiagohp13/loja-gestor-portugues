@@ -16,6 +16,7 @@ export interface CreateOrganizationData {
   subscriptionPlan: 'free' | 'basic' | 'premium' | 'unlimited';
   subscriptionStatus: 'active' | 'suspended' | 'cancelled';
   subscriptionStartsAt: string;
+  subscriptionExpiresAt?: string;
   notes?: string;
   isSuperAdminTenant?: boolean;
   taxId?: string;
