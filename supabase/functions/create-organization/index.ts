@@ -20,6 +20,7 @@ interface CreateOrganizationRequest {
   subscriptionPlan: 'free' | 'basic' | 'premium' | 'unlimited';
   subscriptionStatus: 'active' | 'suspended' | 'cancelled';
   subscriptionStartsAt: string;
+  subscriptionExpiresAt?: string;
   notes?: string;
   isSuperAdminTenant?: boolean;
   taxId?: string;
@@ -46,6 +47,7 @@ serve(async (req) => {
       subscriptionPlan,
       subscriptionStatus,
       subscriptionStartsAt,
+      subscriptionExpiresAt,
       notes,
       isSuperAdminTenant = false,
       taxId,
@@ -138,6 +140,7 @@ serve(async (req) => {
         status: subscriptionStatus,
         max_users: isSuperAdminTenant ? null : limits.maxUsers,
         max_products: isSuperAdminTenant ? null : limits.maxProducts,
+        expires_at: subscriptionExpiresAt || null,
         created_at: subscriptionStartsAt
       });
 

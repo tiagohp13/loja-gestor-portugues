@@ -8,7 +8,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Settings, Plus, Trash2, UserPlus } from 'lucide-react';
+import { Building2, Users, Settings, Plus, Trash2, UserPlus, CalendarIcon } from 'lucide-react';
 import { TenantInfo } from '@/components/tenant/TenantInfo';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,6 +22,11 @@ import { toast } from 'sonner';
 import TenantDetailModal from './components/TenantDetailModal';
 import TenantEditModal from './components/TenantEditModal';
 import { useAdminTenants, TenantWithStats } from '@/hooks/admin/useAdminTenants';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { pt } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 
 interface Tenant {
   id: string;
@@ -77,6 +82,7 @@ const TenantManagement: React.FC = () => {
     subscriptionPlan: 'free',
     subscriptionStatus: 'active',
     subscriptionStartsAt: new Date().toISOString().split('T')[0],
+    subscriptionExpiresAt: undefined,
     notes: '',
     isSuperAdminTenant: false,
     taxId: '',
@@ -433,12 +439,90 @@ const TenantManagement: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="subscriptionStartsAt">Data de Início *</Label>
-                  <Input
-                    id="subscriptionStartsAt"
-                    type="date"
-                    value={formData.subscriptionStartsAt}
-                    onChange={(e) => setFormData({ ...formData, subscriptionStartsAt: e.target.value })}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.subscriptionStartsAt && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.subscriptionStartsAt ? (
+                          format(new Date(formData.subscriptionStartsAt), "PPP", { locale: pt })
+                        ) : (
+                          <span>Selecione a data</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.subscriptionStartsAt ? new Date(formData.subscriptionStartsAt) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setFormData({ 
+                              ...formData, 
+                              subscriptionStartsAt: format(date, 'yyyy-MM-dd')
+                            });
+                          }
+                        }}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subscriptionExpiresAt">Data de Fim</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !formData.subscriptionExpiresAt && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {formData.subscriptionExpiresAt ? (
+                          format(new Date(formData.subscriptionExpiresAt), "PPP", { locale: pt })
+                        ) : (
+                          <span>Ilimitado</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={formData.subscriptionExpiresAt ? new Date(formData.subscriptionExpiresAt) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            setFormData({ 
+                              ...formData, 
+                              subscriptionExpiresAt: format(date, 'yyyy-MM-dd')
+                            });
+                          } else {
+                            setFormData({ 
+                              ...formData, 
+                              subscriptionExpiresAt: undefined
+                            });
+                          }
+                        }}
+                        disabled={(date) => {
+                          const startDate = formData.subscriptionStartsAt ? new Date(formData.subscriptionStartsAt) : new Date();
+                          return date < startDate;
+                        }}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">
+                    Se não for preenchida, a subscrição será por tempo ilimitado
+                  </p>
                 </div>
               </div>
 
