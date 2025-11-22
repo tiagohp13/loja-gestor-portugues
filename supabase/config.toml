@@ -1,6 +1,9 @@
 
 project_id = "ptkqosrcopnsclgyrjqh"
 
+[functions.create-organization]
+verify_jwt = true
+
 [api]
   # Enable additional logging for RLS and SQL errors
   debug_logging = true
@@ -10,4 +13,4 @@ project_id = "ptkqosrcopnsclgyrjqh"
 [db]
   extra_search_path = ["public", "extensions"]
   # Recommended setting to force explicit schema qualification
-  default_search_path_schema = "public" 
+  default_search_path_schema = "public"

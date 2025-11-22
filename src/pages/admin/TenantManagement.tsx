@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
+import { useCreateOrganization, CreateOrganizationData } from '@/hooks/admin/useCreateOrganization';
 import { Navigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +14,9 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from 'sonner';
 
 interface Tenant {
@@ -25,75 +29,68 @@ interface Tenant {
 
 const TenantManagement: React.FC = () => {
   const { isSuperAdmin, isLoading: superAdminLoading } = useIsSuperAdmin();
-  const [selectedTenant, setSelectedTenant] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [newTenantName, setNewTenantName] = useState('');
-  const [newTenantSlug, setNewTenantSlug] = useState('');
-  const queryClient = useQueryClient();
+  const createOrganization = useCreateOrganization();
+
+  // Form state
+  const [formData, setFormData] = useState<CreateOrganizationData>({
+    tenantName: '',
+    adminEmail: '',
+    subscriptionPlan: 'free',
+    subscriptionStatus: 'active',
+    subscriptionStartsAt: new Date().toISOString().split('T')[0],
+    notes: '',
+    isSuperAdminTenant: false
+  });
 
   const { data: tenants = [], isLoading } = useQuery({
     queryKey: ['all-tenants'],
     queryFn: async () => {
+      console.log('Fetching all tenants...');
       const { data, error } = await supabase
         .from('tenants')
         .select('*')
+        .eq('status', 'active')
         .order('name');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching tenants:', error);
+        throw error;
+      }
+      
+      console.log('Tenants fetched:', data);
       return data as Tenant[];
     },
     enabled: isSuperAdmin,
   });
 
-  const createTenantMutation = useMutation({
-    mutationFn: async () => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .insert({
-          name: newTenantName,
-          slug: newTenantSlug,
-          status: 'active',
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['all-tenants'] });
-      toast.success('Organização criada com sucesso');
-      setShowCreateDialog(false);
-      setNewTenantName('');
-      setNewTenantSlug('');
-    },
-    onError: (error) => {
-      console.error('Error creating tenant:', error);
-      toast.error('Erro ao criar organização');
-    },
-  });
-
-  const handleCreateTenant = () => {
-    if (!newTenantName.trim() || !newTenantSlug.trim()) {
-      toast.error('Nome e slug são obrigatórios');
+  const handleSubmit = async () => {
+    // Validar campos obrigatórios
+    if (!formData.tenantName.trim()) {
+      toast.error('Nome da organização é obrigatório');
       return;
     }
-    createTenantMutation.mutate();
-  };
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '');
-  };
+    if (!formData.adminEmail.trim() || !formData.adminEmail.includes('@')) {
+      toast.error('Email do administrador inválido');
+      return;
+    }
 
-  const handleNameChange = (name: string) => {
-    setNewTenantName(name);
-    if (!newTenantSlug || newTenantSlug === generateSlug(newTenantName)) {
-      setNewTenantSlug(generateSlug(name));
+    try {
+      await createOrganization.mutateAsync(formData);
+      setShowCreateDialog(false);
+      // Resetar form
+      setFormData({
+        tenantName: '',
+        adminEmail: '',
+        subscriptionPlan: 'free',
+        subscriptionStatus: 'active',
+        subscriptionStartsAt: new Date().toISOString().split('T')[0],
+        notes: '',
+        isSuperAdminTenant: false
+      });
+    } catch (error) {
+      console.error('Failed to create organization:', error);
     }
   };
 
@@ -142,6 +139,10 @@ const TenantManagement: React.FC = () => {
         <CardContent>
           {isLoading ? (
             <LoadingSpinner />
+          ) : tenants.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              Nenhuma organização encontrada. Crie a primeira organização.
+            </div>
           ) : (
             <div className="space-y-4">
               {tenants.map((tenant) => (
@@ -176,52 +177,149 @@ const TenantManagement: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Create Tenant Dialog */}
+      {/* Create Organization Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nova Organização</DialogTitle>
             <DialogDescription>
-              Criar uma nova organização no sistema
+              Criar uma nova organização no sistema NEXORA
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nome da Organização</Label>
-              <Input
-                id="name"
-                value={newTenantName}
-                onChange={(e) => handleNameChange(e.target.value)}
-                placeholder="Ex: Empresa ABC"
-              />
+          <div className="space-y-6">
+            {/* Campos Obrigatórios */}
+            <div className="space-y-4">
+              <h3 className="font-semibold text-sm">Campos Obrigatórios</h3>
+              
+              <div>
+                <Label htmlFor="name">Nome da Organização *</Label>
+                <Input
+                  id="name"
+                  value={formData.tenantName}
+                  onChange={(e) => setFormData({ ...formData, tenantName: e.target.value })}
+                  placeholder="Ex: Empresa ABC"
+                />
+              </div>
+              
+              <div>
+                <Label htmlFor="email">Email do Administrador *</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={formData.adminEmail}
+                  onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
+                  placeholder="admin@empresa.com"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Se o utilizador não existir, será criado automaticamente e receberá um email com password temporária.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="plan">Plano de Subscrição *</Label>
+                  <Select
+                    value={formData.subscriptionPlan}
+                    onValueChange={(value: any) => setFormData({ ...formData, subscriptionPlan: value })}
+                    disabled={formData.isSuperAdminTenant}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="free">Free (1 user, 5 produtos)</SelectItem>
+                      <SelectItem value="basic">Basic (3 users, ilimitado)</SelectItem>
+                      <SelectItem value="premium">Premium (10 users, ilimitado)</SelectItem>
+                      <SelectItem value="unlimited">Unlimited (ilimitado)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="status">Estado da Subscrição *</Label>
+                  <Select
+                    value={formData.subscriptionStatus}
+                    onValueChange={(value: any) => setFormData({ ...formData, subscriptionStatus: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Ativa</SelectItem>
+                      <SelectItem value="suspended">Suspensa</SelectItem>
+                      <SelectItem value="cancelled">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="startDate">Data de Início da Subscrição *</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={formData.subscriptionStartsAt}
+                  onChange={(e) => setFormData({ ...formData, subscriptionStartsAt: e.target.value })}
+                />
+              </div>
             </div>
-            
-            <div>
-              <Label htmlFor="slug">Slug (Identificador único)</Label>
-              <Input
-                id="slug"
-                value={newTenantSlug}
-                onChange={(e) => setNewTenantSlug(e.target.value)}
-                placeholder="Ex: empresa-abc"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Usado em URLs. Apenas letras minúsculas, números e hífens.
+
+            {/* Campos Opcionais */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-sm">Campos Opcionais</h3>
+              
+              <div>
+                <Label htmlFor="notes">Notas Internas</Label>
+                <Textarea
+                  id="notes"
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Informações adicionais sobre esta organização..."
+                  rows={3}
+                />
+              </div>
+            </div>
+
+            {/* Campos Avançados */}
+            <div className="space-y-4 pt-4 border-t">
+              <h3 className="font-semibold text-sm">Configurações Avançadas (Super Admin)</h3>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="internal"
+                  checked={formData.isSuperAdminTenant}
+                  onCheckedChange={(checked) => 
+                    setFormData({ 
+                      ...formData, 
+                      isSuperAdminTenant: checked as boolean,
+                      subscriptionPlan: checked ? 'unlimited' : 'free'
+                    })
+                  }
+                />
+                <Label htmlFor="internal" className="font-normal cursor-pointer">
+                  Tenant Interno (Unlimited)
+                </Label>
+              </div>
+              <p className="text-xs text-muted-foreground ml-6">
+                Se marcado, força o plano para unlimited ignorando a seleção acima. Usar apenas para tenants internos de teste ou demonstração.
               </p>
             </div>
 
-            <div className="flex gap-2 justify-end">
+            {/* Actions */}
+            <div className="flex gap-2 justify-end pt-4 border-t">
               <Button
                 variant="outline"
                 onClick={() => setShowCreateDialog(false)}
+                disabled={createOrganization.isPending}
               >
                 Cancelar
               </Button>
               <Button
-                onClick={handleCreateTenant}
-                disabled={createTenantMutation.isPending}
+                onClick={handleSubmit}
+                disabled={createOrganization.isPending}
               >
-                {createTenantMutation.isPending ? 'Criando...' : 'Criar Organização'}
+                {createOrganization.isPending ? 'Criando...' : 'Criar Organização'}
               </Button>
             </div>
           </div>

@@ -204,18 +204,23 @@ const AppSidebar: React.FC = () => {
             </SidebarGroupContent>
           </SidebarGroup>}
 
-        {/* Painel Administrativo NEXORA - apenas para super admins */}
-        {isSuperAdmin && <SidebarGroup className="mt-auto pt-4 border-t">
+        {/* Painel Administrativo NEXORA - apenas para super admins - FIXO NO FUNDO */}
+        {isSuperAdmin && <SidebarGroup className="mt-auto pt-4 border-t bg-muted/30">
             <SidebarGroupContent>
               <SidebarMenu>
                 <SidebarMenuItem>
-          <SidebarMenuButton onClick={() => handleNavigation('/admin-panel/dashboard')} isActive={location.pathname.includes('/admin-panel')} tooltip="Painel Administrativo NEXORA" className="font-semibold h-auto py-3">
-            <div className="flex flex-col items-center gap-1 w-full">
-              <Crown className="w-5 h-5 text-yellow-500" />
-              <span className="leading-tight text-center">Painel Administrativo</span>
-              <span className="text-xs text-primary leading-tight">NEXORA</span>
-            </div>
-          </SidebarMenuButton>
+                  <SidebarMenuButton 
+                    onClick={() => handleNavigation('/admin-panel/dashboard')} 
+                    isActive={location.pathname.includes('/admin-panel')} 
+                    tooltip="Painel Administrativo NEXORA" 
+                    className="font-semibold h-auto py-3 hover:bg-primary/10"
+                  >
+                    <div className="flex flex-col items-center gap-1 w-full">
+                      <Crown className="w-5 h-5 text-yellow-500" />
+                      <span className="leading-tight text-center">Painel Administrativo</span>
+                      <span className="text-xs text-primary leading-tight font-bold">NEXORA</span>
+                    </div>
+                  </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
