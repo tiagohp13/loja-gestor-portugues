@@ -59,7 +59,7 @@ export const useSuspendUser = () => {
       
       const action = data.suspend ? 'suspenso' : 'reativado';
       const userName = variables.userName || 'Utilizador';
-      toast.success(`${userName} foi ${action} com sucesso`);
+      toast.success(`${userName} foi ${action} com sucesso${!data.suspend ? ' e a validade de acesso foi removida' : ''}`);
 
       // Send email notification if user has email
       if (data.userEmail) {

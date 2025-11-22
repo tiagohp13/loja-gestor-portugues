@@ -79,9 +79,14 @@ Deno.serve(async (req) => {
     console.log(`${suspend ? 'Suspending' : 'Reactivating'} user:`, userId);
 
     // Update user_profiles
+    // When reactivating, also clear access_expires_at
+    const updateData = suspend 
+      ? { is_suspended: suspend }
+      : { is_suspended: suspend, access_expires_at: null };
+    
     const { error: profileError } = await supabaseAdmin
       .from('user_profiles')
-      .update({ is_suspended: suspend })
+      .update(updateData)
       .eq('user_id', userId);
 
     if (profileError) {
