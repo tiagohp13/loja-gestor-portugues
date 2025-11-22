@@ -1,8 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useIsSuperAdmin } from '@/hooks/useIsSuperAdmin';
+import { useAdminStats, useAdminTenants } from '@/hooks/admin';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,81 +11,15 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Navigate } from 'react-router-dom';
 import PageHeader from '@/components/ui/PageHeader';
 
-interface Tenant {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  created_at: string;
-}
-
-interface TenantStats {
-  users: number;
-  products: number;
-  sales: number;
-}
-
 const AdminPanelDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { isSuperAdmin, isLoading: loadingSuperAdmin } = useIsSuperAdmin();
-
-  // Fetch all tenants
-  const { data: tenants, isLoading: loadingTenants } = useQuery({
-    queryKey: ['admin-tenants'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('tenants')
-        .select('*')
-        .eq('status', 'active')
-        .order('name');
-
-      if (error) throw error;
-      return data as Tenant[];
-    },
-    enabled: isSuperAdmin,
-  });
-
-  // Fetch stats for each tenant (simplified for now)
-  const { data: tenantsStats } = useQuery({
-    queryKey: ['admin-tenant-stats'],
-    queryFn: async () => {
-      if (!tenants) return {};
-      
-      const stats: Record<string, TenantStats> = {};
-      
-      for (const tenant of tenants) {
-        // Count users
-        const { count: usersCount } = await supabase
-          .from('tenant_users')
-          .select('*', { count: 'exact', head: true })
-          .eq('tenant_id', tenant.id)
-          .eq('status', 'active');
-
-        // Count products
-        const { count: productsCount } = await supabase
-          .from('products')
-          .select('*', { count: 'exact', head: true })
-          .eq('tenant_id', tenant.id)
-          .is('deleted_at', null);
-
-        // Sum sales (simplified)
-        const { data: exits } = await supabase
-          .from('stock_exits')
-          .select('discount')
-          .eq('tenant_id', tenant.id)
-          .is('deleted_at', null);
-
-        stats[tenant.id] = {
-          users: usersCount || 0,
-          products: productsCount || 0,
-          sales: exits?.length || 0,
-        };
-      }
-      
-      return stats;
-    },
-    enabled: !!tenants && tenants.length > 0,
-  });
+  
+  // Fetch global stats
+  const { data: stats, isLoading: loadingStats } = useAdminStats();
+  
+  // Fetch all tenants with their stats
+  const { data: tenants = [], isLoading: loadingTenants } = useAdminTenants();
 
   const handleEnterTenant = async (tenantId: string) => {
     try {
@@ -122,8 +56,10 @@ const AdminPanelDashboard: React.FC = () => {
             <Building2 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{tenants?.length || 0}</div>
-            <p className="text-xs text-muted-foreground">Clientes ativos</p>
+            <div className="text-2xl font-bold">{loadingStats ? '...' : stats?.activeTenants || 0}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats?.totalTenants || 0} total{stats?.totalTenants !== 1 ? 's' : ''}
+            </p>
           </CardContent>
         </Card>
 
@@ -133,9 +69,7 @@ const AdminPanelDashboard: React.FC = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {tenantsStats ? Object.values(tenantsStats).reduce((sum, t) => sum + t.users, 0) : 0}
-            </div>
+            <div className="text-2xl font-bold">{loadingStats ? '...' : stats?.totalUsers || 0}</div>
             <p className="text-xs text-muted-foreground">Em todas as organizações</p>
           </CardContent>
         </Card>
@@ -146,9 +80,7 @@ const AdminPanelDashboard: React.FC = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {tenantsStats ? Object.values(tenantsStats).reduce((sum, t) => sum + t.products, 0) : 0}
-            </div>
+            <div className="text-2xl font-bold">{loadingStats ? '...' : stats?.totalProducts || 0}</div>
             <p className="text-xs text-muted-foreground">Em todas as organizações</p>
           </CardContent>
         </Card>
@@ -167,10 +99,12 @@ const AdminPanelDashboard: React.FC = () => {
             <LoadingSpinner />
           ) : (
             <div className="space-y-4">
-              {tenants?.map((tenant) => {
-                const stats = tenantsStats?.[tenant.id];
-                
-                return (
+              {tenants.length === 0 && !loadingTenants ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhuma organização encontrada
+                </div>
+              ) : (
+                tenants.map((tenant) => (
                   <Card key={tenant.id} className="hover:shadow-md transition-shadow">
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
@@ -181,28 +115,38 @@ const AdminPanelDashboard: React.FC = () => {
                           <div>
                             <h3 className="font-semibold text-lg">{tenant.name}</h3>
                             <p className="text-sm text-muted-foreground">@{tenant.slug}</p>
+                            {tenant.subscription && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Plano: {tenant.subscription.plan_name}
+                              </p>
+                            )}
                           </div>
                         </div>
 
                         <div className="flex items-center gap-6">
-                          {stats && (
-                            <div className="flex gap-4 text-sm">
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4 text-muted-foreground" />
-                                <span>{stats.users}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Package className="h-4 w-4 text-muted-foreground" />
-                                <span>{stats.products}</span>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                                <span>{stats.sales}</span>
-                              </div>
+                          <div className="flex gap-4 text-sm">
+                            <div className="flex items-center gap-1" title="Utilizadores">
+                              <Users className="h-4 w-4 text-muted-foreground" />
+                              <span>{tenant.stats.users}</span>
                             </div>
-                          )}
+                            <div className="flex items-center gap-1" title="Produtos">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                              <span>{tenant.stats.products}</span>
+                            </div>
+                            <div className="flex items-center gap-1" title="Vendas">
+                              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                              <span>{tenant.stats.sales}</span>
+                            </div>
+                          </div>
                           
-                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                          <Badge 
+                            variant="outline" 
+                            className={
+                              tenant.status === 'active' 
+                                ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
+                                : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-400 dark:border-gray-800'
+                            }
+                          >
                             {tenant.status}
                           </Badge>
 
@@ -219,8 +163,8 @@ const AdminPanelDashboard: React.FC = () => {
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })}
+                ))
+              )}
             </div>
           )}
         </CardContent>
