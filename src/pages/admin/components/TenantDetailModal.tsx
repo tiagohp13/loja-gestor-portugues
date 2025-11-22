@@ -9,7 +9,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Building2, Users, Package, TrendingUp, ShoppingCart, Calendar, Phone, Globe, Briefcase, FileText } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Building2, Users, Package, TrendingUp, ShoppingCart, Calendar, Phone, Globe, Briefcase, FileText, CreditCard, Settings } from 'lucide-react';
 
 interface TenantStats {
   users: number;
@@ -67,32 +68,99 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-primary" />
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                <Building2 className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <DialogTitle className="text-2xl">{tenant.name}</DialogTitle>
+                <DialogDescription>@{tenant.slug}</DialogDescription>
+              </div>
+              <Badge 
+                variant="outline" 
+                className={
+                  tenant.status === 'active' 
+                    ? 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
+                    : 'bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-400 dark:border-gray-800'
+                }
+              >
+                {tenant.status}
+              </Badge>
             </div>
-            <div>
-              <DialogTitle className="text-2xl">{tenant.name}</DialogTitle>
-              <DialogDescription>@{tenant.slug}</DialogDescription>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Gerir
+              </Button>
             </div>
-            <Badge 
-              variant="outline" 
-              className={
-                tenant.status === 'active' 
-                  ? 'ml-auto bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400 dark:border-green-800'
-                  : 'ml-auto bg-gray-50 text-gray-700 border-gray-200 dark:bg-gray-950 dark:text-gray-400 dark:border-gray-800'
-              }
-            >
-              {tenant.status}
-            </Badge>
           </div>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Informação Básica */}
+          {/* Subscrição - PRIMEIRO */}
+          {tenant.subscription && (
+            <>
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <CreditCard className="h-5 w-5" />
+                        Plano de Subscrição
+                      </CardTitle>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Informação sobre o plano e limites
+                      </p>
+                    </div>
+                    <Button variant="default" size="sm">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Renovar Plano
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                      <p className="text-xs text-muted-foreground">Plano</p>
+                      <p className="text-sm font-medium capitalize">{tenant.subscription.plan_name}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Estado</p>
+                      <Badge 
+                        variant="outline" 
+                        className={
+                          tenant.subscription.status === 'active'
+                            ? 'mt-1 bg-green-50 text-green-700 border-green-200 dark:bg-green-950 dark:text-green-400'
+                            : 'mt-1'
+                        }
+                      >
+                        {tenant.subscription.status}
+                      </Badge>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Limite de Utilizadores</p>
+                      <p className="text-sm font-medium">
+                        {tenant.subscription.max_users === null ? 'Ilimitado' : `${tenant.stats.users} / ${tenant.subscription.max_users}`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">Limite de Produtos</p>
+                      <p className="text-sm font-medium">
+                        {tenant.subscription.max_products === null ? 'Ilimitado' : `${tenant.stats.products} / ${tenant.subscription.max_products}`}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Separator />
+            </>
+          )}
+
+          {/* Dados Fiscais e Contacto */}
           <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">Informação Básica</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <h3 className="text-sm font-medium text-muted-foreground mb-3">Dados Fiscais e Contacto</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {tenant.tax_id && (
                 <div className="flex items-start gap-2">
                   <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
@@ -147,40 +215,6 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
           </div>
 
           <Separator />
-
-          {/* Subscrição */}
-          {tenant.subscription && (
-            <>
-              <div>
-                <h3 className="text-sm font-medium text-muted-foreground mb-3">Subscrição</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Plano</p>
-                    <p className="text-sm font-medium capitalize">{tenant.subscription.plan_name}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Estado</p>
-                    <Badge variant="outline" className="mt-1">
-                      {tenant.subscription.status}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Limite de Utilizadores</p>
-                    <p className="text-sm font-medium">
-                      {tenant.subscription.max_users === null ? 'Ilimitado' : tenant.subscription.max_users}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Limite de Produtos</p>
-                    <p className="text-sm font-medium">
-                      {tenant.subscription.max_products === null ? 'Ilimitado' : tenant.subscription.max_products}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <Separator />
-            </>
-          )}
 
           {/* Estatísticas */}
           <div>
