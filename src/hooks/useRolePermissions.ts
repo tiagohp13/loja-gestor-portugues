@@ -15,18 +15,23 @@ export function useRolePermissions() {
     queryFn: async () => {
       if (!user?.id) return null;
       
+      console.log('🔑 useRolePermissions: Carregando role para:', user.email);
+      
       // Usar a função SECURITY DEFINER para obter o role do utilizador
       const { data, error } = await supabase
         .rpc("get_user_role", { _user_id: user.id });
       
       if (error) {
-        console.error("Erro ao obter role:", error);
+        console.error("❌ Erro ao obter role:", error);
         return null;
       }
       
+      console.log('🔑 useRolePermissions: Role obtido:', data || 'viewer');
       return data as "admin" | "editor" | "viewer" | null;
     },
-    staleTime: 10 * 60 * 1000, // Cache por 10 minutos
+    // CRÍTICO: Sem staleTime para garantir recalculo em cada sessão
+    staleTime: 0,
+    gcTime: 0,
   });
 
   /**

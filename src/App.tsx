@@ -90,6 +90,7 @@ import UsersManagement from './pages/admin/UsersManagement';
 import SubscriptionsManagement from './pages/admin/SubscriptionsManagement';
 import AdminSettings from './pages/admin/AdminSettings';
 import AdminRoute from './components/layouts/AdminRoute';
+import SuperAdminRoute from './components/layouts/SuperAdminRoute';
 
 // Requisições
 import RequisicoesList from './pages/requisicoes/RequisicoesList';
@@ -141,41 +142,41 @@ function App() {
                     <Route 
                       path="/admin-panel/dashboard" 
                       element={
-                        <AdminRoute>
+                        <SuperAdminRoute>
                           <AdminPanelDashboard />
-                        </AdminRoute>
+                        </SuperAdminRoute>
                       } 
                     />
                     <Route 
                       path="/admin-panel/tenants" 
                       element={
-                        <AdminRoute>
+                        <SuperAdminRoute>
                           <TenantManagement />
-                        </AdminRoute>
+                        </SuperAdminRoute>
                       } 
                     />
                     <Route 
                       path="/admin-panel/users" 
                       element={
-                        <AdminRoute>
+                        <SuperAdminRoute>
                           <UsersManagement />
-                        </AdminRoute>
+                        </SuperAdminRoute>
                       } 
                     />
                     <Route 
                       path="/admin-panel/subscriptions" 
                       element={
-                        <AdminRoute>
+                        <SuperAdminRoute>
                           <SubscriptionsManagement />
-                        </AdminRoute>
+                        </SuperAdminRoute>
                       } 
                     />
                     <Route 
                       path="/admin-panel/settings" 
                       element={
-                        <AdminRoute>
+                        <SuperAdminRoute>
                           <AdminSettings />
-                        </AdminRoute>
+                        </SuperAdminRoute>
                       } 
                     />
                   </Route>

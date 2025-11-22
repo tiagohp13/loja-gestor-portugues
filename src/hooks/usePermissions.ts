@@ -28,6 +28,14 @@ export const usePermissions = () => {
   const isEditor = accessLevel === 'editor';
   const isViewer = accessLevel === 'viewer';
   
+  console.log('🔐 usePermissions:', {
+    isSuperAdmin,
+    accessLevel,
+    isAdmin,
+    role: rbac.role,
+    tenantRole: tenantRole.role,
+  });
+  
   const canCreate = isAdmin || isEditor;
   const canEdit   = isAdmin || isEditor;
   const canDelete = isAdmin;
