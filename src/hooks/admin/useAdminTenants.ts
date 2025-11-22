@@ -9,6 +9,10 @@ export interface TenantWithStats {
   status: string;
   created_at: string;
   settings: any;
+  tax_id?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  industry_sector?: string | null;
   subscription?: {
     plan_name: string;
     status: string;
@@ -20,6 +24,9 @@ export interface TenantWithStats {
     users: number;
     products: number;
     sales: number;
+    clients: number;
+    orders: number;
+    stockEntries: number;
   };
 }
 
@@ -73,6 +80,27 @@ export const useAdminTenants = () => {
             .eq('tenant_id', tenant.id)
             .is('deleted_at', null);
 
+          // Count clients
+          const { count: clientsCount } = await supabase
+            .from('clients')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenant.id)
+            .is('deleted_at', null);
+
+          // Count orders
+          const { count: ordersCount } = await supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenant.id)
+            .is('deleted_at', null);
+
+          // Count stock entries
+          const { count: entriesCount } = await supabase
+            .from('stock_entries')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenant.id)
+            .is('deleted_at', null);
+
           return {
             ...tenant,
             subscription: subscription || undefined,
@@ -80,6 +108,9 @@ export const useAdminTenants = () => {
               users: usersCount || 0,
               products: productsCount || 0,
               sales: salesCount || 0,
+              clients: clientsCount || 0,
+              orders: ordersCount || 0,
+              stockEntries: entriesCount || 0,
             },
           };
         })
