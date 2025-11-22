@@ -84,6 +84,7 @@ import NotificationsList from './pages/notificacoes/NotificationsList';
 import RoleManagement from './pages/admin/RoleManagement';
 import DataManagement from './pages/admin/DataManagement';
 import ClientTagsManagement from './pages/admin/ClientTagsManagement';
+import TenantManagement from './pages/admin/TenantManagement';
 import AdminRoute from './components/layouts/AdminRoute';
 
 // Requisições
@@ -214,6 +215,14 @@ function App() {
                       element={
                         <AdminRoute>
                           <ClientTagsManagement />
+                        </AdminRoute>
+                      } 
+                    />
+                    <Route 
+                      path="/admin/tenants" 
+                      element={
+                        <AdminRoute>
+                          <TenantManagement />
                         </AdminRoute>
                       } 
                     />
