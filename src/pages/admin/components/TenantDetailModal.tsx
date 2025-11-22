@@ -94,12 +94,12 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
                 {tenant.status}
               </Badge>
             </div>
-            <div className="flex gap-2">
+            {onEdit && (
               <Button variant="outline" size="sm" onClick={onEdit}>
                 <Settings className="h-4 w-4 mr-2" />
                 Gerir
               </Button>
-            </div>
+            )}
           </div>
         </DialogHeader>
 
@@ -109,21 +109,13 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
             <>
               <Card className="border-primary/20 bg-primary/5">
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="flex items-center gap-2">
-                        <CreditCard className="h-5 w-5" />
-                        Plano de Subscrição
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Informação sobre o plano e limites
-                      </p>
-                    </div>
-                    <Button variant="ghost" size="sm" disabled>
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Renovar Plano
-                    </Button>
-                  </div>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Plano de Subscrição
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Informação sobre o plano e limites
+                  </p>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
