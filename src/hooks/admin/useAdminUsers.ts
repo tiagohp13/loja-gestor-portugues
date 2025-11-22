@@ -76,7 +76,15 @@ export const useAdminUsers = () => {
         })
       );
 
-      return usersWithDetails;
+      // Sort: Super admins first, then alphabetically by name
+      return usersWithDetails.sort((a, b) => {
+        // Super admins always come first
+        if (a.is_super_admin && !b.is_super_admin) return -1;
+        if (!a.is_super_admin && b.is_super_admin) return 1;
+        
+        // Within the same group, sort alphabetically by name
+        return (a.name || a.email).localeCompare(b.name || b.email, 'pt-PT');
+      });
     },
     enabled: isSuperAdmin,
     staleTime: 30 * 1000,
