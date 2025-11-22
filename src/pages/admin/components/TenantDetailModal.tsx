@@ -119,7 +119,7 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
                         Informação sobre o plano e limites
                       </p>
                     </div>
-                    <Button variant="default" size="sm">
+                    <Button variant="ghost" size="sm" disabled>
                       <CreditCard className="h-4 w-4 mr-2" />
                       Renovar Plano
                     </Button>
@@ -284,65 +284,6 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
                 ))}
               </div>
             )}
-          </div>
-
-          <Separator />
-
-          {/* Dados Fiscais e Contacto */}
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground mb-3">Dados Fiscais e Contacto</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {tenant.tax_id && (
-                <div className="flex items-start gap-2">
-                  <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">NIF</p>
-                    <p className="text-sm font-medium">{tenant.tax_id}</p>
-                  </div>
-                </div>
-              )}
-              {tenant.phone && (
-                <div className="flex items-start gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Telefone</p>
-                    <p className="text-sm font-medium">{tenant.phone}</p>
-                  </div>
-                </div>
-              )}
-              {tenant.website && (
-                <div className="flex items-start gap-2">
-                  <Globe className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Website</p>
-                    <a 
-                      href={tenant.website} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      {tenant.website}
-                    </a>
-                  </div>
-                </div>
-              )}
-              {tenant.industry_sector && (
-                <div className="flex items-start gap-2">
-                  <Briefcase className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Setor</p>
-                    <p className="text-sm font-medium capitalize">{tenant.industry_sector}</p>
-                  </div>
-                </div>
-              )}
-              <div className="flex items-start gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground mt-0.5" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Data de Criação</p>
-                  <p className="text-sm font-medium">{formatDate(tenant.created_at)}</p>
-                </div>
-              </div>
-            </div>
           </div>
 
           <Separator />
