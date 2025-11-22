@@ -1526,6 +1526,16 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_tenants: {
+        Args: { _user_id?: string }
+        Returns: {
+          is_current: boolean
+          tenant_id: string
+          tenant_name: string
+          tenant_slug: string
+          user_role: Database["public"]["Enums"]["app_role"]
+        }[]
+      }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]
@@ -1601,6 +1611,7 @@ export type Database = {
         Args: { record_id: string; table_name: string }
         Returns: undefined
       }
+      switch_tenant: { Args: { _tenant_id: string }; Returns: boolean }
       table_exists:
         | {
             Args: { schema_name: string; table_name: string }
