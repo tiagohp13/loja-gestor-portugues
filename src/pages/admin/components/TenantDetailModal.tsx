@@ -167,17 +167,24 @@ const TenantDetailModal: React.FC<TenantDetailModalProps> = ({
           <div>
             <h3 className="text-sm font-medium text-muted-foreground mb-3">Dados Fiscais e Contacto</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {tenantUsers.length > 0 && tenantUsers[0].role === 'admin' && (
-                <div className="flex items-start gap-2">
-                  <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-xs text-muted-foreground">Administrador</p>
-                    <p className="text-sm font-medium">
-                      {tenantUsers[0].name || tenantUsers[0].email}
-                    </p>
+              {(() => {
+                // Encontrar o administrador correto: priorizar super_admin, depois admin que não seja "Convidado"
+                const admin = tenantUsers.find(u => u.role === 'super_admin') || 
+                              tenantUsers.find(u => u.role === 'admin' && u.name !== 'Convidado') ||
+                              tenantUsers.find(u => u.role === 'admin');
+                
+                return admin ? (
+                  <div className="flex items-start gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-xs text-muted-foreground">Administrador</p>
+                      <p className="text-sm font-medium">
+                        {admin.name || admin.email}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                ) : null;
+              })()}
               {tenant.phone && (
                 <div className="flex items-start gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground mt-0.5" />
