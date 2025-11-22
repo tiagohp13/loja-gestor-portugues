@@ -19,8 +19,6 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { toast } from "sonner";
 import UserProfileModal from '@/components/profile/UserProfileModal';
 import GlobalSearch from './GlobalSearch';
-import { TenantSwitcher } from '@/components/tenant/TenantSwitcher';
-import { ContextSwitcher } from './ContextSwitcher';
 import { Badge } from '@/components/ui/badge';
 
 /**
@@ -31,7 +29,6 @@ const AppSidebar: React.FC = () => {
   const { user, logout } = useAuth();
   const { data: profile } = useUserProfileQuery();
   const { isAdmin } = usePermissions();
-  const { isSuperAdmin } = usePermissions();
   const { currentTenant } = useTenant();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -144,13 +141,7 @@ const AppSidebar: React.FC = () => {
       label: 'Etiquetas de Clientes',
       icon: <Tag className="w-5 h-5" />,
       isActive: location.pathname.includes('/admin/client-tags')
-    },
-    ...(isSuperAdmin ? [{
-      path: '/admin/tenants',
-      label: 'Organizações',
-      icon: <Users className="w-5 h-5" />,
-      isActive: location.pathname.includes('/admin/tenants')
-    }] : [])
+    }
   ];
 
   const handleLogout = async () => {
@@ -187,37 +178,22 @@ const AppSidebar: React.FC = () => {
   return (
     <Sidebar variant="sidebar" collapsible="offcanvas">
       <SidebarHeader className="p-4 border-b">
-        <div className="flex flex-col space-y-3">
-          {/* Logo e Nome do Tenant */}
-          <div className="flex items-center space-x-2">
-            <img 
-              src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
-              alt="Logo" 
-              className="h-8 w-auto"
-            />
-            <div className="flex flex-col">
-              <h2 className="text-lg font-bold text-primary">{currentTenant?.name || 'AquaParaíso'}</h2>
-              <p className="text-[10px] text-muted-foreground font-medium">
-                powered by <span className="text-primary font-bold">NEXORA (NXR)</span>
-              </p>
-            </div>
+        <div className="flex items-center space-x-2">
+          <img 
+            src="/lovable-uploads/3841c0e4-f3de-4811-a15b-404f0ea98932.png" 
+            alt="Logo" 
+            className="h-8 w-auto"
+          />
+          <div className="flex flex-col">
+            <h2 className="text-lg font-bold text-primary">{currentTenant?.name || 'AquaParaíso'}</h2>
+            <p className="text-[10px] text-muted-foreground font-medium">
+              powered by <span className="text-primary font-bold">NEXORA (NXR)</span>
+            </p>
           </div>
-          
-          {/* Context Switcher - apenas para super admin */}
-          {isSuperAdmin && (
-            <ContextSwitcher variant="outline" className="w-full" />
-          )}
         </div>
       </SidebarHeader>
       
       <SidebarContent>
-        {/* Tenant Switcher */}
-        <SidebarGroup>
-          <SidebarGroupContent className="px-2 py-2">
-            <TenantSwitcher className="w-full" />
-          </SidebarGroupContent>
-        </SidebarGroup>
-
         {/* Global Search */}
         <SidebarGroup>
           <SidebarGroupContent className="px-2">
