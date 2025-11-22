@@ -73,6 +73,7 @@ const TenantManagement: React.FC = () => {
   const [formData, setFormData] = useState<CreateOrganizationData>({
     tenantName: '',
     adminEmail: '',
+    adminName: '',
     subscriptionPlan: 'free',
     subscriptionStatus: 'active',
     subscriptionStartsAt: new Date().toISOString().split('T')[0],
@@ -155,6 +156,11 @@ const TenantManagement: React.FC = () => {
       return;
     }
 
+    if (!formData.adminName?.trim()) {
+      toast.error('Nome do administrador é obrigatório');
+      return;
+    }
+
     if (!formData.adminEmail.trim() || !formData.adminEmail.includes('@')) {
       toast.error('Email do administrador inválido');
       return;
@@ -204,6 +210,7 @@ const TenantManagement: React.FC = () => {
       setFormData({
         tenantName: '',
         adminEmail: '',
+        adminName: '',
         subscriptionPlan: 'free',
         subscriptionStatus: 'active',
         subscriptionStartsAt: new Date().toISOString().split('T')[0],
@@ -453,19 +460,32 @@ const TenantManagement: React.FC = () => {
             <div className="space-y-4">
               <h3 className="text-sm font-medium">Administrador Principal</h3>
               
-              <div className="space-y-2">
-                <Label htmlFor="adminEmail">Email do Administrador *</Label>
-                <Input
-                  id="adminEmail"
-                  type="email"
-                  value={formData.adminEmail}
-                  onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
-                  placeholder="admin@empresa.com"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Este utilizador terá role de <strong>admin</strong> na organização
-                </p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="adminName">Nome do Administrador *</Label>
+                  <Input
+                    id="adminName"
+                    value={formData.adminName || ''}
+                    onChange={(e) => setFormData({ ...formData, adminName: e.target.value })}
+                    placeholder="Nome completo"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="adminEmail">Email do Administrador *</Label>
+                  <Input
+                    id="adminEmail"
+                    type="email"
+                    value={formData.adminEmail}
+                    onChange={(e) => setFormData({ ...formData, adminEmail: e.target.value })}
+                    placeholder="admin@empresa.com"
+                  />
+                </div>
               </div>
+              
+              <p className="text-xs text-muted-foreground">
+                Este utilizador terá role de <strong>admin</strong> na organização
+              </p>
             </div>
 
             {/* Utilizadores Adicionais */}
