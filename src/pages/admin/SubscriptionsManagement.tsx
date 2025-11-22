@@ -105,7 +105,7 @@ const SubscriptionsManagement: React.FC = () => {
         <CardHeader>
           <CardTitle>Subscrições Ativas</CardTitle>
           <CardDescription>
-            {tenants.length} organização{tenants.length !== 1 ? 'ões' : ''} no sistema
+            {tenants.length} organiza{tenants.length !== 1 ? 'ções' : 'ção'} no sistema
           </CardDescription>
         </CardHeader>
         <CardContent>
