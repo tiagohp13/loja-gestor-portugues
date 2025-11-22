@@ -1,20 +1,30 @@
 import { useUserProfileQuery } from './queries/useUserProfileQuery';
 import { useRolePermissions } from './useRolePermissions';
+import { useTenantRole } from './useTenantRole';
+import { useIsSuperAdmin } from './useIsSuperAdmin';
 
 export type AccessLevel = 'admin' | 'editor' | 'viewer';
 
 /**
  * Hook unificado de permissões
- * Usa o novo sistema RBAC mas mantém compatibilidade com o código existente
+ * Agora integra o sistema multi-tenancy com RBAC
+ * Prioridade: Super Admin > Tenant Role > RBAC > Access Level
  */
 export const usePermissions = () => {
   const { data: profile, isLoading: loading } = useUserProfileQuery();
   const rbac = useRolePermissions();
+  const tenantRole = useTenantRole();
+  const { isSuperAdmin, isLoading: superAdminLoading } = useIsSuperAdmin();
   
-  // Usar o role do RBAC se disponível, senão fallback para access_level
-  const accessLevel = (rbac.role || profile?.access_level || 'viewer') as AccessLevel;
+  // Determinar nível de acesso com prioridades
+  const accessLevel = (() => {
+    if (isSuperAdmin) return 'admin';
+    if (tenantRole.role) return tenantRole.role;
+    if (rbac.role) return rbac.role;
+    return (profile?.access_level || 'viewer') as AccessLevel;
+  })();
   
-  const isAdmin  = accessLevel === 'admin';
+  const isAdmin  = isSuperAdmin || accessLevel === 'admin';
   const isEditor = accessLevel === 'editor';
   const isViewer = accessLevel === 'viewer';
   
@@ -43,11 +53,15 @@ export const usePermissions = () => {
     canDelete,
     canView,
     checkPermission,
-    loading: loading || rbac.isLoading,
-    // Novas funcionalidades RBAC
+    loading: loading || rbac.isLoading || tenantRole.isLoading || superAdminLoading,
+    // RBAC funcionalidades
     can: rbac.can,
     hasRole: rbac.hasRole,
     hasAnyRole: rbac.hasAnyRole,
     roleName: rbac.roleName,
+    // Multi-tenancy funcionalidades
+    isSuperAdmin,
+    tenantRole: tenantRole.role,
+    currentTenant: tenantRole.currentTenant,
   };
 };

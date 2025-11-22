@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { TenantProvider } from './contexts/TenantContext';
 import { ProductsProvider } from './contexts/ProductsContext';
 import { CategoriesProvider } from './contexts/CategoriesContext';
 import { ClientsProvider } from './contexts/ClientsContext';
@@ -118,12 +119,13 @@ function App() {
       <ScrollToTop />
       <ThemeProvider>
         <AuthProvider>
-          <CategoriesProvider>
-            <ProductsProvider>
-              <ClientsProvider>
-                <OrdersProvider>
-                  <StockProvider>
-                    <Suspense fallback={<LoadingSpinner />}>
+          <TenantProvider>
+            <CategoriesProvider>
+              <ProductsProvider>
+                <ClientsProvider>
+                  <OrdersProvider>
+                    <StockProvider>
+                      <Suspense fallback={<LoadingSpinner />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/install" element={<InstallPWA />} />
@@ -224,11 +226,12 @@ function App() {
               </Routes>
               <Toaster />
             </Suspense>
-        </StockProvider>
-      </OrdersProvider>
-    </ClientsProvider>
-  </ProductsProvider>
-</CategoriesProvider>
+          </StockProvider>
+        </OrdersProvider>
+      </ClientsProvider>
+    </ProductsProvider>
+  </CategoriesProvider>
+</TenantProvider>
 </AuthProvider>
 </ThemeProvider>
 </BrowserRouter>
