@@ -8,7 +8,7 @@ import PageHeader from '@/components/ui/PageHeader';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Building2, Users, Settings, Plus, Trash2, UserPlus, CalendarIcon } from 'lucide-react';
+import { Building2, Users, Settings, Plus, Trash2, UserPlus } from 'lucide-react';
 import { TenantInfo } from '@/components/tenant/TenantInfo';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -22,11 +22,6 @@ import { toast } from 'sonner';
 import TenantDetailModal from './components/TenantDetailModal';
 import TenantEditModal from './components/TenantEditModal';
 import { useAdminTenants, TenantWithStats } from '@/hooks/admin/useAdminTenants';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { pt } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
 
 interface Tenant {
   id: string;
@@ -71,8 +66,6 @@ const TenantManagement: React.FC = () => {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedTenant, setSelectedTenant] = useState<TenantWithStats | null>(null);
   const createOrganization = useCreateOrganization();
-  const [startDateOpen, setStartDateOpen] = useState(false);
-  const [endDateOpen, setEndDateOpen] = useState(false);
   
   const { data: tenantsWithStats = [], isLoading: isLoadingStats } = useAdminTenants();
 
@@ -439,72 +432,25 @@ const TenantManagement: React.FC = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="subscriptionStartsAt">Data de Início *</Label>
-                  <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.subscriptionStartsAt 
-                          ? format(new Date(formData.subscriptionStartsAt), "dd 'de' MMMM 'de' yyyy", { locale: pt })
-                          : "Selecione a data"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.subscriptionStartsAt ? new Date(formData.subscriptionStartsAt) : undefined}
-                        onSelect={(date) => {
-                          if (date) {
-                            setFormData({ 
-                              ...formData, 
-                              subscriptionStartsAt: format(date, 'yyyy-MM-dd')
-                            });
-                            setStartDateOpen(false);
-                          }
-                        }}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="subscriptionStartsAt"
+                    type="date"
+                    value={formData.subscriptionStartsAt}
+                    onChange={(e) => setFormData({ ...formData, subscriptionStartsAt: e.target.value })}
+                    className="w-full"
+                  />
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subscriptionExpiresAt">Data de Fim (opcional)</Label>
-                  <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className="w-full justify-start text-left font-normal"
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {formData.subscriptionExpiresAt 
-                          ? format(new Date(formData.subscriptionExpiresAt), "dd 'de' MMMM 'de' yyyy", { locale: pt })
-                          : "Ilimitado - Clique para definir"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={formData.subscriptionExpiresAt ? new Date(formData.subscriptionExpiresAt) : undefined}
-                        onSelect={(date) => {
-                          setFormData({ 
-                            ...formData, 
-                            subscriptionExpiresAt: date ? format(date, 'yyyy-MM-dd') : undefined
-                          });
-                          setEndDateOpen(false);
-                        }}
-                        disabled={(date) => {
-                          const startDate = formData.subscriptionStartsAt ? new Date(formData.subscriptionStartsAt) : new Date();
-                          return date < startDate;
-                        }}
-                        initialFocus
-                        className="p-3 pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Input
+                    id="subscriptionExpiresAt"
+                    type="date"
+                    value={formData.subscriptionExpiresAt || ''}
+                    onChange={(e) => setFormData({ ...formData, subscriptionExpiresAt: e.target.value || undefined })}
+                    min={formData.subscriptionStartsAt}
+                    className="w-full"
+                  />
                   <p className="text-xs text-muted-foreground">
                     Se não for preenchida, a subscrição será por tempo ilimitado
                   </p>
