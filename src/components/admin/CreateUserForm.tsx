@@ -238,7 +238,8 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                   value={accessExpiresAt ? format(accessExpiresAt, 'yyyy-MM-dd') : ''}
                   onChange={(e) => {
                     if (e.target.value) {
-                      setValue('accessExpiresAt', new Date(e.target.value + 'T00:00:00'));
+                      const timeValue = accessExpiresAt ? format(accessExpiresAt, 'HH:mm') : '23:59';
+                      setValue('accessExpiresAt', new Date(e.target.value + 'T' + timeValue + ':00'));
                     } else {
                       setValue('accessExpiresAt', null);
                     }
@@ -246,6 +247,18 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                   min={format(new Date(), 'yyyy-MM-dd')}
                   disabled={isSubmitting}
                   className="flex-1"
+                />
+                <Input
+                  type="time"
+                  value={accessExpiresAt ? format(accessExpiresAt, 'HH:mm') : '23:59'}
+                  onChange={(e) => {
+                    if (accessExpiresAt && e.target.value) {
+                      const dateValue = format(accessExpiresAt, 'yyyy-MM-dd');
+                      setValue('accessExpiresAt', new Date(dateValue + 'T' + e.target.value + ':00'));
+                    }
+                  }}
+                  disabled={isSubmitting || !accessExpiresAt}
+                  className="w-32"
                 />
                 {accessExpiresAt && (
                   <Button
@@ -260,7 +273,7 @@ const CreateUserForm: React.FC<CreateUserFormProps> = ({ onSuccess }) => {
                 )}
               </div>
               <p className="text-sm text-muted-foreground">
-                Após esta data, o utilizador será automaticamente suspenso
+                Após esta data e hora, o utilizador será automaticamente suspenso
               </p>
             </div>
 

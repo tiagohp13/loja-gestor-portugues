@@ -73,11 +73,11 @@ const UserRow = ({
 
   const isAccessExpired = expirationDate && isPast(expirationDate);
 
-  const handleUpdateExpiration = async (dateString: string) => {
+  const handleUpdateExpiration = async (dateTimeString: string) => {
     setIsUpdatingExpiration(true);
     
     try {
-      const newDate = dateString ? new Date(dateString + 'T00:00:00') : null;
+      const newDate = dateTimeString ? new Date(dateTimeString) : null;
       
       const { error } = await supabase
         .from('user_profiles')
@@ -175,7 +175,7 @@ const UserRow = ({
                 {expirationDate && !isAccessExpired && (
                   <Badge variant="outline" className="text-xs text-orange-600">
                     <CalendarIcon className="w-3 h-3 mr-1" />
-                    Expira {format(expirationDate, "dd/MM/yyyy")}
+                    Expira {format(expirationDate, "dd/MM/yyyy 'às' HH:mm")}
                   </Badge>
                 )}
               </p>
@@ -297,23 +297,39 @@ const UserRow = ({
                 <div>
                   <p className="text-sm font-medium">Validade de Acesso</p>
                   <p className="text-xs text-muted-foreground">
-                    Definir data de expiração automática
+                    Definir data e hora de expiração automática
                   </p>
                 </div>
               </div>
               <div className="flex gap-2">
-                <div className="flex-1">
-                  <Input
-                    type="date"
-                    value={expirationDate ? format(expirationDate, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => handleUpdateExpiration(e.target.value)}
-                    min={format(new Date(), 'yyyy-MM-dd')}
-                    disabled={isUpdatingExpiration}
-                    className={cn(
-                      isAccessExpired && "border-destructive"
-                    )}
-                  />
-                </div>
+                <Input
+                  type="date"
+                  value={expirationDate ? format(expirationDate, 'yyyy-MM-dd') : ''}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      const timeValue = expirationDate ? format(expirationDate, 'HH:mm') : '23:59';
+                      handleUpdateExpiration(e.target.value + 'T' + timeValue);
+                    }
+                  }}
+                  min={format(new Date(), 'yyyy-MM-dd')}
+                  disabled={isUpdatingExpiration}
+                  className={cn(
+                    "flex-1",
+                    isAccessExpired && "border-destructive"
+                  )}
+                />
+                <Input
+                  type="time"
+                  value={expirationDate ? format(expirationDate, 'HH:mm') : '23:59'}
+                  onChange={(e) => {
+                    if (expirationDate && e.target.value) {
+                      const dateValue = format(expirationDate, 'yyyy-MM-dd');
+                      handleUpdateExpiration(dateValue + 'T' + e.target.value);
+                    }
+                  }}
+                  disabled={isUpdatingExpiration || !expirationDate}
+                  className="w-32"
+                />
                 {expirationDate && (
                   <Button
                     variant="outline"
