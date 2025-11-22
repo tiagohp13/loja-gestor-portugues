@@ -12,6 +12,7 @@ export interface AdditionalUser {
 export interface CreateOrganizationData {
   tenantName: string;
   adminEmail: string;
+  adminName?: string;
   subscriptionPlan: 'free' | 'basic' | 'premium' | 'unlimited';
   subscriptionStatus: 'active' | 'suspended' | 'cancelled';
   subscriptionStartsAt: string;

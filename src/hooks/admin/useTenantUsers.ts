@@ -21,7 +21,7 @@ export const useTenantUsers = (tenantId: string | null) => {
           user_id,
           role,
           status,
-          user_profiles!inner(
+          user_profiles(
             email,
             name
           )

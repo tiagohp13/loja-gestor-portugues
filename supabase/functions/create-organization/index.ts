@@ -16,6 +16,7 @@ interface AdditionalUser {
 interface CreateOrganizationRequest {
   tenantName: string;
   adminEmail: string;
+  adminName?: string;
   subscriptionPlan: 'free' | 'basic' | 'premium' | 'unlimited';
   subscriptionStatus: 'active' | 'suspended' | 'cancelled';
   subscriptionStartsAt: string;
@@ -41,6 +42,7 @@ serve(async (req) => {
     const {
       tenantName,
       adminEmail,
+      adminName,
       subscriptionPlan,
       subscriptionStatus,
       subscriptionStartsAt,
@@ -153,7 +155,7 @@ serve(async (req) => {
     const adminResult = await createOrAssociateUser(
       supabase,
       adminEmail,
-      'Admin Principal',
+      adminName || 'Admin Principal',
       'admin',
       tenant.id,
       supabaseUrl
