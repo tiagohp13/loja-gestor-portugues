@@ -22,20 +22,10 @@ const Login: React.FC = () => {
   const location = useLocation();
   const emailRef = useRef<HTMLInputElement>(null);
 
-  // Obter o caminho para onde redirecionar após login
-  const from = location.state?.from?.pathname || '/dashboard';
-
   // Ao montar, foca email
   useEffect(() => {
     emailRef.current?.focus();
   }, []);
-
-  // Se já estiver autenticado, redireciona imediatamente
-  useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
-    }
-  }, [isAuthenticated, navigate, from]);
 
   // Função de submit com validação de email e throttle via isLoading
   const handleSubmit = useCallback(
@@ -62,14 +52,13 @@ const Login: React.FC = () => {
           setLoginError('Utilizador Suspenso');
         } else if (!result) {
           setLoginError('Email ou palavra-passe inválidos.');
-        } else {
-          navigate(from, { replace: true });
         }
+        // O redirect é feito automaticamente no AuthContext
       } finally {
         setIsLoading(false);
       }
     },
-    [email, password, login, navigate, from, isLoading]
+    [email, password, login, isLoading]
   );
 
   // Verifica estado do Caps Lock em password
@@ -95,22 +84,25 @@ const Login: React.FC = () => {
       {/* Container de Login */}
       <div className="w-full max-w-md bg-card rounded-lg shadow-lg overflow-hidden relative z-10">
         <div className="p-4 sm:p-6">
-          {/* Logo sem efeito de desfoque */}
+          {/* Logo NEXORA */}
           <div className="flex justify-center mb-2">
-            <img
-              src="/lovable-uploads/43c0e0df-8fbe-4332-9b09-1437e2354fd4.png"
-              alt="Aqua Paraíso"
-              className="w-auto h-32 drop-shadow-lg rounded-md"
-            />
+            <div className="text-center">
+              <div className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent mb-2">
+                NEXORA
+              </div>
+              <div className="text-xs text-muted-foreground font-medium tracking-wider">
+                NXR · PLATAFORMA DE GESTÃO
+              </div>
+            </div>
           </div>
 
           {/* Título e descrição */}
-          <div className="text-center mb-6">
+          <div className="text-center mb-6 mt-6">
             <h2 className="text-xl sm:text-2xl font-semibold mb-2 text-foreground">
               Iniciar Sessão
             </h2>
             <p className="text-sm text-muted-foreground">
-              Aceda ao painel de controlo do seu stock e vendas.
+              Aceda ao seu painel de gestão empresarial.
             </p>
           </div>
 
@@ -264,7 +256,7 @@ const Login: React.FC = () => {
       {/* Footer */}
       <footer className="mt-8 text-center relative z-10">
         <p className="text-xs text-muted-foreground">
-          © 2025 Aqua Paraíso · Todos os direitos reservados
+          © 2025 NEXORA (NXR) · Plataforma de Gestão Empresarial
         </p>
       </footer>
     </div>
